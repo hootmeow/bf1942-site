@@ -5,19 +5,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 const tools = [
   {
+    title: "BF1942 Map Alert Bot",
+    description: "The BF1942 Map Alert Bot is an essential tool that allows your community members to receive private DM alerts the moment their favorite maps start on a server. It also provides a full suite of slash commands to view live server lists, check real-time scoreboards, find players, and more, ensuring you never miss a round.",
+    href: "/tools/map-alert",
+  },
+  {
+    title: "Linux BF1942 server",
+    description: "Automated setup and patching scripts for running a Battlefield 1942 Dedicated Server on modern 64-bit Linux systems — securely, without ever running the game or related services with elevated privileges.",
+    href: "/tools/linux-server",
+  },
+  {
     title: "Server Config Generator",
-    description: "Build compliant server configs with validated presets, rate limits, and mod integrations.",
-    href: "#",
-  },
-  {
-    title: "Log Intelligence",
-    description: "Stream and annotate server logs to flag anomalies, vote kick abuse, or crash loops.",
-    href: "#",
-  },
-  {
-    title: "Latency Diagnostics",
-    description: "Trace route visualizations and packet loss monitors for global Battlefield 1942 endpoints.",
-    href: "#",
+    description: "Build your `serversettings.con` file through an interactive web form. This tool guides you through all available server options, from server name and friendly fire to network settings, and compiles a complete, ready-to-download config file, eliminating syntax errors.",
+    href: "/tools/server-config",
   },
 ];
 
@@ -52,3 +52,4 @@ export default function ToolsPage() {
     </div>
   );
 }
+
