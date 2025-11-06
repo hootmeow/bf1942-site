@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
+  ActivitySquare,
   BarChart,
   Bell,
   Cog,
@@ -34,11 +35,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const navItems = [
   { label: "Dashboard", icon: Home, href: "/" },
+  { label: "News & Updates", icon: Newspaper, href: "/news" },
   { label: "Server Info", icon: Server, href: "/servers" },
   { label: "Player Stats", icon: BarChart, href: "/stats" },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
   { label: "Install Guide", icon: Download, href: "/guide" },
-  { label: "News & Updates", icon: Newspaper, href: "/news" },
   { label: "Community", icon: Users, href: "/community" },
   { label: "Tools", icon: Wrench, href: "/tools" },
 ];
@@ -71,6 +72,18 @@ export function AppShell({ children }: AppShellProps) {
         <main className="flex-1 bg-background px-4 pb-10 pt-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
+        <footer className="border-t border-border/60 bg-background/90 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl text-center text-xs text-muted-foreground">
+            <Link href="/about" className="px-2 hover:underline">
+              About
+            </Link>
+            <span className="px-1">•</span>
+            <Link href="/tos-privacy" className="px-2 hover:underline">
+              TOS & Privacy
+            </Link>
+            <p className="mt-2">© {new Date().getFullYear()} BF1942.online. All rights reserved.</p>
+          </div>
+        </footer>
       </div>
     </div>
   );
@@ -195,30 +208,24 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
         </TooltipProvider>
       </nav>
       <div className="px-3 pb-6">
-        <Link
-          href="https://github.com"
-          target="_blank"
-          rel="noreferrer"
-          className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-            collapsed && "justify-center"
-          )}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-4 w-4"
-            aria-hidden
-          >
-            <path
-              fillRule="evenodd"
-              d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.262.82-.582 0-.287-.011-1.244-.017-2.255-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.082-.73.082-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.776.418-1.305.762-1.606-2.665-.304-5.467-1.333-5.467-5.932 0-1.31.469-2.382 1.236-3.22-.124-.303-.536-1.524.117-3.176 0 0 1.008-.322 3.301 1.23a11.5 11.5 0 0 1 6.003 0c2.292-1.552 3.298-1.23 3.298-1.23.655 1.652.243 2.873.119 3.176.77.838 1.235 1.91 1.235 3.22 0 4.61-2.807 5.625-5.48 5.922.43.372.823 1.102.823 2.222 0 1.606-.015 2.901-.015 3.293 0 .323.217.699.825.58C20.565 21.796 24 17.297 24 12c0-6.63-5.37-12-12-12Z"
-              clipRule="evenodd"
-            />
-          </svg>
-          {!collapsed && <span>Source Code</span>}
-        </Link>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/system-status"
+                onClick={onCloseMobile}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+                  collapsed && "justify-center"
+                )}
+              >
+                <ActivitySquare className="h-4 w-4" />
+                {!collapsed && <span>System Status</span>}
+              </Link>
+            </TooltipTrigger>
+            {collapsed && <TooltipContent side="right">System Status</TooltipContent>}
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
