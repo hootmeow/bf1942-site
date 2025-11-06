@@ -81,3 +81,4 @@ certs/
 # --- Git backup/merge crap ---
 *.orig
 *.rej
+app/public/images/dotnet-sdk-8.0.415-win-x64.exe
