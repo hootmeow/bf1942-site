@@ -1,6 +1,6 @@
 "use client";
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, Label } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs
 
 // --- Mock Data for other charts (kept for stats page) ---
@@ -215,17 +215,47 @@ export function PlayerPlaytimeChart({ data }: { data: number[] }) {
   }));
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={chartData}>
+      <AreaChart data={chartData}>
+        <defs>
+          <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+          </linearGradient>
+        </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-        <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+        <XAxis
+          dataKey="hour"
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          fontSize={12}
+          interval={3}
+        >
+          <Label value="Hour of Day (UTC)" offset={-5} position="insideBottom" fill="hsl(var(--muted-foreground))" fontSize={12} />
+        </XAxis>
+        <YAxis
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          fontSize={12}
+          allowDecimals={false}
+        >
+          <Label value="Rounds Played" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} fill="hsl(var(--muted-foreground))" fontSize={12} />
+        </YAxis>
         <ReTooltip
           cursor={{ fill: "hsl(var(--accent)/0.3)" }}
           contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }}
-          labelFormatter={(label) => `Hour: ${label}`}
+          labelFormatter={(label) => `Hour: ${label} (UTC)`}
         />
-        <Bar dataKey="activity" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-      </BarChart>
+        <Area 
+          type="monotone" 
+          dataKey="activity" 
+          name="Rounds Played" 
+          stroke="hsl(var(--primary))" 
+          fillOpacity={1} 
+          fill="url(#colorActivity)" 
+        />
+      </AreaChart>
     </ResponsiveContainer>
   );
 }
