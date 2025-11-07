@@ -130,3 +130,20 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* --- ADDED FOR SEARCH GLOW --- */
+.search-glow {
+  /* Use the existing purple ring color for consistency */
+  --glow-color: hsl(var(--ring));
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+/* Apply glow on focus (typing) or hover */
+.search-glow:focus-within,
+.search-glow:hover {
+  /* A 0 0 10px 2px glow effect */
+  box-shadow: 0 0 10px 2px var(--glow-color);
+  /* Make sure border also uses the glow color */
+  @apply border-ring;
+}
+/* --- END ADDED SECTION --- */

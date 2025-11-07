@@ -51,7 +51,7 @@ interface ServerDetailsApiResponse {
   scoreboard: ScoreboardPlayer[];
 }
 
-// --- NEW Metrics API Types ---
+// --- Metrics API Types ---
 interface PlayerCountData {
   hour: string;
   avg_players: number;
@@ -84,8 +84,42 @@ interface MetricsApiResponse {
   };
 }
 
+// --- NEW Rounds API Types ---
+interface Round {
+  round_id: number;
+  map_name: string;
+  start_time: string;
+  end_time: string;
+  duration_seconds: number;
+  player_count: number;
+}
+
+interface RoundsApiResponse {
+  ok: boolean;
+  server_info: {
+    server_id: number;
+    current_server_name: string;
+  };
+  pagination: {
+    page: number;
+    page_size: number;
+    total_rounds: number;
+    total_pages: number;
+  };
+  rounds: Round[];
+}
+
 
 // --- Helper Functions ---
+
+/**
+ * Formats seconds into a MM:SS string
+ */
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+}
 
 function getPingColorClass(ping: number): string {
   if (ping <= 80) return "text-green-500";
@@ -135,7 +169,6 @@ function ScoreboardTable({ players }: { players: ScoreboardPlayer[] }) {
       </TableHeader>
       <TableBody>
         {players.map((player, index) => (
-          // Using index in the key as player names might not be unique
           <TableRow key={`${player.player_name}-${index}`}>
             <TableCell className="font-medium text-foreground">{player.player_name}</TableCell>
             <TableCell className="text-right">{player.score}</TableCell>
@@ -160,7 +193,6 @@ function ScoreboardTable({ players }: { players: ScoreboardPlayer[] }) {
   );
 }
 
-// --- NEW Top Players Table ---
 function TopPlayersTable({ players }: { players: TopPlayerData[] }) {
   return (
     <Table>
@@ -186,6 +218,34 @@ function TopPlayersTable({ players }: { players: TopPlayerData[] }) {
   );
 }
 
+// --- UPDATED Recent Rounds Table ---
+function RecentRoundsTable({ rounds }: { rounds: Round[] }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[100px]">Round ID</TableHead>
+          <TableHead>Map</TableHead>
+          <TableHead>Date</TableHead>
+          <TableHead>Duration</TableHead>
+          <TableHead className="text-right">Players</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rounds.map((round) => (
+          <TableRow key={round.round_id}>
+            <TableCell className="font-medium text-muted-foreground">{round.round_id}</TableCell>
+            <TableCell className="font-medium text-foreground">{round.map_name}</TableCell>
+            <TableCell>{new Date(round.start_time).toLocaleDateString()}</TableCell>
+            <TableCell>{formatDuration(round.duration_seconds)}</TableCell>
+            <TableCell className="text-right">{round.player_count}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
 
 // --- Main Page Component ---
 
@@ -198,10 +258,15 @@ export default function ServerDetailPage() {
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
-  // NEW state for server metrics (charts)
+  // State for server metrics (charts)
   const [metrics, setMetrics] = useState<MetricsApiResponse['metrics'] | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [metricsError, setMetricsError] = useState<string | null>(null);
+  
+  // NEW state for server rounds (table)
+  const [rounds, setRounds] = useState<Round[]>([]);
+  const [roundsLoading, setRoundsLoading] = useState(true);
+  const [roundsError, setRoundsError] = useState<string | null>(null);
 
   // Fetch server details (scoreboard)
   useEffect(() => {
@@ -222,7 +287,7 @@ export default function ServerDetailPage() {
     fetchServerDetails();
   }, [slug]);
 
-  // NEW: Fetch server metrics (charts)
+  // Fetch server metrics (charts)
   useEffect(() => {
     if (!slug) return;
     async function fetchServerMetrics() {
@@ -239,6 +304,25 @@ export default function ServerDetailPage() {
       }
     }
     fetchServerMetrics();
+  }, [slug]);
+
+  // NEW: Fetch server rounds (table)
+  useEffect(() => {
+    if (!slug) return;
+    async function fetchServerRounds() {
+      try {
+        const response = await fetch(`/api/v1/servers/search/rounds?search=${slug}&page=1&page_size=5`);
+        if (!response.ok) throw new Error(`Failed to fetch recent rounds: ${response.statusText}`);
+        const result: RoundsApiResponse = await response.json();
+        if (!result.ok) throw new Error("Rounds API returned an error");
+        setRounds(result.rounds);
+      } catch (err) {
+        setRoundsError(err instanceof Error ? err.message : "An unknown error occurred");
+      } finally {
+        setRoundsLoading(false);
+      }
+    }
+    fetchServerRounds();
   }, [slug]);
 
 
@@ -328,8 +412,31 @@ export default function ServerDetailPage() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* 4. NEW: Recent Rounds Section */}
+      {roundsLoading ? (
+         <div className="flex items-center justify-center gap-2 rounded-lg border border-border/60 bg-card p-6 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <p>Loading recent rounds...</p>
+        </div>
+      ) : roundsError ? (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error Loading Recent Rounds</AlertTitle>
+          <AlertDescription>{roundsError}</AlertDescription>
+        </Alert>
+      ) : rounds && (
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle>Recent Rounds</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecentRoundsTable rounds={rounds} />
+          </CardContent>
+        </Card>
+      )}
 
-      {/* 4. Metrics Section (24h Stats) */}
+      {/* 5. Metrics Section (24h Stats) */}
       {metricsLoading ? (
         <div className="flex items-center justify-center gap-2 rounded-lg border border-border/60 bg-card p-6 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -342,7 +449,7 @@ export default function ServerDetailPage() {
           <AlertDescription>{metricsError}</AlertDescription>
         </Alert>
       ) : metrics && (
-        <div className="space-y-6"> {/* Added a space-y-6 wrapper */}
+        <div className="space-y-6">
           {/* 24h Activity Chart */}
           <Card className="border-border/60">
             <CardHeader>

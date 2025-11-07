@@ -1,14 +1,27 @@
 "use client";
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs
 
-// --- Existing Global Charts ---
-
-const barData = Array.from({ length: 24 }).map((_, index) => ({
-  hour: `${index}:00`,
-  players: Math.floor(150 + Math.sin(index / 3) * 40 + (index % 5) * 10),
+// --- Mock Data for other charts (kept for stats page) ---
+const uptimeData = Array.from({ length: 7 }).map((_, index) => ({
+  day: `Day ${index + 1}`,
+  uptime: 92 + Math.round(Math.sin(index) * 3 + index),
 }));
-// ... (rest of existing chart data)
+const communityData = [
+  { name: "Discord", value: 45 },
+  { name: "Forums", value: 30 },
+  { name: "Reddit", value: 25 },
+];
+const playerStatsData = [
+  { label: "Mon", active: 320 },
+  { label: "Tue", active: 290 },
+  { label: "Wed", active: 340 },
+  { label: "Thu", active: 360 },
+  { label: "Fri", active: 410 },
+  { label: "Sat", active: 480 },
+  { label: "Sun", active: 450 },
+];
 const popularMapsData = [
   { map: "Wake Island", plays: 420 },
   { map: "Stalingrad", plays: 380 },
@@ -16,26 +29,64 @@ const popularMapsData = [
   { map: "Market Garden", plays: 300 },
   { map: "Guadalcanal", plays: 270 },
 ];
-
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--secondary))"];
 
-export function PlayerActivityChart() {
-  // ... (existing function)
+
+// --- Global PlayerActivityChart (Used on Homepage) ---
+const processHeatmapData = (data: number[]) => {
+  if (!data) return []; // Guard against undefined data
+  return data.map((value, index) => ({
+    hour: `${index.toString().padStart(2, '0')}:00`,
+    activity: value,
+  }));
+};
+
+/**
+ * A single, reusable line chart component
+ */
+function ActivityLineChart({ data }: { data: number[] }) {
+  const chartData = processHeatmapData(data);
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={barData}>
+    // --- Height set to 220px to be more compact ---
+    <ResponsiveContainer width="100%" height={220}>
+      <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-        <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-        <ReTooltip cursor={{ fill: "hsl(var(--accent)/0.3)" }} contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }} />
-        <Bar dataKey="players" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-      </BarChart>
+        <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} fontSize={12} />
+        <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} fontSize={12} />
+        <ReTooltip
+          cursor={{ fill: "hsl(var(--accent)/0.3)" }}
+          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }}
+          labelFormatter={(label) => `Hour: ${label} (UTC)`}
+        />
+        <Line type="monotone" dataKey="activity" name="Avg. Players" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+      </LineChart>
     </ResponsiveContainer>
   );
 }
 
+/**
+ * Main chart component with 24h/7d toggle
+ */
+export function PlayerActivityChart({ data24h, data7d }: { data24h: number[]; data7d: number[] }) {
+  return (
+    <Tabs defaultValue="24h">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="24h">Last 24 Hours</TabsTrigger>
+        <TabsTrigger value="7d">Last 7 Days</TabsTrigger>
+      </TabsList>
+      <TabsContent value="24h" className="pt-4">
+        <ActivityLineChart data={data24h} />
+      </TabsContent>
+      <TabsContent value="7d" className="pt-4">
+        <ActivityLineChart data={data7d} />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+// --- Other charts (unchanged) ---
+
 export function ServerUptimeChart() {
-  // ... (existing function)
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart data={uptimeData}>
@@ -50,7 +101,6 @@ export function ServerUptimeChart() {
 }
 
 export function CommunityActivityChart() {
-  // ... (existing function)
   return (
     <ResponsiveContainer width="100%" height={260}>
       <PieChart>
@@ -67,7 +117,6 @@ export function CommunityActivityChart() {
 }
 
 export function PlayerStatsBarChart() {
-  // ... (existing function)
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={playerStatsData}>
@@ -82,7 +131,6 @@ export function PlayerStatsBarChart() {
 }
 
 export function PopularMapsChart() {
-  // ... (existing function)
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={popularMapsData} layout="vertical">
@@ -96,31 +144,20 @@ export function PopularMapsChart() {
   );
 }
 
-
-// --- NEW Server-Specific Charts ---
-
-/**
- * Merges player count and ping data, formats hour for X-axis
- */
+// --- Server-Specific Charts ---
 const processMetricsData = (playerData: any[], pingData: any[]) => {
   const pingMap = new Map(pingData.map(p => [p.hour, p.avg_ping]));
   
   return playerData.map(p => ({
     ...p,
-    avg_ping: pingMap.get(p.hour) || 0,
-    // Format "2025-11-06T22:00:00" to "22:00"
     hour: new Date(p.hour).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-    avg_players: Math.round(p.avg_players), // Round for cleaner tooltip
-    avg_ping: Math.round(pingMap.get(p.hour) || 0), // Round for cleaner tooltip
+    avg_players: Math.round(p.avg_players),
+    avg_ping: Math.round(pingMap.get(p.hour) || 0),
   }));
 };
 
-/**
- * New chart for 24h Player Activity & Avg Ping
- */
 export function ServerActivityChart({ playerData, pingData }: { playerData: any[], pingData: any[] }) {
   const chartData = processMetricsData(playerData, pingData);
-
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart data={chartData}>
@@ -138,9 +175,6 @@ export function ServerActivityChart({ playerData, pingData }: { playerData: any[
   );
 }
 
-/**
- * New Pie Chart for Popular Maps
- */
 export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
   const chartColors = [
     "hsl(var(--chart-1))",
@@ -149,7 +183,6 @@ export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
     "hsl(var(--chart-4))",
     "hsl(var(--chart-5))",
   ];
-
   return (
     <ResponsiveContainer width="100%" height={260}>
       <PieChart>
@@ -170,6 +203,29 @@ export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
         <Legend verticalAlign="bottom" height={36} iconType="circle" />
         <ReTooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }} />
       </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+// --- Player-Specific Chart ---
+export function PlayerPlaytimeChart({ data }: { data: number[] }) {
+  const chartData = data.map((value, index) => ({
+    hour: `${index.toString().padStart(2, '0')}:00`,
+    activity: value,
+  }));
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <BarChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+        <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+        <ReTooltip
+          cursor={{ fill: "hsl(var(--accent)/0.3)" }}
+          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }}
+          labelFormatter={(label) => `Hour: ${label}`}
+        />
+        <Bar dataKey="activity" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+      </BarChart>
     </ResponsiveContainer>
   );
 }

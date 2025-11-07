@@ -22,7 +22,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+// Import the new search component
+import { PlayerSearch } from "@/components/player-search"; 
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
@@ -107,14 +108,15 @@ function AppHeader({ onToggleSidebar }: AppHeaderProps) {
           <PanelLeft className="h-5 w-5" />
         </Button>
         <div className="flex w-full items-center gap-3">
-          <div className="relative flex w-full items-center md:hidden">
-            <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search players..." className="pl-10" type="search" />
+          {/* --- UPDATED --- */}
+          <div className="flex w-full items-center md:hidden">
+            <PlayerSearch />
           </div>
-          <div className="relative hidden w-full max-w-sm items-center md:flex">
-            <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search players..." className="pl-10" type="search" />
+          <div className="hidden w-full items-center md:flex">
+            <PlayerSearch />
           </div>
+          {/* --- END UPDATE --- */}
+
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
             <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Notifications">
@@ -145,6 +147,7 @@ function AppHeader({ onToggleSidebar }: AppHeaderProps) {
   );
 }
 
+// ... (rest of SiteSidebar component is unchanged)
 interface SiteSidebarProps {
   isCollapsed: boolean;
   isMobileOpen: boolean;
