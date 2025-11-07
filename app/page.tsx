@@ -94,7 +94,7 @@ export default function Page() {
         </p>
       </div>
 
-      {/* 2. Stat Cards - Now smaller */}
+      {/* 2. Stat Cards - Smaller */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -176,7 +176,7 @@ export default function Page() {
           </CardHeader>
           <CardContent className="pt-4">
             {/* The table is now scrollable on small screens to be more compact */}
-            <div className="h-[284px] overflow-y-auto">
+            <div className="h-[308px] overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
