@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import Image from "next/image"; // --- IMPORTED Image ---
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -94,6 +94,7 @@ export default function MapAlertBotPage() {
               <CardTitle>Screenshots</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {/* --- MODIFIED: Replaced <img> with <Image> --- */}
               <Image
                 src="/images/bot-alert.png"
                 alt="Discord bot map alert notification"
@@ -115,6 +116,7 @@ export default function MapAlertBotPage() {
                 height={250}
                 className="rounded-md border border-border/60"
               />
+              {/* --- END MODIFICATION --- */}
             </CardContent>
           </Card>
         </div>
