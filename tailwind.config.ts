@@ -79,15 +79,13 @@ const config = {
   				to: {
   					height: '0'
   				}
-  			},
-        // --- DELETED DUPLICATE 'accordion-down' FROM HERE ---
-        // --- DELETED DUPLICATE 'accordion-up' FROM HERE ---
+  			}
+        // --- DELETED DUPLICATE ENTRIES FROM HERE ---
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out',
-        // --- DELETED DUPLICATE 'accordion-down' FROM HERE ---
-        // --- DELETED DUPLICATE 'accordion-up' FROM HERE ---
+  			'accordion-up': 'accordion-up 0.2s ease-out'
+        // --- DELETED DUPLICATE ENTRIES FROM HERE ---
   		}
   	}
   },
