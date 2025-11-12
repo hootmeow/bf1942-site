@@ -4,7 +4,7 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  ActivitySquare,
+  ActivitySquare, // Added for System Status
   BarChart,
   Bell,
   Cog,
@@ -22,8 +22,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-// Import the new search component
-import { PlayerSearch } from "@/components/player-search"; 
+import { PlayerSearch } from "@/components/player-search"; // Use the PlayerSearch component
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
@@ -108,38 +107,41 @@ function AppHeader({ onToggleSidebar }: AppHeaderProps) {
           <PanelLeft className="h-5 w-5" />
         </Button>
         <div className="flex w-full items-center gap-3">
-          {/* --- UPDATED --- */}
           <div className="flex w-full items-center md:hidden">
             <PlayerSearch />
           </div>
           <div className="hidden w-full items-center md:flex">
             <PlayerSearch />
           </div>
-          {/* --- END UPDATE --- */}
-
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Notifications">
+            
+            {/* --- UPDATED: Added 'hidden' class to these buttons --- */}
+            <Button variant="ghost" size="icon" className="h-9 w-9 hidden" aria-label="Notifications">
               <Bell className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Settings">
+            <Button variant="ghost" size="icon" className="h-9 w-9 hidden" aria-label="Settings">
               <Settings className="h-4 w-4" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="User menu">
-                  <User className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/login">Login</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="hidden"> {/* Wrapped DropdownMenu in a hidden div */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="User menu">
+                    <User className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">Login</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            {/* --- END UPDATE --- */}
+
           </div>
         </div>
       </div>
@@ -147,7 +149,6 @@ function AppHeader({ onToggleSidebar }: AppHeaderProps) {
   );
 }
 
-// ... (rest of SiteSidebar component is unchanged)
 interface SiteSidebarProps {
   isCollapsed: boolean;
   isMobileOpen: boolean;
