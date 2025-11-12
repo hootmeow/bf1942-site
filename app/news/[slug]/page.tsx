@@ -17,7 +17,9 @@ import { Button } from "@/components/ui/button";
 export default function ArticlePage() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug;
-  const article = getArticleBySlug(slug);
+  
+  // FIX: Check if slug exists before passing it to the function
+  const article = slug ? getArticleBySlug(slug) : undefined;
 
   if (!article) {
     return (

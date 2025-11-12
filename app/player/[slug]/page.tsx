@@ -9,7 +9,7 @@ import { PlayerPlaytimeChart } from "@/components/charts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 
-// --- API Types ---
+// ... (API Types and Helper components are all correct) ...
 interface PlayerInfo {
   player_id: number;
   canonical_name: string;
@@ -17,7 +17,6 @@ interface PlayerInfo {
   first_seen: string;
   last_seen: string;
 }
-
 interface LifetimeStats {
   total_rounds_played: number;
   total_playtime_seconds: number;
@@ -29,31 +28,28 @@ interface LifetimeStats {
   average_score_per_round: number;
   average_ping: number;
 }
-
 interface PersonalBests {
   best_round_score: number;
   best_round_kills: number;
   best_round_kpm: number;
   best_kill_round_id: number;
 }
-
 interface PlaystyleHabits {
   favorite_map: {
     map_name: string;
     map_play_count: number;
-  } | null; // Can be null
+  } | null; 
   favorite_server: {
     server_id: number;
     current_server_name: string;
     server_play_count: number;
-  } | null; // Can be null
+  } | null; 
   favorite_team: {
     team: 1 | 2;
     team_play_count: number;
-  } | null; // Can be null
+  } | null; 
   playtime_by_hour_utc: number[];
 }
-
 interface RecentRound {
   round_id: number;
   map_name: string;
@@ -62,7 +58,6 @@ interface RecentRound {
   final_kills: number;
   final_deaths: number;
 }
-
 interface PlayerProfileApiResponse {
   ok: boolean;
   player_info: PlayerInfo;
@@ -71,28 +66,14 @@ interface PlayerProfileApiResponse {
   playstyle_habits: PlaystyleHabits | null; 
   recent_rounds: RecentRound[] | null; 
 }
-
-// --- Helper Components ---
-
-/**
- * Formats seconds into a readable string (e.g., 10h 15m)
- */
 function formatPlaytime(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   return `${hours}h ${minutes}m`;
 }
-
-/**
- * Returns 'Axis' or 'Allies' from team number
- */
 function getTeamName(team: 1 | 2): string {
   return team === 1 ? "Axis" : "Allies";
 }
-
-/**
- * Reusable stat card for lifetime stats
- */
 function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ElementType }) {
   const Icon = icon;
   return (
@@ -109,10 +90,6 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
     </div>
   );
 }
-
-/**
- * Table for recent rounds
- */
 function RecentRoundsTable({ rounds }: { rounds: RecentRound[] }) {
   return (
     <Table>
@@ -141,18 +118,24 @@ function RecentRoundsTable({ rounds }: { rounds: RecentRound[] }) {
 }
 
 // --- Main Page Component ---
-
 function PlayerProfile() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug;
-  const playerName = decodeURIComponent(slug);
+  
+  // --- FIX: Check if slug exists before decoding ---
+  const playerName = slug ? decodeURIComponent(slug) : undefined;
 
   const [profile, setProfile] = useState<PlayerProfileApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!playerName) return;
+    // --- FIX: Check if playerName is valid before fetching ---
+    if (!playerName) {
+      setError("Invalid player name in URL.");
+      setLoading(false);
+      return;
+    }
 
     async function fetchPlayerProfile() {
       try {
@@ -246,7 +229,6 @@ function PlayerProfile() {
           <CardHeader>
             <CardTitle>Playstyle Habits</CardTitle>
           </CardHeader>
-          {/* --- THIS BLOCK IS NOW FIXED --- */}
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <Server className="h-4 w-4 text-muted-foreground" />
@@ -277,7 +259,6 @@ function PlayerProfile() {
               </span>
             </div>
           </CardContent>
-          {/* --- END FIX --- */}
         </Card>
         
         <Card className="border-border/60 lg:col-span-2">
