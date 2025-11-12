@@ -4,10 +4,11 @@ import { redirect } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Add 'async' to the function
+// --- FIX: Add 'async' to the function ---
 export default async function ProfilePage() {
-  // 'cookies()' is now a Promise, so we await it
-  const cookieStore = cookies();
+  
+  // --- FIX: Add 'await' to the cookies() call ---
+  const cookieStore = await cookies();
   const authToken = cookieStore.get("auth-token");
 
   if (!authToken) {
