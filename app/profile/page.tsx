@@ -4,8 +4,11 @@ import { redirect } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function ProfilePage() {
-  const authToken = cookies().get("auth-token");
+// Add 'async' to the function
+export default async function ProfilePage() {
+  // 'cookies()' is now a Promise, so we await it
+  const cookieStore = cookies();
+  const authToken = cookieStore.get("auth-token");
 
   if (!authToken) {
     redirect("/login");
