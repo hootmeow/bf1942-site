@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PlayerPageClient from "./player-page-client"; // This line must match your filename
+import PlayerPageClient from "./player-page-client"; // This MUST match the filename below
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -25,6 +25,7 @@ export async function generateMetadata(
       },
     };
   } catch (e) {
+    console.error("Metadata error:", e);
     return {
       title: "Player Not Found | BF1942 Online",
       description: "Details for this player could not be found.",
