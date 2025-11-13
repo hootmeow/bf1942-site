@@ -84,7 +84,8 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
           <Icon className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-xs font-medium text-muted-foreground">{title}</p>
+          {/* --- UPDATED: Use as="h3" (sub-heading) --- */}
+          <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
           <p className="text-xl font-bold text-foreground">{value}</p>
         </div>
       </div>
@@ -228,7 +229,8 @@ export default function PlayerPageClient() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Playstyle Habits</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Playstyle Habits</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
@@ -264,7 +266,8 @@ export default function PlayerPageClient() {
         
         <Card className="border-border/60 lg:col-span-2">
            <CardHeader>
-            <CardTitle>Personal Bests</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Personal Bests</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
              <StatCard
@@ -289,7 +292,8 @@ export default function PlayerPageClient() {
       {/* 24h Activity Chart */}
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle>24 Hour Activity (UTC)</CardTitle>
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2">24 Hour Activity (UTC)</CardTitle>
         </CardHeader>
         <CardContent>
           {playstyle_habits?.playtime_by_hour_utc ? (
@@ -303,7 +307,8 @@ export default function PlayerPageClient() {
       {/* Recent Rounds */}
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle>Recent Rounds</CardTitle>
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2">Recent Rounds</CardTitle>
         </CardHeader>
         <CardContent>
           {recent_rounds && recent_rounds.length > 0 ? (

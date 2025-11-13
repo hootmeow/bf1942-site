@@ -83,7 +83,8 @@ function RecordStatCard({
           <Icon className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-xs font-medium text-muted-foreground">{title}</p>
+          {/* --- UPDATED: Use as="h3" (sub-heading of card) --- */}
+          <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
           <p className="text-xl font-bold text-foreground">{value}</p>
         </div>
       </div>
@@ -150,7 +151,8 @@ export default function StatsPage() {
           {/* Hall of Fame */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>Hall of Fame</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">Hall of Fame</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <RecordStatCard
@@ -192,7 +194,8 @@ export default function StatsPage() {
           {/* Hall of Shame */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>Hall of Shame</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">Hall of Shame</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <RecordStatCard

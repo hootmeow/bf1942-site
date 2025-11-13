@@ -137,7 +137,8 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
           <Icon className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-xs font-medium text-muted-foreground">{title}</p>
+          {/* --- UPDATED: Use as="h3" (sub-heading) --- */}
+          <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
           <p className="text-base font-semibold text-foreground">{value}</p>
         </div>
       </div>
@@ -383,7 +384,8 @@ export default function ServerDetailPage() {
       {/* 2. Server Details Card */}
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle>Server Details</CardTitle>
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2">Server Details</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard title="Address" value={`${server_info.ip}:${server_info.current_game_port}`} icon={Server} />
@@ -397,7 +399,8 @@ export default function ServerDetailPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Team 1 (Axis) - Tickets: {server_info.tickets1 ?? 'N/A'}</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Team 1 (Axis) - Tickets: {server_info.tickets1 ?? 'N/A'}</CardTitle>
           </CardHeader>
           <CardContent>
             <ScoreboardTable players={team1} />
@@ -405,7 +408,8 @@ export default function ServerDetailPage() {
         </Card>
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Team 2 (Allies) - Tickets: {server_info.tickets2 ?? 'N/A'}</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Team 2 (Allies) - Tickets: {server_info.tickets2 ?? 'N/A'}</CardTitle>
           </CardHeader>
           <CardContent>
             <ScoreboardTable players={team2} />
@@ -428,7 +432,8 @@ export default function ServerDetailPage() {
       ) : rounds && (
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Recent Rounds</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Recent Rounds</CardTitle>
           </CardHeader>
           <CardContent>
             <RecentRoundsTable rounds={rounds} />
@@ -453,7 +458,8 @@ export default function ServerDetailPage() {
           {/* 24h Activity Chart */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>24 Hour Player & Ping Activity</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">24 Hour Player & Ping Activity</CardTitle>
             </CardHeader>
             <CardContent>
               <ServerActivityChart
@@ -468,7 +474,8 @@ export default function ServerDetailPage() {
             {/* Top Players Table */}
             <Card className="border-border/60 lg:col-span-2">
               <CardHeader>
-                <CardTitle>Top Players (24h)</CardTitle>
+                {/* --- UPDATED: Use as="h2" --- */}
+                <CardTitle as="h2">Top Players (24h)</CardTitle>
               </CardHeader>
               <CardContent>
                 <TopPlayersTable players={metrics.top_players_24h} />
@@ -478,7 +485,8 @@ export default function ServerDetailPage() {
             {/* Popular Maps Pie Chart */}
             <Card className="border-border/60">
               <CardHeader>
-                <CardTitle>Popular Maps (24h)</CardTitle>
+                {/* --- UPDATED: Use as="h2" --- */}
+                <CardTitle as="h2">Popular Maps (24h)</CardTitle>
               </CardHeader>
               <CardContent>
                 <ServerMapsPieChart mapData={metrics.popular_maps_24h} />

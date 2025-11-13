@@ -68,7 +68,8 @@ export default function MapAlertBotPage() {
         <div className="space-y-6 lg:col-span-2">
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>How it Works</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">How it Works</CardTitle>
               <CardDescription>
                 Get set up in less than a minute. You must have "Manage Server" permissions in Discord.
               </CardDescription>
@@ -91,7 +92,8 @@ export default function MapAlertBotPage() {
           {/* Screenshots */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>Screenshots</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">Screenshots</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {/* --- MODIFIED: Replaced <img> with <Image> --- */}
@@ -124,7 +126,8 @@ export default function MapAlertBotPage() {
         {/* Commands List */}
         <Card className="border-border/60 lg:col-span-1">
           <CardHeader>
-            <CardTitle>Available Commands</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Available Commands</CardTitle>
             <CardDescription>
               The bot uses Discord's built-in slash commands. Just type `/` to see the list.
             </CardDescription>
