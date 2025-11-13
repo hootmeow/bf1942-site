@@ -116,9 +116,51 @@ const OriginAndCdSteps = () => (
   </>
 )
 
+// --- ADDED: JSON-LD Structured Data for HowTo Guide ---
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Install Battlefield 1942 on a Modern PC (2025)",
+  "description": "A complete guide to install Battlefield 1942, get online with the community master server patch, and apply widescreen fixes.",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Enable DirectPlay",
+      "text": "Open 'OptionalFeatures.exe', find 'Legacy Components', and check the box for 'DirectPlay'. This is required for the game to launch on modern Windows.",
+      "url": "https://www.bf1942.online/guide#step-1" // You would need to add an id="step-1" to this section
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Install Battlefield 1942",
+      "text": "Install the game using the recommended Community Repack, the Origin/EA App version, or the original CD version.",
+      "url": "https://www.bf1942.online/guide#step-2" // You would need to add an id="step-2" to this section
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Install Master Server Patch",
+      "text": "Download and run the Community Master Server Patch. This is essential to see servers in the multiplayer list, as the original GameSpy server is offline.",
+      "url": "https://www.bf1942.online/guide#step-3" // You would need to add an id="step-3" to this section
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Apply Widescreen Fix",
+      "text": "Manually edit the 'Video.con' file in your Documents folder to set your monitor's modern resolution, such as 'game.setGameDisplayMode 1920 1080 32 60'.",
+      "url": "https://www.bf1942.online/guide#step-4" // You would need to add an id="step-4" to this section
+    }
+  ]
+};
+// --- END ADDED SECTION ---
+
 export default function GuidePage() {
   return (
     <div className="container mx-auto max-w-4xl py-12">
+      {/* --- ADDED: Script tag for JSON-LD --- */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
+      {/* --- END ADDED SECTION --- */}
+
       <h1 className="mb-4 text-4xl font-bold tracking-tight">
         Battlefield 1942 Installation Guide (2025)
       </h1>

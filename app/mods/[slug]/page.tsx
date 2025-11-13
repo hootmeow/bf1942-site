@@ -12,8 +12,11 @@ export async function generateMetadata(
   }
 
   try {
-    // We can use a dynamic import on the server
-    const modModule = await import(`@/content/mods/${params.slug}`);
+    // --- THIS IS THE FIX ---
+    // We add .tsx to the path for the SERVER-SIDE import
+    const modModule = await import(`@/content/mods/${params.slug}.tsx`);
+    // --- END FIX ---
+    
     const mod: ModData = modModule.default;
 
     return {
@@ -25,6 +28,7 @@ export async function generateMetadata(
       },
     };
   } catch (e) {
+    console.error("Metadata error:", e); // Added for debugging
     return {
       title: "Mod Not Found | BF1942 Online",
       description: "Details for this mod could not be found.",

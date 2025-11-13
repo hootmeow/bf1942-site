@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image"; // Now uses next/image
+import Image from "next/image"; // For next/image component
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ModData } from "@/lib/types";
@@ -23,7 +23,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-// Component name is changed
 export default function ModDetailPageClient() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug;
@@ -38,7 +37,10 @@ export default function ModDetailPageClient() {
     const loadModData = async () => {
       try {
         setLoading(true);
+        // --- THIS IS THE FIX ---
+        // We REMOVE .tsx from the path for the CLIENT-SIDE import
         const modData = await import(`@/content/mods/${slug}`);
+        // --- END FIX ---
         setMod(modData.default);
       } catch (e) {
         console.error("Failed to load mod data", e);
@@ -88,6 +90,7 @@ export default function ModDetailPageClient() {
         </div>
       </div>
       
+      {/* --- Downloads Card with Buttons --- */}
       {mod.downloadLinks && mod.downloadLinks.length > 0 && (
         <Card className="border-border/60">
           <CardHeader>
@@ -96,10 +99,10 @@ export default function ModDetailPageClient() {
           <CardContent className="flex flex-col space-y-3">
             {mod.downloadLinks.map((link) => (
               <Button asChild key={link.name} variant="outline" className="justify-start">
-                <Link href={link.url} target="_blank" rel="noreferrer">
+                <a href={link.url} target="_blank" rel="noreferrer">
                   <Download className="mr-2 h-4 w-4" />
                   {link.name}
-                </Link>
+                </a>
               </Button>
             ))}
           </CardContent>
@@ -118,6 +121,7 @@ export default function ModDetailPageClient() {
         </CardContent>
       </Card>
 
+      {/* --- Mod Gallery Card --- */}
       {mod.galleryImages && mod.galleryImages.length > 0 && (
         <Card className="border-border/60">
           <CardHeader>
@@ -145,6 +149,7 @@ export default function ModDetailPageClient() {
         </Card>
       )}
 
+      {/* Map List Card (Unchanged) */}
       {mod.maps && mod.maps.length > 0 && (
         <Card className="border-border/60">
           <CardHeader>
