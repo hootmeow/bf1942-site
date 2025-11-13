@@ -99,7 +99,8 @@ export default function Page() {
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Players (24h)</CardTitle>
+              {/* --- UPDATED: Use as="h2" (but keep styling) --- */}
+              <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Active Players (24h)</CardTitle>
               <div className="mt-2 text-2xl font-semibold text-foreground">{data.active_players_24h}</div>
             </div>
             <div className="rounded-full bg-primary/10 p-3 text-primary">
@@ -119,7 +120,8 @@ export default function Page() {
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Players Seen</CardTitle>
+              {/* --- UPDATED: Use as="h2" (but keep styling) --- */}
+              <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Total Players Seen</CardTitle>
               <div className="mt-2 text-2xl font-semibold text-foreground">{data.total_players_seen}</div>
             </div>
             <div className="rounded-full bg-primary/10 p-3 text-primary">
@@ -136,7 +138,8 @@ export default function Page() {
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Rounds Processed</CardTitle>
+              {/* --- UPDATED: Use as="h2" (but keep styling) --- */}
+              <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Total Rounds Processed</CardTitle>
               <div className="mt-2 text-2xl font-semibold text-foreground">{data.total_rounds_processed}</div>
             </div>
             <div className="rounded-full bg-primary/10 p-3 text-primary">
@@ -156,7 +159,8 @@ export default function Page() {
         {/* Player Activity Chart */}
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Global Player Concurrency</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Global Player Concurrency</CardTitle>
             <CardDescription>Average player count by hour (UTC).</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
@@ -171,7 +175,8 @@ export default function Page() {
         {/* Popular Maps Table */}
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Popular Maps (7 Days)</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Popular Maps (7 Days)</CardTitle>
             <CardDescription>Top 10 most played maps by round.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">

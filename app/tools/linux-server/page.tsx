@@ -26,9 +26,51 @@ const distributions = [
   { distro: "Debian 12 (Bookworm)", status: "📝 TODO", notes: "Same multiarch flow" },
 ];
 
+// --- ADDED: HowTo JSON-LD Schema ---
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Install a BF1942 Linux Server",
+  "description": "Automated setup and patching scripts for running a Battlefield 1942 Dedicated Server on modern 64-bit Linux systems.",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Prerequisites",
+      "text": "Install git and curl. Ensure you have sudo access and a supported OS like Ubuntu 24.04.",
+      "url": "https://www.bf1942.online/tools/linux-server#prerequisites" // Assumes you add id="prerequisites"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Installation",
+      "text": "Clone the repository (https://github.com/hootmeow/bf1942-linux.git), make setup_env.sh executable, and run 'sudo ./setup_env.sh'.",
+      "url": "https://www.bf1942.online/tools/linux-server#installation" // Assumes you add id="installation"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "How It Works",
+      "text": "The script creates a non-privileged user (bf1942_user), installs 32-bit libraries, downloads and patches the server, and sets up a systemd service.",
+      "url": "https://www.bf1942.online/tools/linux-server#how-it-works" // Assumes you add id="how-it-works"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Managing Your Server",
+      "text": "Log in as the service user with 'sudo -iu bf1942_user' and use 'sudo systemctl [start|stop|status] bf1942-server.service' to manage the server.",
+      "url": "https://www.bf1942.online/tools/linux-server#managing-server" // Assumes you add id="managing-server"
+    }
+  ]
+};
+// --- END ADDED SECTION ---
+
 export default function LinuxServerPage() {
   return (
     <div className="space-y-6">
+      {/* --- ADDED: Script tag for JSON-LD --- */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
+      {/* --- END ADDED SECTION --- */}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
@@ -53,7 +95,8 @@ export default function LinuxServerPage() {
       {/* Main Content Card */}
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle>Overview</CardTitle>
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2">Overview</CardTitle>
           <CardDescription>
             This project automates the setup of the 32-bit BF1942 server on a modern 64-bit
             Linux OS, following best security practices.
@@ -61,8 +104,8 @@ export default function LinuxServerPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           
-          {/* Prerequisites */}
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+          {/* Prerequisites (id added) */}
+          <h2 id="prerequisites" className="text-xl font-semibold tracking-tight text-foreground">
             1. Prerequisites
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -81,8 +124,8 @@ export default function LinuxServerPage() {
             </li>
           </ul>
 
-          {/* Installation */}
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+          {/* Installation (id added) */}
+          <h2 id="installation" className="text-xl font-semibold tracking-tight text-foreground">
             2. Installation
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -111,8 +154,8 @@ export default function LinuxServerPage() {
             <code>bf1942_user</code>.
           </p>
 
-          {/* How It Works */}
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+          {/* How It Works (id added) */}
+          <h2 id="how-it-works" className="text-xl font-semibold tracking-tight text-foreground">
             3. How It Works
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -140,8 +183,8 @@ export default function LinuxServerPage() {
             </li>
           </ul>
 
-          {/* Managing Server */}
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+          {/* Managing Server (id added) */}
+          <h2 id="managing-server" className="text-xl font-semibold tracking-tight text-foreground">
             4. Managing Your Server
           </h2>
           <Alert>

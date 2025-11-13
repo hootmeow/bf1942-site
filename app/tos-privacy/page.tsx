@@ -40,7 +40,8 @@ export default function TosPrivacyPage() {
               <div className="flex-shrink-0 text-primary">
                 <FileText className="h-8 w-8" />
               </div>
-              <CardTitle className="text-3xl font-semibold">Terms of Service</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2" className="text-3xl font-semibold">Terms of Service</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -88,7 +89,8 @@ export default function TosPrivacyPage() {
               <div className="flex-shrink-0 text-primary">
                 <ShieldCheck className="h-8 w-8" />
               </div>
-              <CardTitle className="text-3xl font-semibold">Privacy Policy</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2" className="text-3xl font-semibold">Privacy Policy</CardTitle>
             </div>
           </CardHeader>
           <CardContent>

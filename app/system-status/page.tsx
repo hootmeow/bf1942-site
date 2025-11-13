@@ -52,7 +52,8 @@ export default function SystemStatusPage() {
 
       <Card className="border-green-500/30 bg-green-500/5 dark:border-green-500/50 dark:bg-green-500/10">
         <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-green-700 dark:text-green-400">
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2" className="flex items-center gap-3 text-green-700 dark:text-green-400">
             All Systems Operational
           </CardTitle>
           <CardDescription className="text-green-700/80 dark:text-green-400/80">
@@ -63,7 +64,8 @@ export default function SystemStatusPage() {
 
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle>Component Status</CardTitle>
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2">Component Status</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

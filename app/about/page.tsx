@@ -10,9 +10,29 @@ export const metadata: Metadata = {
   description: "Learn about BF1942 Online, a community-driven statistics hub for Battlefield 1942, providing live server tracking, player profiles, and detailed round history.",
 };
 
+// --- ADDED: Organization JSON-LD Schema ---
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "BF1942 Online",
+  "url": "https://www.bf1942.online",
+  "logo": "https://www.bf1942.online/images/og-image.png", // Using the main OG image
+  "sameAs": [
+    "https://discord.gg/XWkkZnqJnm" // From the "Join Discord" button
+  ]
+};
+// --- END ADDED SECTION ---
+
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
+      {/* --- ADDED: Script tag for JSON-LD --- */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      {/* --- END ADDED SECTION --- */}
+
       {/* Header Text */}
       <div className="text-center">
         <h1 className="text-4xl font-bold tracking-tight text-foreground">
@@ -29,7 +49,8 @@ export default function AboutPage() {
       {/* What We Offer Card */}
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold">What We Offer</CardTitle>
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2" className="text-2xl font-semibold">What We Offer</CardTitle>
           <CardDescription>
             A complete toolkit for players, server admins, and community newcomers.
           </CardDescription>
@@ -40,6 +61,7 @@ export default function AboutPage() {
               <Server className="h-5 w-5" />
             </div>
             <div>
+              {/* These are fine as h3, as they are sub-sections of "What We Offer" */}
               <h3 className="text-lg font-semibold text-foreground">Live Statistics</h3>
               <p className="text-muted-foreground">
                 Our site is powered by a real-time server browser, allowing you to see every active
@@ -83,7 +105,8 @@ export default function AboutPage() {
       {/* Community Card */}
       <Card className="border-border/60 bg-card/40 text-center">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold">
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2" className="text-2xl font-semibold">
             Join the Community
           </CardTitle>
           <CardDescription>

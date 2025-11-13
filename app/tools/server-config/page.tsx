@@ -170,7 +170,8 @@ export default function ServerConfigPage() {
           {/* General Settings */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>General Settings</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">General Settings</CardTitle>
               <CardDescription>
                 Basic server identification and access.
               </CardDescription>
@@ -224,7 +225,8 @@ export default function ServerConfigPage() {
           {/* Gameplay Settings */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>Gameplay Settings</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">Gameplay Settings</CardTitle>
               <CardDescription>
                 Rules affecting game mode, scoring, and teams.
               </CardDescription>
@@ -313,7 +315,8 @@ export default function ServerConfigPage() {
            {/* Spawn Settings */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>Spawn & Delay Settings</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">Spawn & Delay Settings</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                <FormInput
@@ -350,7 +353,8 @@ export default function ServerConfigPage() {
           {/* Co-op Settings */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>Co-op Settings</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">Co-op Settings</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2">
               <FormInput
@@ -379,7 +383,8 @@ export default function ServerConfigPage() {
           {/* Network Settings */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>Network Settings</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">Network Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormCheckbox
@@ -431,7 +436,8 @@ export default function ServerConfigPage() {
           {/* View Settings */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>View & Camera Settings</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">View & Camera Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormCheckbox
@@ -461,7 +467,8 @@ export default function ServerConfigPage() {
           {/* Misc Settings */}
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle>Misc. Server Settings</CardTitle>
+              {/* --- UPDATED: Use as="h2" --- */}
+              <CardTitle as="h2">Misc. Server Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormCheckbox
@@ -589,4 +596,3 @@ function FormSelect({ label, name, description, children, ...props }: FormSelect
     </div>
   );
 }
-

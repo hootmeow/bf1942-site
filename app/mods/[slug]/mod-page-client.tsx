@@ -94,7 +94,8 @@ export default function ModDetailPageClient() {
       {mod.downloadLinks && mod.downloadLinks.length > 0 && (
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Downloads</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Downloads</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col space-y-3">
             {mod.downloadLinks.map((link) => (
@@ -111,7 +112,8 @@ export default function ModDetailPageClient() {
 
       <Card className="flex flex-col border-border/60">
         <CardHeader>
-          <CardTitle>Mod Details</CardTitle>
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2">Mod Details</CardTitle>
           <CardDescription>
             Version: {mod.version}
           </CardDescription>
@@ -125,7 +127,8 @@ export default function ModDetailPageClient() {
       {mod.galleryImages && mod.galleryImages.length > 0 && (
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Mod Gallery</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Mod Gallery</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-center px-12">
             <Carousel className="w-full max-w-xl" opts={{ loop: true }}>
@@ -153,7 +156,8 @@ export default function ModDetailPageClient() {
       {mod.maps && mod.maps.length > 0 && (
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>Maps in {mod.name}</CardTitle>
+            {/* --- UPDATED: Use as="h2" --- */}
+            <CardTitle as="h2">Maps in {mod.name}</CardTitle>
             <CardDescription>
               Browse all maps included in this mod.
             </CardDescription>

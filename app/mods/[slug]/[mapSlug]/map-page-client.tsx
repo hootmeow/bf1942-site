@@ -131,7 +131,8 @@ export default function MapDetailPageClient() {
       
       <Card className="flex flex-col border-border/60">
         <CardHeader>
-          <CardTitle>Map Guide & Details</CardTitle>
+          {/* --- UPDATED: Use as="h2" --- */}
+          <CardTitle as="h2">Map Guide & Details</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground">
           {map.content}

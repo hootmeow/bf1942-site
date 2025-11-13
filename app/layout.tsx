@@ -50,6 +50,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
+        {/* --- ADDED: WebSite JSON-LD Schema --- */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "BF1942 Command Center",
+              "url": "https://www.bf1942.online",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": {
+                  "@type": "EntryPoint",
+                  "urlTemplate": "https://www.bf1942.online/search?q={search_term_string}"
+                },
+                "query-input": "required name=search_term_string"
+              }
+            })
+          }}
+        />
+        {/* --- END ADDED SECTION --- */}
         <ThemeProvider>
           <AppShell>{children}</AppShell>
         </ThemeProvider>
