@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PlayerPageClient from "./player-page-client.tsx"; // This line must match your filename
+import PlayerPageClient from "./player-page-client"; // This line must match your filename
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
