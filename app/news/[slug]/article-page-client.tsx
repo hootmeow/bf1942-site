@@ -36,8 +36,37 @@ export default function ArticlePageClient() {
     );
   }
 
+  // --- ADDED: JSON-LD Structured Data ---
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    'headline': article.title,
+    'description': article.excerpt,
+    'datePublished': new Date(article.date).toISOString(),
+    'author': {
+      '@type': 'Organization',
+      'name': 'BF1942 Online'
+    },
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'BF1942 Online',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': 'https://www.bf1942.online/logo.png' // You should create a logo.png
+      }
+    }
+  };
+  // --- END ADDED SECTION ---
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      {/* --- ADDED: Script tag for JSON-LD --- */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {/* --- END ADDED SECTION --- */}
+
       <Button asChild variant="outline">
         <Link href="/news">← Back to all news</Link>
       </Button>

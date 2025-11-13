@@ -12,7 +12,11 @@ export async function generateMetadata(
   }
 
   try {
-    const mapModule = await import(`@/content/maps/${params.slug}/${params.mapSlug}`);
+    // --- THIS IS THE FIX ---
+    // We add .tsx to the path for the SERVER-SIDE import
+    const mapModule = await import(`@/content/maps/${params.slug}/${params.mapSlug}.tsx`);
+    // --- END FIX ---
+
     const map: ModMapData = mapModule.default;
 
     return {
@@ -25,6 +29,7 @@ export async function generateMetadata(
       },
     };
   } catch (e) {
+    console.error("Metadata error:", e); // Added for debugging
     return {
       title: "Map Not Found | BF1942 Online",
       description: "Details for this map could not be found.",

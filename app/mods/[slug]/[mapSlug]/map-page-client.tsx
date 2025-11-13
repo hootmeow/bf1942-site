@@ -41,7 +41,10 @@ export default function MapDetailPageClient() {
     const loadMapData = async () => {
       try {
         setLoading(true);
+        // --- THIS IS THE FIX ---
+        // We REMOVE .tsx from the path for the CLIENT-SIDE import
         const mapDataModule = await import(`@/content/maps/${modSlug}/${mapSlug}`);
+        // --- END FIX ---
         const mapData: ModMapData = mapDataModule.default;
         setMap(mapData);
       } catch (e) {
@@ -99,9 +102,10 @@ export default function MapDetailPageClient() {
           <Carousel
             className="w-full max-w-2xl"
             opts={{ loop: true }}
+            // Add the autoplay plugin
             plugins={[
               Autoplay({
-                delay: 4000,
+                delay: 4000, // 4 seconds per slide
                 stopOnInteraction: true,
               }),
             ]}

@@ -1,7 +1,9 @@
-// Create new file: app/sitemap.ts
 import { MetadataRoute } from 'next'
-import { modsList } from '@/lib/mods-list';
-import { articles } from '@/lib/articles';
+import { modsList } from '@/lib/mods-list'
+import { articles } from '@/lib/articles'
+
+// --- FIX: Explicitly define the type for changeFrequency ---
+type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // SET YOUR REAL DOMAIN HERE
@@ -11,14 +13,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const modEntries: MetadataRoute.Sitemap = modsList.map((mod) => ({
     url: `${siteUrl}/mods/${mod.slug}`,
     lastModified: new Date(),
-    changeFrequency: 'monthly',
+    changeFrequency: 'monthly' as ChangeFrequency, // <-- FIX
   }));
 
   // Dynamic News Pages
   const newsEntries: MetadataRoute.Sitemap = articles.map((article) => ({
     url: `${siteUrl}/news/${article.slug}`,
     lastModified: new Date(article.date),
-    changeFrequency: 'yearly',
+    changeFrequency: 'yearly' as ChangeFrequency, // <-- FIX
   }));
 
   // Static Pages
@@ -43,10 +45,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/tos-privacy'
   ];
 
-  const staticEntries = staticRoutes.map((route) => ({
+  const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
     url: `${siteUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'weekly',
+    changeFrequency: 'weekly' as ChangeFrequency, // <-- FIX
     priority: route === '/' ? 1.0 : 0.8,
   }));
   
@@ -54,8 +56,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...staticEntries,
     ...modEntries,
     ...newsEntries,
-    // NOTE: You should also add dynamic entries for /player/[slug] if possible,
-    // but that would require fetching all players, which might be too large.
-    // The current setup is a great start.
   ];
 }
