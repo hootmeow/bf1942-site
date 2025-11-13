@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react"; // Removed Suspense
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,7 +9,7 @@ import { PlayerPlaytimeChart } from "@/components/charts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 
-// ... (API Types and Helper components are all correct) ...
+// --- API Types ---
 interface PlayerInfo {
   player_id: number;
   canonical_name: string;
@@ -66,6 +66,7 @@ interface PlayerProfileApiResponse {
   playstyle_habits: PlaystyleHabits | null; 
   recent_rounds: RecentRound[] | null; 
 }
+// --- Helper Functions ---
 function formatPlaytime(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -95,7 +96,7 @@ function RecentRoundsTable({ rounds }: { rounds: RecentRound[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          {/* --- THIS WAS THE TYPO --- */}
+          {/* --- THIS WAS THE JSX ERROR. I fixed the closing tag. --- */}
           <TableHead>Map</TableHead>
           {/* --- END FIX --- */}
           <TableHead>Finished</TableHead>
@@ -120,7 +121,6 @@ function RecentRoundsTable({ rounds }: { rounds: RecentRound[] }) {
 }
 
 // --- Main Page Component ---
-// Renamed component
 export default function PlayerPageClient() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug;
