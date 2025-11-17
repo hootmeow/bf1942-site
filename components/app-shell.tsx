@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/accordion";
 // --- NEW: Import the guides list ---
 import { guidesList } from "@/lib/guides-list";
+// --- REMOVED Image import ---
 
 // --- MODIFIED: Updated navItems data structure ---
 const navItems = [
@@ -77,7 +78,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] =React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
   const toggleSidebar = React.useCallback(() => {
@@ -193,9 +194,11 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
       )}
     >
       <div className="flex items-center gap-3 px-4 py-6">
-        <Avatar className="h-10 w-10 border border-primary/50">
+        {/* --- REVERTED to Avatar and ADDED animate-pulse-glow --- */}
+        <Avatar className="h-10 w-10 border border-primary/50 animate-pulse-glow">
           <AvatarFallback className="bg-primary/20 text-primary">BF</AvatarFallback>
         </Avatar>
+        {/* --- END MODIFIED SECTION --- */}
         {!collapsed && (
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Command Center</p>
