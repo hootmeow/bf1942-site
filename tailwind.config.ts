@@ -79,13 +79,25 @@ const config = {
   				to: {
   					height: '0'
   				}
-  			}
-        // --- DELETED DUPLICATE ENTRIES FROM HERE ---
+  			},
+        // --- ADDED THIS SECTION ---
+        'pulse-glow': {
+          '0%, 100%': { 
+            opacity: '0.85', 
+            boxShadow: '0 0 8px 3px hsl(var(--primary) / 0.3)' 
+          },
+          '50%': { 
+            opacity: '1', 
+            boxShadow: '0 0 14px 6px hsl(var(--primary) / 0.5)' 
+          },
+        }
+        // --- END ADDED SECTION ---
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
-        // --- DELETED DUPLICATE ENTRIES FROM HERE ---
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+        // --- ADDED THIS LINE ---
+        'pulse-glow': 'pulse-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
   		}
   	}
   },
