@@ -41,10 +41,17 @@ export interface ModInfo {
   description: string;
 }
 
-// --- NEW ---
 // For the simple list/table of other mods
 export interface OtherMod {
   name: string;
   author: string;
+  description: string;
+}
+
+// --- NEW ---
+// For the main /guide overview page
+export interface GuideInfo {
+  slug: string;
+  title: string;
   description: string;
 }

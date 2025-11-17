@@ -32,16 +32,44 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+// --- Import Accordion components ---
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+// --- NEW: Import the guides list ---
+import { guidesList } from "@/lib/guides-list";
 
+// --- MODIFIED: Updated navItems data structure ---
 const navItems = [
   { label: "Dashboard", icon: Home, href: "/" },
   { label: "News & Updates", icon: Newspaper, href: "/news" },
   { label: "Server Info", icon: Server, href: "/servers" },
   { label: "Player Stats", icon: BarChart, href: "/stats" },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
-  { label: "Install Guide", icon: Download, href: "/guide" },
+  {
+    label: "Guides", // --- Changed from "Guide" to "Guides" ---
+    icon: Download,
+    href: "/guide",
+    // Dynamically build children from guidesList, limiting to 5
+    children: guidesList.slice(0, 5).map(guide => ({
+      label: guide.title,
+      href: `/guide/${guide.slug}`,
+    })),
+  },
   { label: "Community", icon: Users, href: "/community" },
-  { label: "Tools", icon: Wrench, href: "/tools" },
+  {
+    label: "Tools",
+    icon: Wrench,
+    href: "/tools", // This is the parent "Overview" page
+    children: [
+      { label: "Map Alert Bot", href: "/tools/map-alert" },
+      { label: "Linux Server", href: "/tools/linux-server" },
+      { label: "Server Config", href: "/tools/server-config" },
+    ],
+  },
 ];
 
 interface AppShellProps {
@@ -116,7 +144,6 @@ function AppHeader({ onToggleSidebar }: AppHeaderProps) {
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
             
-            {/* --- UPDATED: Added 'hidden' class to these buttons --- */}
             <Button variant="ghost" size="icon" className="h-9 w-9 hidden" aria-label="Notifications">
               <Bell className="h-4 w-4" />
             </Button>
@@ -140,7 +167,6 @@ function AppHeader({ onToggleSidebar }: AppHeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            {/* --- END UPDATE --- */}
 
           </div>
         </div>
@@ -177,28 +203,29 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
           </div>
         )}
       </div>
+
+      {/* --- NAVIGATION SECTION (from previous step, handles submenus) --- */}
       <nav className="flex-1 space-y-1 px-3">
         <TooltipProvider delayDuration={0}>
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
-            const link = (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onCloseMobile}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                  isActive && "bg-primary/20 text-primary",
-                  collapsed && "justify-center"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
-            );
 
+            // --- 1. Collapsed View (Icons Only) ---
             if (collapsed) {
+              const link = (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onCloseMobile}
+                  className={cn(
+                    "flex items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                    // Use startsWith to highlight parent when on a child page
+                    pathname.startsWith(item.href) && "bg-primary/20 text-primary"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                </Link>
+              );
               return (
                 <Tooltip key={item.href}>
                   <TooltipTrigger asChild>{link}</TooltipTrigger>
@@ -207,10 +234,77 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
               );
             }
 
-            return link;
+            // --- 2. Expanded View (With Submenu Logic) ---
+            
+            // If item HAS children, render an Accordion
+            if (item.children && item.children.length > 0) { // Check if children exist
+              const isChildActive = item.children.some(child => child.href === pathname);
+              return (
+                <Accordion type="single" collapsible key={item.href} defaultValue={isChildActive || pathname === item.href ? item.label : undefined}>
+                  <AccordionItem value={item.label} className="border-b-0">
+                    <AccordionTrigger
+                      className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground hover:no-underline",
+                        // Highlight if parent or a child is active
+                        (pathname.startsWith(item.href)) && "text-primary" 
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="flex-1 text-left">{item.label}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1 pl-9 pr-2">
+                      {/* Link to the parent "Overview" page */}
+                      <Link
+                        href={item.href}
+                        onClick={onCloseMobile}
+                        className={cn(
+                          "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
+                          pathname === item.href && "text-primary" // Active state for parent
+                        )}
+                      >
+                        Overview
+                      </Link>
+                      {/* Links to all the children */}
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={onCloseMobile}
+                          className={cn(
+                            "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
+                            pathname === child.href && "text-primary" // Active state for child
+                          )}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              );
+            }
+
+            // If item has NO children, render a normal Link
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onCloseMobile}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                  isActive && "bg-primary/20 text-primary"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
           })}
         </TooltipProvider>
       </nav>
+      {/* --- END NAVIGATION --- */}
+
       <div className="px-3 pb-6">
         <TooltipProvider delayDuration={0}>
           <Tooltip>
@@ -220,7 +314,8 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                 onClick={onCloseMobile}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-                  collapsed && "justify-center"
+                  collapsed && "justify-center",
+                  pathname === "/system-status" && "text-primary"
                 )}
               >
                 <ActivitySquare className="h-4 w-4" />
