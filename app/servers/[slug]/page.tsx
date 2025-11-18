@@ -1,19 +1,27 @@
 import type { Metadata } from "next";
 import { ServerDetailView } from "@/components/server-detail-view";
 
+// Use local proxy
+const API_BASE = process.env.API_URL || "http://localhost:3000/api/v1";
+
 async function getServerData(slug: string) {
   try {
-    // FIX: Force connection to local proxy to handle the rewrite correctly
-    const targetUrl = `http://127.0.0.1:3000/api/v1/servers/search?search=${slug}`;
+    // FIX: Use ID-based endpoint instead of search
+    const targetUrl = `http://127.0.0.1:3000/api/v1/servers/${slug}`;
+
+    console.log(`[ServerDetail Fetch] Fetching: ${targetUrl}`);
 
     const res = await fetch(targetUrl, {
       cache: 'no-store'
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`[ServerDetail Fetch] Error ${res.status}`);
+      return null;
+    }
     return res.json();
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error("[ServerDetail Fetch] Error:", error);
     return null;
   }
 }

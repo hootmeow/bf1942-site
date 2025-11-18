@@ -16,7 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { ServerActivityChart, ServerMapsPieChart } from "@/components/charts";
 
-// Re-defining types locally or import from a shared types file
+// Types
 interface ServerInfo {
   server_id: number;
   ip: string;
@@ -47,7 +47,7 @@ interface ServerDetailsData {
   scoreboard: ScoreboardPlayer[];
 }
 
-// Helper Functions
+// Helpers
 function getPingColorClass(ping: number): string {
   if (ping <= 80) return "text-green-500";
   if (ping <= 120) return "text-yellow-500";
@@ -121,18 +121,16 @@ function ScoreboardTable({ players }: { players: ScoreboardPlayer[] }) {
 }
 
 export function ServerDetailView({ initialData, slug }: { initialData: ServerDetailsData | null, slug: string }) {
-  // We use initialData for the main view, but we still need to fetch Metrics/Rounds client-side
-  // to avoid blocking the server render too long.
   const [metrics, setMetrics] = useState<any>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
-  
+
   const { server_info, scoreboard } = initialData || { server_info: {} as any, scoreboard: [] };
 
-  // Fetch additional metrics on mount
   useEffect(() => {
     async function fetchMetrics() {
       try {
-        const response = await fetch(`/api/v1/servers/search/metrics?search=${slug}`);
+        // FIX: Use ID-based metrics endpoint
+        const response = await fetch(`/api/v1/servers/${slug}/metrics`);
         if (response.ok) {
           const result = await response.json();
           setMetrics(result.metrics);
@@ -213,7 +211,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
             <Card className="border-border/60 lg:col-span-1">
               <CardHeader><CardTitle as="h2">Map Rotation</CardTitle></CardHeader>
               <CardContent>
-                 <ServerMapsPieChart mapData={metrics.popular_maps_24h} />
+                <ServerMapsPieChart mapData={metrics.popular_maps_24h} />
               </CardContent>
             </Card>
           </div>
