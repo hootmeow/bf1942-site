@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { ServerDetailView } from "@/components/server-detail-view";
 
-// Use your real API URL from env or localhost fallback
-const API_BASE = process.env.API_URL || "http://127.0.0.1:8000";
-
 async function getServerData(slug: string) {
   try {
-    const res = await fetch(`${API_BASE}/servers/search?search=${slug}`, { 
-      cache: 'no-store' // Always fresh data
+    // FIX: Force connection to local proxy to handle the rewrite correctly
+    const targetUrl = `http://127.0.0.1:3000/api/v1/servers/search?search=${slug}`;
+
+    const res = await fetch(targetUrl, {
+      cache: 'no-store'
     });
+
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
@@ -19,7 +20,7 @@ async function getServerData(slug: string) {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const data = await getServerData(params.slug);
-  
+
   if (!data || !data.ok) {
     return { title: "Server Not Found | BF1942 Online" };
   }
@@ -32,8 +33,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     openGraph: {
       title: current_server_name || "BF1942 Server",
       description: `Playing ${current_map} with ${current_player_count} players.`,
-      // If you have dynamic OG images set up:
-      // images: [`/api/og/server?name=${encodeURIComponent(current_server_name)}`],
     }
   };
 }
