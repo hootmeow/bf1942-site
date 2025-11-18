@@ -11,19 +11,19 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 // --- MODIFIED METADATA ---
 export const metadata: Metadata = {
   // Set your canonical URL base
-  metadataBase: new URL("https://www.bf1942.online"), // <-- REPLACE with your real domain
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online"),
 
   title: {
     default: "BF1942 Command Center | Live Stats & Server Browser",
     template: "%s | BF1942 Command Center",
   },
   description: "A central hub for the Battlefield 1942 community. Live server browser, player statistics, mod database, and installation guides.",
-  
+
   // Add default Open Graph (social sharing) tags
   openGraph: {
     title: "BF1942 Command Center | Live Stats & Server Browser",
     description: "A central hub for the Battlefield 1942 community.",
-    url: "https://www.bf1942.online", // <-- REPLACE with your real domain
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online",
     siteName: "BF1942 Command Center",
     images: [
       {
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     type: "website",
   },
-  
+
   // Add default Twitter Card tags
   twitter: {
     card: "summary_large_image",
@@ -58,12 +58,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "@context": "https://schema.org",
               "@type": "WebSite",
               "name": "BF1942 Command Center",
-              "url": "https://www.bf1942.online",
+              "url": process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online",
               "potentialAction": {
                 "@type": "SearchAction",
                 "target": {
                   "@type": "EntryPoint",
-                  "urlTemplate": "https://www.bf1942.online/search?q={search_term_string}"
+                  "urlTemplate": `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online"}/search?q={search_term_string}`
                 },
                 "query-input": "required name=search_term_string"
               }
