@@ -129,8 +129,8 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
   useEffect(() => {
     async function fetchMetrics() {
       try {
-        // FIX: Use ID-based metrics endpoint
-        const response = await fetch(`/api/v1/servers/${slug}/metrics`);
+        // REVERTED: Using the query param endpoint here as well
+        const response = await fetch(`/api/v1/servers/search/metrics?search=${slug}`);
         if (response.ok) {
           const result = await response.json();
           setMetrics(result.metrics);
