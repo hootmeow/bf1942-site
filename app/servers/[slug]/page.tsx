@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { ServerDetailView } from "@/components/server-detail-view";
 
-// Use local proxy
-const API_BASE = process.env.API_URL || "http://localhost:3000/api/v1";
+// FIX: Force connection to local proxy to handle the rewrite correctly
+// We use 127.0.0.1 to avoid potential localhost resolution issues in some environments
+const API_BASE = "http://127.0.0.1:3000/api/v1";
 
 async function getServerData(slug: string) {
   try {
-    // FIX: Use ID-based endpoint instead of search
-    const targetUrl = `http://127.0.0.1:3000/api/v1/servers/${slug}`;
+    // FIX: Use the direct ID endpoint
+    const targetUrl = `${API_BASE}/servers/${slug}`;
 
     console.log(`[ServerDetail Fetch] Fetching: ${targetUrl}`);
 
@@ -26,8 +27,15 @@ async function getServerData(slug: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const data = await getServerData(params.slug);
+// FIX: Next.js 15/16 Breaking Change
+// 'params' is now a Promise that must be awaited
+type Props = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params; // <--- Await is required here
+  const data = await getServerData(slug);
 
   if (!data || !data.ok) {
     return { title: "Server Not Found | BF1942 Online" };
@@ -45,8 +53,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default async function ServerPage({ params }: { params: { slug: string } }) {
-  const data = await getServerData(params.slug);
+export default async function ServerPage({ params }: Props) {
+  const { slug } = await params; // <--- Await is required here
+  const data = await getServerData(slug);
 
-  return <ServerDetailView initialData={data} slug={params.slug} />;
+  return <ServerDetailView initialData={data} slug={slug} />;
 }
