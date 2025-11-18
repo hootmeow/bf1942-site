@@ -5,31 +5,14 @@ import { Activity, Users, BarChart, Loader2, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PlayerActivityChart } from "@/components/charts"; // Use the updated chart
-import { cn } from "@/lib/utils"; 
-
-// --- API Types ---
-interface PopularMap {
-  map_name: string;
-  rounds_played: number;
-}
-
-interface GlobalMetrics {
-  total_rounds_processed: number;
-  total_players_seen: number;
-  active_players_24h: number;
-  active_players_24h_change_pct: number;
-  popular_maps_7_days: PopularMap[];
-  global_concurrency_heatmap_24h: number[]; // Updated
-  global_concurrency_heatmap_7d: number[]; // Updated
-}
+import { PlayerActivityChart } from "@/components/charts";
+import { cn } from "@/lib/utils";
+import { GlobalMetrics, GlobalMetricsSchema } from "@/lib/schemas";
 
 interface MetricsApiResponse {
   ok: boolean;
-  [key: string]: any; 
+  [key: string]: any;
 }
-
-// --- Main Page Component ---
 
 export default function Page() {
   const [data, setData] = useState<GlobalMetrics | null>(null);
@@ -45,7 +28,12 @@ export default function Page() {
         }
         const result: MetricsApiResponse = await response.json();
         if (result.ok) {
-          setData(result as unknown as GlobalMetrics);
+          const parsed = GlobalMetricsSchema.safeParse(result);
+          if (!parsed.success) {
+            console.error("Validation Error:", parsed.error);
+            throw new Error("Data validation failed. API response format has changed.");
+          }
+          setData(parsed.data);
         } else {
           throw new Error("API returned an error");
         }
@@ -58,7 +46,6 @@ export default function Page() {
     fetchGlobalMetrics();
   }, []);
 
-  // This check fixes the build error
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center gap-2 text-muted-foreground">
@@ -78,13 +65,11 @@ export default function Page() {
     );
   }
 
-  // Format the change percentage
   const changePct = data.active_players_24h_change_pct.toFixed(2);
   const isPositiveChange = data.active_players_24h_change_pct >= 0;
 
   return (
     <div className="space-y-6">
-      {/* 1. Welcome Text - Centered & Larger */}
       <div className="space-y-2 py-6 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-foreground lg:text-5xl">
           Welcome Back to the Battlefield
@@ -94,12 +79,10 @@ export default function Page() {
         </p>
       </div>
 
-      {/* 2. Stat Cards - Smaller */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
-              {/* --- UPDATED: Use as="h2" (but keep styling) --- */}
               <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Active Players (24h)</CardTitle>
               <div className="mt-2 text-2xl font-semibold text-foreground">{data.active_players_24h}</div>
             </div>
@@ -120,7 +103,6 @@ export default function Page() {
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
-              {/* --- UPDATED: Use as="h2" (but keep styling) --- */}
               <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Total Players Seen</CardTitle>
               <div className="mt-2 text-2xl font-semibold text-foreground">{data.total_players_seen}</div>
             </div>
@@ -138,7 +120,6 @@ export default function Page() {
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
-              {/* --- UPDATED: Use as="h2" (but keep styling) --- */}
               <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Total Rounds Processed</CardTitle>
               <div className="mt-2 text-2xl font-semibold text-foreground">{data.total_rounds_processed}</div>
             </div>
@@ -153,34 +134,27 @@ export default function Page() {
           </CardContent>
         </Card>
       </div>
-      
-      {/* 3. Charts (new 50/50 layout) */}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Player Activity Chart */}
         <Card className="border-border/60">
           <CardHeader>
-            {/* --- UPDATED: Use as="h2" --- */}
             <CardTitle as="h2">Global Player Concurrency</CardTitle>
             <CardDescription>Average player count by hour (UTC).</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
-            {/* This now has the 24h/7d toggle inside it */}
             <PlayerActivityChart
               data24h={data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_heatmap_7d}
             />
           </CardContent>
         </Card>
-        
-        {/* Popular Maps Table */}
+
         <Card className="border-border/60">
           <CardHeader>
-            {/* --- UPDATED: Use as="h2" --- */}
             <CardTitle as="h2">Popular Maps (7 Days)</CardTitle>
             <CardDescription>Top 10 most played maps by round.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
-            {/* The table is now scrollable on small screens to be more compact */}
             <div className="h-[308px] overflow-y-auto">
               <Table>
                 <TableHeader>

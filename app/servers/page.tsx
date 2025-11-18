@@ -1,4 +1,5 @@
 import { ServerDirectory } from "@/components/server-directory";
+import { ServerListSchema } from "@/lib/schemas";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -23,7 +24,15 @@ async function getServers() {
     }
 
     const data = await res.json();
-    return data;
+
+    // Validate with Zod
+    const parsed = ServerListSchema.safeParse(data);
+    if (!parsed.success) {
+      console.error("[Server Fetch] Validation Error:", parsed.error);
+      return { ok: false, servers: [] };
+    }
+
+    return parsed.data;
 
   } catch (error) {
     console.error("[Server Fetch] FAILED:", error);

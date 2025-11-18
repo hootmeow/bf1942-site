@@ -7,7 +7,7 @@ type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'y
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // SET YOUR REAL DOMAIN HERE
-  const siteUrl = 'https://www.bf1942.online';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.bf1942.online';
 
   // Dynamic Mod Pages
   const modEntries: MetadataRoute.Sitemap = modsList.map((mod) => ({
@@ -25,23 +25,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Static Pages
   const staticRoutes = [
-    '/', 
-    '/about', 
-    '/community', 
-    '/guide', 
-    '/login', 
-    '/mods', 
-    '/news', 
-    '/profile', 
-    '/search', 
-    '/servers', 
-    '/signup', 
-    '/stats', 
-    '/system-status', 
-    '/tools', 
-    '/tools/linux-server', 
-    '/tools/map-alert', 
-    '/tools/server-config', 
+    '/',
+    '/about',
+    '/community',
+    '/guide',
+    '/login',
+    '/mods',
+    '/news',
+    '/profile',
+    '/search',
+    '/servers',
+    '/signup',
+    '/stats',
+    '/system-status',
+    '/tools',
+    '/tools/linux-server',
+    '/tools/map-alert',
+    '/tools/server-config',
     '/tos-privacy'
   ];
 
@@ -51,7 +51,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as ChangeFrequency, // <-- FIX
     priority: route === '/' ? 1.0 : 0.8,
   }));
-  
+
   return [
     ...staticEntries,
     ...modEntries,
