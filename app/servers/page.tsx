@@ -2,14 +2,13 @@ import { ServerDirectory } from "@/components/server-directory";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// FIX: Default to localhost:3000/api/v1 since the API is part of the Next.js app
-const API_BASE = process.env.API_URL || "http://localhost:3000/api/v1";
-
 async function getServers() {
-  const targetUrl = `${API_BASE}/servers`;
+  // FIX: We intentionally hit the Next.js Proxy (port 3000)
+  // This ensures the request goes through the 'rewrites' in next.config.mjs
+  // just like it did when it was a Client Component.
+  const targetUrl = "http://127.0.0.1:3000/api/v1/servers";
 
-  // DEBUG: This will show up in your VS Code terminal so you can see exactly what it's doing
-  console.log(`[Server Fetch] Fetching: ${targetUrl}`);
+  console.log(`[Server Fetch] Fetching via Proxy: ${targetUrl}`);
 
   try {
     const res = await fetch(targetUrl, {
@@ -19,7 +18,8 @@ async function getServers() {
 
     if (!res.ok) {
       console.error(`[Server Fetch] Error ${res.status}: ${res.statusText}`);
-      throw new Error(`Status: ${res.status}`);
+      // We return null/empty here to allow the page to render the error state
+      return { ok: false, servers: [] };
     }
 
     const data = await res.json();
@@ -45,7 +45,7 @@ export default async function ServersPage() {
         </p>
       </div>
 
-      {!data.ok && (
+      {(!data || !data.ok) && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Connection Error</AlertTitle>
@@ -53,13 +53,13 @@ export default async function ServersPage() {
             Could not retrieve live server data.
             <br />
             <span className="text-xs opacity-80 font-mono">
-              Target: {API_BASE}/servers
+              Target: http://127.0.0.1:3000/api/v1/servers
             </span>
           </AlertDescription>
         </Alert>
       )}
 
-      <ServerDirectory initialServers={data.servers || []} />
+      <ServerDirectory initialServers={data?.servers || []} />
     </div>
   );
 }
