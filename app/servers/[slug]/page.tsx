@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { ServerDetailView } from "@/components/server-detail-view";
 
-// FIX: Force connection to local proxy to handle the rewrite correctly
-// We use 127.0.0.1 to avoid potential localhost resolution issues in some environments
+// Use local proxy to ensure we hit the internal API correctly
 const API_BASE = "http://127.0.0.1:3000/api/v1";
 
 async function getServerData(slug: string) {
   try {
-    // FIX: Use the direct ID endpoint
-    const targetUrl = `${API_BASE}/servers/${slug}`;
+    // REVERTED: Going back to the query-based lookup which is how your API works
+    const targetUrl = `${API_BASE}/servers/search?search=${slug}`;
 
     console.log(`[ServerDetail Fetch] Fetching: ${targetUrl}`);
 
@@ -17,24 +16,23 @@ async function getServerData(slug: string) {
     });
 
     if (!res.ok) {
-      console.error(`[ServerDetail Fetch] Error ${res.status}`);
+      console.error(`[ServerDetail Fetch] Error ${res.status}: ${res.statusText}`);
       return null;
     }
     return res.json();
   } catch (error) {
-    console.error("[ServerDetail Fetch] Error:", error);
+    console.error("[ServerDetail Fetch] Network Error:", error);
     return null;
   }
 }
 
-// FIX: Next.js 15/16 Breaking Change
-// 'params' is now a Promise that must be awaited
+// FIX: Next.js 15/16 requirement: params is a Promise
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params; // <--- Await is required here
+  const { slug } = await params; // <--- This was the missing await causing 'undefined'
   const data = await getServerData(slug);
 
   if (!data || !data.ok) {
@@ -54,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ServerPage({ params }: Props) {
-  const { slug } = await params; // <--- Await is required here
+  const { slug } = await params; // <--- This was the missing await
   const data = await getServerData(slug);
 
   return <ServerDetailView initialData={data} slug={slug} />;
