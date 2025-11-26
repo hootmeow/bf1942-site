@@ -1,9 +1,9 @@
 "use client";
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, Label } from "recharts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// --- Mock Data for other charts (kept for stats page) ---
+// --- Mock Data (unchanged) ---
 const uptimeData = Array.from({ length: 7 }).map((_, index) => ({
   day: `Day ${index + 1}`,
   uptime: 92 + Math.round(Math.sin(index) * 3 + index),
@@ -31,54 +31,112 @@ const popularMapsData = [
 ];
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--secondary))"];
 
-
-// --- Global PlayerActivityChart (Used on Homepage) ---
-const processHeatmapData = (data: number[]) => {
-  if (!data) return []; // Guard against undefined data
+// --- Helper: Process Data ---
+const processChartData = (data: number[]) => {
+  if (!data) return [];
+  const isDaily = data.length <= 7;
   return data.map((value, index) => ({
-    hour: `${index.toString().padStart(2, '0')}:00`,
+    label: isDaily ? `Day ${index + 1}` : `${index.toString().padStart(2, '0')}:00`,
     activity: value,
   }));
 };
 
 /**
- * A single, reusable line chart component
+ * UPDATED: ActivityAreaChart
+ * Now uses an AreaChart with a gradient fill.
+ * Accepts 'color' and 'gradientId' to visually distinguish between tabs.
  */
-function ActivityLineChart({ data }: { data: number[] }) {
-  const chartData = processHeatmapData(data);
+function ActivityAreaChart({ 
+  data, 
+  color = "hsl(var(--primary))", 
+  gradientId 
+}: { 
+  data: number[]; 
+  color?: string; 
+  gradientId: string;
+}) {
+  const chartData = processChartData(data);
+
   return (
-    // --- Height set to 220px to be more compact ---
     <ResponsiveContainer width="100%" height={220}>
-      <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} fontSize={12} />
-        <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} fontSize={12} />
-        <ReTooltip
-          cursor={{ fill: "hsl(var(--accent)/0.3)" }}
-          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }}
-          labelFormatter={(label) => `Hour: ${label} (UTC)`}
+      <AreaChart data={chartData}>
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={color} stopOpacity={0.8} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+        <XAxis 
+          dataKey="label" 
+          stroke="hsl(var(--muted-foreground))" 
+          tickLine={false} 
+          axisLine={false} 
+          fontSize={12} 
+          minTickGap={30} // Prevents labels from crowding
         />
-        <Line type="monotone" dataKey="activity" name="Avg. Players" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-      </LineChart>
+        <YAxis 
+          stroke="hsl(var(--muted-foreground))" 
+          tickLine={false} 
+          axisLine={false} 
+          fontSize={12} 
+          width={30}
+        />
+        <ReTooltip
+          cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 4' }}
+          contentStyle={{ 
+            backgroundColor: "hsl(var(--card))", 
+            borderRadius: 8, 
+            border: "1px solid hsl(var(--border))",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)" 
+          }}
+          labelFormatter={(label) => label.includes(':') ? `Time: ${label} UTC` : label}
+        />
+        <Area 
+          type="monotone" 
+          dataKey="activity" 
+          name="Active Players" 
+          stroke={color} 
+          fillOpacity={1} 
+          fill={`url(#${gradientId})`} 
+          strokeWidth={2}
+        />
+      </AreaChart>
     </ResponsiveContainer>
   );
 }
 
 /**
  * Main chart component with 24h/7d toggle
+ * Now passes distinct colors to the Area Charts.
  */
 export function PlayerActivityChart({ data24h, data7d }: { data24h: number[]; data7d: number[] }) {
   return (
     <Tabs defaultValue="24h">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="24h">Last 24 Hours</TabsTrigger>
-        <TabsTrigger value="7d">Last 7 Days</TabsTrigger>
-      </TabsList>
-      <TabsContent value="24h" className="pt-4">
-        <ActivityLineChart data={data24h} />
+      <div className="flex items-center justify-between pb-4">
+        {/* We can move the list to the right or keep it full width, usually full width looks cleaner in dashboard cards */}
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="24h">Last 24 Hours</TabsTrigger>
+          <TabsTrigger value="7d">Last 7 Days</TabsTrigger>
+        </TabsList>
+      </div>
+      
+      <TabsContent value="24h" className="mt-0">
+        <ActivityAreaChart 
+          data={data24h} 
+          key="chart-24h" 
+          gradientId="gradient-24h"
+          color="hsl(var(--primary))" // Default Theme Color (usually Purple/Black)
+        />
       </TabsContent>
-      <TabsContent value="7d" className="pt-4">
-        <ActivityLineChart data={data7d} />
+      
+      <TabsContent value="7d" className="mt-0">
+        <ActivityAreaChart 
+          data={data7d} 
+          key="chart-7d" 
+          gradientId="gradient-7d" 
+          color="hsl(var(--chart-2))" // Secondary Chart Color (usually Teal/Blue)
+        />
       </TabsContent>
     </Tabs>
   );

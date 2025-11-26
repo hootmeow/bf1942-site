@@ -1,49 +1,90 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Activity, Users, BarChart, Loader2, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { Activity, Users, BarChart, Loader2, AlertTriangle, ArrowRight, Server as ServerIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PlayerActivityChart } from "@/components/charts";
 import { cn } from "@/lib/utils";
 import { GlobalMetrics, GlobalMetricsSchema } from "@/lib/schemas";
+import { Server } from "@/components/server-directory"; // Import Server type
 
 interface MetricsApiResponse {
   ok: boolean;
   [key: string]: any;
 }
 
+interface ServerListResponse {
+  ok: boolean;
+  servers: Server[];
+}
+
+// Mirror the sort order from components/server-directory.tsx
+const SERVER_STATUS_ORDER: Record<string, number> = { 
+  ACTIVE: 1, 
+  EMPTY: 2, 
+  OFFLINE: 3 
+};
+
 export default function Page() {
   const [data, setData] = useState<GlobalMetrics | null>(null);
+  const [topServers, setTopServers] = useState<Server[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchGlobalMetrics() {
+    async function fetchDashboardData() {
       try {
-        const response = await fetch("/api/v1/metrics/global");
-        if (!response.ok) {
-          throw new Error(`Failed to fetch global metrics: ${response.statusText}`);
-        }
-        const result: MetricsApiResponse = await response.json();
-        if (result.ok) {
-          const parsed = GlobalMetricsSchema.safeParse(result);
-          if (!parsed.success) {
+        // 1. Fetch Global Metrics
+        const metricsRes = await fetch("/api/v1/metrics/global");
+        if (!metricsRes.ok) throw new Error("Failed to fetch metrics");
+        
+        const metricsJson: MetricsApiResponse = await metricsRes.json();
+        if (metricsJson.ok) {
+          const parsed = GlobalMetricsSchema.safeParse(metricsJson);
+          if (parsed.success) {
+            setData(parsed.data);
+          } else {
             console.error("Validation Error:", parsed.error);
-            throw new Error("Data validation failed. API response format has changed.");
           }
-          setData(parsed.data);
-        } else {
-          throw new Error("API returned an error");
         }
+
+        // 2. Fetch Active Servers for Top 5 List
+        const serversRes = await fetch("/api/v1/servers");
+        if (serversRes.ok) {
+          const serversJson: ServerListResponse = await serversRes.json();
+          if (serversJson.ok) {
+            // Sort to mirror the /servers page logic:
+            // 1. Status (Active -> Empty -> Offline)
+            // 2. Player Count (High -> Low)
+            const sorted = serversJson.servers.sort((a, b) => {
+              const statusA = SERVER_STATUS_ORDER[a.current_state] ?? 99;
+              const statusB = SERVER_STATUS_ORDER[b.current_state] ?? 99;
+              
+              if (statusA !== statusB) {
+                return statusA - statusB;
+              }
+              
+              return b.current_player_count - a.current_player_count;
+            });
+
+            // Take the top 5
+            setTopServers(sorted.slice(0, 5));
+          }
+        }
+
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
         setLoading(false);
       }
     }
-    fetchGlobalMetrics();
+
+    fetchDashboardData();
   }, []);
 
   if (loading) {
@@ -79,6 +120,7 @@ export default function Page() {
         </p>
       </div>
 
+      {/* --- Top Metrics Grid --- */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -135,6 +177,73 @@ export default function Page() {
         </Card>
       </div>
 
+      {/* --- Compact Top Servers --- */}
+      <Card className="border-border/60">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle as="h2" className="flex items-center gap-2">
+              <ServerIcon className="h-5 w-5 text-primary" /> 
+              Top Active Servers
+            </CardTitle>
+            <CardDescription>Live leaderboard of the most populated battlefields.</CardDescription>
+          </div>
+          <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+            <Link href="/servers">
+              View Full List <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Status</TableHead>
+                <TableHead>Server Name</TableHead>
+                <TableHead className="hidden md:table-cell">Map</TableHead>
+                <TableHead className="text-right pr-6">Players</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {topServers.length > 0 ? (
+                topServers.map((server) => (
+                  <TableRow key={server.server_id} className="group cursor-pointer hover:bg-muted/50">
+                    <TableCell className="pl-6 py-3">
+                       <Badge variant={server.current_state === "ACTIVE" ? "success" : "secondary"} className="text-[10px] px-2 h-5">
+                        {server.current_state}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-3 font-medium text-foreground">
+                      <Link href={`/servers/${server.server_id}`} className="block group-hover:underline group-hover:text-primary transition-colors">
+                        {server.current_server_name || "Unknown Server"}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell py-3 text-muted-foreground">
+                      {server.current_map || "N/A"}
+                    </TableCell>
+                    <TableCell className="text-right pr-6 py-3 font-mono">
+                      {server.current_player_count}/{server.current_max_players}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    No active servers found at this moment.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+        {/* Mobile-only view all button */}
+        <div className="flex items-center justify-center p-4 sm:hidden border-t border-border/60">
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link href="/servers">View Full Server List</Link>
+          </Button>
+        </div>
+      </Card>
+
+      {/* --- Charts Grid --- */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="border-border/60">
           <CardHeader>
