@@ -106,9 +106,6 @@ export default function Page() {
     );
   }
 
-  const changePct = data.active_players_24h_change_pct.toFixed(2);
-  const isPositiveChange = data.active_players_24h_change_pct >= 0;
-
   return (
     <div className="space-y-6">
       <div className="space-y-2 py-6 text-center">
@@ -125,8 +122,8 @@ export default function Page() {
         <Card className="border-border/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
-              <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Active Players (24h)</CardTitle>
-              <div className="mt-2 text-2xl font-semibold text-foreground">{data.active_players_24h}</div>
+              <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Current Active Players</CardTitle>
+              <div className="mt-2 text-2xl font-semibold text-foreground">{data.current_active_players}</div>
             </div>
             <div className="rounded-full bg-primary/10 p-3 text-primary">
               <Activity className="h-5 w-5" />
@@ -134,10 +131,7 @@ export default function Page() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              <span className={cn("font-medium", isPositiveChange ? "text-green-500" : "text-red-500")}>
-                {isPositiveChange ? "+" : ""}{changePct}%
-              </span>
-              {" "}from yesterday.
+              Live across all servers.
             </p>
           </CardContent>
         </Card>

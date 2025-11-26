@@ -11,6 +11,11 @@ export const GlobalMetricsSchema = z.object({
     total_players_seen: z.number(),
     active_players_24h: z.number(),
     active_players_24h_change_pct: z.number(),
+    // --- ADDED NEW FIELDS ---
+    active_players_7d: z.number(),
+    active_players_7d_change_pct: z.number(),
+    current_active_players: z.number(),
+    // --- END ADDED SECTION ---
     popular_maps_7_days: z.array(PopularMapSchema),
     global_concurrency_heatmap_24h: z.array(z.number()),
     global_concurrency_heatmap_7d: z.array(z.number()),
