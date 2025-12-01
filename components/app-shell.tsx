@@ -48,7 +48,15 @@ const navItems = [
   { label: "Dashboard", icon: Home, href: "/" },
   { label: "News & Updates", icon: Newspaper, href: "/news" },
   { label: "Server Info", icon: Server, href: "/servers" },
-  { label: "Player Stats", icon: BarChart, href: "/stats" },
+  {
+    label: "Player Stats",
+    icon: BarChart,
+    href: "/stats",
+    overviewLabel: "Search",
+    children: [
+      { label: "Rounds", href: "/stats/rounds" },
+    ],
+  },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
   {
     label: "Guides", // --- Changed from "Guide" to "Guides" ---
@@ -78,7 +86,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const [isCollapsed, setIsCollapsed] =React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
   const toggleSidebar = React.useCallback(() => {
@@ -144,7 +152,7 @@ function AppHeader({ onToggleSidebar }: AppHeaderProps) {
           </div>
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
-            
+
             <Button variant="ghost" size="icon" className="h-9 w-9 hidden" aria-label="Notifications">
               <Bell className="h-4 w-4" />
             </Button>
@@ -238,7 +246,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
             }
 
             // --- 2. Expanded View (With Submenu Logic) ---
-            
+
             // If item HAS children, render an Accordion
             if (item.children && item.children.length > 0) { // Check if children exist
               const isChildActive = item.children.some(child => child.href === pathname);
@@ -249,7 +257,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                       className={cn(
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground hover:no-underline",
                         // Highlight if parent or a child is active
-                        (pathname.startsWith(item.href)) && "text-primary" 
+                        (pathname.startsWith(item.href)) && "text-primary"
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -265,7 +273,8 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                           pathname === item.href && "text-primary" // Active state for parent
                         )}
                       >
-                        Overview
+                        {/* @ts-ignore */}
+                        {item.overviewLabel || "Overview"}
                       </Link>
                       {/* Links to all the children */}
                       {item.children.map((child) => (
