@@ -1,6 +1,6 @@
 "use client";
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, Label } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, Label, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, LabelList } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // --- Mock Data (unchanged) ---
@@ -46,13 +46,13 @@ const processChartData = (data: number[]) => {
  * Now uses an AreaChart with a gradient fill.
  * Accepts 'color' and 'gradientId' to visually distinguish between tabs.
  */
-function ActivityAreaChart({ 
-  data, 
-  color = "hsl(var(--primary))", 
-  gradientId 
-}: { 
-  data: number[]; 
-  color?: string; 
+function ActivityAreaChart({
+  data,
+  color = "hsl(var(--primary))",
+  gradientId
+}: {
+  data: number[];
+  color?: string;
   gradientId: string;
 }) {
   const chartData = processChartData(data);
@@ -67,38 +67,38 @@ function ActivityAreaChart({
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-        <XAxis 
-          dataKey="label" 
-          stroke="hsl(var(--muted-foreground))" 
-          tickLine={false} 
-          axisLine={false} 
-          fontSize={12} 
+        <XAxis
+          dataKey="label"
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          fontSize={12}
           minTickGap={30} // Prevents labels from crowding
         />
-        <YAxis 
-          stroke="hsl(var(--muted-foreground))" 
-          tickLine={false} 
-          axisLine={false} 
-          fontSize={12} 
+        <YAxis
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          fontSize={12}
           width={30}
         />
         <ReTooltip
           cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 4' }}
-          contentStyle={{ 
-            backgroundColor: "hsl(var(--card))", 
-            borderRadius: 8, 
+          contentStyle={{
+            backgroundColor: "hsl(var(--card))",
+            borderRadius: 8,
             border: "1px solid hsl(var(--border))",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)" 
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
           }}
           labelFormatter={(label) => label.includes(':') ? `Time: ${label} UTC` : label}
         />
-        <Area 
-          type="monotone" 
-          dataKey="activity" 
-          name="Active Players" 
-          stroke={color} 
-          fillOpacity={1} 
-          fill={`url(#${gradientId})`} 
+        <Area
+          type="monotone"
+          dataKey="activity"
+          name="Active Players"
+          stroke={color}
+          fillOpacity={1}
+          fill={`url(#${gradientId})`}
           strokeWidth={2}
         />
       </AreaChart>
@@ -120,21 +120,21 @@ export function PlayerActivityChart({ data24h, data7d }: { data24h: number[]; da
           <TabsTrigger value="7d">Last 7 Days</TabsTrigger>
         </TabsList>
       </div>
-      
+
       <TabsContent value="24h" className="mt-0">
-        <ActivityAreaChart 
-          data={data24h} 
-          key="chart-24h" 
+        <ActivityAreaChart
+          data={data24h}
+          key="chart-24h"
           gradientId="gradient-24h"
           color="hsl(var(--primary))" // Default Theme Color (usually Purple/Black)
         />
       </TabsContent>
-      
+
       <TabsContent value="7d" className="mt-0">
-        <ActivityAreaChart 
-          data={data7d} 
-          key="chart-7d" 
-          gradientId="gradient-7d" 
+        <ActivityAreaChart
+          data={data7d}
+          key="chart-7d"
+          gradientId="gradient-7d"
           color="hsl(var(--chart-2))" // Secondary Chart Color (usually Teal/Blue)
         />
       </TabsContent>
@@ -205,7 +205,7 @@ export function PopularMapsChart() {
 // --- Server-Specific Charts ---
 const processMetricsData = (playerData: any[], pingData: any[]) => {
   const pingMap = new Map(pingData.map(p => [p.hour, p.avg_ping]));
-  
+
   return playerData.map(p => ({
     ...p,
     hour: new Date(p.hour).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
@@ -272,15 +272,15 @@ export function PlayerPlaytimeChart({ data }: { data: number[] }) {
     activity: value,
   }));
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height={200}>
       <AreaChart data={chartData}>
         <defs>
           <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
         <XAxis
           dataKey="hour"
           stroke="hsl(var(--muted-foreground))"
@@ -289,7 +289,7 @@ export function PlayerPlaytimeChart({ data }: { data: number[] }) {
           fontSize={12}
           interval={3}
         >
-          <Label value="Hour of Day (UTC)" offset={-5} position="insideBottom" fill="hsl(var(--muted-foreground))" fontSize={12} />
+          <Label value="Hour (UTC)" offset={-5} position="insideBottom" fill="hsl(var(--muted-foreground))" fontSize={12} />
         </XAxis>
         <YAxis
           stroke="hsl(var(--muted-foreground))"
@@ -297,21 +297,167 @@ export function PlayerPlaytimeChart({ data }: { data: number[] }) {
           axisLine={false}
           fontSize={12}
           allowDecimals={false}
-        >
-          <Label value="Rounds Played" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} fill="hsl(var(--muted-foreground))" fontSize={12} />
-        </YAxis>
+          width={30}
+        />
         <ReTooltip
           cursor={{ fill: "hsl(var(--accent)/0.3)" }}
           contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }}
           labelFormatter={(label) => `Hour: ${label} (UTC)`}
         />
-        <Area 
-          type="monotone" 
-          dataKey="activity" 
-          name="Rounds Played" 
-          stroke="hsl(var(--primary))" 
-          fillOpacity={1} 
-          fill="url(#colorActivity)" 
+        <Area
+          type="monotone"
+          dataKey="activity"
+          name="Rounds Played"
+          stroke="hsl(var(--primary))"
+          fillOpacity={1}
+          fill="url(#colorActivity)"
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+// --- New Player Profile Charts ---
+
+export function PlayerTopMapsChart({ data }: { data: { map_name: string; map_play_count: number }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+        <defs>
+          <linearGradient id="colorMaps" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+        <XAxis type="number" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} hide />
+        <YAxis
+          dataKey="map_name"
+          type="category"
+          stroke="hsl(var(--foreground))"
+          width={120}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 13, fontWeight: 500 }}
+        />
+        <ReTooltip
+          cursor={{ fill: "hsl(var(--accent)/0.2)" }}
+          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+        />
+        <Bar
+          dataKey="map_play_count"
+          name="Rounds Played"
+          fill="url(#colorMaps)"
+          radius={[0, 4, 4, 0]}
+          barSize={20}
+          background={{ fill: 'hsl(var(--muted)/0.3)', radius: [0, 4, 4, 0] }}
+        >
+          <LabelList dataKey="map_play_count" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function PlayerTopServersChart({ data }: { data: { current_server_name: string; server_play_count: number }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <defs>
+          <linearGradient id="colorServers" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8} />
+            <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={1} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+        <XAxis type="number" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} hide />
+        <YAxis
+          dataKey="current_server_name"
+          type="category"
+          stroke="hsl(var(--foreground))"
+          width={180}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 12, fontWeight: 500 }}
+        />
+        <ReTooltip
+          cursor={{ fill: "hsl(var(--accent)/0.2)" }}
+          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+        />
+        <Bar
+          dataKey="server_play_count"
+          name="Rounds Played"
+          fill="url(#colorServers)"
+          radius={[0, 4, 4, 0]}
+          barSize={20}
+          background={{ fill: 'hsl(var(--muted)/0.3)', radius: [0, 4, 4, 0] }}
+        >
+          <LabelList dataKey="server_play_count" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function PlayerTeamPreferenceChart({ data }: { data: { name: string; value: number }[] }) {
+  const teamColors = ["hsl(var(--destructive))", "hsl(var(--chart-1))"];
+
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={40}
+          outerRadius={60}
+          paddingAngle={5}
+          dataKey="value"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={teamColors[index % teamColors.length]} />
+          ))}
+        </Pie>
+        <ReTooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 8, border: "1px solid hsl(var(--border))" }} />
+        <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function PlayerActivityLast7DaysChart({ data }: { data: { date: string; rounds: number }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <AreaChart data={data}>
+        <defs>
+          <linearGradient id="colorActivity7d" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+        <XAxis
+          dataKey="date"
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { weekday: 'short' })}
+          fontSize={12}
+        />
+        <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} fontSize={12} width={30} />
+        <ReTooltip
+          cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: '4 4' }}
+          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+          labelFormatter={(label) => new Date(label).toLocaleDateString()}
+        />
+        <Area
+          type="monotone"
+          dataKey="rounds"
+          name="Rounds Played"
+          stroke="hsl(var(--primary))"
+          fillOpacity={1}
+          fill="url(#colorActivity7d)"
+          strokeWidth={2}
         />
       </AreaChart>
     </ResponsiveContainer>
