@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -66,7 +66,7 @@ interface GlobalMetricsResponse {
     largest_score_delta_24h: ScoreDelta[];
 }
 
-export default function RoundsPage() {
+function RoundsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -104,13 +104,6 @@ export default function RoundsPage() {
     // Fetch Search Results
     useEffect(() => {
         async function fetchRounds() {
-            // Only fetch if there is a search term or we are paging through results
-            // Actually, user might want to see *some* rounds initially? 
-            // The API requires a search term usually for "search/rounds".
-            // If no search term, maybe we don't show the table yet?
-            // Or if the API supports empty search to list all rounds?
-            // Let's assume we only search if `search` param exists.
-
             if (!search) {
                 setData(null);
                 setLoading(false);
@@ -348,5 +341,17 @@ export default function RoundsPage() {
                 </div>
             ) : null}
         </div>
+    );
+}
+
+export default function RoundsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex min-h-[400px] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        }>
+            <RoundsContent />
+        </Suspense>
     );
 }
