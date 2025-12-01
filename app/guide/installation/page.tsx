@@ -71,7 +71,7 @@ const OriginAndCdSteps = () => (
         </ol>
         <Button asChild className="mt-4">
           <a
-            href="[LINK_TO_MASTER_SERVER_PATCH]"
+            href="https://files.bf1942.online/game/bf1942_master_server_patch.zip"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -349,7 +349,7 @@ export default function GuidePage() {
           </ol>
           <Button asChild className="mt-4">
             <a
-              href="[LINK_TO_1.61B_PATCH]"
+              href="https://files.bf1942.online/game/bf1942_v1.6_to_v1.61b.zip"
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -1,57 +1,56 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, Loader2, AlertTriangle, Clock, Target, Skull, BarChart, Trophy, Map, Heart, Server, Star } from "lucide-react";
-import { PlayerPlaytimeChart } from "@/components/charts"; 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import Link from "next/link";
+import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, Star } from "lucide-react";
+import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
 
-// --- API Types ---
+// --- Interfaces (Updated to match API) ---
 interface PlayerInfo {
-  player_id: number;
-  canonical_name: string;
+  id: number;
   last_known_name: string;
-  first_seen: string;
   last_seen: string;
 }
 interface LifetimeStats {
-  total_rounds_played: number;
   total_playtime_seconds: number;
-  total_score: number;
+  overall_kdr: number;
   total_kills: number;
   total_deaths: number;
-  overall_kdr: number;
-  overall_kpm: number;
-  average_score_per_round: number;
-  average_ping: number;
+  score_per_minute: number;
+  kills_per_round: number;
+  unique_servers_played: number;
+  unique_maps_played: number;
 }
 interface PersonalBests {
   best_round_score: number;
   best_round_kills: number;
   best_round_kpm: number;
-  best_kill_round_id: number;
 }
 interface PlaystyleHabits {
-  favorite_map: {
-    map_name: string;
-    map_play_count: number;
-  } | null; 
-  favorite_server: {
-    server_id: number;
-    current_server_name: string;
-    server_play_count: number;
-  } | null; 
-  favorite_team: {
-    team: 1 | 2;
-    team_play_count: number;
-  } | null; 
+  top_maps: { map_name: string; map_play_count: number }[];
+  top_servers: { current_server_name: string; server_play_count: number }[];
+  team_preference: { axis: number; allied: number };
+  activity_last_7_days: { date: string; rounds: number }[];
   playtime_by_hour_utc: number[];
 }
 interface RecentRound {
   round_id: number;
+  server_name: string;
   map_name: string;
   end_time: string;
   final_score: number;
@@ -61,20 +60,23 @@ interface RecentRound {
 interface PlayerProfileApiResponse {
   ok: boolean;
   player_info: PlayerInfo;
-  lifetime_stats: LifetimeStats | null; 
-  personal_bests: PersonalBests | null; 
-  playstyle_habits: PlaystyleHabits | null; 
-  recent_rounds: RecentRound[] | null; 
+  lifetime_stats: LifetimeStats | null;
+  personal_bests: PersonalBests | null;
+  playstyle_habits: PlaystyleHabits | null;
+  recent_rounds: RecentRound[] | null;
 }
+
 // --- Helper Functions ---
 function formatPlaytime(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   return `${hours}h ${minutes}m`;
 }
+
 function getTeamName(team: 1 | 2): string {
   return team === 1 ? "Axis" : "Allies";
 }
+
 function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ElementType }) {
   const Icon = icon;
   return (
@@ -84,7 +86,6 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
           <Icon className="h-4 w-4" />
         </div>
         <div>
-          {/* --- UPDATED: Use as="h3" (sub-heading) --- */}
           <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
           <p className="text-xl font-bold text-foreground">{value}</p>
         </div>
@@ -92,14 +93,13 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
     </div>
   );
 }
+
 function RecentRoundsTable({ rounds }: { rounds: RecentRound[] }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          {/* --- THIS WAS THE JSX ERROR. I fixed the closing tag. --- */}
           <TableHead>Map</TableHead>
-          {/* --- END FIX --- */}
           <TableHead>Finished</TableHead>
           <TableHead className="text-right">Score</TableHead>
           <TableHead className="text-right">Kills</TableHead>
@@ -125,7 +125,7 @@ function RecentRoundsTable({ rounds }: { rounds: RecentRound[] }) {
 export default function PlayerPageClient() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug;
-  
+
   const playerName = slug ? decodeURIComponent(slug) : undefined;
 
   const [profile, setProfile] = useState<PlayerProfileApiResponse | null>(null);
@@ -202,7 +202,7 @@ export default function PlayerPageClient() {
       </div>
 
       {/* Lifetime Stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
         <StatCard
           title="Total Playtime"
           value={formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)}
@@ -219,95 +219,125 @@ export default function PlayerPageClient() {
           icon={Target}
         />
         <StatCard
-          title="Total Deaths"
-          value={lifetime_stats?.total_deaths ?? 0}
+          title="Score/Min"
+          value={lifetime_stats?.score_per_minute?.toFixed(2) ?? '0.00'}
+          icon={BarChart}
+        />
+        <StatCard
+          title="Kills/Round"
+          value={lifetime_stats?.kills_per_round?.toFixed(2) ?? '0.00'}
           icon={Skull}
         />
       </div>
 
-      {/* Playstyle & Bests Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Personal Bests */}
+      <Card className="border-border/60">
+        <CardHeader>
+          <CardTitle as="h2">Personal Bests</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard
+            title="Best Round Score"
+            value={personal_bests?.best_round_score ?? 0}
+            icon={Star}
+          />
+          <StatCard
+            title="Best Round Kills"
+            value={personal_bests?.best_round_kills ?? 0}
+            icon={Target}
+          />
+          <StatCard
+            title="Best Round KPM"
+            value={personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00'}
+            icon={BarChart}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Activity Charts Row (Side-by-Side) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* 24h Activity Chart */}
         <Card className="border-border/60">
           <CardHeader>
-            {/* --- UPDATED: Use as="h2" --- */}
-            <CardTitle as="h2">Playstyle Habits</CardTitle>
+            <CardTitle as="h2">24 Hour Activity (UTC)</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Server className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">
-                Favorite Server:{" "}
-                {playstyle_habits?.favorite_server ? (
-                  <Link
-                    href={`/servers/${playstyle_habits.favorite_server.server_id}`}
-                    className="font-medium text-primary hover:underline"
-                  >
-                    {playstyle_habits.favorite_server.current_server_name}
-                  </Link>
-                ) : (
-                  <span className="font-medium">N/A</span>
-                )}
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Map className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">
-                Favorite Map: <span className="font-medium">{playstyle_habits?.favorite_map?.map_name ?? 'N/A'}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Heart className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">
-                Favorite Team: <span className="font-medium">{playstyle_habits?.favorite_team ? getTeamName(playstyle_habits.favorite_team.team) : 'N/A'}</span>
-              </span>
-            </div>
+          <CardContent>
+            {playstyle_habits?.playtime_by_hour_utc ? (
+              <PlayerPlaytimeChart data={playstyle_habits.playtime_by_hour_utc} />
+            ) : (
+              <p className="text-sm text-muted-foreground">No activity data available.</p>
+            )}
           </CardContent>
         </Card>
-        
-        <Card className="border-border/60 lg:col-span-2">
-           <CardHeader>
-            {/* --- UPDATED: Use as="h2" --- */}
-            <CardTitle as="h2">Personal Bests</CardTitle>
+
+        {/* Activity Last 7 Days */}
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle as="h3">Activity (Last 7 Days)</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-             <StatCard
-              title="Best Round Score"
-              value={personal_bests?.best_round_score ?? 0}
-              icon={Star}
-            />
-             <StatCard
-              title="Best Round Kills"
-              value={personal_bests?.best_round_kills ?? 0}
-              icon={Target}
-            />
-             <StatCard
-              title="Best Round KPM"
-              value={personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00'}
-              icon={BarChart}
-            />
+          <CardContent>
+            {playstyle_habits?.activity_last_7_days && playstyle_habits.activity_last_7_days.length > 0 ? (
+              <PlayerActivityLast7DaysChart data={playstyle_habits.activity_last_7_days} />
+            ) : (
+              <p className="text-sm text-muted-foreground">No activity data available.</p>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* 24h Activity Chart */}
-      <Card className="border-border/60">
-        <CardHeader>
-          {/* --- UPDATED: Use as="h2" --- */}
-          <CardTitle as="h2">24 Hour Activity (UTC)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {playstyle_habits?.playtime_by_hour_utc ? (
-            <PlayerPlaytimeChart data={playstyle_habits.playtime_by_hour_utc} />
-          ) : (
-            <p className="text-sm text-muted-foreground">No activity data available.</p>
-          )}
-        </CardContent>
-      </Card>
-      
+      {/* Team Preference & Habits Row */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Team Preference */}
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle as="h3">Team Preference</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {playstyle_habits?.team_preference ? (
+              <PlayerTeamPreferenceChart
+                data={[
+                  { name: "Axis", value: playstyle_habits.team_preference.axis },
+                  { name: "Allies", value: playstyle_habits.team_preference.allied }
+                ]}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">No team preference data available.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Maps */}
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle as="h3">Top Maps</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {playstyle_habits?.top_maps && playstyle_habits.top_maps.length > 0 ? (
+              <PlayerTopMapsChart data={playstyle_habits.top_maps} />
+            ) : (
+              <p className="text-sm text-muted-foreground">No map data available.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Servers */}
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle as="h3">Top Servers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {playstyle_habits?.top_servers && playstyle_habits.top_servers.length > 0 ? (
+              <PlayerTopServersChart data={playstyle_habits.top_servers} />
+            ) : (
+              <p className="text-sm text-muted-foreground">No server data available.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Recent Rounds */}
       <Card className="border-border/60">
         <CardHeader>
-          {/* --- UPDATED: Use as="h2" --- */}
           <CardTitle as="h2">Recent Rounds</CardTitle>
         </CardHeader>
         <CardContent>
