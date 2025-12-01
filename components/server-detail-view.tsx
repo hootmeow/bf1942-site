@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ServerActivityChart, ServerMapsPieChart } from "@/components/charts";
 import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
+import { cn } from "@/lib/utils";
 
 // Types
 interface ServerInfo {
@@ -83,6 +84,8 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
     return [t1, t2];
   }, [scoreboard]);
 
+  const winner = (server_info.tickets1 || 0) > (server_info.tickets2 || 0) ? 1 : (server_info.tickets2 || 0) > (server_info.tickets1 || 0) ? 2 : 0;
+
   if (!initialData) {
     return (
       <Alert variant="destructive">
@@ -113,13 +116,27 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
       </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="border-border/60">
-          <CardHeader><CardTitle as="h2">Axis (Tickets: {server_info.tickets1 ?? 'N/A'})</CardTitle></CardHeader>
-          <CardContent><ScoreboardTable players={team1} /></CardContent>
+        <Card className={cn("border-border/60", winner === 1 && "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]")}>
+          <CardHeader className={cn("bg-red-950/20 border-b border-red-900/20", winner === 1 && "bg-red-900/30")}>
+            <div className="flex items-center justify-between">
+              <CardTitle as="h2" className="text-red-500 flex items-center gap-2">
+                Axis
+              </CardTitle>
+              <div className="text-2xl font-bold text-red-500">{server_info.tickets1 ?? 'N/A'} Tickets</div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6"><ScoreboardTable players={team1} /></CardContent>
         </Card>
-        <Card className="border-border/60">
-          <CardHeader><CardTitle as="h2">Allies (Tickets: {server_info.tickets2 ?? 'N/A'})</CardTitle></CardHeader>
-          <CardContent><ScoreboardTable players={team2} /></CardContent>
+        <Card className={cn("border-border/60", winner === 2 && "border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]")}>
+          <CardHeader className={cn("bg-blue-950/20 border-b border-blue-900/20", winner === 2 && "bg-blue-900/30")}>
+            <div className="flex items-center justify-between">
+              <CardTitle as="h2" className="text-blue-500 flex items-center gap-2">
+                Allies
+              </CardTitle>
+              <div className="text-2xl font-bold text-blue-500">{server_info.tickets2 ?? 'N/A'} Tickets</div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6"><ScoreboardTable players={team2} /></CardContent>
         </Card>
       </div>
 
