@@ -7,6 +7,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ServerActivityChart, ServerMapsPieChart } from "@/components/charts";
 import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Types
 interface ServerInfo {
@@ -50,6 +59,8 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
 export function ServerDetailView({ initialData, slug }: { initialData: ServerDetailsData | null, slug: string }) {
   const [metrics, setMetrics] = useState<any>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
+  const [recentRounds, setRecentRounds] = useState<any[]>([]);
+  const [recentRoundsLoading, setRecentRoundsLoading] = useState(true);
 
   const { server_info, scoreboard } = initialData || { server_info: {} as any, scoreboard: [] };
 
@@ -69,6 +80,26 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
     }
     fetchMetrics();
   }, [slug]);
+
+  useEffect(() => {
+    async function fetchRecentRounds() {
+      if (!server_info?.server_id) return;
+      try {
+        const res = await fetch(`/api/v1/servers/search/rounds?search=${server_info.server_id}&page_size=5`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok) {
+            setRecentRounds(data.rounds);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch recent rounds", e);
+      } finally {
+        setRecentRoundsLoading(false);
+      }
+    }
+    fetchRecentRounds();
+  }, [server_info?.server_id]);
 
   const roundTime = useMemo(() => {
     if (!server_info.round_time_remain) return "N/A";
@@ -154,6 +185,46 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
               <CardHeader><CardTitle as="h2">Map Rotation</CardTitle></CardHeader>
               <CardContent>
                 <ServerMapsPieChart mapData={metrics.popular_maps_24h} />
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/60 lg:col-span-2">
+              <CardHeader><CardTitle as="h2">Recent Rounds</CardTitle></CardHeader>
+              <CardContent>
+                {recentRoundsLoading ? (
+                  <div className="flex items-center justify-center p-8 text-muted-foreground">
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading rounds...
+                  </div>
+                ) : recentRounds.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Map</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Duration</TableHead>
+                        <TableHead className="text-right">Players</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recentRounds.map((round) => (
+                        <TableRow key={round.round_id}>
+                          <TableCell className="font-medium">{round.map_name}</TableCell>
+                          <TableCell>{new Date(round.start_time).toLocaleString()}</TableCell>
+                          <TableCell className="text-right">{Math.floor(round.duration_seconds / 60)}m {round.duration_seconds % 60}s</TableCell>
+                          <TableCell className="text-right">{round.player_count}</TableCell>
+                          <TableCell className="text-right">
+                            <Link href={`/stats/rounds/${round.round_id}`} className="text-primary hover:underline">
+                              View
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="p-4 text-center text-muted-foreground">No recent rounds found.</div>
+                )}
               </CardContent>
             </Card>
           </div>
