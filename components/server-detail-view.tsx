@@ -3,18 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { AlertTriangle, Loader2, Clock, Map, Users, Server } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
 import { ServerActivityChart, ServerMapsPieChart } from "@/components/charts";
+import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
 
 // Types
 interface ServerInfo {
@@ -32,27 +23,10 @@ interface ServerInfo {
   tickets2: number;
 }
 
-interface ScoreboardPlayer {
-  player_name: string;
-  score: number;
-  kills: number;
-  deaths: number;
-  ping: number;
-  team: 1 | 2;
-}
-
 interface ServerDetailsData {
   ok: boolean;
   server_info: ServerInfo;
   scoreboard: ScoreboardPlayer[];
-}
-
-// Helpers
-function getPingColorClass(ping: number): string {
-  if (ping <= 80) return "text-green-500";
-  if (ping <= 120) return "text-yellow-500";
-  if (ping <= 160) return "text-orange-500";
-  return "text-red-500";
 }
 
 function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ElementType }) {
@@ -72,54 +46,6 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
   );
 }
 
-function ScoreboardTable({ players }: { players: ScoreboardPlayer[] }) {
-  const totals = players.reduce(
-    (acc, player) => {
-      acc.score += player.score;
-      acc.kills += player.kills;
-      acc.deaths += player.deaths;
-      return acc;
-    },
-    { score: 0, kills: 0, deaths: 0 }
-  );
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Player</TableHead>
-          <TableHead className="text-right">Score</TableHead>
-          <TableHead className="text-right">Kills</TableHead>
-          <TableHead className="text-right">Deaths</TableHead>
-          <TableHead className="text-right">Ping</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {players.map((player, index) => (
-          <TableRow key={`${player.player_name}-${index}`}>
-            <TableCell className="font-medium text-foreground">{player.player_name}</TableCell>
-            <TableCell className="text-right">{player.score}</TableCell>
-            <TableCell className="text-right">{player.kills}</TableCell>
-            <TableCell className="text-right">{player.deaths}</TableCell>
-            <TableCell className={cn("text-right font-medium", getPingColorClass(player.ping))}>
-              {player.ping}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-      <TableFooter>
-        <TableRow>
-          <TableCell className="font-semibold text-foreground">Team Totals</TableCell>
-          <TableCell className="text-right font-semibold text-foreground">{totals.score}</TableCell>
-          <TableCell className="text-right font-semibold text-foreground">{totals.kills}</TableCell>
-          <TableCell className="text-right font-semibold text-foreground">{totals.deaths}</TableCell>
-          <TableCell className="text-right"></TableCell>
-        </TableRow>
-      </TableFooter>
-    </Table>
-  );
-}
-
 export function ServerDetailView({ initialData, slug }: { initialData: ServerDetailsData | null, slug: string }) {
   const [metrics, setMetrics] = useState<any>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
@@ -129,7 +55,6 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
   useEffect(() => {
     async function fetchMetrics() {
       try {
-        // REVERTED: Using the query param endpoint here as well
         const response = await fetch(`/api/v1/servers/search/metrics?search=${slug}`);
         if (response.ok) {
           const result = await response.json();
@@ -153,8 +78,8 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
 
   const [team1, team2] = useMemo(() => {
     if (!scoreboard) return [[], []];
-    const t1 = scoreboard.filter((p) => p.team === 1).sort((a, b) => b.score - a.score);
-    const t2 = scoreboard.filter((p) => p.team === 2).sort((a, b) => b.score - a.score);
+    const t1 = scoreboard.filter((p) => p.team === 1).sort((a, b) => (b.score || 0) - (a.score || 0));
+    const t2 = scoreboard.filter((p) => p.team === 2).sort((a, b) => (b.score || 0) - (a.score || 0));
     return [t1, t2];
   }, [scoreboard]);
 
