@@ -350,7 +350,7 @@ export function PlayerTopMapsChart({ data }: { data: { map_name: string; map_pla
           fill="url(#colorMaps)"
           radius={[0, 4, 4, 0]}
           barSize={20}
-          background={{ fill: 'hsl(var(--muted)/0.3)', radius: [0, 4, 4, 0] }}
+          background={{ fill: 'hsl(var(--muted)/0.3)', radius: 4 }}
         >
           <LabelList dataKey="map_play_count" position="right" fill="hsl(var(--foreground))" fontSize={12} />
         </Bar>
@@ -390,7 +390,7 @@ export function PlayerTopServersChart({ data }: { data: { current_server_name: s
           fill="url(#colorServers)"
           radius={[0, 4, 4, 0]}
           barSize={20}
-          background={{ fill: 'hsl(var(--muted)/0.3)', radius: [0, 4, 4, 0] }}
+          background={{ fill: 'hsl(var(--muted)/0.3)', radius: 4 }}
         >
           <LabelList dataKey="server_play_count" position="right" fill="hsl(var(--foreground))" fontSize={12} />
         </Bar>
