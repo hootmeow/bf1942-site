@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { ServerDetailView } from "@/components/server-detail-view";
 
+export const dynamic = "force-dynamic";
+
 // Use local proxy to ensure we hit the internal API correctly
 const API_BASE = "http://127.0.0.1:3000/api/v1";
 

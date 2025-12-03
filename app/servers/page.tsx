@@ -3,6 +3,8 @@ import { ServerListSchema } from "@/lib/schemas";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+export const dynamic = "force-dynamic";
+
 async function getServers() {
   // FIX: We intentionally hit the Next.js Proxy (port 3000)
   // This ensures the request goes through the 'rewrites' in next.config.mjs
