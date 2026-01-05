@@ -173,63 +173,64 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
 
       {/* Charts Section */}
       {metrics && (
-        <div className="space-y-6">
-          <Card className="border-border/60">
-            <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
+        <Card className="border-border/60">
+          <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
+          <CardContent>
+            <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {metrics && (
+          <Card className="border-border/60 lg:col-span-1">
+            <CardHeader><CardTitle as="h2">Map Rotation</CardTitle></CardHeader>
             <CardContent>
-              <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
+              <ServerMapsPieChart mapData={metrics.popular_maps_24h} />
             </CardContent>
           </Card>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="border-border/60 lg:col-span-1">
-              <CardHeader><CardTitle as="h2">Map Rotation</CardTitle></CardHeader>
-              <CardContent>
-                <ServerMapsPieChart mapData={metrics.popular_maps_24h} />
-              </CardContent>
-            </Card>
+        )}
 
-            <Card className="border-border/60 lg:col-span-2">
-              <CardHeader><CardTitle as="h2">Recent Rounds</CardTitle></CardHeader>
-              <CardContent>
-                {recentRoundsLoading ? (
-                  <div className="flex items-center justify-center p-8 text-muted-foreground">
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading rounds...
-                  </div>
-                ) : recentRounds.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Map</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Duration</TableHead>
-                        <TableHead className="text-right">Players</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recentRounds.map((round) => (
-                        <TableRow key={round.round_id}>
-                          <TableCell className="font-medium">{round.map_name}</TableCell>
-                          <TableCell>{new Date(round.start_time).toLocaleString()}</TableCell>
-                          <TableCell className="text-right">{Math.floor(round.duration_seconds / 60)}m {round.duration_seconds % 60}s</TableCell>
-                          <TableCell className="text-right">{round.player_count}</TableCell>
-                          <TableCell className="text-right">
-                            <Link href={`/stats/rounds/${round.round_id}`} className="text-primary hover:underline">
-                              View
-                            </Link>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="p-4 text-center text-muted-foreground">No recent rounds found.</div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
+        <Card className={cn("border-border/60", metrics ? "lg:col-span-2" : "lg:col-span-3")}>
+          <CardHeader><CardTitle as="h2">Recent Rounds</CardTitle></CardHeader>
+          <CardContent>
+            {recentRoundsLoading ? (
+              <div className="flex items-center justify-center p-8 text-muted-foreground">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading rounds...
+              </div>
+            ) : recentRounds.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Map</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Duration</TableHead>
+                    <TableHead className="text-right">Players</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentRounds.map((round) => (
+                    <TableRow key={round.round_id}>
+                      <TableCell className="font-medium">{round.map_name}</TableCell>
+                      <TableCell>{new Date(round.start_time).toLocaleString()}</TableCell>
+                      <TableCell className="text-right">{Math.floor(round.duration_seconds / 60)}m {round.duration_seconds % 60}s</TableCell>
+                      <TableCell className="text-right">{round.player_count}</TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/stats/rounds/${round.round_id}`} className="text-primary hover:underline">
+                          View
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="p-4 text-center text-muted-foreground">No recent rounds found.</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
       {metricsLoading && (
         <div className="flex items-center justify-center p-8 text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading historical metrics...
