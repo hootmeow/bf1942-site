@@ -89,7 +89,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         if (res.ok) {
           const data = await res.json();
           if (data.ok) {
-            setRecentRounds(data.rounds);
+            setRecentRounds(data.rounds || []);
           }
         }
       } catch (e) {
