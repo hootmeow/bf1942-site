@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, Star } from "lucide-react";
+import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost } from "lucide-react";
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
 
 // --- Interfaces (Updated to match API) ---
@@ -26,20 +26,33 @@ interface PlayerInfo {
   last_known_name: string;
   last_seen: string;
 }
+
+// Correcting the Interface completely to match the USER'S JSON
 interface LifetimeStats {
-  total_playtime_seconds: number;
-  overall_kdr: number;
+  total_rounds_played: number;
+  total_score: number;
   total_kills: number;
   total_deaths: number;
+  overall_kdr: number;
+  overall_kpm: number;
+  average_score_per_round: number;
+  average_ping: number;
+  unique_servers: number;
+  unique_maps: number;
+  total_playtime_seconds: number;
   score_per_minute: number;
   kills_per_round: number;
-  unique_servers_played: number;
-  unique_maps_played: number;
+  deaths_per_round: number;
+  // Legacy support if needed, but likely these are the real keys now
+  unique_servers_played?: number;
+  unique_maps_played?: number;
 }
+
 interface PersonalBests {
   best_round_score: number;
   best_round_kills: number;
   best_round_kpm: number;
+  best_kill_round_id?: number;
 }
 interface PlaystyleHabits {
   top_maps: { map_name: string; map_play_count: number }[];
@@ -239,32 +252,25 @@ export default function PlayerPageClient() {
       )}
 
       {/* Lifetime Stats */}
+      {/* Lifetime Stats */}
+      <h3 className="text-xl font-semibold tracking-tight">Lifetime Stats</h3>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
-        <StatCard
-          title="Total Playtime"
-          value={formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)}
-          icon={Clock}
-        />
-        <StatCard
-          title="Overall KDR"
-          value={lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'}
-          icon={Trophy}
-        />
-        <StatCard
-          title="Total Kills"
-          value={lifetime_stats?.total_kills ?? 0}
-          icon={Target}
-        />
-        <StatCard
-          title="Score/Min"
-          value={lifetime_stats?.score_per_minute?.toFixed(2) ?? '0.00'}
-          icon={BarChart}
-        />
-        <StatCard
-          title="Kills/Round"
-          value={lifetime_stats?.kills_per_round?.toFixed(2) ?? '0.00'}
-          icon={Skull}
-        />
+        <StatCard title="Playtime" value={formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)} icon={Clock} />
+        <StatCard title="Rounds Played" value={lifetime_stats?.total_rounds_played ?? 0} icon={Hash} />
+        <StatCard title="Total Score" value={lifetime_stats?.total_score?.toLocaleString() ?? 0} icon={Star} />
+        <StatCard title="Total Kills" value={lifetime_stats?.total_kills?.toLocaleString() ?? 0} icon={Target} />
+        <StatCard title="Total Deaths" value={lifetime_stats?.total_deaths?.toLocaleString() ?? 0} icon={Ghost} />
+
+        <StatCard title="K/D Ratio" value={lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'} icon={Trophy} />
+        <StatCard title="Kills/Round" value={lifetime_stats?.kills_per_round?.toFixed(2) ?? '0.00'} icon={Skull} />
+        <StatCard title="Deaths/Round" value={lifetime_stats?.deaths_per_round?.toFixed(2) ?? '0.00'} icon={Ghost} />
+        <StatCard title="KPM" value={lifetime_stats?.overall_kpm?.toFixed(2) ?? '0.00'} icon={Zap} />
+        <StatCard title="Score/Min" value={lifetime_stats?.score_per_minute?.toFixed(2) ?? '0.00'} icon={BarChart} />
+
+        <StatCard title="Avg Score/Round" value={lifetime_stats?.average_score_per_round?.toFixed(2) ?? '0.00'} icon={TrendingUp} />
+        <StatCard title="Avg Ping" value={Math.round(lifetime_stats?.average_ping ?? 0)} icon={Wifi} />
+        <StatCard title="Unique Servers" value={lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0} icon={Server} />
+        <StatCard title="Unique Maps" value={lifetime_stats?.unique_maps ?? lifetime_stats?.unique_maps_played ?? 0} icon={Map} />
       </div>
 
       {/* Personal Bests */}
@@ -272,7 +278,7 @@ export default function PlayerPageClient() {
         <CardHeader>
           <CardTitle as="h2">Personal Bests</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Best Round Score"
             value={personal_bests?.best_round_score ?? 0}
@@ -286,7 +292,12 @@ export default function PlayerPageClient() {
           <StatCard
             title="Best Round KPM"
             value={personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00'}
-            icon={BarChart}
+            icon={Zap}
+          />
+          <StatCard
+            title="Best Kill Round ID"
+            value={personal_bests?.best_kill_round_id ? `#${personal_bests.best_kill_round_id}` : 'N/A'}
+            icon={Hash}
           />
         </CardContent>
       </Card>

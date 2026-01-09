@@ -4,10 +4,12 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 // This is the server-side metadata function
+// This is the server-side metadata function
 export async function generateMetadata(
-  { params }: { params: { slug: string } }
+  props: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-  
+  const params = await props.params;
+
   if (!params.slug) {
     return { title: "Player Not Found | BF1942 Online" };
   }
