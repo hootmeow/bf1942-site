@@ -66,6 +66,16 @@ interface PlayerProfileApiResponse {
   recent_rounds: RecentRound[] | null;
 }
 
+// --- New Advanced Stats Interfaces ---
+import { SkillRatingCard, SkillRating } from "@/components/skill-rating-card";
+import { BattleBuddiesList, RelatedPlayer } from "@/components/battle-buddies-list";
+
+interface AdvancedProfileResponse {
+  ok: boolean;
+  skill_rating?: SkillRating;
+  related_players?: RelatedPlayer[];
+}
+
 // --- Helper Functions ---
 function formatPlaytime(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
@@ -161,6 +171,26 @@ export default function PlayerPageClient() {
     fetchPlayerProfile();
   }, [playerName]);
 
+  const [advancedProfile, setAdvancedProfile] = useState<AdvancedProfileResponse | null>(null);
+
+  useEffect(() => {
+    if (!playerName) return;
+    async function fetchAdvancedProfile() {
+      try {
+        const res = await fetch(`/api/v1/players/search/profile_advanced?name=${playerName}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok) {
+            setAdvancedProfile(data);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch advanced profile", e);
+      }
+    }
+    fetchAdvancedProfile();
+  }, [playerName]);
+
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center gap-2 text-muted-foreground">
@@ -200,6 +230,13 @@ export default function PlayerPageClient() {
           </div>
         </div>
       </div>
+
+      {/* Advanced Stats: Skill Rating */}
+      {advancedProfile?.skill_rating && (
+        <div className="mb-6">
+          <SkillRatingCard rating={advancedProfile.skill_rating} />
+        </div>
+      )}
 
       {/* Lifetime Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
@@ -333,6 +370,13 @@ export default function PlayerPageClient() {
             )}
           </CardContent>
         </Card>
+
+        {/* Battle Buddies */}
+        {advancedProfile?.related_players && (
+          <div className="lg:col-span-1">
+            <BattleBuddiesList players={advancedProfile.related_players} />
+          </div>
+        )}
       </div>
 
       {/* Recent Rounds */}

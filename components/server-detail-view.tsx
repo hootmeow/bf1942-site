@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ServerActivityChart, ServerMapsPieChart } from "@/components/charts";
 import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
+import { ServerPeakHeatmap } from "@/components/server-peak-heatmap";
+import { MapBalanceTable, MapBalanceStat } from "@/components/map-balance-table";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -101,6 +103,26 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
     fetchRecentRounds();
   }, [server_info?.server_id]);
 
+  const [mapBalance, setMapBalance] = useState<MapBalanceStat[]>([]);
+  useEffect(() => {
+    async function fetchMapBalance() {
+      if (!server_info?.server_id) return;
+      try {
+        const res = await fetch(`/api/v1/servers/search/balance?search=${server_info.server_id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.map_balance_stats) {
+            setMapBalance(data.map_balance_stats);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch map balance", e);
+      }
+    }
+    fetchMapBalance();
+  }, [server_info?.server_id]);
+
+
   const roundTime = useMemo(() => {
     if (!server_info.round_time_remain) return "N/A";
     const minutes = Math.floor(server_info.round_time_remain / 60);
@@ -171,14 +193,18 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         </Card>
       </div>
 
-      {/* Charts Section */}
       {metrics && (
-        <Card className="border-border/60">
-          <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
-          <CardContent>
-            <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="border-border/60 lg:col-span-2">
+            <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
+            <CardContent>
+              <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
+            </CardContent>
+          </Card>
+          <div className="lg:col-span-1">
+            <ServerPeakHeatmap data={metrics.player_count_24h} />
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -231,6 +257,13 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
           </CardContent>
         </Card>
       </div>
+
+      {mapBalance.length > 0 && (
+        <div className="mt-6">
+          <MapBalanceTable stats={mapBalance} />
+        </div>
+      )}
+
       {metricsLoading && (
         <div className="flex items-center justify-center p-8 text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading historical metrics...
