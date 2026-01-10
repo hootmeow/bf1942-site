@@ -55,6 +55,7 @@ const navItems = [
     overviewLabel: "Search",
     children: [
       { label: "Rounds", href: "/stats/rounds" },
+      { label: "Rank Info", href: "/rank-info" },
     ],
   },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },

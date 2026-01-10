@@ -118,7 +118,7 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                 <div className="flex items-center justify-between">
                     <CardTitle as="h2" className="flex items-center gap-2">
                         <Swords className="h-5 w-5 text-primary" />
-                        BF Rating (V4)
+                        Player Rank
                     </CardTitle>
                     <TooltipProvider>
                         <Tooltip>
@@ -126,11 +126,12 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                                 <Info className="h-4 w-4 text-muted-foreground" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-[320px]">
-                                <p className="font-semibold mb-2">BF Rating V4 Formula</p>
+                                <p className="font-semibold mb-2">Rank Score (XP)</p>
+                                <p className="text-xs text-muted-foreground mb-2">Your rank never drops. Earn Career XP for every action:</p>
                                 <ul className="text-xs list-disc pl-4 space-y-1">
-                                    <li><b>Skill (60%):</b> (Kills/Round &times; 100) + (KDR &times; 1000) + (Kills &times; 0.5)</li>
-                                    <li><b>Objective (20%):</b> (Score/Round &times; 50)</li>
-                                    <li><b>Experience (20%):</b> (Total Rounds &times; 1)</li>
+                                    <li><b>Combat:</b> 10 XP per Kill</li>
+                                    <li><b>Objective:</b> 20 XP per Flag Capture, Defense, or Assist</li>
+                                    <li><b>Service:</b> 100 XP for every Round Completed</li>
                                 </ul>
                             </TooltipContent>
                         </Tooltip>
