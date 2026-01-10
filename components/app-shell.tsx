@@ -52,10 +52,19 @@ const navItems = [
     label: "Player Stats",
     icon: BarChart,
     href: "/stats",
-    overviewLabel: "Search",
+    overviewLabel: null,
     children: [
+      {
+        label: "Ranked Stats",
+        href: "/rank-info",
+        children: [
+          { label: "All Time", href: "/rank-info" },
+          { label: "Weekly (Last 7 Days)", href: "/rank-info/weekly" },
+          { label: "Monthly (Last 30 Days)", href: "/rank-info/monthly" },
+        ]
+      },
       { label: "Rounds", href: "/stats/rounds" },
-      { label: "Player Ranks", href: "/rank-info" },
+      { label: "Search", href: "/stats" },
     ],
   },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
@@ -265,32 +274,72 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                       <span className="flex-1 text-left">{item.label}</span>
                     </AccordionTrigger>
                     <AccordionContent className="pb-1 pl-9 pr-2">
-                      {/* Link to the parent "Overview" page */}
-                      <Link
-                        href={item.href}
-                        onClick={onCloseMobile}
-                        className={cn(
-                          "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
-                          pathname === item.href && "text-primary" // Active state for parent
-                        )}
-                      >
-                        {/* @ts-ignore */}
-                        {item.overviewLabel || "Overview"}
-                      </Link>
-                      {/* Links to all the children */}
-                      {item.children.map((child) => (
+                      {/* Link to the parent "Overview" page - Only if not null */}
+                      {/* @ts-ignore */}
+                      {item.overviewLabel !== null && (
                         <Link
-                          key={child.href}
-                          href={child.href}
+                          href={item.href}
                           onClick={onCloseMobile}
                           className={cn(
                             "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
-                            pathname === child.href && "text-primary" // Active state for child
+                            pathname === item.href && "text-primary" // Active state for parent
                           )}
                         >
-                          {child.label}
+                          {/* @ts-ignore */}
+                          {item.overviewLabel || "Overview"}
                         </Link>
-                      ))}
+                      )}
+                      {/* Links to all the children */}
+                      {item.children.map((child) => {
+                        // Check if child has children (Level 3)
+                        // @ts-ignore - Dynamic children property
+                        if (child.children && child.children.length > 0) {
+                          return (
+                            <div key={child.href} className="space-y-1">
+                              <Link
+                                href={child.href}
+                                onClick={onCloseMobile}
+                                className={cn(
+                                  "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
+                                  pathname === child.href && "text-primary"
+                                )}
+                              >
+                                {child.label}
+                              </Link>
+                              <div className="pl-3 border-l-2 border-border/40 ml-3 space-y-1">
+                                {/* @ts-ignore - Dynamic children property */}
+                                {child.children.map((subChild) => (
+                                  <Link
+                                    key={subChild.href}
+                                    href={subChild.href}
+                                    onClick={onCloseMobile}
+                                    className={cn(
+                                      "block rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
+                                      pathname === subChild.href && "text-primary font-semibold"
+                                    )}
+                                  >
+                                    {subChild.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            onClick={onCloseMobile}
+                            className={cn(
+                              "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
+                              pathname === child.href && "text-primary" // Active state for child
+                            )}
+                          >
+                            {child.label}
+                          </Link>
+                        );
+                      })}
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>

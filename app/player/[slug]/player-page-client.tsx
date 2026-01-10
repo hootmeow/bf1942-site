@@ -265,8 +265,8 @@ export default function PlayerPageClient() {
         <StatCard title="Total Deaths" value={lifetime_stats?.total_deaths?.toLocaleString() ?? 0} icon={Ghost} />
 
         <StatCard title="K/D Ratio" value={lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'} icon={Trophy} />
-        <StatCard title="Kills/Round" value={lifetime_stats?.kills_per_round?.toFixed(2) ?? '0.00'} icon={Skull} />
-        <StatCard title="Deaths/Round" value={lifetime_stats?.deaths_per_round?.toFixed(2) ?? '0.00'} icon={Ghost} />
+        <StatCard title="Avg. Kills/Round" value={lifetime_stats?.kills_per_round?.toFixed(2) ?? '0.00'} icon={Skull} />
+        <StatCard title="Avg. Deaths/Round" value={lifetime_stats?.deaths_per_round?.toFixed(2) ?? '0.00'} icon={Ghost} />
         <StatCard title="KPM" value={lifetime_stats?.overall_kpm?.toFixed(2) ?? '0.00'} icon={Zap} />
         <StatCard title="Score/Min" value={lifetime_stats?.score_per_minute?.toFixed(2) ?? '0.00'} icon={BarChart} />
 

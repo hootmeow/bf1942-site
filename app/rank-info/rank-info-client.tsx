@@ -14,7 +14,17 @@ interface LeaderboardResponse {
     count: number;
 }
 
-export default function RankInfoClient() {
+interface RankInfoClientProps {
+    endpoint?: string;
+    title?: string;
+    description?: string;
+}
+
+export default function RankInfoClient({
+    endpoint = "/api/v1/leaderboard",
+    title = "Player Ranks",
+    description = "Global leaderboard based on Career XP (All Time)."
+}: RankInfoClientProps) {
     const [leaderboard, setLeaderboard] = useState<LeaderboardItem[] | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -23,7 +33,7 @@ export default function RankInfoClient() {
         async function fetchLeaderboard() {
             try {
                 // Use relative path to leverage Next.js proxy/rewrite to API
-                const res = await fetch("/api/v1/leaderboard");
+                const res = await fetch(endpoint);
                 if (!res.ok) {
                     throw new Error(`Failed to fetch leaderboard: ${res.statusText}`);
                 }
@@ -42,7 +52,7 @@ export default function RankInfoClient() {
         }
 
         fetchLeaderboard();
-    }, []);
+    }, [endpoint]);
 
     if (loading) {
         return (
@@ -69,9 +79,9 @@ export default function RankInfoClient() {
         <div className="container py-6 md:py-10 space-y-8 max-w-5xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h1 className="text-3xl font-bold tracking-tight">Player Ranks</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
                     <p className="text-muted-foreground text-lg">
-                        Global leaderboard based on Career XP.
+                        {description}
                     </p>
                 </div>
                 {/* Snippet Card */}
