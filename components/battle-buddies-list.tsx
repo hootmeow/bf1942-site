@@ -21,7 +21,7 @@ export function BattleBuddiesList({ players }: { players: RelatedPlayer[] }) {
     if (!players || players.length === 0) return null;
 
     return (
-        <Card className="border-border/60">
+        <Card className="border-border/60 h-full">
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>

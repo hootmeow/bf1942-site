@@ -43,6 +43,7 @@ interface LifetimeStats {
   score_per_minute: number;
   kills_per_round: number;
   deaths_per_round: number;
+  win_rate?: number;
   // Legacy support if needed, but likely these are the real keys now
   unique_servers_played?: number;
   unique_maps_played?: number;
@@ -82,11 +83,19 @@ interface PlayerProfileApiResponse {
 // --- New Advanced Stats Interfaces ---
 import { SkillRatingCard, SkillRating } from "@/components/skill-rating-card";
 import { BattleBuddiesList, RelatedPlayer } from "@/components/battle-buddies-list";
+import { RankHistoryList, RankHistoryItem } from "@/components/rank-history-list";
+import { RecentRoundsList } from "@/components/recent-rounds-list";
 
 interface AdvancedProfileResponse {
   ok: boolean;
   skill_rating?: SkillRating;
   related_players?: RelatedPlayer[];
+}
+
+interface RankHistoryResponse {
+  ok: boolean;
+  player: string;
+  history: RankHistoryItem[];
 }
 
 // --- Helper Functions ---
@@ -117,32 +126,7 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
   );
 }
 
-function RecentRoundsTable({ rounds }: { rounds: RecentRound[] }) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Map</TableHead>
-          <TableHead>Finished</TableHead>
-          <TableHead className="text-right">Score</TableHead>
-          <TableHead className="text-right">Kills</TableHead>
-          <TableHead className="text-right">Deaths</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rounds.map((round) => (
-          <TableRow key={round.round_id}>
-            <TableCell className="font-medium text-foreground">{round.map_name}</TableCell>
-            <TableCell>{new Date(round.end_time).toLocaleString()}</TableCell>
-            <TableCell className="text-right">{round.final_score}</TableCell>
-            <TableCell className="text-right">{round.final_kills}</TableCell>
-            <TableCell className="text-right">{round.final_deaths}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
+
 
 // --- Main Page Component ---
 export default function PlayerPageClient() {
@@ -185,9 +169,11 @@ export default function PlayerPageClient() {
   }, [playerName]);
 
   const [advancedProfile, setAdvancedProfile] = useState<AdvancedProfileResponse | null>(null);
+  const [rankHistory, setRankHistory] = useState<RankHistoryItem[] | null>(null);
 
   useEffect(() => {
     if (!playerName) return;
+
     async function fetchAdvancedProfile() {
       try {
         const res = await fetch(`/api/v1/players/search/profile_advanced?name=${playerName}`);
@@ -201,7 +187,23 @@ export default function PlayerPageClient() {
         console.error("Failed to fetch advanced profile", e);
       }
     }
+
+    async function fetchRankHistory() {
+      try {
+        const res = await fetch(`/api/v1/players/search/history_rank?name=${playerName}`);
+        if (res.ok) {
+          const data: RankHistoryResponse = await res.json();
+          if (data.ok) {
+            setRankHistory(data.history);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch rank history", e);
+      }
+    }
+
     fetchAdvancedProfile();
+    fetchRankHistory();
   }, [playerName]);
 
   if (loading) {
@@ -258,6 +260,7 @@ export default function PlayerPageClient() {
         <StatCard title="Playtime" value={formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)} icon={Clock} />
         <StatCard title="Rounds Played" value={lifetime_stats?.total_rounds_played ?? 0} icon={Hash} />
         <StatCard title="Total Score" value={lifetime_stats?.total_score?.toLocaleString() ?? 0} icon={Star} />
+        <StatCard title="Win Rate" value={lifetime_stats?.win_rate ? `${lifetime_stats.win_rate}%` : 'N/A'} icon={Trophy} />
         <StatCard title="Total Kills" value={lifetime_stats?.total_kills?.toLocaleString() ?? 0} icon={Target} />
         <StatCard title="Total Deaths" value={lifetime_stats?.total_deaths?.toLocaleString() ?? 0} icon={Ghost} />
 
@@ -333,7 +336,7 @@ export default function PlayerPageClient() {
         </Card>
       </div>
 
-      {/* Team Preference & Habits Row */}
+      {/* Team Preference, Maps, Servers Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Team Preference */}
         <Card className="border-border/60">
@@ -381,28 +384,43 @@ export default function PlayerPageClient() {
             )}
           </CardContent>
         </Card>
-
-        {/* Battle Buddies */}
-        {advancedProfile?.related_players && (
-          <div className="lg:col-span-1">
-            <BattleBuddiesList players={advancedProfile.related_players} />
-          </div>
-        )}
       </div>
 
-      {/* Recent Rounds */}
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle as="h2">Recent Rounds</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recent_rounds && recent_rounds.length > 0 ? (
-            <RecentRoundsTable rounds={recent_rounds} />
+      {/* Social & History Row (Battle Buddies, Recent Rounds, Rank History) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Battle Buddies */}
+        <div className="h-full">
+          {advancedProfile?.related_players ? (
+            <BattleBuddiesList players={advancedProfile.related_players} />
           ) : (
-            <p className="text-sm text-muted-foreground">No recent rounds found.</p>
+            <Card className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
+              <p className="text-muted-foreground text-sm">No battle buddies found.</p>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Recent Rounds - Compact List */}
+        <div className="h-full">
+          {recent_rounds && recent_rounds.length > 0 ? (
+            <RecentRoundsList rounds={recent_rounds} />
+          ) : (
+            <Card className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
+              <p className="text-muted-foreground text-sm">No recent rounds.</p>
+            </Card>
+          )}
+        </div>
+
+        {/* Rank History Summary */}
+        <div className="h-full">
+          {rankHistory ? (
+            <RankHistoryList history={rankHistory} playerName={player_info.last_known_name} />
+          ) : (
+            <Card className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
+              <p className="text-muted-foreground text-sm">No rank history.</p>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
