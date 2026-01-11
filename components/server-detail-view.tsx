@@ -18,6 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ServerFlag } from "@/components/server-flag";
+import { useServerGeo } from "@/hooks/use-server-geo";
 
 // Types
 interface ServerInfo {
@@ -33,6 +35,7 @@ interface ServerInfo {
   live_snapshot_timestamp: string;
   tickets1: number;
   tickets2: number;
+  ip_address?: string; // Fallback if ip is missing?
 }
 
 interface ServerDetailsData {
@@ -65,6 +68,8 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
   const [recentRoundsLoading, setRecentRoundsLoading] = useState(true);
 
   const { server_info, scoreboard } = initialData || { server_info: {} as any, scoreboard: [] };
+
+  const { data: geo } = useServerGeo(server_info?.ip);
 
   useEffect(() => {
     async function fetchMetrics() {
@@ -152,10 +157,26 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground flex items-center gap-3">
+          <ServerFlag ip={server_info.ip} className="h-6 w-auto shadow-md" />
           {server_info.current_server_name || "Server Details"}
         </h1>
-        <p className="mt-1 text-muted-foreground">Live scoreboard and information</p>
+
+        {/* Updated Subheader with Location Info */}
+        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+          {geo ? (
+            <>
+              <span className="font-medium text-foreground">{geo.city}, {geo.region}</span>
+              <span>•</span>
+              <div className="flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" />
+                <span>{geo.timezone.current_time.split('T')[1].split('-')[0].split('+')[0]} ({geo.timezone.abbr})</span>
+              </div>
+            </>
+          ) : (
+            <span>Live scoreboard and information</span>
+          )}
+        </div>
       </div>
 
       <Card className="border-border/60">

@@ -14,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ServerFlag } from "@/components/server-flag"; // Import
+
 
 // --- Types ---
 export interface Server {
@@ -52,11 +54,11 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
 
     // Default sort logic if 'status' is selected
     const sortOrder = { ACTIVE: 1, EMPTY: 2, OFFLINE: 3 };
-    
+
     if (sortConfig.key === "status") {
       sortableServers.sort((a, b) => {
         if (sortOrder[a.current_state] !== sortOrder[b.current_state]) {
-          return sortConfig.direction === "asc" 
+          return sortConfig.direction === "asc"
             ? sortOrder[a.current_state] - sortOrder[b.current_state]
             : sortOrder[b.current_state] - sortOrder[a.current_state];
         }
@@ -110,10 +112,10 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
       direction = "desc";
     }
     if (key === "status") {
-       // Reset to default preferred sort for status
-       setSortConfig({ key: "status", direction: "asc" });
+      // Reset to default preferred sort for status
+      setSortConfig({ key: "status", direction: "asc" });
     } else {
-       setSortConfig({ key, direction });
+      setSortConfig({ key, direction });
     }
     setCurrentPage(1);
   };
@@ -195,12 +197,15 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
                   </Badge>
                 </TableCell>
                 <TableCell className="font-medium text-foreground">
-                  <Link
-                    href={`/servers/${server.server_id}`}
-                    className="hover:underline"
-                  >
-                    {server.current_server_name || "Unknown"}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <ServerFlag ip={server.ip} />
+                    <Link
+                      href={`/servers/${server.server_id}`}
+                      className="hover:underline truncate"
+                    >
+                      {server.current_server_name || "Unknown"}
+                    </Link>
+                  </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {server.ip}:{server.current_game_port}

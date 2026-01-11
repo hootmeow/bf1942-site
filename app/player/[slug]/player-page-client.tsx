@@ -17,8 +17,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost } from "lucide-react";
+import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2 } from "lucide-react";
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
+import { useToast } from "@/components/ui/toast-simple";
+import { Button } from "@/components/ui/button";
 
 // --- Interfaces (Updated to match API) ---
 interface PlayerInfo {
@@ -134,6 +136,7 @@ export default function PlayerPageClient() {
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug;
 
   const playerName = slug ? decodeURIComponent(slug) : undefined;
+  const { toast } = useToast();
 
   const [profile, setProfile] = useState<PlayerProfileApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -231,6 +234,21 @@ export default function PlayerPageClient() {
     fetchRankHistory();
   }, [playerName]);
 
+  const handleShare = () => {
+    const url = window.location.href;
+    const kdr = profile?.lifetime_stats?.overall_kdr?.toFixed(2) || "N/A";
+    const rank = advancedProfile?.skill_rating?.label || "Soldier";
+    const text = `🎖️ ${profile?.player_info.last_known_name} | Rank: ${rank} | K/D: ${kdr} | ${url}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Profile Copied!",
+        description: "Share link copied to clipboard.",
+        variant: "success"
+      });
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center gap-2 text-muted-foreground">
@@ -269,6 +287,11 @@ export default function PlayerPageClient() {
             </p>
           </div>
         </div>
+
+        <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
+          <Share2 className="h-4 w-4" />
+          Share Profile
+        </Button>
       </div>
 
       {/* Advanced Stats: Skill Rating */}

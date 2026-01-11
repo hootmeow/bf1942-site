@@ -1,5 +1,4 @@
-"use client";
-
+import { useState } from "react"; // Add useState
 import {
     Table,
     TableBody,
@@ -8,9 +7,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Scale } from "lucide-react";
+import { Scale, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button"; // Import Button
 
 export interface MapBalanceStat {
     map_name: string;
@@ -20,10 +20,23 @@ export interface MapBalanceStat {
     average_duration: number;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export function MapBalanceTable({ stats }: { stats: MapBalanceStat[] }) {
+    const [currentPage, setCurrentPage] = useState(1);
+
     // Sort by total rounds (popularity) or maybe balanced-ness? Default to popularity.
     // Ideally, sort by most played.
     const sortedStats = [...stats].sort((a, b) => b.total_rounds - a.total_rounds);
+
+    const totalPages = Math.ceil(sortedStats.length / ITEMS_PER_PAGE);
+    const paginatedStats = sortedStats.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    const handleNext = () => setCurrentPage(p => Math.min(p + 1, totalPages));
+    const handlePrev = () => setCurrentPage(p => Math.max(p - 1, 1));
 
     return (
         <Card className="border-border/60">
@@ -55,7 +68,7 @@ export function MapBalanceTable({ stats }: { stats: MapBalanceStat[] }) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sortedStats.map((map) => (
+                            {paginatedStats.map((map) => (
                                 <TableRow key={map.map_name}>
                                     <TableCell className="font-medium">{map.map_name}</TableCell>
                                     <TableCell className="text-center">{map.total_rounds}</TableCell>
@@ -86,6 +99,21 @@ export function MapBalanceTable({ stats }: { stats: MapBalanceStat[] }) {
                     </Table>
                 )}
             </CardContent>
+            {totalPages > 1 && (
+                <CardFooter className="flex items-center justify-between border-t p-4">
+                    <span className="text-xs text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handlePrev} disabled={currentPage === 1}>
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleNext} disabled={currentPage === totalPages}>
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </CardFooter>
+            )}
         </Card>
     );
 }

@@ -95,6 +95,8 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
+import { ToastProvider } from "@/components/ui/toast-simple"; // Add import
+
 export function AppShell({ children }: AppShellProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
@@ -112,27 +114,29 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      <SiteSidebar isCollapsed={isCollapsed} isMobileOpen={isMobileOpen} onCloseMobile={closeMobile} />
-      <div className="flex min-h-screen flex-1 flex-col">
-        <AppHeader onToggleSidebar={toggleSidebar} />
-        <main className="flex-1 bg-background px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">{children}</div>
-        </main>
-        <footer className="border-t border-border/60 bg-background/90 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl text-center text-xs text-muted-foreground">
-            <Link href="/about" className="px-2 hover:underline">
-              About
-            </Link>
-            <span className="px-1">•</span>
-            <Link href="/tos-privacy" className="px-2 hover:underline">
-              TOS & Privacy
-            </Link>
-            <p className="mt-2">© {new Date().getFullYear()} BF1942.online. All rights reserved.</p>
-          </div>
-        </footer>
+    <ToastProvider>
+      <div className="flex min-h-screen bg-background text-foreground">
+        <SiteSidebar isCollapsed={isCollapsed} isMobileOpen={isMobileOpen} onCloseMobile={closeMobile} />
+        <div className="flex min-h-screen flex-1 flex-col">
+          <AppHeader onToggleSidebar={toggleSidebar} />
+          <main className="flex-1 bg-background px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl">{children}</div>
+          </main>
+          <footer className="border-t border-border/60 bg-background/90 px-4 py-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl text-center text-xs text-muted-foreground">
+              <Link href="/about" className="px-2 hover:underline">
+                About
+              </Link>
+              <span className="px-1">•</span>
+              <Link href="/tos-privacy" className="px-2 hover:underline">
+                TOS & Privacy
+              </Link>
+              <p className="mt-2">© {new Date().getFullYear()} BF1942.online. All rights reserved.</p>
+            </div>
+          </footer>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
 
