@@ -177,12 +177,37 @@ export default function PlayerPageClient() {
     async function fetchAdvancedProfile() {
       try {
         const res = await fetch(`/api/v1/players/search/profile_advanced?name=${playerName}`);
+        let advancedData = null;
         if (res.ok) {
-          const data = await res.json();
-          if (data.ok) {
-            setAdvancedProfile(data);
-          }
+          advancedData = await res.json();
         }
+
+        // Fetch Global Rank (Client-side workaround since backend doesn't provide it yet)
+        let globalRankVal = undefined;
+        try {
+          const lbRes = await fetch('/api/v1/leaderboard');
+          if (lbRes.ok) {
+            const lbData = await lbRes.json();
+            if (lbData.ok && Array.isArray(lbData.leaderboard)) {
+              // Find player in leaderboard
+              const foundStat = lbData.leaderboard.find((p: any) => p.name.toLowerCase() === playerName?.toLowerCase());
+              if (foundStat) {
+                globalRankVal = foundStat.rank;
+              }
+            }
+          }
+        } catch (lbErr) {
+          console.error("Failed to fetch leaderboard for rank", lbErr);
+        }
+
+        // Merge Data
+        if (advancedData && advancedData.ok) {
+          if (globalRankVal && advancedData.skill_rating) {
+            advancedData.skill_rating.global_rank = globalRankVal;
+          }
+          setAdvancedProfile(advancedData);
+        }
+
       } catch (e) {
         console.error("Failed to fetch advanced profile", e);
       }

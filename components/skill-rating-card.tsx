@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 export interface SkillRating {
     score: number;
     label: string;
+    global_rank?: number; // Added global rank
     breakdown: {
         skill_score?: number;
         obj_score?: number;
@@ -18,6 +19,9 @@ export interface SkillRating {
         win_score?: number;
     };
 }
+
+// ... (RANK_THRESHOLDS and getRankIcon constants remain unchanged)
+
 
 const RANK_THRESHOLDS = [
     { label: "Private (E-1)", minScore: 0, icon: "e1.png" },
@@ -119,6 +123,11 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                     <CardTitle as="h2" className="flex items-center gap-2">
                         <Swords className="h-5 w-5 text-primary" />
                         Player Rank
+                        {rating.global_rank && (
+                            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20">
+                                Global #{rating.global_rank}
+                            </Badge>
+                        )}
                     </CardTitle>
                     <TooltipProvider>
                         <Tooltip>
