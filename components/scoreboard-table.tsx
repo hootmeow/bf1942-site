@@ -80,7 +80,7 @@ export function ScoreboardTable({ players }: { players: ScoreboardPlayer[] }) {
                     return (
                         <TableRow key={`${name}-${index}`}>
                             <TableCell className="font-medium text-foreground">
-                                {playerId ? (
+                                {name && name !== "Unknown" ? (
                                     <Link href={`/player/${encodeURIComponent(name)}`} className="hover:underline">
                                         {name}
                                     </Link>

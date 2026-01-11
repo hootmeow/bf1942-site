@@ -10,8 +10,8 @@ export const size = {
 
 export const contentType = 'image/png';
 
-export default async function Image({ params }: { params: { slug: string } }) {
-    const slug = params.slug;
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
     let playerName = "Unknown Soldier";
     let kd = "N/A";
     let rank = "Private";
