@@ -63,8 +63,9 @@ const navItems = [
           { label: "Monthly (Last 30 Days)", href: "/rank-info/monthly" },
         ]
       },
+      { label: "Search", href: "/search" },
       { label: "Rounds", href: "/stats/rounds" },
-      { label: "Search", href: "/stats" },
+      { label: "Compare Players", href: "/stats/compare" },
     ],
   },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
