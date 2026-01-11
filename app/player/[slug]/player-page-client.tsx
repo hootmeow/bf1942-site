@@ -21,6 +21,8 @@ import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, S
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { StatCard } from "@/components/stat-card"; // Import StatCard
 
 // --- Interfaces (Updated to match API) ---
 interface PlayerInfo {
@@ -111,22 +113,7 @@ function getTeamName(team: 1 | 2): string {
   return team === 1 ? "Axis" : "Allies";
 }
 
-function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ElementType }) {
-  const Icon = icon;
-  return (
-    <div className="rounded-lg border border-border/60 bg-card/40 p-4">
-      <div className="flex items-center gap-3">
-        <div className="rounded-full bg-primary/10 p-2 text-primary">
-          <Icon className="h-4 w-4" />
-        </div>
-        <div>
-          <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
-          <p className="text-xl font-bold text-foreground">{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+// StatCard removed (imported)
 
 
 
@@ -251,9 +238,23 @@ export default function PlayerPageClient() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center gap-2 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <p>Loading player profile...</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-16 w-16 rounded-full" />
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
@@ -272,6 +273,28 @@ export default function PlayerPageClient() {
 
   return (
     <div className="space-y-6">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ProfilePage",
+            "mainEntity": {
+              "@type": "Person",
+              "name": player_info.last_known_name,
+              "interactionStatistic": [
+                {
+                  "@type": "InteractionCounter",
+                  "interactionType": "https://schema.org/PlayAction",
+                  "userInteractionCount": lifetime_stats?.total_rounds_played || 0
+                }
+              ],
+              "description": `Combat record for ${player_info.last_known_name}: ${lifetime_stats?.overall_kdr?.toFixed(2)} K/D, ${lifetime_stats?.total_score?.toLocaleString()} Score`
+            }
+          })
+        }}
+      />
       {/* Player Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

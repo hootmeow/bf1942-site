@@ -5,7 +5,7 @@ import { articles } from '@/lib/articles'
 // --- FIX: Explicitly define the type for changeFrequency ---
 type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // SET YOUR REAL DOMAIN HERE
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.bf1942.online';
 
@@ -52,9 +52,50 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route === '/' ? 1.0 : 0.8,
   }));
 
+  // Fetch active servers
+  let serverEntries: MetadataRoute.Sitemap = [];
+  try {
+    const res = await fetch('http://127.0.0.1:8000/api/v1/servers', { next: { revalidate: 3600 } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.servers)) {
+        serverEntries = data.servers.map((server: any) => ({
+          url: `${siteUrl}/servers/${server.server_id}`,
+          lastModified: new Date(),
+          changeFrequency: 'hourly' as ChangeFrequency,
+          priority: 0.7,
+        }));
+      }
+    }
+  } catch (e) {
+    console.error("Failed to fetch servers for sitemap", e);
+  }
+
+  // Fetch top players (Leaderboard)
+  let playerEntries: MetadataRoute.Sitemap = [];
+  try {
+    const res = await fetch('http://127.0.0.1:8000/api/v1/leaderboard', { next: { revalidate: 3600 } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.leaderboard)) {
+        // Limit to top 500 active players
+        playerEntries = data.leaderboard.slice(0, 500).map((player: any) => ({
+          url: `${siteUrl}/player/${encodeURIComponent(player.name)}`,
+          lastModified: new Date(),
+          changeFrequency: 'daily' as ChangeFrequency,
+          priority: 0.6,
+        }));
+      }
+    }
+  } catch (e) {
+    console.error("Failed to fetch players for sitemap", e);
+  }
+
   return [
     ...staticEntries,
     ...modEntries,
     ...newsEntries,
+    ...serverEntries,
+    ...playerEntries,
   ];
 }
