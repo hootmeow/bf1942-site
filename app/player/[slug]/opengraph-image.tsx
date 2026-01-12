@@ -17,10 +17,14 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     let rank = "Private";
     let score = "0";
 
-    if (Array.isArray(slug)) {
-        playerName = decodeURIComponent(slug.join('/'));
-    } else {
-        playerName = decodeURIComponent(slug);
+    try {
+        if (Array.isArray(slug)) {
+            playerName = decodeURIComponent(slug.join('/'));
+        } else if (slug) {
+            playerName = decodeURIComponent(slug);
+        }
+    } catch (e) {
+        console.error("Failed to decode slug", slug);
     }
 
     // Fetch Player Data
@@ -29,7 +33,11 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     // Using a fallback "mock" fetch for the image generation if API is not reachable, 
     // but ideally we hit the API.
     try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/players/search/profile?name=${encodeURIComponent(playerName)}`);
+        // Use production URL or fallback to localhost if env var missing (but localhost fails on edge)
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bf1942.online"; // Hardcoded backup for safety
+        const res = await fetch(`${baseUrl}/api/v1/players/search/profile?name=${encodeURIComponent(playerName)}`, {
+            next: { revalidate: 60 } // Cache for 60s
+        });
         if (res.ok) {
             const data = await res.json();
             if (data.ok && data.lifetime_stats) {
@@ -41,63 +49,64 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                 else if (data.lifetime_stats.total_score > 10000) rank = "Sergeant";
             }
         }
+
+
+        return new ImageResponse(
+            (
+                <div
+                    style={{
+                        background: 'linear-gradient(to bottom right, #0F172A, #1E293B)',
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        position: 'relative',
+                    }}
+                >
+                    {/* Background Decorative Elements */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '-100px',
+                        right: '-100px',
+                        width: '400px',
+                        height: '400px',
+                        background: '#F97316',
+                        borderRadius: '50%',
+                        opacity: '0.1',
+                        filter: 'blur(100px)'
+                    }} />
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10 }}>
+                        <h2 style={{ fontSize: '32px', color: '#F97316', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }}>
+                            COMBAT RECORD
+                        </h2>
+                        <h1 style={{ fontSize: '84px', fontWeight: 'bold', margin: '0', textAlign: 'center', lineHeight: '1' }}>
+                            {playerName}
+                        </h1>
+                        <div style={{ display: 'flex', marginTop: '40px', gap: '60px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '24px', color: '#94A3B8', textTransform: 'uppercase' }}>K/D Ratio</span>
+                                <span style={{ fontSize: '64px', fontWeight: 'bold' }}>{kd}</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '24px', color: '#94A3B8', textTransform: 'uppercase' }}>Total Score</span>
+                                <span style={{ fontSize: '64px', fontWeight: 'bold' }}>{score}</span>
+                            </div>
+                        </div>
+                        <p style={{ marginTop: '50px', fontSize: '24px', color: '#64748B' }}>
+                            bf1942.online
+                        </p>
+                    </div>
+                </div>
+            ),
+            {
+                ...size,
+            }
+        );
     } catch (e) {
         console.error("OG Image Fetch Error", e);
     }
-
-    return new ImageResponse(
-        (
-            <div
-                style={{
-                    background: 'linear-gradient(to bottom right, #0F172A, #1E293B)',
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    position: 'relative',
-                }}
-            >
-                {/* Background Decorative Elements */}
-                <div style={{
-                    position: 'absolute',
-                    top: '-100px',
-                    right: '-100px',
-                    width: '400px',
-                    height: '400px',
-                    background: '#F97316',
-                    borderRadius: '50%',
-                    opacity: '0.1',
-                    filter: 'blur(100px)'
-                }} />
-
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10 }}>
-                    <h2 style={{ fontSize: '32px', color: '#F97316', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }}>
-                        COMBAT RECORD
-                    </h2>
-                    <h1 style={{ fontSize: '84px', fontWeight: 'bold', margin: '0', textAlign: 'center', lineHeight: '1' }}>
-                        {playerName}
-                    </h1>
-                    <div style={{ display: 'flex', marginTop: '40px', gap: '60px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <span style={{ fontSize: '24px', color: '#94A3B8', textTransform: 'uppercase' }}>K/D Ratio</span>
-                            <span style={{ fontSize: '64px', fontWeight: 'bold' }}>{kd}</span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <span style={{ fontSize: '24px', color: '#94A3B8', textTransform: 'uppercase' }}>Total Score</span>
-                            <span style={{ fontSize: '64px', fontWeight: 'bold' }}>{score}</span>
-                        </div>
-                    </div>
-                    <p style={{ marginTop: '50px', fontSize: '24px', color: '#64748B' }}>
-                        bf1942.online
-                    </p>
-                </div>
-            </div>
-        ),
-        {
-            ...size,
-        }
-    );
 }

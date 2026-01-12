@@ -21,6 +21,10 @@ import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, S
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Copy, Image as ImageIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 import { StatCard } from "@/components/stat-card"; // Import StatCard
 
@@ -311,10 +315,62 @@ export default function PlayerPageClient() {
           </div>
         </div>
 
-        <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
-          <Share2 className="h-4 w-4" />
-          Share Profile
-        </Button>
+        <div className="flex gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Get Signature
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Forum Signature</DialogTitle>
+                <DialogDescription>
+                  Use this dynamic image on forums or Discord. It updates automatically as you play.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="rounded-md border p-1 bg-black/50 overflow-hidden flex justify-center">
+                  <img
+                    src={`/sig/${encodeURIComponent(player_info.last_known_name)}`}
+                    alt="Signature Preview"
+                    className="max-w-full h-auto"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Direct Link</Label>
+                  <div className="flex gap-2">
+                    <Input readOnly value={`${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}`} />
+                    <Button size="icon" variant="outline" onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}`);
+                      toast({ title: "Copied!", variant: "success" });
+                    }}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>BBCode (Forums)</Label>
+                  <div className="flex gap-2">
+                    <Input readOnly value={`[img]${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}[/img]`} />
+                    <Button size="icon" variant="outline" onClick={() => {
+                      navigator.clipboard.writeText(`[img]${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}[/img]`);
+                      toast({ title: "Copied!", variant: "success" });
+                    }}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
+            <Share2 className="h-4 w-4" />
+            Share Profile
+          </Button>
+        </div>
       </div>
 
       {/* Advanced Stats: Skill Rating */}

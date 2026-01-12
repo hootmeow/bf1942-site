@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronLeft, Trophy } from "lucide-react";
+import { ChevronLeft, Trophy, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RoundData {
@@ -93,6 +93,33 @@ export default function RoundDetailPage() {
         return `${minutes}m ${remainingSeconds}s`;
     };
 
+    // --- Highlights Calculation ---
+    const highlights = useMemo(() => {
+        if (!data?.player_stats || data.player_stats.length === 0) return null;
+
+        const stats = data.player_stats;
+        const mvp = [...stats].sort((a, b) => (b.final_score || 0) - (a.final_score || 0))[0];
+        const deadliest = [...stats].sort((a, b) => (b.final_kills || 0) - (a.final_kills || 0))[0];
+        const survivor = [...stats].sort((a, b) => (a.final_deaths || 0) - (b.final_deaths || 0))[0]; // Least deaths
+
+        return { mvp, deadliest, survivor };
+    }, [data]);
+
+    const narrative = useMemo(() => {
+        if (!data) return "";
+        const { round } = data;
+        const winnerName = round.tickets1 > round.tickets2 ? "Axis" : "Allies";
+        const loserName = winnerName === "Axis" ? "Allies" : "Axis";
+        const ticketDiff = Math.abs(round.tickets1 - round.tickets2);
+
+        let intensity = "skirmish";
+        if (ticketDiff < 10) intensity = "nail-biting finish";
+        else if (ticketDiff < 50) intensity = "hard-fought battle";
+        else intensity = "decisive victory";
+
+        return `The ${winnerName} secured a ${intensity} on ${round.map_name}, defeating the ${loserName} by ${ticketDiff} tickets. The battle lasted for ${Math.floor(round.duration_seconds / 60)} minutes.`;
+    }, [data]);
+
     if (loading) {
         return (
             <div className="flex min-h-[200px] items-center justify-center gap-2 text-muted-foreground">
@@ -142,6 +169,46 @@ export default function RoundDetailPage() {
                     <StatCard title="Total Players" value={data.player_stats.length} icon={Users} />
                 </CardContent>
             </Card>
+
+            {/* Battle Highlights & Narrative */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="md:col-span-2 border-border/60 bg-muted/10">
+                    <CardHeader><CardTitle as="h3" className="text-lg">Battle Report</CardTitle></CardHeader>
+                    <CardContent>
+                        <p className="text-lg italic text-muted-foreground leading-relaxed">"{narrative}"</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-border/60">
+                    <CardHeader><CardTitle as="h3" className="text-lg">Match Highlights</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        {highlights?.mvp && (
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-yellow-500/10 text-yellow-500 rounded-full"><Trophy className="h-4 w-4" /></div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase">MVP</p>
+                                    <Link href={`/player/${encodeURIComponent(highlights.mvp.last_known_name || "")}`} className="font-bold hover:underline">
+                                        {highlights.mvp.last_known_name}
+                                    </Link>
+                                    <span className="text-xs ml-2 opacity-70">({highlights.mvp.final_score} Score)</span>
+                                </div>
+                            </div>
+                        )}
+                        {highlights?.deadliest && (
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-500/10 text-red-500 rounded-full"><Target className="h-4 w-4" /></div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase">Most Dangerous</p>
+                                    <Link href={`/player/${encodeURIComponent(highlights.deadliest.last_known_name || "")}`} className="font-bold hover:underline">
+                                        {highlights.deadliest.last_known_name}
+                                    </Link>
+                                    <span className="text-xs ml-2 opacity-70">({highlights.deadliest.final_kills} Kills)</span>
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Axis Card */}

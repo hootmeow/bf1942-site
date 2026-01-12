@@ -3,6 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { type LucideIcon } from "lucide-react";
 import {
   ActivitySquare, // Added for System Status
   BarChart,
@@ -44,7 +45,17 @@ import { guidesList } from "@/lib/guides-list";
 // --- REMOVED Image import ---
 
 // --- MODIFIED: Updated navItems data structure ---
-const navItems = [
+// --- Define NavItem type for safety ---
+interface NavItem {
+  label: string;
+  href: string;
+  icon?: LucideIcon;
+  overviewLabel?: string | null;
+  children?: NavItem[];
+}
+
+// --- MODIFIED: Updated navItems data structure ---
+const navItems: NavItem[] = [
   { label: "Dashboard", icon: Home, href: "/" },
   { label: "News & Updates", icon: Newspaper, href: "/news" },
   { label: "Server Info", icon: Server, href: "/servers" },
@@ -79,7 +90,14 @@ const navItems = [
       href: `/guide/${guide.slug}`,
     })),
   },
-  { label: "Community", icon: Users, href: "/community" },
+  {
+    label: "Community",
+    icon: Users,
+    href: "/community",
+    children: [
+      { label: "Clan Headquarters", href: "/clans" },
+    ]
+  },
   {
     label: "Tools",
     icon: Wrench,
@@ -234,13 +252,13 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
       <nav className="flex-1 space-y-1 px-3">
         <TooltipProvider delayDuration={0}>
           {navItems.map((item) => {
-            const Icon = item.icon;
+            const Icon = item.icon || ActivitySquare; // Fallback icon
 
             // --- 1. Collapsed View (Icons Only) ---
             if (collapsed) {
               const link = (
                 <Link
-                  key={item.href}
+                  key={item.label} // Use label as key
                   href={item.href}
                   onClick={onCloseMobile}
                   className={cn(
@@ -253,7 +271,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                 </Link>
               );
               return (
-                <Tooltip key={item.href}>
+                <Tooltip key={item.label}>
                   <TooltipTrigger asChild>{link}</TooltipTrigger>
                   <TooltipContent side="right">{item.label}</TooltipContent>
                 </Tooltip>
@@ -266,7 +284,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
             if (item.children && item.children.length > 0) { // Check if children exist
               const isChildActive = item.children.some(child => child.href === pathname);
               return (
-                <Accordion type="single" collapsible key={item.href} defaultValue={isChildActive || pathname === item.href ? item.label : undefined}>
+                <Accordion type="single" collapsible key={item.label} defaultValue={isChildActive || pathname === item.href ? item.label : undefined}>
                   <AccordionItem value={item.label} className="border-b-0">
                     <AccordionTrigger
                       className={cn(
@@ -355,7 +373,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
             const isActive = pathname === item.href;
             return (
               <Link
-                key={item.href}
+                key={item.label}
                 href={item.href}
                 onClick={onCloseMobile}
                 className={cn(
