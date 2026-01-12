@@ -529,7 +529,7 @@ export default function PlayerPageClient() {
         {/* Recent Rounds - Compact List */}
         <div className="h-full">
           {recent_rounds && recent_rounds.length > 0 ? (
-            <RecentRoundsList rounds={recent_rounds} />
+            <RecentRoundsList rounds={recent_rounds} playerName={player_info.last_known_name} />
           ) : (
             <Card className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
               <p className="text-muted-foreground text-sm">No recent rounds.</p>
