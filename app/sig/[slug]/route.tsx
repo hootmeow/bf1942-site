@@ -1,54 +1,40 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { SIG_BACKGROUNDS } from '../static-assets';
-
 export const runtime = 'nodejs';
-
 export async function GET(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
     try {
         const params = await props.params;
         const { slug } = params;
-
         // Default values
         let playerName = "Unknown";
         let score = "0";
-        let kdr = "0.00";
+        let globalRank = "# --";  // Changed from kdr
         let rank = "Private";
         let rankAbbr = "Pvt";
-
         // Decode Player Name
         if (slug) {
             const rawSlug = Array.isArray(slug) ? slug.join('/') : slug;
             playerName = decodeURIComponent(rawSlug);
         }
-
         // --- DYNAMIC API URL RESOLUTION ---
-        // Prioritize the user-configured production API IP
-        let profileUrl = `http://15.204.245.34:8000/api/v1/players/search/profile?name=${encodeURIComponent(playerName)}`;
-        let advancedUrl = `http://15.204.245.34:8000/api/v1/players/search/profile_advanced?name=${encodeURIComponent(playerName)}`;
-
-        // Use env var if specifically set (e.g. for local overrides)
-        const envApiUrl = process.env.API_URL ? process.env.API_URL.replace(/\/+$/, "") : "";
-        if (envApiUrl) {
-            profileUrl = `${envApiUrl}/players/search/profile?name=${encodeURIComponent(playerName)}`;
-            advancedUrl = `${envApiUrl}/players/search/profile_advanced?name=${encodeURIComponent(playerName)}`;
-        }
-
+        // Use env var (configured in .env.local), fallback to localhost
+        const envApiUrl = process.env.API_URL 
+            ? process.env.API_URL.replace(/\/+$/, "") 
+            : "http://127.0.0.1:8000/api/v1";
+        const profileUrl = `${envApiUrl}/players/search/profile?name=${encodeURIComponent(playerName)}`;
+        const advancedUrl = `${envApiUrl}/players/search/profile_advanced?name=${encodeURIComponent(playerName)}`;
         let debugStatus = "OK";
-
         try {
             console.log(`[Sig] Fetching profile: ${profileUrl}`);
-
             // Parallel Fetch
             const [profileRes, advancedRes] = await Promise.all([
                 fetch(profileUrl, { next: { revalidate: 60 } }),
                 fetch(advancedUrl, { next: { revalidate: 60 } })
             ]);
-
             if (profileRes.ok) {
                 const data = await profileRes.json();
                 if (data.ok && data.lifetime_stats) {
-                    kdr = data.lifetime_stats.overall_kdr?.toFixed(2) || "0.00";
                     // Fallback score if advanced fails or has no rating
                     score = data.lifetime_stats.total_score?.toLocaleString() || "0";
                 } else {
@@ -57,19 +43,22 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
             } else {
                 debugStatus = `Err${profileRes.status}`;
             }
-
             // Override score with Skill Rating if available (matches Profile Page)
             if (advancedRes.ok) {
                 const advData = await advancedRes.json();
-                if (advData.ok && advData.skill_rating && advData.skill_rating.score) {
-                    score = advData.skill_rating.score.toLocaleString();
+                if (advData.ok && advData.skill_rating) {
+                    if (advData.skill_rating.score) {
+                        score = advData.skill_rating.score.toLocaleString();
+                    }
                     if (advData.skill_rating.label) {
                         // Optional: Use rank label from advanced stats if preferred
                         rank = advData.skill_rating.label;
                     }
+                    if (advData.skill_rating.global_rank) {
+                        globalRank = `# ${advData.skill_rating.global_rank}`;
+                    }
                 }
             }
-
         } catch (e: any) {
             debugStatus = "FetchFail";
             if (e.cause && e.cause.code === 'ECONNREFUSED') {
@@ -77,10 +66,8 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
             }
             console.error("[Sig] Fetch Exception:", e);
         }
-
         // Pick random theme from all available backgrounds
         const randomBg = SIG_BACKGROUNDS[Math.floor(Math.random() * SIG_BACKGROUNDS.length)];
-
         // VISUAL ERROR INDICATOR
         const errorBadge = debugStatus !== "OK" ? (
             <div style={{
@@ -97,7 +84,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                 {debugStatus}
             </div>
         ) : null;
-
         return new ImageResponse(
             (
                 <div
@@ -117,7 +103,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                     }}
                 >
                     {errorBadge}
-
                     {/* BACKGROUND IMAGE (Randomized) */}
                     <img
                         src={randomBg}
@@ -131,7 +116,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                             zIndex: 0
                         }}
                     />
-
                     {/* Dark Overlay for readability - Maximum Contrast */}
                     <div style={{
                         position: 'absolute',
@@ -139,7 +123,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                         background: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.85) 100%)',
                         zIndex: 1
                     }} />
-
                     {/* Left Column - Name & Rank */}
                     <div style={{ display: 'flex', flexDirection: 'column', zIndex: 10, textShadow: '0 2px 4px #000000, 0 0 10px #000000' }}>
                         <div style={{ display: 'flex', fontSize: '24px', fontWeight: 'bold', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis' }}>
@@ -149,7 +132,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                             {rank}
                         </div>
                     </div>
-
                     {/* Right Column - Stats */}
                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center', zIndex: 10, textShadow: '0 2px 4px #000000, 0 0 10px #000000' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -158,11 +140,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                         </div>
                         <div style={{ display: 'flex', width: '1px', height: '30px', background: 'rgba(255,255,255,0.6)' }}></div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ display: 'flex', fontSize: '10px', color: '#ffffff', fontWeight: '600', opacity: 0.9 }}>K/D</span>
-                            <span style={{ display: 'flex', fontSize: '24px', fontWeight: 'bold', color: '#ea580c' }}>{kdr}</span>
+                            <span style={{ display: 'flex', fontSize: '10px', color: '#ffffff', fontWeight: '600', opacity: 0.9 }}>GLOBAL RANK</span>
+                            <span style={{ display: 'flex', fontSize: '24px', fontWeight: 'bold', color: '#ea580c' }}>{globalRank}</span>
                         </div>
                     </div>
-
                     {/* Bottom Right Watermark (Requested) */}
                     <div style={{
                         display: 'flex',

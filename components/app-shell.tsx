@@ -105,7 +105,6 @@ const navItems: NavItem[] = [
     children: [
       { label: "Map Alert Bot", href: "/tools/map-alert" },
       { label: "Linux Server", href: "/tools/linux-server" },
-      { label: "Server Config", href: "/tools/server-config" },
     ],
   },
 ];

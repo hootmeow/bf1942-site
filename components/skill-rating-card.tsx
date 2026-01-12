@@ -25,32 +25,32 @@ export interface SkillRating {
 
 const RANK_THRESHOLDS = [
     { label: "Private (E-1)", minScore: 0, icon: "e1.png" },
-    { label: "Private 1st Class (E-2)", minScore: 1350, icon: "e2.png" },
-    { label: "PFC (E-3)", minScore: 2000, icon: "e3.png" },
-    { label: "Corporal (E-4)", minScore: 2800, icon: "e4.png" },
-    { label: "Sergeant (E-5)", minScore: 3500, icon: "e5.png" },
-    { label: "Staff Sgt (E-6)", minScore: 4200, icon: "e6.png" },
-    { label: "SFC (E-7)", minScore: 5300, icon: "e7.png" },
-    { label: "Master Sgt (E-8)", minScore: 6300, icon: "e8_msg.png" },
-    { label: "1st Sgt (E-8)", minScore: 7000, icon: "e8_1sg.png" },
-    { label: "Sgt Major (E-9)", minScore: 7400, icon: "e9_sgm.png" },
-    { label: "CSM (E-9)", minScore: 7600, icon: "e9_csm.png" },
-    { label: "SMA (E-9)", minScore: 7800, icon: "e9_sma.png" },
-    { label: "Warrant Officer 1 (WO1)", minScore: 8000, icon: "w1.png" },
-    { label: "Chief Warrant Officer 2 (CW2)", minScore: 8150, icon: "w2.png" },
-    { label: "Chief Warrant Officer 3 (CW3)", minScore: 8300, icon: "w3.png" },
-    { label: "Chief Warrant Officer 4 (CW4)", minScore: 8450, icon: "w4.png" },
-    { label: "Chief Warrant Officer 5 (CW5)", minScore: 8600, icon: "w5.png" },
-    { label: "2nd Lt (O-1)", minScore: 8750, icon: "o1.png" },
-    { label: "1st Lt (O-2)", minScore: 9400, icon: "o2.png" },
-    { label: "Captain (O-3)", minScore: 10000, icon: "o3.png" },
-    { label: "Major (O-4)", minScore: 11200, icon: "o4.png" },
-    { label: "Lt Colonel (O-5)", minScore: 12400, icon: "o5.png" },
-    { label: "Colonel (O-6)", minScore: 13700, icon: "o6.png" },
-    { label: "Brigadier Gen (O-7)", minScore: 15300, icon: "o7.png" },
-    { label: "Major Gen (O-8)", minScore: 17000, icon: "o8.png" },
-    { label: "Lt Gen (O-9)", minScore: 18700, icon: "o9.png" },
-    { label: "General (O-10)", minScore: 25000, icon: "o10.png" }
+    { label: "Private 1st Class (E-2)", minScore: 7500, icon: "e2.png" },
+    { label: "PFC (E-3)", minScore: 10000, icon: "e3.png" },
+    { label: "Corporal (E-4)", minScore: 15000, icon: "e4.png" },
+    { label: "Sergeant (E-5)", minScore: 20000, icon: "e5.png" },
+    { label: "Staff Sgt (E-6)", minScore: 30000, icon: "e6.png" },
+    { label: "SFC (E-7)", minScore: 40000, icon: "e7.png" },
+    { label: "Master Sgt (E-8)", minScore: 50000, icon: "e8_msg.png" },
+    { label: "1st Sgt (E-8)", minScore: 60000, icon: "e8_1sg.png" },
+    { label: "Sgt Major (E-9)", minScore: 70000, icon: "e9_sgm.png" },
+    { label: "CSM (E-9)", minScore: 80000, icon: "e9_csm.png" },
+    { label: "SMA (E-9)", minScore: 90000, icon: "e9_sma.png" },
+    { label: "Warrant Officer 1 (WO1)", minScore: 100000, icon: "w1.png" },
+    { label: "Chief Warrant Officer 2 (CW2)", minScore: 110000, icon: "w2.png" },
+    { label: "Chief Warrant Officer 3 (CW3)", minScore: 120000, icon: "w3.png" },
+    { label: "Chief Warrant Officer 4 (CW4)", minScore: 130000, icon: "w4.png" },
+    { label: "Chief Warrant Officer 5 (CW5)", minScore: 140000, icon: "w5.png" },
+    { label: "2nd Lt (O-1)", minScore: 150000, icon: "o1.png" },
+    { label: "1st Lt (O-2)", minScore: 160000, icon: "o2.png" },
+    { label: "Captain (O-3)", minScore: 170000, icon: "o3.png" },
+    { label: "Major (O-4)", minScore: 180000, icon: "o4.png" },
+    { label: "Lt Colonel (O-5)", minScore: 190000, icon: "o5.png" },
+    { label: "Colonel (O-6)", minScore: 200000, icon: "o6.png" },
+    { label: "Brigadier Gen (O-7)", minScore: 215000, icon: "o7.png" },
+    { label: "Major Gen (O-8)", minScore: 230000, icon: "o8.png" },
+    { label: "Lt Gen (O-9)", minScore: 240000, icon: "o9.png" },
+    { label: "General (O-10)", minScore: 250000, icon: "o10.png" }
 ];
 
 export function getRankIcon(rankLabel: string): string {
@@ -123,11 +123,6 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                     <CardTitle as="h2" className="flex items-center gap-2">
                         <Swords className="h-5 w-5 text-primary" />
                         Player Rank
-                        {rating.global_rank && (
-                            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20">
-                                Global #{rating.global_rank}
-                            </Badge>
-                        )}
                     </CardTitle>
                     <TooltipProvider>
                         <Tooltip>

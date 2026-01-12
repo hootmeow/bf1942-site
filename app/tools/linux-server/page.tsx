@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Github, AlertTriangle, Terminal, ShieldCheck, Server, Settings } from "lucide-react";
+import { Github, AlertTriangle, Terminal, ShieldCheck, Server, Settings, Monitor, Download } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const metadata: Metadata = {
@@ -45,34 +45,32 @@ const howToJsonLd = {
     {
       "@type": "HowToStep",
       "name": "Download the Script",
-      "text": "Download the setup script using wget: wget https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/ubuntu/24.0.3_setup.sh",
+      "text": "Download the setup script using wget.",
       "url": "https://www.bf1942.online/tools/linux-server#installation"
     },
     {
       "@type": "HowToStep",
       "name": "Make Executable",
-      "text": "Make the script executable: chmod +x 24.0.3_setup.sh",
+      "text": "Make the script executable with chmod +x.",
       "url": "https://www.bf1942.online/tools/linux-server#installation"
     },
     {
       "@type": "HowToStep",
       "name": "Run the Script",
-      "text": "Run the script with sudo privileges: sudo ./24.0.3_setup.sh",
+      "text": "Run the script with sudo privileges.",
       "url": "https://www.bf1942.online/tools/linux-server#installation"
     }
   ]
 };
-// --- END ADDED SECTION ---
 
 export default function LinuxServerPage() {
   return (
     <div className="space-y-6">
-      {/* --- ADDED: Script tag for JSON-LD --- */}
+      {/* --- JSON-LD --- */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
       />
-      {/* --- END ADDED SECTION --- */}
 
       {/* Header */}
       <div>
@@ -99,12 +97,12 @@ export default function LinuxServerPage() {
         <CardHeader>
           <CardTitle as="h2">Automated Setup Script</CardTitle>
           <CardDescription>
-            This solution installs the legacy 32-bit Battlefield 1942 dedicated server using a dedicated,
-            non-privileged account, following best security practices.
+            This solution installs the legacy 32-bit Battlefield 1942 dedicated server on modern 64-bit Linux systems using a dedicated,
+            non-privileged account.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-8">
-          
+        <CardContent className="space-y-10">
+
           {/* Overview Section */}
           <section className="space-y-4">
             <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
@@ -133,6 +131,13 @@ export default function LinuxServerPage() {
                 </div>
               </li>
               <li className="flex gap-3 rounded-md border border-border/60 p-3">
+                <Monitor className="h-5 w-5 shrink-0 text-primary" />
+                <div>
+                  <span className="font-medium text-foreground">Optional Manager</span>
+                  <p className="text-sm text-muted-foreground">Option to install BFSMD (Battlefield Server Manager Daemon) for remote management.</p>
+                </div>
+              </li>
+              <li className="flex gap-3 rounded-md border border-border/60 p-3 sm:col-span-2">
                 <Terminal className="h-5 w-5 shrink-0 text-primary" />
                 <div>
                   <span className="font-medium text-foreground">Systemd Integration</span>
@@ -173,7 +178,7 @@ export default function LinuxServerPage() {
           </section>
 
           {/* Installation Section */}
-          <section id="installation" className="space-y-4">
+          <section id="installation" className="space-y-6">
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
               🚀 Usage
             </h2>
@@ -184,24 +189,186 @@ export default function LinuxServerPage() {
                 Commands must be run by a user with <strong>sudo</strong> privileges.
               </AlertDescription>
             </Alert>
-            
-            <div className="mt-4">
-              <h3 className="mb-2 text-lg font-medium">1️⃣ Download and Run</h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                This install script is for <strong>Ubuntu 24.0.3</strong> servers. For other distros, please check the repository and adjust the file links accordingly.
-              </p>
-              <CodeBlock>
-                wget https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/ubuntu/24.0.3_setup.sh
-                <br />
-                chmod +x 24.0.3_setup.sh
-                <br />
-                sudo ./24.0.3_setup.sh
-              </CodeBlock>
+
+            <p className="text-sm text-muted-foreground">
+              You have two options for installation. <strong>We recommend using the BFSMD version</strong> for the ease of server and player management.
+              The installation scripts below are for <strong>Ubuntu 24.0.3 LTS</strong>. For other distros, select the appropriate install script from the project and adjust the file names accordingly.
+            </p>
+
+            <div className="space-y-6">
+              {/* Option A */}
+              <div className="rounded-lg border border-border/60 bg-card/50 p-4">
+                <h3 className="mb-2 text-lg font-semibold flex items-center gap-2">
+                  Option A: Install with BFSMD (Recommended)
+                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs text-primary">Best Choice</span>
+                </h3>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  This version installs the Battlefield Server Manager Daemon, allowing you to manage the server remotely via the Windows client.
+                </p>
+                <ul className="mb-4 list-disc pl-5 text-sm text-muted-foreground">
+                  <li>You will be prompted to set a password for the service user.</li>
+                  <li>Choose between <strong>BF Remote Manager v2.0 (Final)</strong> or <strong>v2.01 (Patched)</strong>.</li>
+                  <li>Automatically configure UFW firewall rules (optional).</li>
+                </ul>
+
+                <CodeBlock>
+                  curl -O https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/ubuntu/24.0.3_bfsmd_setup.sh
+                  <br />
+                  chmod +x 24.0.3_bfsmd_setup.sh
+                  <br />
+                  sudo ./24.0.3_bfsmd_setup.sh
+                </CodeBlock>
+              </div>
+
+              {/* Option B */}
+              <div className="rounded-lg border border-border/60 bg-card/50 p-4">
+                <h3 className="mb-2 text-lg font-semibold">Option B: Standard Installation</h3>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  This version installs the base dedicated server without the remote manager daemon.
+                </p>
+                <CodeBlock>
+                  curl -# -O https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/ubuntu/24.0.3_setup.sh
+                  <br />
+                  chmod +x 24.0.3_setup.sh
+                  <br />
+                  sudo ./24.0.3_setup.sh
+                </CodeBlock>
+              </div>
             </div>
           </section>
 
+          {/* Setup Guide with Images */}
+          <section className="space-y-8 border-t border-border/60 pt-8">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
+              Server Manager Configuration (BFSMD Only)
+            </h2>
+
+            {/* Step 2 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">2️⃣ Connect to Server Manager</h3>
+              <p className="text-sm text-muted-foreground">
+                If you installed the BFSMD version, open your Battlefield Server Manager client (Windows) and connect using your server's IP address.
+              </p>
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-sm font-mono">Default Username : <span className="text-foreground font-bold">bf1942</span></p>
+                <p className="text-sm font-mono">Default Password : <span className="text-foreground font-bold">battlefield</span></p>
+              </div>
+              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
+                <img
+                  src="/images/server/bfsmd_password.png"
+                  alt="BFSMD Login Screen"
+                  className="w-full max-w-2xl bg-black"
+                />
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">3️⃣ Set Server IP</h3>
+              <p className="text-sm text-muted-foreground">
+                Once connected, navigate to the IP settings tab. You must set the server's IP address explicitly under the <strong>IP Address</strong> field to ensure it binds correctly to your network interface.
+              </p>
+              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
+                <img
+                  src="/images/server/bfsmd_ip_addr.png"
+                  alt="Set Server IP Address"
+                  className="w-full max-w-2xl bg-black"
+                />
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">4️⃣ Secure Remote Console & Admin</h3>
+              <p className="text-sm text-muted-foreground">
+                Go to the <strong>Remote Console</strong> or <strong>Admin</strong> tab. Change the default passwords immediately to something secure. This protects your server from unauthorized rcon commands.
+              </p>
+              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
+                <img
+                  src="/images/server/bfsmd_remoteconsole.png"
+                  alt="Remote Console Security"
+                  className="w-full max-w-2xl bg-black"
+                />
+              </div>
+            </div>
+
+            {/* Step 5 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">5️⃣ Set a Default Map</h3>
+              <p className="text-sm text-muted-foreground">
+                The server requires a map rotation to start effectively. Go to the <strong>Maps</strong> list and add at least one map to the rotation to set it as the default map.
+              </p>
+              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
+                <img
+                  src="/images/server/bfsmd_setmap.png"
+                  alt="Set Default Map"
+                  className="w-full max-w-2xl bg-black"
+                />
+              </div>
+            </div>
+
+            {/* Step 6 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">6️⃣ Server Manager Users</h3>
+              <p className="text-sm text-muted-foreground">
+                For security, do not keep using the default account.
+              </p>
+              <ul className="list-decimal pl-5 text-sm text-muted-foreground">
+                <li>Change the password for the <code>bf1942</code> user from the default (<code>battlefield</code>).</li>
+                <li>Create new accounts for any other admins if needed.</li>
+                <li>Ensure you set appropriate permissions for each user.</li>
+              </ul>
+              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
+                <img
+                  src="/images/server/bfsmd_adminpassword.png"
+                  alt="Set Admin Users"
+                  className="w-full max-w-2xl bg-black"
+                />
+              </div>
+            </div>
+
+            {/* Patches */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">🛠️ Applying Patches</h3>
+              <p className="text-sm text-muted-foreground">
+                The <Link href="https://github.com/hootmeow/bf1942-linux/tree/main/patches" className="text-primary hover:underline">patches folder</Link> contains Python scripts to fix various server bugs. Please see individual patch files for additional details and instructions.
+              </p>
+            </div>
+          </section>
+
+          {/* Downloads */}
+          <section className="space-y-4 border-t border-border/60 pt-8">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
+              <Download className="h-5 w-5 text-primary" /> Server Manager Downloads (Windows)
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              <li>
+                <Button variant="outline" className="w-full justify-start h-auto py-4" asChild>
+                  <Link href="https://files.bf1942.online/server/toolsBFRemoteManager20final-patched.zip">
+                    <Download className="mr-2 h-4 w-4" />
+                    <div className="text-left">
+                      <div className="font-semibold">BFRM Version 2.0</div>
+                      <div className="text-xs text-muted-foreground">Standard Release</div>
+                    </div>
+                  </Link>
+                </Button>
+              </li>
+              <li>
+                <Button variant="outline" className="w-full justify-start h-auto py-4" asChild>
+                  <Link href="https://files.bf1942.online/server/tools/BFRemoteManager201-patched.zip">
+                    <Download className="mr-2 h-4 w-4" />
+                    <div className="text-left">
+                      <div className="font-semibold">BFRM Version 2.1 (Patched)</div>
+                      <div className="text-xs text-muted-foreground">Recommended</div>
+                    </div>
+                  </Link>
+                </Button>
+              </li>
+            </ul>
+          </section>
+
           {/* Supported Distributions */}
-          <section className="space-y-4">
+          <section className="space-y-4 border-t border-border/60 pt-8">
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
               🧪 Supported Distributions
             </h2>
@@ -234,9 +401,10 @@ export default function LinuxServerPage() {
             <h2 className="text-lg font-semibold tracking-tight text-foreground">
               📜 License
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Scripts released under the MIT License. All Battlefield 1942 game assets remain © Electronic Arts Inc.
-            </p>
+            <div className="text-sm text-muted-foreground">
+              <p>Scripts released under the MIT License. All Battlefield 1942 game assets remain © Electronic Arts Inc.</p>
+              <p className="mt-2">Author: <Link href="https://github.com/hootmeow" className="text-primary hover:underline">OWLCAT</Link></p>
+            </div>
           </section>
 
         </CardContent>

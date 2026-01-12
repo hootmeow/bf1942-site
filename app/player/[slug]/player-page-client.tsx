@@ -306,9 +306,17 @@ export default function PlayerPageClient() {
             <User className="h-8 w-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              {player_info.last_known_name}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                {player_info.last_known_name}
+              </h1>
+              {/* GLOBAL RANK BADGE */}
+              {advancedProfile?.skill_rating?.global_rank && (
+                <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
+                  Global #{advancedProfile.skill_rating.global_rank}
+                </div>
+              )}
+            </div>
             <p className="mt-1 text-muted-foreground">
               Last seen: {new Date(player_info.last_seen).toLocaleString()}
             </p>
