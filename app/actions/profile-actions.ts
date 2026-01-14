@@ -86,3 +86,25 @@ export async function updateProfileSettings(prevState: ProfileUpdateState | null
         // If we want to be safe: revalidatePath('/player/[slug]')
     }
 }
+
+export async function getMyLinkedProfile(userId: string): Promise<string | null> {
+    try {
+        const client = await pool.connect();
+        const res = await client.query(
+            "SELECT last_known_name FROM players WHERE linked_user_id = $1 LIMIT 1",
+            [userId]
+        );
+        client.release();
+
+        if (res.rows.length > 0) {
+            const name = res.rows[0].last_known_name;
+            // The frontend expects the name, we can encode it or just return name
+            // Returning the name allows the frontend to encodeURIComponent(name)
+            return name;
+        }
+        return null;
+    } catch (e) {
+        console.error("Failed to fetch linked profile:", e);
+        return null;
+    }
+}

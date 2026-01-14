@@ -11,6 +11,10 @@ import {
     DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import Link from "next/link"
+import { User, Settings, LogOut } from "lucide-react"
+import { useEffect, useState } from "react"
+import { getMyLinkedProfile } from "@/app/actions/profile-actions"
 
 export function SignIn() {
     return (
@@ -21,6 +25,16 @@ export function SignIn() {
 }
 
 export function UserNav({ user }: { user: any }) {
+    const [profileSlug, setProfileSlug] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (user?.id) {
+            getMyLinkedProfile(user.id).then((slug) => {
+                if (slug) setProfileSlug(slug);
+            });
+        }
+    }, [user]);
+
     if (!user) return <SignIn />
 
     return (
@@ -41,16 +55,32 @@ export function UserNav({ user }: { user: any }) {
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>
-                    Profile (Coming Soon)
+
+                <DropdownMenuItem asChild disabled={!profileSlug}>
+                    {profileSlug ? (
+                        <Link href={`/player/${profileSlug}`} className="cursor-pointer">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>My Profile</span>
+                        </Link>
+                    ) : (
+                        <span className="text-muted-foreground cursor-not-allowed flex items-center">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Profile (Not Linked)</span>
+                        </span>
+                    )}
                 </DropdownMenuItem>
+
                 <DropdownMenuItem disabled>
-                    Settings
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                     <form action={logoutAction} className="w-full">
-                        <button className="w-full text-left">Log out</button>
+                        <button className="w-full text-left flex items-center">
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Log out
+                        </button>
                     </form>
                 </DropdownMenuItem>
             </DropdownMenuContent>
