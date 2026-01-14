@@ -4,7 +4,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, X, Shield } from "lucide-react"
 
-async function getPendingClaims() {
+// Define Interface
+interface ClaimRequest {
+    claim_id: string
+    player_id: number
+    discord_username: string
+    created_at: Date
+    player_name: string
+}
+
+async function getPendingClaims(): Promise<ClaimRequest[]> {
     const res = await pool.query(`
     SELECT c.claim_id, c.player_id, c.discord_username, c.created_at, p.last_known_name as player_name
     FROM claim_requests c
