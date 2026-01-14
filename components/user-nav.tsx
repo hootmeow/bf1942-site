@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import Link from "next/link"
 import { User, Settings, LogOut } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { getMyLinkedProfile } from "@/app/actions/profile-actions"
 
 export function SignIn() {
@@ -26,6 +26,7 @@ export function SignIn() {
 
 export function UserNav({ user }: { user: any }) {
     const [profileSlug, setProfileSlug] = useState<string | null>(null);
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         if (user?.id) {
@@ -75,13 +76,13 @@ export function UserNav({ user }: { user: any }) {
                     <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <form action={logoutAction} className="w-full">
-                        <button className="w-full text-left flex items-center">
-                            <LogOut className="mr-2 h-4 w-4" />
-                            Log out
-                        </button>
-                    </form>
+                <DropdownMenuItem
+                    className="cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-50"
+                    onClick={() => startTransition(() => { logoutAction() })}
+                    disabled={isPending}
+                >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
