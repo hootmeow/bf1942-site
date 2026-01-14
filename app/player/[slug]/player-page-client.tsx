@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Card,
@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/stat-card";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
 import { submitClaimRequest } from "@/app/actions/claim-actions";
+import { loginAction } from "@/app/actions/auth-actions";
 import { PlayerFlag } from "@/components/player-flag";
 
 // --- Interfaces ---
@@ -134,7 +135,7 @@ function formatPlaytime(totalSeconds: number): string {
 
 // function getFlagEmoji... removed
 
-function ClaimProfileDialog({ playerId, playerName, isVerified }: { playerId: number, playerName: string, isVerified: boolean }) {
+function ClaimProfileDialog({ playerId, playerName, isVerified, isLoggedIn }: { playerId: number, playerName: string, isVerified: boolean, isLoggedIn: boolean }) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -158,6 +159,17 @@ function ClaimProfileDialog({ playerId, playerName, isVerified }: { playerId: nu
         <ShieldCheck className="h-4 w-4" />
         Verified
       </Button>
+    )
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <form action={loginAction}>
+        <Button variant="secondary" size="sm" className="gap-2">
+          <Shield className="h-4 w-4" />
+          Claim Profile
+        </Button>
+      </form>
     )
   }
 
@@ -515,6 +527,7 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             playerId={player_info.player_id}
             playerName={player_info.last_known_name}
             isVerified={player_info.is_verified ?? false}
+            isLoggedIn={!!currentUser}
           />
 
           {/* Edit Profile Button (Only if owner) */}
