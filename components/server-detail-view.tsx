@@ -254,7 +254,11 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         <CardHeader><CardTitle as="h2">Server Details</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard title="Address" value={`${server_info.ip}:${server_info.current_game_port}`} icon={Server} />
-          <StatCard title="Players" value={`${server_info.current_player_count} / ${server_info.current_max_players}`} icon={Users} />
+          <StatCard
+            title="Players"
+            value={`${scoreboard.length > 0 ? scoreboard.length : server_info.current_player_count} / ${server_info.current_max_players}`}
+            icon={Users}
+          />
           <StatCard title="Current Map" value={server_info.current_map || "N/A"} icon={Map} />
           <StatCard title="Time Remaining" value={roundTime} icon={Clock} />
         </CardContent>
