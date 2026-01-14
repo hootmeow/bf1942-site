@@ -38,7 +38,7 @@ export async function updateProfileSettings(prevState: ProfileUpdateState | null
     const validated = ProfileUpdateSchema.safeParse(rawData)
 
     if (!validated.success) {
-        return { error: validated.error.errors[0].message }
+        return { error: validated.error.issues[0].message }
     }
 
     const { playerId, bio, isoCountryCode, customTitle, displayDiscordId } = validated.data
