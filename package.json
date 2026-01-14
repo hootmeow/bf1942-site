@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
+    "@types/pg": "^8.11.0",
     "@types/react": "^18.2.74",
     "@types/react-dom": "^18.2.22",
     "autoprefixer": "^10.4.18",
