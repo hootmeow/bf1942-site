@@ -28,27 +28,54 @@ async function getServerData(slug: string) {
   }
 }
 
+// Helper to get Global Rank (Client-side mirror logic)
+async function getGlobalRank(serverId: number) {
+  try {
+    const res = await fetch(`${API_BASE}/servers/rankings?limit=250`, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.ok || !Array.isArray(data.rankings)) return null;
+
+    const rankItem = data.rankings.find((r: any) => r.server_id === serverId);
+    return rankItem ? rankItem.rank : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // FIX: Next.js 15/16 requirement: params is a Promise
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params; // <--- This was the missing await causing 'undefined'
+  const { slug } = await params;
   const data = await getServerData(slug);
 
   if (!data || !data.ok) {
     return { title: "Server Not Found | BF1942 Online" };
   }
 
-  const { current_server_name, current_map, current_player_count, current_max_players } = data.server_info;
+  const { server_id, current_server_name, current_map, current_player_count, current_max_players } = data.server_info;
+
+  // Attempt to fetch rank
+  const rank = await getGlobalRank(server_id);
+  const rankStr = rank ? `(Rank #${rank})` : "";
+  const title = rank ? `${rankStr} ${current_server_name} | BF1942 Online` : `${current_server_name} | BF1942 Online`;
 
   return {
-    title: `${current_server_name} | BF1942 Online`,
-    description: `Join ${current_server_name} playing ${current_map}. ${current_player_count}/${current_max_players} players online now.`,
+    title: title,
+    description: `Join ${current_server_name} on ${current_map}. ${current_player_count}/${current_max_players} soldiers deployed. ${rank ? `Rated #${rank} globally based on activity.` : ""}`,
     openGraph: {
-      title: current_server_name || "BF1942 Server",
-      description: `Playing ${current_map} with ${current_player_count} players.`,
+      title: title,
+      description: `Playing ${current_map} - ${current_player_count}/${current_max_players} online. View live stats, scoreboard, and more.`,
+      images: [
+        {
+          url: '/opengraph-image', // Fallback or dynamic generator if you have one
+          width: 1200,
+          height: 630,
+        }
+      ]
     }
   };
 }

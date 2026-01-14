@@ -15,6 +15,62 @@ export interface Article {
  */
 export const articles: Article[] = [
   {
+    slug: 'global-sitrep-1',
+    title: 'Global Sitrep #1: Ranks, Maps & Visual Upgrades',
+    category: 'Update',
+    date: 'January 14, 2026',
+    excerpt: 'Detailed Activity Rankings, new Profile Stats, and major visual enhancements across the site. Here is what we have been working on.',
+    content: (
+      <div className="space-y-6 text-base text-muted-foreground">
+        <p className="text-lg text-foreground">
+          Command has issued a new update for the network. Over the last week, we deployed significant
+          upgrades to how we track server activity, visualize global conflict, and present critical intel.
+        </p>
+
+        <div>
+          <h3 className="mb-2 text-xl font-semibold text-foreground">Top-Tier Server Rankings</h3>
+          <p className="mb-2">
+            The <strong>Server Directory</strong> has been upgraded with a sophisticated new ranking algorithm.
+            Servers are now ranked globally based on total man-hours played over the last 7 days.
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>Global Rank Badge:</strong> Every server page now proudly displays its global rank.</li>
+            <li><strong>Activity Sorting:</strong> You can sort the server list by "Server Rank" to see the true heavyweights of the community.</li>
+            <li><strong>Inclusive Tracking:</strong> Even quieter fronts are tracked and ranked, ensuring every server gets its standing.</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-xl font-semibold text-foreground">🏆 New Leaderboard System</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>Ranked Stats:</strong> Compete for the top spot! View the Top 100 players by Career XP.</li>
+            <li><strong>Multiple Timeframes:</strong> Check who is dominating All Time, Weekly (Last 7 Days), and Monthly (Last 30 Days).</li>
+            <li><strong>Rank System Explained:</strong> A new dedicated page breaking down exactly how XP is calculated (Combats vs. Objective vs. Service).</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-xl font-semibold text-foreground">👤 Player Profile 2.0</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>New Stats:</strong> Added Win Rate, Avg. Kills/Round, and Avg. Deaths/Round and more detailed player stats.</li>
+            <li><strong>Activity Graphs:</strong> Visual charts for 24h Activity and Last 7 Days playtime.</li>
+            <li><strong>Playstyle Insights:</strong> See your Top Maps, Top Servers, and Team Preference (Axis vs. Allies).</li>
+            <li><strong>Battle Buddies:</strong> Find out who you play with the most! 🤝</li>
+            <li><strong>Rank History:</strong> A timeline of your recent promotions.</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-xl font-semibold text-foreground">✨ Other Improvements</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>Navigation:</strong> Reorganized menu with "Ranked Stats" at the top for easy access.</li>
+            <li><strong>Visuals:</strong> Cleaner layout for "Recent Rounds" and "Personal Bests".</li>
+          </ul>
+        </div>
+      </div>
+    )
+  },
+  {
     slug: 'bf1942-online-2-0',
     title: 'Bf1942.Online 2.0 is Here!',
     category: 'News',

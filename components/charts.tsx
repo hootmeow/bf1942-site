@@ -58,38 +58,51 @@ function ActivityAreaChart({
   const chartData = processChartData(data);
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <AreaChart data={chartData}>
+    <ResponsiveContainer width="100%" height={280}>
+      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.8} />
+            <stop offset="5%" stopColor={color} stopOpacity={0.6} />
             <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
+          {/* Neon Glow Filter */}
+          <filter id="glow" height="200%" width="200%" x="-50%" y="-50%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+            <feFlood floodColor={color} floodOpacity="0.5" result="color" />
+            <feComposite in="color" in2="blur" operator="in" result="shadow" />
+            <feMerge>
+              <feMergeNode in="shadow" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.4} />
         <XAxis
           dataKey="label"
           stroke="hsl(var(--muted-foreground))"
           tickLine={false}
           axisLine={false}
           fontSize={12}
-          minTickGap={30} // Prevents labels from crowding
+          minTickGap={40}
+          tickMargin={10}
         />
         <YAxis
           stroke="hsl(var(--muted-foreground))"
           tickLine={false}
           axisLine={false}
           fontSize={12}
-          width={30}
+          width={35}
+          tickMargin={10}
         />
         <ReTooltip
-          cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 4' }}
+          cursor={{ stroke: color, strokeWidth: 2, strokeDasharray: '4 4' }}
           contentStyle={{
             backgroundColor: "hsl(var(--card))",
             borderRadius: 8,
             border: "1px solid hsl(var(--border))",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
           }}
+          itemStyle={{ color: "hsl(var(--foreground))" }}
           labelFormatter={(label) => label.includes(':') ? `Time: ${label} UTC` : label}
         />
         <Area
@@ -99,7 +112,9 @@ function ActivityAreaChart({
           stroke={color}
           fillOpacity={1}
           fill={`url(#${gradientId})`}
-          strokeWidth={2}
+          strokeWidth={3}
+          filter="url(#glow)"
+          animationDuration={1500}
         />
       </AreaChart>
     </ResponsiveContainer>

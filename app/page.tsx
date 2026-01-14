@@ -109,67 +109,56 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2 py-6 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground lg:text-5xl">
-          Welcome Back to the Battlefield
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Here is your live, global battlefield report. All stats are updated in real-time.
-        </p>
-      </div>
+      {/* --- Command Center Hero --- */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card/80 via-card/50 to-background p-6 shadow-sm sm:p-10">
+        {/* Ambient Glow */}
+        <div className="absolute -right-20 -top-20 h-[300px] w-[300px] rounded-full bg-primary/10 blur-[100px]" />
 
-      {/* --- Top Metrics Grid --- */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Current Active Players</CardTitle>
-              <div className="mt-2 text-2xl font-semibold text-foreground">{data.current_active_players}</div>
+        <div className="relative z-10 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
+              </span>
+              <span className="font-mono text-sm font-medium tracking-wider text-green-500">
+                SYSTEM ONLINE // MONITORING ACTIVE FRONTS
+              </span>
             </div>
-            <div className="rounded-full bg-primary/10 p-3 text-primary">
-              <Activity className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Live across all servers.
-            </p>
-          </CardContent>
-        </Card>
 
-        <Card className="border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Total Players Seen</CardTitle>
-              <div className="mt-2 text-2xl font-semibold text-foreground">{data.total_players_seen}</div>
+            <div className="space-y-1">
+              <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-7xl">
+                {data.current_active_players}
+                <span className="ml-2 text-2xl font-light text-muted-foreground sm:text-3xl">Soldiers Deployed</span>
+              </h1>
+              <p className="max-w-[600px] text-lg text-muted-foreground">
+                Live telemetry from {topServers.length} active battlefields worldwide.
+              </p>
             </div>
-            <div className="rounded-full bg-primary/10 p-3 text-primary">
-              <Users className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Total unique players recorded.
-            </p>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle as="h2" className="text-sm font-medium text-muted-foreground">Total Rounds Processed</CardTitle>
-              <div className="mt-2 text-2xl font-semibold text-foreground">{data.total_rounds_processed}</div>
+          <div className="flex flex-wrap gap-x-8 gap-y-4 rounded-xl border border-border/40 bg-background/40 p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-muted-foreground">Total Players</p>
+                <p className="font-mono text-xl font-bold">{data.total_players_seen.toLocaleString()}</p>
+              </div>
             </div>
-            <div className="rounded-full bg-primary/10 p-3 text-primary">
-              <BarChart className="h-5 w-5" />
+            <div className="h-10 w-px bg-border/60 hidden sm:block"></div>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
+                <Activity className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-muted-foreground">Rounds Logged</p>
+                <p className="font-mono text-xl font-bold">{data.total_rounds_processed.toLocaleString()}</p>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Total rounds logged by the tracker.
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* --- Compact Top Servers --- */}
@@ -213,44 +202,17 @@ export default function Page() {
       </Card>
 
       {/* --- Charts Grid --- */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6">
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle as="h2">Global Player Concurrency</CardTitle>
-            <CardDescription>Average player count by hour (UTC).</CardDescription>
+            <CardTitle as="h2">Player Activity History</CardTitle>
+            <CardDescription>Live player counts across all servers over time.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <PlayerActivityChart
               data24h={data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_heatmap_7d}
             />
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle as="h2">Popular Maps (7 Days)</CardTitle>
-            <CardDescription>Top 10 most played maps by round.</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-[308px] overflow-y-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Map</TableHead>
-                    <TableHead className="text-right">Rounds Played</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.popular_maps_7_days.map((map) => (
-                    <TableRow key={map.map_name}>
-                      <TableCell className="font-medium text-foreground">{map.map_name}</TableCell>
-                      <TableCell className="text-right">{map.rounds_played}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
           </CardContent>
         </Card>
       </div>

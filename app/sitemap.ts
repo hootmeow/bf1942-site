@@ -2,7 +2,6 @@ import { MetadataRoute } from 'next'
 import { modsList } from '@/lib/mods-list'
 import { articles } from '@/lib/articles'
 
-// --- FIX: Explicitly define the type for changeFrequency ---
 type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -13,14 +12,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const modEntries: MetadataRoute.Sitemap = modsList.map((mod) => ({
     url: `${siteUrl}/mods/${mod.slug}`,
     lastModified: new Date(),
-    changeFrequency: 'monthly' as ChangeFrequency, // <-- FIX
+    changeFrequency: 'monthly' as ChangeFrequency,
   }));
 
   // Dynamic News Pages
   const newsEntries: MetadataRoute.Sitemap = articles.map((article) => ({
     url: `${siteUrl}/news/${article.slug}`,
     lastModified: new Date(article.date),
-    changeFrequency: 'yearly' as ChangeFrequency, // <-- FIX
+    changeFrequency: 'yearly' as ChangeFrequency,
   }));
 
   // Static Pages
@@ -48,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
     url: `${siteUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'weekly' as ChangeFrequency, // <-- FIX
+    changeFrequency: 'weekly' as ChangeFrequency,
     priority: route === '/' ? 1.0 : 0.8,
   }));
 
