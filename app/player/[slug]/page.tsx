@@ -35,8 +35,12 @@ export async function generateMetadata(
   }
 }
 
+import { auth } from "@/lib/auth";
+
 // This is the default export for the page
-export default function PlayerPage() {
+export default async function PlayerPage() {
+  const session = await auth();
+
   // We keep the Suspense boundary here, wrapping the client component
   return (
     <Suspense fallback={
@@ -45,7 +49,7 @@ export default function PlayerPage() {
         <p>Loading profile...</p>
       </div>
     }>
-      <PlayerPageClient />
+      <PlayerPageClient currentUser={session?.user} />
     </Suspense>
   );
 }

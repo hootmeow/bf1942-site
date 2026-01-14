@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2 } from "lucide-react";
+import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck } from "lucide-react";
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
 import { Button } from "@/components/ui/button";
@@ -25,17 +25,24 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, Image as ImageIcon } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
-import { StatCard } from "@/components/stat-card"; // Import StatCard
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatCard } from "@/components/stat-card";
+import { EditProfileDialog } from "@/components/edit-profile-dialog";
+import { submitClaimRequest } from "@/app/actions/claim-actions";
 
-// --- Interfaces (Updated to match API) ---
+// --- Interfaces ---
 interface PlayerInfo {
-  id: number;
+  player_id: number;
   last_known_name: string;
   last_seen: string;
+  is_verified?: boolean;
+  iso_country_code?: string | null;
+  bio?: string | null;
+  custom_title?: string | null;
+  display_discord_id?: boolean;
+  linked_user_id?: string | null;
 }
 
-// Correcting the Interface completely to match the USER'S JSON
 interface LifetimeStats {
   total_rounds_played: number;
   total_score: number;
@@ -52,7 +59,6 @@ interface LifetimeStats {
   kills_per_round: number;
   deaths_per_round: number;
   win_rate?: number;
-  // Legacy support if needed, but likely these are the real keys now
   unique_servers_played?: number;
   unique_maps_played?: number;
 }
@@ -63,6 +69,7 @@ interface PersonalBests {
   best_round_kpm: number;
   best_kill_round_id?: number;
 }
+
 interface PlaystyleHabits {
   top_maps: { map_name: string; map_play_count: number }[];
   top_servers: { current_server_name: string; server_play_count: number }[];
@@ -70,6 +77,7 @@ interface PlaystyleHabits {
   activity_last_7_days: { date: string; rounds: number }[];
   playtime_by_hour_utc: number[];
 }
+
 interface RecentRound {
   round_id: number;
   server_name: string;
@@ -79,6 +87,7 @@ interface RecentRound {
   final_kills: number;
   final_deaths: number;
 }
+
 interface PlayerProfileApiResponse {
   ok: boolean;
   player_info: PlayerInfo;
@@ -88,7 +97,7 @@ interface PlayerProfileApiResponse {
   recent_rounds: RecentRound[] | null;
 }
 
-// --- New Advanced Stats Interfaces ---
+// --- New Advanced Stats Components ---
 import { SkillRatingCard, SkillRating } from "@/components/skill-rating-card";
 import { BattleBuddiesList, RelatedPlayer } from "@/components/battle-buddies-list";
 import { RankHistoryList, RankHistoryItem } from "@/components/rank-history-list";
@@ -113,19 +122,89 @@ function formatPlaytime(totalSeconds: number): string {
   return `${hours}h ${minutes}m`;
 }
 
-function getTeamName(team: 1 | 2): string {
-  return team === 1 ? "Axis" : "Allies";
+function getFlagEmoji(countryCode: string) {
+  if (!countryCode) return "";
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
 }
 
-// StatCard removed (imported)
+function ClaimProfileDialog({ playerId, playerName, isVerified }: { playerId: number, playerName: string, isVerified: boolean }) {
+  const { toast } = useToast()
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
+  async function onClaim() {
+    setLoading(true)
+    const res = await submitClaimRequest(playerId, playerName)
+    setLoading(false)
 
+    if (res.ok) {
+      setOpen(false)
+      toast({ title: "Request Sent", description: res.message, variant: "success" })
+    } else {
+      toast({ title: "Error", description: res.error, variant: "destructive" })
+    }
+  }
+
+  if (isVerified) {
+    return (
+      <Button variant="ghost" size="sm" className="gap-2 text-green-500 hover:text-green-600 hover:bg-green-500/10 cursor-default">
+        <ShieldCheck className="h-4 w-4" />
+        Verified Owner
+      </Button>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="secondary" size="sm" className="gap-2">
+          <Shield className="h-4 w-4" />
+          Claim Profile
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Claim This Profile</DialogTitle>
+          <DialogDescription>
+            Are you the real <strong>{playerName}</strong>?
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-sm text-muted-foreground">
+            Claiming this profile will link it to your Discord account.
+            This allows you to:
+          </p>
+          <ul className="text-sm list-disc list-inside space-y-1 ml-2">
+            <li>Show a "Verified" badge on your stats.</li>
+            <li>Prevent others from impersonating you.</li>
+            <li>Join Clans and participate in events.</li>
+          </ul>
+          <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-md">
+            <p className="text-xs text-yellow-500 font-medium">
+              Note: An admin will manually verify this claim. You may be asked to confirm via Discord.
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={onClaim} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Submit Claim
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 // --- Main Page Component ---
-export default function PlayerPageClient() {
+export default function PlayerPageClient({ currentUser }: { currentUser?: any }) {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug;
-
   const playerName = slug ? decodeURIComponent(slug) : undefined;
   const { toast } = useToast();
 
@@ -176,14 +255,12 @@ export default function PlayerPageClient() {
           advancedData = await res.json();
         }
 
-        // Fetch Global Rank (Client-side workaround since backend doesn't provide it yet)
         let globalRankVal = undefined;
         try {
           const lbRes = await fetch('/api/v1/leaderboard');
           if (lbRes.ok) {
             const lbData = await lbRes.json();
             if (lbData.ok && Array.isArray(lbData.leaderboard)) {
-              // Find player in leaderboard
               const foundStat = lbData.leaderboard.find((p: any) => p.name.toLowerCase() === playerName?.toLowerCase());
               if (foundStat) {
                 globalRankVal = foundStat.rank;
@@ -194,7 +271,6 @@ export default function PlayerPageClient() {
           console.error("Failed to fetch leaderboard for rank", lbErr);
         }
 
-        // Merge Data
         if (advancedData && advancedData.ok) {
           if (globalRankVal && advancedData.skill_rating) {
             advancedData.skill_rating.global_rank = globalRankVal;
@@ -273,6 +349,7 @@ export default function PlayerPageClient() {
     );
   }
 
+  // DESTRUCTURING HAPPENS HERE, SAFE AFTER CHECKS
   const { player_info, lifetime_stats, personal_bests, playstyle_habits, recent_rounds } = profile;
 
   return (
@@ -300,16 +377,30 @@ export default function PlayerPageClient() {
         }}
       />
       {/* Player Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <User className="h-8 w-8" />
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
+            {player_info.iso_country_code ? (
+              <span className="text-4xl" role="img" aria-label={`Flag of ${player_info.iso_country_code}`}>
+                {getFlagEmoji(player_info.iso_country_code)}
+              </span>
+            ) : (
+              <User className="h-8 w-8" />
+            )}
           </div>
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                 {player_info.last_known_name}
               </h1>
+
+              {/* Custom Title Badge */}
+              {player_info.custom_title && (
+                <span className="inline-flex items-center rounded-md bg-yellow-500/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-500/20">
+                  {player_info.custom_title}
+                </span>
+              )}
+
               {/* GLOBAL RANK BADGE */}
               {advancedProfile?.skill_rating?.global_rank && (
                 <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
@@ -317,9 +408,26 @@ export default function PlayerPageClient() {
                 </div>
               )}
             </div>
-            <p className="mt-1 text-muted-foreground">
-              Last seen: {new Date(player_info.last_seen).toLocaleString()}
-            </p>
+
+            {/* Bio / Status */}
+            {player_info.bio && (
+              <p className="mt-2 text-sm italic text-muted-foreground max-w-2xl">
+                "{player_info.bio}"
+              </p>
+            )}
+
+            {/* Metadata Row */}
+            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+              <span>Last seen: {new Date(player_info.last_seen).toLocaleString()}</span>
+
+              {/* Discord Display */}
+              {player_info.display_discord_id && player_info.is_verified && (
+                <span className="flex items-center gap-1 text-indigo-400">
+                  <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 1-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.315-9.673-3.546-13.66a.07.07 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" /></svg>
+                  Linked Discord
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -378,6 +486,23 @@ export default function PlayerPageClient() {
             <Share2 className="h-4 w-4" />
             Share Profile
           </Button>
+
+          <ClaimProfileDialog
+            playerId={player_info.player_id}
+            playerName={player_info.last_known_name}
+            isVerified={player_info.is_verified ?? false}
+          />
+
+          {/* Edit Profile Button (Only if owner) */}
+          {currentUser?.id === player_info.linked_user_id && (
+            <EditProfileDialog
+              playerId={player_info.player_id}
+              initialBio={player_info.bio}
+              initialCountry={player_info.iso_country_code}
+              initialTitle={player_info.custom_title}
+              initialDiscordVisible={player_info.display_discord_id}
+            />
+          )}
         </div>
       </div>
 
@@ -388,7 +513,6 @@ export default function PlayerPageClient() {
         </div>
       )}
 
-      {/* Lifetime Stats */}
       {/* Lifetime Stats */}
       <h3 className="text-xl font-semibold tracking-tight">Lifetime Stats</h3>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">

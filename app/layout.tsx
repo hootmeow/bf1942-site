@@ -46,7 +46,11 @@ export const metadata: Metadata = {
 };
 // --- END MODIFIED METADATA ---
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+import { auth } from "@/lib/auth"; // Import auth
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
@@ -72,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         {/* --- END ADDED SECTION --- */}
         <ThemeProvider>
-          <AppShell>{children}</AppShell>
+          <AppShell user={session?.user}>{children}</AppShell>
         </ThemeProvider>
       </body>
     </html>

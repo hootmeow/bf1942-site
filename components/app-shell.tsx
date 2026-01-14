@@ -109,13 +109,16 @@ const navItems: NavItem[] = [
   },
 ];
 
+import { UserNav } from "@/components/user-nav"; // Import UserNav
+
 interface AppShellProps {
   children: React.ReactNode;
+  user?: any; // Add user prop
 }
 
-import { ToastProvider } from "@/components/ui/toast-simple"; // Add import
+import { ToastProvider } from "@/components/ui/toast-simple";
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, user }: AppShellProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
@@ -136,7 +139,7 @@ export function AppShell({ children }: AppShellProps) {
       <div className="flex min-h-screen bg-background text-foreground">
         <SiteSidebar isCollapsed={isCollapsed} isMobileOpen={isMobileOpen} onCloseMobile={closeMobile} />
         <div className="flex min-h-screen flex-1 flex-col">
-          <AppHeader onToggleSidebar={toggleSidebar} />
+          <AppHeader onToggleSidebar={toggleSidebar} user={user} />
           <main className="flex-1 bg-background px-4 pb-10 pt-6 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">{children}</div>
           </main>
@@ -160,9 +163,10 @@ export function AppShell({ children }: AppShellProps) {
 
 interface AppHeaderProps {
   onToggleSidebar: () => void;
+  user?: any; // Add user prop
 }
 
-function AppHeader({ onToggleSidebar }: AppHeaderProps) {
+function AppHeader({ onToggleSidebar, user }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border/60 bg-background/90 backdrop-blur">
       <div className="flex items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -191,23 +195,9 @@ function AppHeader({ onToggleSidebar }: AppHeaderProps) {
             <Button variant="ghost" size="icon" className="h-9 w-9 hidden" aria-label="Settings">
               <Settings className="h-4 w-4" />
             </Button>
-            <div className="hidden"> {/* Wrapped DropdownMenu in a hidden div */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="User menu">
-                    <User className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href="/login">Login</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/signup">Sign Up</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+
+            {/* User Navigation Component */}
+            <UserNav user={user} />
 
           </div>
         </div>
