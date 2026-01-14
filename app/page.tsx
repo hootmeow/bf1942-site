@@ -12,6 +12,7 @@ import { PlayerActivityChart } from "@/components/charts";
 import { cn } from "@/lib/utils";
 import { GlobalMetrics, GlobalMetricsSchema } from "@/lib/schemas";
 import { Server } from "@/components/server-directory"; // Import Server type
+import { ServerSummaryCard } from "@/components/server-summary-card";
 
 interface MetricsApiResponse {
   ok: boolean;
@@ -24,10 +25,10 @@ interface ServerListResponse {
 }
 
 // Mirror the sort order from components/server-directory.tsx
-const SERVER_STATUS_ORDER: Record<string, number> = { 
-  ACTIVE: 1, 
-  EMPTY: 2, 
-  OFFLINE: 3 
+const SERVER_STATUS_ORDER: Record<string, number> = {
+  ACTIVE: 1,
+  EMPTY: 2,
+  OFFLINE: 3
 };
 
 export default function Page() {
@@ -42,7 +43,7 @@ export default function Page() {
         // 1. Fetch Global Metrics
         const metricsRes = await fetch("/api/v1/metrics/global");
         if (!metricsRes.ok) throw new Error("Failed to fetch metrics");
-        
+
         const metricsJson: MetricsApiResponse = await metricsRes.json();
         if (metricsJson.ok) {
           const parsed = GlobalMetricsSchema.safeParse(metricsJson);
@@ -64,16 +65,16 @@ export default function Page() {
             const sorted = serversJson.servers.sort((a, b) => {
               const statusA = SERVER_STATUS_ORDER[a.current_state] ?? 99;
               const statusB = SERVER_STATUS_ORDER[b.current_state] ?? 99;
-              
+
               if (statusA !== statusB) {
                 return statusA - statusB;
               }
-              
+
               return b.current_player_count - a.current_player_count;
             });
 
-            // Take the top 5
-            setTopServers(sorted.slice(0, 5));
+            // Take the top 12
+            setTopServers(sorted.slice(0, 12));
           }
         }
 
@@ -176,7 +177,7 @@ export default function Page() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle as="h2" className="flex items-center gap-2">
-              <ServerIcon className="h-5 w-5 text-primary" /> 
+              <ServerIcon className="h-5 w-5 text-primary" />
               Top Active Servers
             </CardTitle>
             <CardDescription>Live leaderboard of the most populated battlefields.</CardDescription>
@@ -187,47 +188,21 @@ export default function Page() {
             </Link>
           </Button>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-6">Status</TableHead>
-                <TableHead>Server Name</TableHead>
-                <TableHead className="hidden md:table-cell">Map</TableHead>
-                <TableHead className="text-right pr-6">Players</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {topServers.length > 0 ? (
-                topServers.map((server) => (
-                  <TableRow key={server.server_id} className="group cursor-pointer hover:bg-muted/50">
-                    <TableCell className="pl-6 py-3">
-                       <Badge variant={server.current_state === "ACTIVE" ? "success" : "secondary"} className="text-[10px] px-2 h-5">
-                        {server.current_state}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-3 font-medium text-foreground">
-                      <Link href={`/servers/${server.server_id}`} className="block group-hover:underline group-hover:text-primary transition-colors">
-                        {server.current_server_name || "Unknown Server"}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell py-3 text-muted-foreground">
-                      {server.current_map || "N/A"}
-                    </TableCell>
-                    <TableCell className="text-right pr-6 py-3 font-mono">
-                      {server.current_player_count}/{server.current_max_players}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                    No active servers found at this moment.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <CardContent className="p-4 sm:p-6 bg-transparent border-0">
+          {topServers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {topServers.map(server => (
+                <ServerSummaryCard key={server.server_id} server={server as any} />
+              ))}
+              {/* Note: casting as any or updating interfaces if slight mismatch between Server and LiveServer types. 
+                   Usually they should match if using same API response logic. */}
+            </div>
+          ) : (
+            <div className="py-12 text-center text-muted-foreground border border-dashed rounded-lg bg-card/50">
+              <ServerIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No active fronts detected.</p>
+            </div>
+          )}
         </CardContent>
         {/* Mobile-only view all button */}
         <div className="flex items-center justify-center p-4 sm:hidden border-t border-border/60">

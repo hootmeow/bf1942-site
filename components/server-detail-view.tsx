@@ -88,6 +88,29 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
     fetchMetrics();
   }, [slug]);
 
+  const [rankData, setRankData] = useState<{ rank: number; activity_hours_7d: number } | null>(null);
+
+  useEffect(() => {
+    async function fetchRank() {
+      if (!server_info?.server_id) return;
+      try {
+        const res = await fetch("/api/v1/servers/rankings?limit=100");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.rankings) {
+            const found = data.rankings.find((r: any) => r.server_id === server_info.server_id);
+            if (found) {
+              setRankData({ rank: found.rank, activity_hours_7d: found.activity_hours_7d });
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch rank", e);
+      }
+    }
+    fetchRank();
+  }, [server_info?.server_id]);
+
   useEffect(() => {
     async function fetchRecentRounds() {
       if (!server_info?.server_id) return;
@@ -175,6 +198,17 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
             </>
           ) : (
             <span>Live scoreboard and information</span>
+          )}
+          {/* New Rank Badge */}
+          {rankData && (
+            <>
+              <span>•</span>
+              <span className="flex items-center gap-1.5 text-amber-400 font-mono font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                <span className="text-xs">GLOBAL RANK</span>
+                <span>#{rankData.rank}</span>
+                <span className="text-xs font-normal text-muted-foreground ml-1 hidden sm:inline">({rankData.activity_hours_7d}h activity)</span>
+              </span>
+            </>
           )}
         </div>
       </div>

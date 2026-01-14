@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,7 @@ export interface Server {
   last_successful_poll: string | null;
 }
 
-type SortKey = "name" | "map" | "players" | "status";
+type SortKey = "name" | "map" | "players" | "status" | "activity";
 type SortDirection = "asc" | "desc";
 
 interface SortConfig {
@@ -40,7 +40,7 @@ interface SortConfig {
   direction: SortDirection;
 }
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 30; // Increased items per page
 
 export function ServerDirectory({ initialServers }: { initialServers: Server[] }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,6 +48,29 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
     key: "status",
     direction: "asc",
   });
+  const [activityRanks, setActivityRanks] = useState<Record<number, { rank: number; activity_hours_7d: number }>>({});
+
+  // Fetch Activity Rankings
+  useEffect(() => {
+    async function fetchRankings() {
+      try {
+        const res = await fetch("/api/v1/servers/rankings?limit=100");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.rankings) {
+            const map: Record<number, { rank: number; activity_hours_7d: number }> = {};
+            data.rankings.forEach((r: any) => {
+              map[r.server_id] = { rank: r.rank, activity_hours_7d: r.activity_hours_7d };
+            });
+            setActivityRanks(map);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch server rankings", e);
+      }
+    }
+    fetchRankings();
+  }, []);
 
   const sortedServers = useMemo(() => {
     let sortableServers = [...initialServers];
@@ -86,6 +109,14 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
           aValue = a.current_player_count;
           bValue = b.current_player_count;
           break;
+        case "activity":
+          // Sort by rank (lower is better) or hours (higher is better)
+          // If no rank, treat as infinity (bottom)
+          const rankA = activityRanks[a.server_id]?.rank ?? 9999;
+          const rankB = activityRanks[b.server_id]?.rank ?? 9999;
+          if (rankA < rankB) return sortConfig.direction === "asc" ? -1 : 1;
+          if (rankA > rankB) return sortConfig.direction === "asc" ? 1 : -1;
+          return 0;
       }
 
       if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
@@ -94,7 +125,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
     });
 
     return sortableServers;
-  }, [initialServers, sortConfig]);
+  }, [initialServers, sortConfig, activityRanks]);
 
   // Pagination logic
   const totalPages = Math.ceil(sortedServers.length / ITEMS_PER_PAGE);
@@ -144,85 +175,80 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
           <TableHeader>
             <TableRow>
               <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => requestSort("status")}
-                  className="-ml-4"
-                >
+                <Button variant="ghost" size="sm" onClick={() => requestSort("status")} className="-ml-4">
                   Status {getSortIcon("status")}
                 </Button>
               </TableHead>
               <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => requestSort("name")}
-                  className="-ml-4"
-                >
+                <Button variant="ghost" size="sm" onClick={() => requestSort("activity")} className="-ml-4">
+                  Server Rank {getSortIcon("activity")}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button variant="ghost" size="sm" onClick={() => requestSort("name")} className="-ml-4">
                   Server Name {getSortIcon("name")}
                 </Button>
               </TableHead>
-              <TableHead>Address</TableHead>
+              <TableHead className="hidden md:table-cell">Address</TableHead>
               <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => requestSort("map")}
-                  className="-ml-4"
-                >
+                <Button variant="ghost" size="sm" onClick={() => requestSort("map")} className="-ml-4">
                   Map {getSortIcon("map")}
                 </Button>
               </TableHead>
-              <TableHead>Gametype</TableHead>
+              <TableHead className="hidden lg:table-cell">Gametype</TableHead>
               <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => requestSort("players")}
-                  className="-ml-4"
-                >
+                <Button variant="ghost" size="sm" onClick={() => requestSort("players")} className="-ml-4">
                   Players {getSortIcon("players")}
                 </Button>
               </TableHead>
-              <TableHead className="w-[80px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedServers.map((server) => (
-              <TableRow key={server.server_id}>
-                <TableCell>
-                  <Badge variant={getStatusVariant(server.current_state)}>
-                    {server.current_state}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-medium text-foreground">
-                  <div className="flex items-center gap-2">
-                    <ServerFlag ip={server.ip} />
-                    <Link
-                      href={`/servers/${server.server_id}`}
-                      className="hover:underline truncate"
-                    >
-                      {server.current_server_name || "Unknown"}
-                    </Link>
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {server.ip}:{server.current_game_port}
-                </TableCell>
-                <TableCell>{server.current_map || "N/A"}</TableCell>
-                <TableCell>{server.current_gametype || "N/A"}</TableCell>
-                <TableCell>
-                  {server.current_player_count} /{" "}
-                  {server.current_max_players || 64}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button size="sm" disabled={server.current_state !== "ACTIVE"}>
-                    Join
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {paginatedServers.map((server) => {
+              const rankData = activityRanks[server.server_id];
+              return (
+                <TableRow key={server.server_id}>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(server.current_state)}>
+                      {server.current_state}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {rankData ? (
+                      <div className="flex flex-col items-start leading-none gap-1">
+                        <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary">
+                          #{rankData.rank}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">{rankData.activity_hours_7d}h</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium text-foreground">
+                    <div className="flex items-center gap-2">
+                      <ServerFlag ip={server.ip} />
+                      <Link
+                        href={`/servers/${server.server_id}`}
+                        className="hover:underline truncate max-w-[200px] md:max-w-[300px] block"
+                        title={server.current_server_name || ""}
+                      >
+                        {server.current_server_name || "Unknown"}
+                      </Link>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs font-mono">
+                    {server.ip}:{server.current_game_port}
+                  </TableCell>
+                  <TableCell className="truncate max-w-[150px]">{server.current_map || "N/A"}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{server.current_gametype || "N/A"}</TableCell>
+                  <TableCell>
+                    {server.current_player_count} /{" "}
+                    {server.current_max_players || 64}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </CardContent>

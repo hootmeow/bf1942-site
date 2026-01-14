@@ -7,6 +7,8 @@ export interface GeoData {
     country: string;
     city: string;
     region: string;
+    latitude: number;
+    longitude: number;
     timezone: {
         id: string; // e.g. America/Los_Angeles
         abbr: string; // e.g. PST
@@ -51,7 +53,7 @@ export function useServerGeo(ip: string) {
         async function fetchGeo() {
             setLoading(true);
             try {
-                const res = await fetch(`https://ipwho.is/${ip}?fields=country,country_code,city,region,timezone`);
+                const res = await fetch(`https://ipwho.is/${ip}?fields=country,country_code,city,region,latitude,longitude,timezone`);
                 if (res.ok) {
                     const result = await res.json();
                     // ipwho.is returns a 'success' field too, but let's check basic validity
@@ -61,6 +63,8 @@ export function useServerGeo(ip: string) {
                             country_code: result.country_code,
                             city: result.city,
                             region: result.region,
+                            latitude: result.latitude,
+                            longitude: result.longitude,
                             timezone: result.timezone
                         };
 
