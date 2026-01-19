@@ -28,7 +28,7 @@ export default function TosPrivacyPage() {
         <h1 className="text-4xl font-bold tracking-tight text-foreground">
           Terms of Service & Privacy Policy
         </h1>
-        <p className="mt-2 text-muted-foreground">Last Updated: August 14, 2025</p>
+        <p className="mt-2 text-muted-foreground">Last Updated: January 14, 2026</p>
       </div>
 
       <div className="space-y-12">
@@ -97,8 +97,9 @@ export default function TosPrivacyPage() {
             <ProseContent>
               <H3>Information We Collect</H3>
               <p>
-                We do not require user registration or collect personally identifiable information, with
-                the exception of data that is publicly broadcast by game servers.
+                We do not require user registration to view general statistics. However, if you choose to
+                log in via Discord to claim a player profile or access personalized features, we collect
+                specific account information.
               </p>
               <ul className="list-disc space-y-2 pl-5">
                 <li>
@@ -107,18 +108,27 @@ export default function TosPrivacyPage() {
                   within the context of the game.
                 </li>
                 <li>
+                  <strong>Account Information (Discord):</strong> If you choose to log in, we authenticate your
+                  identity using Discord. We collect and store your Discord Username, Discord User ID, and
+                  Public Avatar to link your account to your player profile. We may receive your email address
+                  for verification purposes, but we do not share it or use it for marketing.
+                </li>
+                <li>
                   <strong>Anonymous Technical Data:</strong> Our web server and service providers (like Cloudflare)
                   may collect standard, anonymous data, such as IP addresses and browser types, for
                   security, analytics, and performance monitoring.
                 </li>
               </ul>
               <H3>Use of Cookies</H3>
-              <p>This Site does not use cookies for tracking or advertising purposes.</p>
+              <p>
+                We use essential functional cookies to manage your login session and security (e.g., preventing
+                CSRF attacks). We do not use cookies for third-party tracking or advertising.
+              </p>
               <H3>Your Rights (GDPR)</H3>
               <p>
                 If you are a resident of the European Economic Area (EEA), you have certain data
-                protection rights. If you wish for your public game alias and associated statistics to be
-                removed from this Site, please contact us via our official Discord server.
+                protection rights. You may request the deletion of your claimed account data at any time
+                by contacting us via our official Discord server. Public game statistics may remain as historical data.
               </p>
               <H3>Children's Privacy (COPPA)</H3>
               <p>
