@@ -209,12 +209,11 @@ export default function Page() {
         <Card className="border-border/60">
           <CardHeader>
             <CardTitle as="h2">Player Activity History</CardTitle>
-            <CardDescription>Live player counts across all servers over time.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <PlayerActivityChart
               data24h={data.global_concurrency_heatmap_24h}
-              data7d={data.global_concurrency_heatmap_7d}
+              data7d={data.global_concurrency_timeline_7d || data.global_concurrency_heatmap_7d}
             />
           </CardContent>
         </Card>

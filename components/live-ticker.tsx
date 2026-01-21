@@ -56,8 +56,8 @@ export function LiveTicker({ className }: { className?: string }) {
                             items.push({
                                 id: `leader-${server.server_id}`,
                                 type: "player_action",
-                                message: `ACE PILOT: ${topScorer.player_name} (${topScorer.score} pts) on ${server.current_map}`,
-                                icon: Trophy,
+                                message: `${topScorer.player_name} [${topScorer.kills} K / ${topScorer.deaths} D]`, // Convert to K/D
+                                icon: Crosshair, // Unified Icon
                             });
                         }
 
@@ -72,18 +72,18 @@ export function LiveTicker({ className }: { className?: string }) {
                                 items.push({
                                     id: `active-${p.player_name}-${server.server_id}`,
                                     type: "player_action",
-                                    message: `DEPLOYED: ${p.player_name} [${p.kills} K / ${p.deaths} D]`,
-                                    icon: Users,
+                                    message: `${p.player_name} [${p.kills} K / ${p.deaths} D]`,
+                                    icon: Crosshair, // Unified Icon
                                 });
                             });
                         }
                     } else {
-                        // Fallback if no scoreboard data (e.g. empty server or API fail): show server name briefly
+                        // Fallback if no scoreboard
                         items.push({
                             id: `server-${server.server_id}`,
                             type: "active_match",
                             message: `ACTIVE FRONT: ${server.current_map} on ${server.current_server_name}`,
-                            icon: Globe,
+                            icon: Crosshair, // Unified Icon
                         });
                     }
                 });
@@ -95,13 +95,13 @@ export function LiveTicker({ className }: { className?: string }) {
                         id: "system-idle-1",
                         type: "recent_event",
                         message: "LONG RANGE SCANNERS ACTIVE... MONITORING FREQUENCIES...",
-                        icon: Globe,
+                        icon: Crosshair, // Unified Icon
                     });
                     items.push({
                         id: "system-idle-2",
                         type: "recent_event",
                         message: "NO ACTIVE CONFLICTS DETECTED. STANDBY.",
-                        icon: MapIcon,
+                        icon: Crosshair, // Unified Icon
                     });
                 }
 

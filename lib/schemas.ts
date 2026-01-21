@@ -19,6 +19,16 @@ export const GlobalMetricsSchema = z.object({
     popular_maps_7_days: z.array(PopularMapSchema),
     global_concurrency_heatmap_24h: z.array(z.number()),
     global_concurrency_heatmap_7d: z.array(z.number()),
+    global_concurrency_timeline_7d: z.array(z.object({
+        timestamp: z.string(),
+        total: z.number(),
+        conquest: z.number(),
+        coop: z.number(),
+        ctf: z.number(),
+        other: z.number(),
+        avg_ping: z.number().nullable().optional(),
+    })).optional().nullable(),
+    debug_timeline_error: z.string().optional().nullable(),
 });
 
 export type GlobalMetrics = z.infer<typeof GlobalMetricsSchema>;

@@ -1,9 +1,10 @@
 "use client";
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area, Label, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, LabelList } from "recharts";
+import { ResponsiveContainer, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, AreaChart, Area, Legend, ComposedChart, Label, LabelList, ReferenceLine } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PieChart, Pie, Cell, LineChart, Line, BarChart, Bar } from "recharts";
 
-// --- Mock Data (unchanged) ---
+// --- Mock / Static Data (unchanged) ---
 const uptimeData = Array.from({ length: 7 }).map((_, index) => ({
   day: `Day ${index + 1}`,
   uptime: 92 + Math.round(Math.sin(index) * 3 + index),
@@ -31,91 +32,160 @@ const popularMapsData = [
 ];
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--secondary))"];
 
-// --- Helper: Process Data ---
-const processChartData = (data: number[]) => {
-  if (!data) return [];
-  const isDaily = data.length <= 7;
-  return data.map((value, index) => ({
-    label: isDaily ? `Day ${index + 1}` : `${index.toString().padStart(2, '0')}:00`,
-    activity: value,
-  }));
+// --- Helper: Process Data for Visibility ---
+const processChartDataSimple = (data: any[], period: "24h" | "7d") => {
+  if (!data || data.length === 0) return { chartData: [], stats: { min: 0, max: 0, avg: 0 }, isHourly7d: false };
+
+  // Detect interval type for formatting
+  const isHourly7d = period === "7d" && data.length > 24;
+
+  const processedData = data.map((item, index) => {
+    let label = "";
+    let total = 0;
+    let originalTimestamp = null;
+
+    // Handle both Object (enriched) and Number (simple) input
+    if (typeof item === 'object' && item !== null && 'total' in item) {
+      total = item.total || 0;
+      originalTimestamp = item.timestamp; // keep raw if available
+    } else if (typeof item === 'number') {
+      total = item;
+    }
+
+    // LABEL LOGIC
+    if (originalTimestamp) {
+      // We have a real timestamp from backend
+      const d = new Date(originalTimestamp);
+      if (period === '24h') {
+        label = d.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+      } else if (isHourly7d) {
+        label = d.toISOString(); // Formatter handles display
+      } else {
+        label = d.toLocaleDateString([], { weekday: 'short' });
+      }
+    } else {
+      // Fallback: Index based
+      if (period === '24h') {
+        // If manual 24h array (0..23)
+        label = `${index}:00`;
+      } else {
+        // 7d simple array
+        label = `Day ${index + 1}`;
+      }
+    }
+
+    return {
+      label,
+      total: total,
+      value: total // alias for simple chart
+    };
+  });
+
+  const values = processedData.map(d => d.total);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const sum = values.reduce((a, b) => a + b, 0);
+  const avg = Math.round(sum / values.length) || 0;
+
+  return { chartData: processedData, stats: { min, max, avg }, isHourly7d };
 };
 
 /**
- * UPDATED: ActivityAreaChart
- * Now uses an AreaChart with a gradient fill.
- * Accepts 'color' and 'gradientId' to visually distinguish between tabs.
+ * SIMPLIFIED ActivityAreaChart
+ * Renders a single robust area for "Total Players".
+ * No stacking, no ping, no complexity. Guaranteed visibility.
  */
 function ActivityAreaChart({
   data,
-  color = "hsl(var(--primary))",
+  period,
+  color = "hsl(var(--primary))", // Purple
   gradientId
 }: {
-  data: number[];
+  data: any[];
+  period: "24h" | "7d";
   color?: string;
   gradientId: string;
 }) {
-  const chartData = processChartData(data);
+  const { chartData, stats, isHourly7d } = processChartDataSimple(data, period);
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height={320}>
+      <AreaChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={color} stopOpacity={0.6} />
             <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
-          {/* Neon Glow Filter */}
-          <filter id="glow" height="200%" width="200%" x="-50%" y="-50%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
-            <feFlood floodColor={color} floodOpacity="0.5" result="color" />
-            <feComposite in="color" in2="blur" operator="in" result="shadow" />
-            <feMerge>
-              <feMergeNode in="shadow" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.4} />
+
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.2} />
+
         <XAxis
           dataKey="label"
           stroke="hsl(var(--muted-foreground))"
           tickLine={false}
           axisLine={false}
-          fontSize={12}
-          minTickGap={40}
+          fontSize={11}
+          minTickGap={30}
           tickMargin={10}
+          interval={isHourly7d ? 23 : 'preserveStartEnd'}
+          tickFormatter={(val) => {
+            if (isHourly7d) {
+              const d = new Date(val);
+              return d.toLocaleDateString([], { weekday: 'short' });
+            }
+            return val;
+          }}
         />
+
+        {/* Increased width to 45 to prevent truncation of 3-digit numbers */}
         <YAxis
           stroke="hsl(var(--muted-foreground))"
           tickLine={false}
           axisLine={false}
-          fontSize={12}
-          width={35}
+          fontSize={11}
+          width={45}
           tickMargin={10}
+          domain={[0, 'auto']}
         />
+
         <ReTooltip
-          cursor={{ stroke: color, strokeWidth: 2, strokeDasharray: '4 4' }}
+          cursor={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1, strokeDasharray: '4 4' }}
           contentStyle={{
-            backgroundColor: "hsl(var(--card))",
+            backgroundColor: "hsl(var(--card)/0.95)",
             borderRadius: 8,
             border: "1px solid hsl(var(--border))",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
+            backdropFilter: "blur(4px)"
           }}
-          itemStyle={{ color: "hsl(var(--foreground))" }}
-          labelFormatter={(label) => label.includes(':') ? `Time: ${label} UTC` : label}
+          labelStyle={{ color: "hsl(var(--muted-foreground))", marginBottom: "0.5rem", fontSize: "12px" }}
+          itemStyle={{ fontSize: "12px", padding: "1px 0" }}
+          labelFormatter={(label) => {
+            if (isHourly7d) {
+              const d = new Date(label);
+              return d.toLocaleString([], { weekday: 'short', hour: 'numeric', hour12: true });
+            }
+            return label;
+          }}
         />
+
+        <Legend
+          verticalAlign="top"
+          height={36}
+          iconType="circle"
+          wrapperStyle={{ paddingBottom: "10px", fontSize: "12px", opacity: 0.8 }}
+        />
+
+        {/* SINGLE ROBUST AREA */}
         <Area
           type="monotone"
-          dataKey="activity"
-          name="Active Players"
+          dataKey="total"
+          name="Total Players"
           stroke={color}
-          fillOpacity={1}
           fill={`url(#${gradientId})`}
-          strokeWidth={3}
-          filter="url(#glow)"
-          animationDuration={1500}
+          fillOpacity={0.6}
+          strokeWidth={2}
         />
+
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -123,36 +193,40 @@ function ActivityAreaChart({
 
 /**
  * Main chart component with 24h/7d toggle
- * Now passes distinct colors to the Area Charts.
+ * Defaulted to "7d"
+ * Tabs moved to bottom and made smaller
  */
-export function PlayerActivityChart({ data24h, data7d }: { data24h: number[]; data7d: number[] }) {
+export function PlayerActivityChart({ data24h, data7d }: { data24h: any[]; data7d: any[] }) {
   return (
-    <Tabs defaultValue="24h">
-      <div className="flex items-center justify-between pb-4">
-        {/* We can move the list to the right or keep it full width, usually full width looks cleaner in dashboard cards */}
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="24h">Last 24 Hours</TabsTrigger>
-          <TabsTrigger value="7d">Last 7 Days</TabsTrigger>
-        </TabsList>
+    <Tabs defaultValue="7d" className="flex flex-col">
+      <div className="order-1">
+        <TabsContent value="24h" className="mt-0">
+          <ActivityAreaChart
+            data={data24h}
+            period="24h"
+            key="chart-24h"
+            gradientId="gradient-24h"
+            color="hsl(var(--primary))"
+          />
+        </TabsContent>
+
+        <TabsContent value="7d" className="mt-0">
+          <ActivityAreaChart
+            data={data7d}
+            period="7d"
+            key="chart-7d"
+            gradientId="gradient-7d"
+            color="hsl(var(--chart-2))"
+          />
+        </TabsContent>
       </div>
 
-      <TabsContent value="24h" className="mt-0">
-        <ActivityAreaChart
-          data={data24h}
-          key="chart-24h"
-          gradientId="gradient-24h"
-          color="hsl(var(--primary))" // Default Theme Color (usually Purple/Black)
-        />
-      </TabsContent>
-
-      <TabsContent value="7d" className="mt-0">
-        <ActivityAreaChart
-          data={data7d}
-          key="chart-7d"
-          gradientId="gradient-7d"
-          color="hsl(var(--chart-2))" // Secondary Chart Color (usually Teal/Blue)
-        />
-      </TabsContent>
+      <div className="order-2 flex justify-center pt-4">
+        <TabsList className="h-8">
+          <TabsTrigger value="24h" className="text-xs h-7 px-4">Avg Day (24h)</TabsTrigger>
+          <TabsTrigger value="7d" className="text-xs h-7 px-4">Last 7 Days</TabsTrigger>
+        </TabsList>
+      </div>
     </Tabs>
   );
 }
