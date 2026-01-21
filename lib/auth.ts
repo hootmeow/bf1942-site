@@ -4,7 +4,7 @@ import PostgresAdapter from "@auth/pg-adapter"
 import { pool } from "@/lib/db"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-    adapter: PostgresAdapter(pool),
+    // adapter: PostgresAdapter(pool), // Disabled for local dev without DB
     providers: [
         Discord({
             profile(profile) {

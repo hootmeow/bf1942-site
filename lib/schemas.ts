@@ -19,13 +19,21 @@ export const GlobalMetricsSchema = z.object({
     popular_maps_7_days: z.array(PopularMapSchema),
     global_concurrency_heatmap_24h: z.array(z.number()),
     global_concurrency_heatmap_7d: z.array(z.number()),
+    // Updated to match "Total Only" simplified format
     global_concurrency_timeline_7d: z.array(z.object({
         timestamp: z.string(),
         total: z.number(),
-        conquest: z.number(),
-        coop: z.number(),
-        ctf: z.number(),
-        other: z.number(),
+        // Optional legacy fields to prevent breaking if old API sends them
+        conquest: z.number().optional(),
+        coop: z.number().optional(),
+        ctf: z.number().optional(),
+        other: z.number().optional(),
+        avg_ping: z.number().nullable().optional(),
+    })).optional().nullable(),
+    // New 24h timeline
+    global_concurrency_timeline_24h: z.array(z.object({
+        timestamp: z.string(),
+        total: z.number(),
         avg_ping: z.number().nullable().optional(),
     })).optional().nullable(),
     debug_timeline_error: z.string().optional().nullable(),

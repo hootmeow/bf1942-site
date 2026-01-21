@@ -212,7 +212,7 @@ export default function Page() {
           </CardHeader>
           <CardContent className="pt-4">
             <PlayerActivityChart
-              data24h={data.global_concurrency_heatmap_24h}
+              data24h={data.global_concurrency_timeline_24h || data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_timeline_7d || data.global_concurrency_heatmap_7d}
             />
           </CardContent>
