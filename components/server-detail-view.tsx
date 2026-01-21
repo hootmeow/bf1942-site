@@ -33,6 +33,7 @@ interface ServerInfo {
   current_player_count: number;
   current_max_players: number;
   current_game_port: number;
+  current_gametype?: string | null;
   round_time_remain: number;
   live_snapshot_timestamp: string;
   tickets1: number;
@@ -260,6 +261,18 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
             icon={Users}
           />
           <StatCard title="Current Map" value={server_info.current_map || "N/A"} icon={Map} />
+          {/* New Game Mode Card */}
+          <div className="rounded-lg border border-border/60 bg-card/40 p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-primary/10 p-2 text-primary">
+                <Server className="h-4 w-4" /> {/* Or custom icon */}
+              </div>
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground">Game Mode</h3>
+                <p className="text-base font-semibold text-foreground uppercase">{server_info.current_gametype || "N/A"}</p>
+              </div>
+            </div>
+          </div>
           <StatCard title="Time Remaining" value={roundTime} icon={Clock} />
         </CardContent>
       </Card>

@@ -14,6 +14,18 @@ interface LiveServer {
     current_max_players: number;
     ip: string;
     port: number;
+    current_gametype?: string | null;
+}
+
+import { Flag, Skull, Users, Gamepad2, FlagTriangleRight } from "lucide-react";
+
+function getGameModeIcon(mode: string | null | undefined) {
+    const m = (mode || "").toLowerCase();
+    if (m.includes("conq")) return <Flag className="h-3 w-3" />;
+    if (m.includes("ctf")) return <FlagTriangleRight className="h-3 w-3" />;
+    if (m.includes("tdm") || m.includes("team death")) return <Skull className="h-3 w-3" />;
+    if (m.includes("coop")) return <Users className="h-3 w-3" />;
+    return <Gamepad2 className="h-3 w-3" />;
 }
 
 export function ServerSummaryCard({ server }: { server: LiveServer }) {
@@ -32,7 +44,10 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                         </h3>
                         <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
                             <span className="flex items-center gap-1 truncate"><MapIcon className="h-3 w-3" /> {server.current_map}</span>
-                            <span className="flex items-center gap-1 truncate"><Server className="h-3 w-3" /> {server.ip}</span>
+                            <span className="flex items-center gap-1 truncate" title={`Game Mode: ${server.current_gametype || 'Unknown'}`}>
+                                {getGameModeIcon(server.current_gametype)}
+                                <span className="uppercase">{server.current_gametype || "CONQ"}</span>
+                            </span>
                         </div>
                     </div>
                     <Badge variant={server.current_player_count > 20 ? "default" : "secondary"} className="font-mono shrink-0">
