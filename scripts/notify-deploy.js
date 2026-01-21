@@ -41,13 +41,17 @@ let author = 'Unknown';
 let branch = 'Unknown';
 
 try {
-    commitHash = execSync('git rev-parse --short HEAD').toString().trim();
-    commitMsg = execSync('git log -1 --pretty=%B').toString().trim();
-    author = execSync('git log -1 --pretty=%an').toString().trim();
-    branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+    commitHash = execSync('git rev-parse --short HEAD').toString().trim() || 'Unknown';
+    // Get subject line only to avoid overly long messages or formatting issues
+    commitMsg = execSync('git log -1 --pretty=%s').toString().trim() || 'No commit message';
+    author = execSync('git log -1 --pretty=%an').toString().trim() || 'Unknown';
+    branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim() || 'Unknown';
 } catch (e) {
     console.error('Failed to get git info:', e.message);
 }
+
+// Validation: Discord fields cannot be empty strings
+if (commitMsg.length > 1000) commitMsg = commitMsg.substring(0, 997) + "...";
 
 // 3. Construct Payload
 const payload = JSON.stringify({
@@ -80,7 +84,7 @@ const options = {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
-        'Content-Length': payload.length
+        'Content-Length': Buffer.byteLength(payload) // handle multi-byte chars correctly
     }
 };
 
