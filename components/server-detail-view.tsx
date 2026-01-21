@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { AlertTriangle, Loader2, Clock, Map, Users, Server, Globe, MessageCircle } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, Map, Users, Server, Globe, MessageCircle, Lock, Unlock, Timer, Tag } from "lucide-react";
 import { SERVER_LINKS } from "@/lib/server-links";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +39,9 @@ interface ServerInfo {
   tickets1: number;
   tickets2: number;
   ip_address?: string; // Fallback if ip is missing?
+  password?: string | number;
+  version?: string;
+  roundtime?: string | number; // CH might return string or int
 }
 
 interface ServerDetailsData {
@@ -62,6 +65,13 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
       </div>
     </div>
   );
+}
+
+function LockIcon({ status, className }: { status?: string | number, className?: string }) {
+  const s = String(status || '');
+  const isPrivate = s !== '0' && s !== '';
+  if (isPrivate) return <Lock className={className} />;
+  return <Unlock className={className} />;
 }
 
 export function ServerDetailView({ initialData, slug }: { initialData: ServerDetailsData | null, slug: string }) {
@@ -156,9 +166,12 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
 
 
   const roundTime = useMemo(() => {
-    if (!server_info.round_time_remain) return "N/A";
-    const minutes = Math.floor(server_info.round_time_remain / 60);
-    const seconds = server_info.round_time_remain % 60;
+    if (!server_info || server_info.round_time_remain === undefined || server_info.round_time_remain === null) return "N/A";
+    const val = Number(server_info.round_time_remain);
+    if (isNaN(val)) return "N/A";
+
+    const minutes = Math.floor(val / 60);
+    const seconds = val % 60;
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   }, [server_info]);
 
@@ -274,6 +287,28 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
             </div>
           </div>
           <StatCard title="Time Remaining" value={roundTime} icon={Clock} />
+
+          <StatCard
+            title="Round Limit"
+            value={server_info.roundtime ? `${Math.floor(Number(server_info.roundtime) / 60)}m` : "N/A"}
+            icon={Timer}
+          />
+
+          <StatCard title="Version" value={server_info.version || "v1.61"} icon={Tag} />
+
+          <div className="rounded-lg border border-border/60 bg-card/40 p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-primary/10 p-2 text-primary">
+                <LockIcon status={server_info.password} className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground">Password</h3>
+                <p className="text-base font-semibold text-foreground uppercase">
+                  {(String(server_info.password) !== '0' && String(server_info.password) !== '') ? "Yes" : "No"}
+                </p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
