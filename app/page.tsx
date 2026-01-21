@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { GlobalMetrics, GlobalMetricsSchema } from "@/lib/schemas";
 import { Server } from "@/components/server-directory"; // Import Server type
 import { ServerSummaryCard } from "@/components/server-summary-card";
+import { LiveTicker } from "@/components/live-ticker";
 
 interface MetricsApiResponse {
   ok: boolean;
@@ -163,13 +164,12 @@ export default function Page() {
 
       {/* --- Compact Top Servers --- */}
       <Card className="border-border/60">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle as="h2" className="flex items-center gap-2">
               <ServerIcon className="h-5 w-5 text-primary" />
               Top Active Servers
             </CardTitle>
-            <CardDescription>Live leaderboard of the most populated battlefields.</CardDescription>
           </div>
           <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
             <Link href="/servers">
@@ -177,7 +177,10 @@ export default function Page() {
             </Link>
           </Button>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 bg-transparent border-0">
+
+        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0 bg-transparent border-0">
+          {/* Integrated Live Ticker */}
+          <LiveTicker className="mb-2 rounded-md border border-white/5 bg-black/20" />
           {topServers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {topServers.map(server => (
@@ -216,6 +219,6 @@ export default function Page() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div >
   );
 }

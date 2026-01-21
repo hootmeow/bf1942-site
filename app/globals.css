@@ -92,6 +92,7 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -126,6 +127,7 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -146,4 +148,23 @@ body {
   /* Make sure border also uses the glow color */
   @apply border-ring;
 }
+
 /* --- END ADDED SECTION --- */
+
+@layer utilities {
+  .animate-marquee {
+    animation: marquee 60s linear infinite;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-33.33%);
+  }
+
+  /* 33.33% because we triplicated the content (original + clone + clone) */
+}
