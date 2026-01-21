@@ -26,7 +26,7 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                     <div className="space-y-1 overflow-hidden">
                         <h3 className="font-bold flex items-center gap-2 text-lg truncate pr-2">
                             <ServerFlag ip={server.ip} />
-                            <Link href={`/servers/${server.server_id}`} className="hover:underline truncate text-blue-100">
+                            <Link href={`/servers/${server.server_id}`} className="hover:underline truncate text-foreground hover:text-primary transition-colors">
                                 {server.current_server_name}
                             </Link>
                         </h3>
