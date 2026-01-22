@@ -291,8 +291,8 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
             </>
           )}
 
-          {/* New Rank Badge */}
-          {rankData && (
+          {/* New Rank Badge - Hide if blacklisted */}
+          {rankData && !server_info.is_blacklisted && (
             <>
               <span>•</span>
               <span className="flex items-center gap-1.5 text-amber-400 font-mono font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
@@ -305,15 +305,21 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         </div>
       </div>
 
+      {/* Blacklist Warning - Force Display */}
       {server_info.is_blacklisted && (
-        <div className="rounded-lg border border-red-500/50 bg-red-900/20 p-6 text-center shadow-lg">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-            <AlertTriangle className="h-6 w-6 text-red-500" />
+        <div className="rounded-lg border border-red-500/50 bg-red-900/20 p-6 text-center shadow-lg relative overflow-hidden">
+          {/* Pulsing element for attention */}
+          <div className="absolute inset-0 bg-red-500/5 animate-pulse pointer-events-none" />
+
+          <div className="relative z-10 mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 ring-1 ring-red-500/50">
+            <AlertTriangle className="h-8 w-8 text-red-500" />
           </div>
-          <h3 className="text-xl font-bold tracking-tight text-red-500">SERVER BLACKLISTED</h3>
-          <p className="mx-auto mt-2 max-w-lg text-red-200">
-            This server has been flagged for stats manipulation or policy violations.
-            Rounds played on this server are <strong>not recorded</strong> and do not count towards global player stats.
+          <h3 className="relative z-10 text-2xl font-bold tracking-tight text-red-500">SERVER BLACKLISTED</h3>
+          <p className="relative z-10 mx-auto mt-2 max-w-lg text-lg text-red-100 font-medium">
+            This server has been flagged for stats manipulation.
+          </p>
+          <p className="relative z-10 mx-auto mt-1 max-w-lg text-red-300/80 text-sm">
+            Rounds are not recorded and do not count towards global stats.
           </p>
         </div>
       )}
