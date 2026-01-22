@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppShell } from "@/components/app-shell";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -54,6 +55,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
+        {/* --- Umami Analytics --- */}
+        <Script
+          src="https://analytics.bf1942.online/script.js"
+          data-website-id="6dab5e14-3b7c-4d1e-a756-ed4b219fc1ff"
+          strategy="afterInteractive"
+        />
         {/* --- ADDED: WebSite JSON-LD Schema --- */}
         <script
           type="application/ld+json"

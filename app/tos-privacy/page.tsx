@@ -143,6 +143,13 @@ export default function TosPrivacyPage() {
                 guardian and you are aware that your child has provided us with Personal Information,
                 please contact us.
               </p>
+              <H3>Analytics</H3>
+              <p>
+                We use a self-hosted instance of Umami Analytics to understand website traffic and usage.
+                Umami is a privacy-focused analytics solution that does not track you across websites and
+                does not store any personally identifiable information (PII). All data is anonymized and
+                cookies are not used.
+              </p>
             </ProseContent>
           </CardContent>
         </Card>
