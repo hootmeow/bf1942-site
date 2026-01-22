@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ServerFlag } from "@/components/server-flag";
 import Link from "next/link";
 import { Map as MapIcon, Server } from "lucide-react";
+import { Sparkline } from "@/components/sparkline";
 
 interface LiveServer {
     server_id: number;
@@ -15,6 +16,7 @@ interface LiveServer {
     ip: string;
     port: number;
     current_gametype?: string | null;
+    history?: number[];
 }
 
 import { Flag, Skull, Users, Gamepad2, FlagTriangleRight } from "lucide-react";
@@ -35,7 +37,7 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
         <Card className="bg-card/40 border-l-4 border-l-primary hover:bg-card/60 transition-colors">
             <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                    <div className="space-y-1 overflow-hidden">
+                    <div className="space-y-1 overflow-hidden flex-1">
                         <h3 className="font-bold flex items-center gap-2 text-lg truncate pr-2">
                             <ServerFlag ip={server.ip} />
                             <Link href={`/servers/${server.server_id}`} className="hover:underline truncate text-foreground hover:text-primary transition-colors">
@@ -50,9 +52,19 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                             </span>
                         </div>
                     </div>
-                    <Badge variant={server.current_player_count > 20 ? "default" : "secondary"} className="font-mono shrink-0">
-                        {server.current_player_count} / {server.current_max_players}
-                    </Badge>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                        {/* Sparkline (Only if history exists) */}
+                        {server.history && server.history.length > 1 && (
+                            <div className="hidden sm:block opacity-80" title="Player Count Trend (2h)">
+                                <Sparkline data={server.history} width={60} height={24} />
+                            </div>
+                        )}
+
+                        <Badge variant={server.current_player_count > 20 ? "default" : "secondary"} className="font-mono">
+                            {server.current_player_count} / {server.current_max_players}
+                        </Badge>
+                    </div>
                 </div>
 
                 {/* Visual Player Bar */}

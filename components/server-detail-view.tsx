@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { AlertTriangle, Loader2, Clock, Map, Users, Server, Globe, MessageCircle, Lock, Unlock, Timer, Tag } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, Map, Users, Server, Globe, MessageCircle, Lock, Unlock, Timer, Tag, Check } from "lucide-react";
 import { SERVER_LINKS } from "@/lib/server-links";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,17 +50,42 @@ interface ServerDetailsData {
   scoreboard: ScoreboardPlayer[];
 }
 
-function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ElementType }) {
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  copyable?: boolean;
+}
+
+function StatCard({ title, value, icon, copyable }: StatCardProps) {
   const Icon = icon;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!copyable) return;
+    navigator.clipboard.writeText(String(value));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="rounded-lg border border-border/60 bg-card/40 p-4">
+    <div
+      className={cn(
+        "rounded-lg border border-border/60 bg-card/40 p-4 transition-all",
+        copyable && "cursor-pointer hover:bg-card/60 hover:border-primary/50 active:scale-[0.98]"
+      )}
+      onClick={handleCopy}
+      title={copyable ? "Click to copy" : undefined}
+    >
       <div className="flex items-center gap-3">
-        <div className="rounded-full bg-primary/10 p-2 text-primary">
-          <Icon className="h-4 w-4" />
+        <div className={cn("rounded-full bg-primary/10 p-2 text-primary", copied && "bg-green-500/10 text-green-500")}>
+          {copied ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
         </div>
         <div>
           <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
-          <p className="text-base font-semibold text-foreground">{value}</p>
+          <p className={cn("text-base font-semibold text-foreground", copied && "text-green-500")}>
+            {copied ? "Copied!" : value}
+          </p>
         </div>
       </div>
     </div>
@@ -267,7 +292,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
       <Card className="border-border/60">
         <CardHeader><CardTitle as="h2">Server Details</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard title="Address" value={`${server_info.ip}:${server_info.current_game_port}`} icon={Server} />
+          <StatCard title="Address" value={`${server_info.ip}:${server_info.current_game_port}`} icon={Server} copyable={true} />
           <StatCard
             title="Players"
             value={`${scoreboard.length > 0 ? scoreboard.length : server_info.current_player_count} / ${server_info.current_max_players}`}

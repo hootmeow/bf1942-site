@@ -30,6 +30,7 @@ export interface Server {
   current_max_players: number;
   current_gametype: string | null;
   last_successful_poll: string | null;
+  history?: number[];
 }
 
 type SortKey = "name" | "map" | "players" | "status" | "activity";

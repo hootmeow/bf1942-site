@@ -163,7 +163,7 @@ export default function Page() {
       </div>
 
       {/* --- Compact Top Servers --- */}
-      <Card className="border-border/60">
+      <div className="rounded-xl border border-border/60 overflow-hidden bg-gradient-to-br from-card/80 via-card/50 to-background shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle as="h2" className="flex items-center gap-2">
@@ -202,7 +202,7 @@ export default function Page() {
             <Link href="/servers">View Full Server List</Link>
           </Button>
         </div>
-      </Card>
+      </div>
 
       {/* --- Charts Grid --- */}
       <div className="grid grid-cols-1 gap-6">
