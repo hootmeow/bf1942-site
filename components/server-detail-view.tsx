@@ -44,6 +44,7 @@ interface ServerInfo {
   version?: string;
   roundtime?: string | number; // CH might return string or int
   history?: number[]; // ADDED
+  is_blacklisted?: boolean;
 }
 
 interface ServerDetailsData {
@@ -304,6 +305,19 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         </div>
       </div>
 
+      {server_info.is_blacklisted && (
+        <div className="rounded-lg border border-red-500/50 bg-red-900/20 p-6 text-center shadow-lg">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+            <AlertTriangle className="h-6 w-6 text-red-500" />
+          </div>
+          <h3 className="text-xl font-bold tracking-tight text-red-500">SERVER BLACKLISTED</h3>
+          <p className="mx-auto mt-2 max-w-lg text-red-200">
+            This server has been flagged for stats manipulation or policy violations.
+            Rounds played on this server are <strong>not recorded</strong> and do not count towards global player stats.
+          </p>
+        </div>
+      )}
+
       <Card className="border-border/60">
         <CardHeader><CardTitle as="h2">Server Details</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -359,7 +373,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card >
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className={cn("border-border/60", winner === 1 && "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]")}>
@@ -386,19 +400,21 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         </Card>
       </div>
 
-      {metrics && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="border-border/60 lg:col-span-2">
-            <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
-            <CardContent>
-              <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
-            </CardContent>
-          </Card>
-          <div className="lg:col-span-1">
-            <ServerPeakHeatmap data={metrics.player_count_24h} />
+      {
+        metrics && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="border-border/60 lg:col-span-2">
+              <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
+              <CardContent>
+                <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
+              </CardContent>
+            </Card>
+            <div className="lg:col-span-1">
+              <ServerPeakHeatmap data={metrics.player_count_24h} />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {metrics && (
@@ -451,17 +467,21 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         </Card>
       </div>
 
-      {mapBalance.length > 0 && (
-        <div className="mt-6">
-          <MapBalanceTable stats={mapBalance} />
-        </div>
-      )}
+      {
+        mapBalance.length > 0 && (
+          <div className="mt-6">
+            <MapBalanceTable stats={mapBalance} />
+          </div>
+        )
+      }
 
-      {metricsLoading && (
-        <div className="flex items-center justify-center p-8 text-muted-foreground">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading historical metrics...
-        </div>
-      )}
-    </div>
+      {
+        metricsLoading && (
+          <div className="flex items-center justify-center p-8 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading historical metrics...
+          </div>
+        )
+      }
+    </div >
   );
 }
