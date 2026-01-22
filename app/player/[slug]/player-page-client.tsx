@@ -45,6 +45,8 @@ interface PlayerInfo {
   linked_user_id?: string | null;
   discord_name?: string | null;
   discord_image?: string | null;
+  is_flagged?: boolean;
+  flag_reason?: string | null;
 }
 
 interface LinkedAlias {
@@ -392,6 +394,16 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         }}
       />
       {/* Player Header */}
+      {player_info.is_flagged && (
+        <Alert variant="destructive" className="border-red-500/50 bg-red-500/10 text-red-500">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Account Flagged</AlertTitle>
+          <AlertDescription>
+            This player has been flagged for <strong>{player_info.flag_reason || "Stat Manipulation"}</strong>.
+            Their stats do not contribute to the global leaderboard.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-sm bg-background/50 shrink-0 overflow-hidden border border-border/50">
