@@ -10,33 +10,34 @@ interface SparklineProps {
 
 export function Sparkline({ data, width = 100, height = 30, color, className }: SparklineProps) {
     const points = useMemo(() => {
-        if (!data || data.length < 2) return "";
+        if (!data || data.length === 0) return "";
 
-        const max = Math.max(...data, 1); // Avoid div by zero
-        const min = Math.min(...data);
-        const range = max - min || 1;
+        // Handle 1 point by duplicating it to make a flat line
+        const safeData = data.length === 1 ? [data[0], data[0]] : data;
 
-        // Simple normalization to fit height
+        const max = Math.max(...safeData, 1); // Avoid div by zero
+        // Normalize max slightly higher so graph isn't pegged at top
+        // If max is 16, use 20. If max is 64, use 70.
+        // Actually simple max is fine, we scale 0 to max.
+
+        const usefulHeight = height - 4; // 2px padding top/bottom
+
         // X axis: equal steps
-        const stepX = width / (data.length - 1);
+        const stepX = width / (safeData.length - 1);
 
-        return data.map((val, i) => {
+        return safeData.map((val, i) => {
             const x = i * stepX;
-            // Invert Y because SVG 0 is top
-            // Scale val to 0..height (with padding maybe?)
-            // Let's use 80% of height to avoid clipping strokes
-            const padding = 2;
-            const usefulHeight = height - (padding * 2);
-
-            // Let's just scale 0 to max, not min to max, so 0 is always bottom
-            // Logic: val=0 -> y=height.  val=max -> y=0
-            const normalized = val / Math.max(max, 10); // Scale relative to at least 10 players so 1 player doesn't look like a spike
-            const y = height - (normalized * usefulHeight) - padding;
+            // Scale logic: 
+            // 0 -> height (bottom)
+            // max -> 0 (top)
+            // We use Math.max(max, 10) to keep scale reasonable for low player servers
+            const normalized = val / Math.max(max, 12);
+            const y = height - 2 - (normalized * usefulHeight);
             return `${x},${y}`;
         }).join(" ");
     }, [data, width, height]);
 
-    if (!data || data.length < 2) return null;
+    if (!points) return null; // Only bail if no points generated
 
     // Determine trend color if not provided
     const start = data[0];

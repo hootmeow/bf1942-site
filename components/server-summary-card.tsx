@@ -54,13 +54,6 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                        {/* Sparkline (Only if history exists) */}
-                        {server.history && server.history.length > 1 && (
-                            <div className="hidden sm:block opacity-80" title="Player Count Trend (2h)">
-                                <Sparkline data={server.history} width={60} height={24} />
-                            </div>
-                        )}
-
                         <Badge variant={server.current_player_count > 20 ? "default" : "secondary"} className="font-mono">
                             {server.current_player_count} / {server.current_max_players}
                         </Badge>

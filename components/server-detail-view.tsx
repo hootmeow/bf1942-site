@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { ServerFlag } from "@/components/server-flag";
 import { useServerGeo } from "@/hooks/use-server-geo";
+import { Sparkline } from "@/components/sparkline";
 
 // Types
 interface ServerInfo {
@@ -42,6 +43,7 @@ interface ServerInfo {
   password?: string | number;
   version?: string;
   roundtime?: string | number; // CH might return string or int
+  history?: number[]; // ADDED
 }
 
 interface ServerDetailsData {
@@ -52,32 +54,44 @@ interface ServerDetailsData {
 
 interface StatCardProps {
   title: string;
-  value: string | number;
+  value: string | number | React.ReactNode;
   icon: React.ElementType;
   copyable?: boolean;
+  children?: React.ReactNode;
 }
 
-function StatCard({ title, value, icon, copyable }: StatCardProps) {
+function StatCard({ title, value, icon, copyable, children }: StatCardProps) {
   const Icon = icon;
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     if (!copyable) return;
-    navigator.clipboard.writeText(String(value));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    // Attempt to stringify if it's a node, or just ignore copying for complex nodes unless explicitly handled
+    let textToCopy = String(value);
+    if (typeof value === 'object') {
+      // If rich content, maybe don't copy, or try to get textContent? 
+      // For now, let's assume if it's an object/node, it's not copyable mainly, or just copy empty.
+      // Actually, for the "Players" card, copy isn't enabled anyway.
+      textToCopy = "";
+    }
+
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
     <div
       className={cn(
-        "rounded-lg border border-border/60 bg-card/40 p-4 transition-all",
+        "rounded-lg border border-border/60 bg-card/40 p-4 transition-all relative overflow-hidden",
         copyable && "cursor-pointer hover:bg-card/60 hover:border-primary/50 active:scale-[0.98]"
       )}
       onClick={handleCopy}
       title={copyable ? "Click to copy" : undefined}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 relative z-10">
         <div className={cn("rounded-full bg-primary/10 p-2 text-primary", copied && "bg-green-500/10 text-green-500")}>
           {copied ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
         </div>
@@ -88,6 +102,7 @@ function StatCard({ title, value, icon, copyable }: StatCardProps) {
           </p>
         </div>
       </div>
+      {children}
     </div>
   );
 }
@@ -295,7 +310,16 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
           <StatCard title="Address" value={`${server_info.ip}:${server_info.current_game_port}`} icon={Server} copyable={true} />
           <StatCard
             title="Players"
-            value={`${scoreboard.length > 0 ? scoreboard.length : server_info.current_player_count} / ${server_info.current_max_players}`}
+            value={(
+              <div className="flex items-center gap-3">
+                <span>{scoreboard.length > 0 ? scoreboard.length : server_info.current_player_count} / {server_info.current_max_players}</span>
+                {server_info.history && server_info.history.length > 0 && (
+                  <div className="h-6 w-16 opacity-80 pt-1">
+                    <Sparkline data={server_info.history} width={64} height={24} />
+                  </div>
+                )}
+              </div>
+            )}
             icon={Users}
           />
           <StatCard title="Current Map" value={server_info.current_map || "N/A"} icon={Map} />
