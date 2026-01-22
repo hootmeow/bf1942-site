@@ -429,9 +429,10 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
               )}
 
               {/* GLOBAL RANK BADGE */}
-              {advancedProfile?.skill_rating?.global_rank && (
-                <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
-                  Global #{advancedProfile.skill_rating.global_rank}
+              {/* GLOBAL RANK BADGE */}
+              {(advancedProfile?.skill_rating?.global_rank || player_info.is_flagged) && (
+                <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ${player_info.is_flagged ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/80"}`}>
+                  Global #{player_info.is_flagged ? "N/A" : advancedProfile?.skill_rating?.global_rank}
                 </div>
               )}
             </div>

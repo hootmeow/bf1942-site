@@ -64,6 +64,12 @@ export default function TosPrivacyPage() {
                 data scraping, attempting to gain unauthorized access, and transmitting any malicious
                 code.
               </p>
+              <H3>Stat Manipulation & Exploits</H3>
+              <p>
+                Stats manipulation or using exploits to boost stats artificially is strictly prohibited.
+                Identified users and servers engaging in this behavior will have their accounts flagged,
+                removed from leaderboards, or permanently blacklisted from the ranking system at our discretion.
+              </p>
               <H3>Intellectual Property</H3>
               <p>
                 The design, branding, and original content of this Site are the property of BF1942
