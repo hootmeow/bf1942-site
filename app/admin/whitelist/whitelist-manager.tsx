@@ -44,8 +44,12 @@ export function WhitelistManager({ initialServers }: { initialServers: Whitelist
         }
     }
 
+    const activeServers = initialServers.filter(s => s.is_active)
+    const pendingServers = initialServers.filter(s => !s.is_active)
+
     return (
         <div className="space-y-6">
+            {/* --- ADD NEW FORM --- */}
             <Card className="bg-secondary/20 border-border/50">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -59,7 +63,7 @@ export function WhitelistManager({ initialServers }: { initialServers: Whitelist
                             <label className="text-sm font-medium text-muted-foreground">Server IP (IPv4 or IPv6)</label>
                             <Input
                                 name="ip"
-                                placeholder="e.g. 192.168.1.1 or 2001:db8::1"
+                                placeholder="e.g. 192.168.1.1"
                                 required
                                 className="bg-background"
                             />
@@ -82,8 +86,64 @@ export function WhitelistManager({ initialServers }: { initialServers: Whitelist
                 </CardContent>
             </Card>
 
-            <div className="grid gap-4">
-                <h2 className="text-xl font-bold">Approved Servers ({initialServers.length})</h2>
+            {/* --- PENDING SERVERS TABLE --- */}
+            {pendingServers.length > 0 && (
+                <div className="space-y-4">
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-yellow-500">
+                        <Loader2 className="h-5 w-5" />
+                        Detected / Pending Servers ({pendingServers.length})
+                    </h2>
+                    <div className="border border-border/50 rounded-lg overflow-hidden bg-yellow-500/5">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-secondary/50 text-muted-foreground font-medium uppercase border-b border-border">
+                                <tr>
+                                    <th className="p-3">IP Address</th>
+                                    <th className="p-3">Detected Name</th>
+                                    <th className="p-3">Discovered</th>
+                                    <th className="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {pendingServers.map((server) => (
+                                    <tr key={server.ip} className="hover:bg-secondary/20 transition-colors">
+                                        <td className="p-3 font-mono">{server.ip}</td>
+                                        <td className="p-3 font-medium text-muted-foreground">{server.server_name || "Unknown"}</td>
+                                        <td className="p-3 text-xs text-muted-foreground">
+                                            {new Date(server.added_at).toLocaleString()}
+                                        </td>
+                                        <td className="p-3 text-right flex justify-end gap-2">
+                                            <Button
+                                                size="sm" variant="default" className="bg-green-600 hover:bg-green-700"
+                                                onClick={() => toggleServerStatus(server.ip, true)}
+                                            >
+                                                Approve
+                                            </Button>
+                                            <Button
+                                                size="sm" variant="ghost" className="text-red-500"
+                                                onClick={() => {
+                                                    if (confirm("Ignore/Remove this server? It will act as a block.")) {
+                                                        removeWhitelistedServer(server.ip)
+                                                    }
+                                                }}
+                                            >
+                                                Ignore
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+
+            {/* --- APPROVED SERVERS TABLE --- */}
+            <div className="space-y-4">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-green-500">
+                    <CheckCircle2 className="h-5 w-5" />
+                    Approved Active Servers ({activeServers.length})
+                </h2>
 
                 <div className="border border-border rounded-lg overflow-hidden">
                     <table className="w-full text-left text-sm">
@@ -98,22 +158,16 @@ export function WhitelistManager({ initialServers }: { initialServers: Whitelist
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {initialServers.map((server) => (
+                            {activeServers.map((server) => (
                                 <tr key={server.ip} className="hover:bg-secondary/20 transition-colors">
                                     <td className="p-3">
                                         <div
                                             className="cursor-pointer"
                                             onClick={() => toggleServerStatus(server.ip, !server.is_active)}
                                         >
-                                            {server.is_active ? (
-                                                <Badge variant="outline" className="text-green-500 border-green-500/50 bg-green-500/10 hover:bg-green-500/20">
-                                                    Active
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="text-muted-foreground">
-                                                    Inactive
-                                                </Badge>
-                                            )}
+                                            <Badge variant="outline" className="text-green-500 border-green-500/50 bg-green-500/10 hover:bg-green-500/20">
+                                                Active
+                                            </Badge>
                                         </div>
                                     </td>
                                     <td className="p-3 font-mono text-xs md:text-sm">{server.ip}</td>
@@ -139,10 +193,10 @@ export function WhitelistManager({ initialServers }: { initialServers: Whitelist
                                     </td>
                                 </tr>
                             ))}
-                            {initialServers.length === 0 && (
+                            {activeServers.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                        No servers whitelisted yet. The ingestion engine will ignore all traffic until you add one.
+                                        No active servers. Check the "Detected" list or add one manually.
                                     </td>
                                 </tr>
                             )}
