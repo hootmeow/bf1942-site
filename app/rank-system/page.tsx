@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Swords, Flag, Clock, Medal } from "lucide-react";
+import { Swords, Flag, Clock, Medal, Trophy, AlertTriangle, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -95,6 +96,7 @@ export default function RankSystemPage() {
                 </div>
 
                 {/* Philosophy */}
+                {/* Philosophy */}
                 <Card className="border-border/60">
                     <CardHeader>
                         <CardTitle>Why this system?</CardTitle>
@@ -106,7 +108,124 @@ export default function RankSystemPage() {
                         </p>
                     </CardContent>
                 </Card>
+
+                {/* Important Notes & Warnings */}
+                <div className="space-y-4">
+                    <Card className="border-yellow-500/50 bg-yellow-500/5">
+                        <CardHeader>
+                            <CardTitle className="text-yellow-600 flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5" />
+                                Important Notes on Stats
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-sm text-yellow-600/90">
+                            <p>
+                                <strong>Co-op (Bot) Rounds:</strong> These rounds are <u>not tracked or stored</u> and do not contribute to your player stats.
+                                Only multiplayer rounds on ranked servers are counted.
+                            </p>
+                            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-md text-red-600">
+                                <strong className="block mb-1 flex items-center gap-2">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    WARNING: Zero Tolerance Policy
+                                </strong>
+                                <p>
+                                    Stats padding and manipulation (e.g. killing AFK players, empty server farming) will <strong>not be tolerated</strong>.
+                                    Engaging in such behavior will result in your <strong>server and/or username being permanently blacklisted</strong> from the global ranking system.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Achievements List */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                        <Trophy className="h-6 w-6 text-primary" />
+                        <h2 className="text-2xl font-bold tracking-tight">Earnable Achievements</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {ALL_ACHIEVEMENTS.map((ach) => (
+                            <Card key={ach.name} className="border-border/60 overflow-hidden hover:bg-muted/50 transition-colors">
+                                <CardContent className="p-4 flex items-center gap-4">
+                                    <div className="shrink-0 w-[82px] h-[32px] bg-background/50 rounded-sm overflow-hidden shadow-sm border border-border/50">
+                                        <img
+                                            src={`/images/achievements/${ach.image}`}
+                                            alt={ach.name}
+                                            className="w-full h-full object-fill"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="font-semibold text-sm leading-none">{ach.name}</h3>
+                                        <p className="text-xs text-muted-foreground line-clamp-2">{ach.description}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
+
+const ALL_ACHIEVEMENTS = [
+    // Kill Streaks
+    { name: "Kill Streak 5", image: "kill_streak_5.png", description: "Achieve 5 kills in a single life without dying." },
+    { name: "Kill Streak 10", image: "kill_streak_10.png", description: "Achieve 10 kills in a single life without dying." },
+    { name: "Kill Streak 15", image: "kill_streak_15.png", description: "Achieve 15 kills in a single life without dying." },
+    { name: "Kill Streak 20", image: "kill_streak_20.png", description: "Achieve 20 kills in a single life without dying." },
+    { name: "Kill Streak 25", image: "kill_streak_25.png", description: "Achieve 25 kills in a single life without dying." },
+    { name: "Kill Streak 30", image: "kill_streak_30.png", description: "Achieve 30 kills in a single life without dying." },
+    { name: "Kill Streak 50", image: "kill_streak_50.png", description: "Achieve 50 kills in a single life without dying." },
+
+    // Total Kills Milestones
+    { name: "Killer 100", image: "total_kills_100.png", description: "Reach 100 total lifetime kills." },
+    { name: "Killer 500", image: "total_kills_500.png", description: "Reach 500 total lifetime kills." },
+    { name: "Killer 1,000", image: "total_kills_1000.png", description: "Reach 1,000 total lifetime kills." },
+    { name: "Killer 2,500", image: "total_kills_2500.png", description: "Reach 2,500 total lifetime kills." },
+    { name: "Killer 5,000", image: "total_kills_5000.png", description: "Reach 5,000 total lifetime kills." },
+    { name: "Killer 10,000", image: "total_kills_10000.png", description: "Reach 10,000 total lifetime kills." },
+    { name: "Killer 25,000", image: "total_kills_25000.png", description: "Reach 25,000 total lifetime kills." },
+    { name: "Killer 50,000", image: "total_kills_50000.png", description: "Reach 50,000 total lifetime kills." },
+    { name: "Legendary Killer", image: "total_kills_legend.png", description: "Reach a legendary number of lifetime kills." },
+
+    // Score Milestones
+    { name: "Score 10k", image: "total_score_10000.png", description: "Reach 10,000 total career score." },
+    { name: "Score 50k", image: "total_score_50000.png", description: "Reach 50,000 total career score." },
+    { name: "Score 100k", image: "total_score_100000.png", description: "Reach 100,000 total career score." },
+    { name: "Score 500k", image: "total_score_500000.png", description: "Reach 500,000 total career score." },
+    { name: "Millionaire", image: "total_score_1000000.png", description: "Reach 1,000,000 total career score." },
+
+    // Playtime Milestones
+    { name: "Recruit (10h)", image: "milestone_playtime_10h.png", description: "Play on ranked servers for 10 hours." },
+    { name: "Regular (50h)", image: "milestone_playtime_50h.png", description: "Play on ranked servers for 50 hours." },
+    { name: "Veteran (100h)", image: "milestone_playtime_100h.png", description: "Play on ranked servers for 100 hours." },
+    { name: "Dedicated (500h)", image: "milestone_playtime_500h.png", description: "Play on ranked servers for 500 hours." },
+    { name: "Life-er (1000h)", image: "milestone_playtime_1000h.png", description: "Play on ranked servers for 1,000 hours." },
+
+    // Skill & Style
+    { name: "Sharpshooter (Bronze)", image: "sharpshooter_bronze.png", description: "Demonstrate skill with rifles." },
+    { name: "Sharpshooter (Silver)", image: "sharpshooter_silver.png", description: "Demonstrate high skill with rifles." },
+    { name: "Sharpshooter (Gold)", image: "sharpshooter_gold.png", description: "Demonstrate expert skill with rifles." },
+    { name: "Sharpshooter (Legend)", image: "sharpshooter_legend.png", description: "Demonstrate legendary skill with rifles." },
+
+    { name: "Elite Warrior (Bronze)", image: "elite_warrior_bronze.png", description: "Top performing combatant." },
+    { name: "Elite Warrior (Silver)", image: "elite_warrior_silver.png", description: "Superior combat performance." },
+    { name: "Elite Warrior (Gold)", image: "elite_warrior_gold.png", description: "Exceptional combat performance." },
+    { name: "Elite Warrior (Legend)", image: "elite_warrior_legend.png", description: "Legendary combat performance." },
+
+    // Habits
+    { name: "Early Bird", image: "early_bird.png", description: "Play games in the early morning hours." },
+    { name: "Night Owl", image: "night_owl.png", description: "Play games late into the night." },
+    { name: "Server Regular", image: "server_regular.png", description: "Play consistently on the same server." },
+
+    // Performance
+    { name: "Comeback King", image: "comeback_king.png", description: "Win a round after your team was significantly behind." },
+    { name: "Consistent Killer", image: "consistent_killer.png", description: "Maintain a high KPM over many consecutive rounds." },
+    { name: "Rock Solid", image: "rock_solid.png", description: "Complete a round with very few deaths and high playtime." },
+    { name: "Map Dominator", image: "map_dominator.png", description: "Win at least one round on every official map." },
+    { name: "Map Specialist", image: "map_specialist.png", description: "Achieve a very high win rate on a specific map." },
+    { name: "Map Legend", image: "map_legend.png", description: "Achieve legend status on a specific map." },
+];

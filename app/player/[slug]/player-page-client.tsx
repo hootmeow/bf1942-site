@@ -31,6 +31,7 @@ import { EditProfileDialog } from "@/components/edit-profile-dialog";
 import { submitClaimRequest } from "@/app/actions/claim-actions";
 import { loginAction } from "@/app/actions/auth-actions";
 import { PlayerFlag } from "@/components/player-flag";
+import { AchievementsList, Achievement } from "@/components/achievements-list";
 
 // --- Interfaces ---
 interface PlayerInfo {
@@ -104,6 +105,7 @@ interface PlayerProfileApiResponse {
   ok: boolean;
   player_info: PlayerInfo;
   linked_aliases?: LinkedAlias[];
+  achievements?: Achievement[];
   lifetime_stats: LifetimeStats | null;
   personal_bests: PersonalBests | null;
   playstyle_habits: PlaystyleHabits | null;
@@ -563,6 +565,8 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </div>
       )}
 
+
+
       {/* Lifetime Stats */}
       <h3 className="text-xl font-semibold tracking-tight">Lifetime Stats</h3>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
@@ -613,6 +617,13 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           />
         </CardContent>
       </Card>
+
+      {/* Achievements */}
+      {profile.achievements && (
+        <div className="mb-6">
+          <AchievementsList achievements={profile.achievements} />
+        </div>
+      )}
 
       {/* Activity Charts Row (Side-by-Side) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

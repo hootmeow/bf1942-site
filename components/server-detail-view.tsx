@@ -98,9 +98,9 @@ function StatCard({ title, value, icon, copyable, children }: StatCardProps) {
         </div>
         <div>
           <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
-          <p className={cn("text-base font-semibold text-foreground", copied && "text-green-500")}>
+          <div className={cn("text-base font-semibold text-foreground", copied && "text-green-500")}>
             {copied ? "Copied!" : value}
-          </p>
+          </div>
         </div>
       </div>
       {children}

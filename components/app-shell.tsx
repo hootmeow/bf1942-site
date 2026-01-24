@@ -77,6 +77,7 @@ const navItems: NavItem[] = [
       { label: "Search", href: "/search" },
       { label: "Rounds", href: "/stats/rounds" },
       { label: "Compare Players", href: "/stats/compare" },
+      { label: "Stats FAQ", href: "/rank-system" },
     ],
   },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
