@@ -44,6 +44,11 @@ export default async function AdminLayout({
                         <UserCheck className="h-4 w-4" />
                         Claims
                     </Link>
+                    <div className="h-px bg-border my-2" />
+                    <Link href="/admin/whitelist" className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-secondary transition-colors text-green-500 hover:text-green-400">
+                        <Shield className="h-4 w-4" />
+                        Ingest Whitelist
+                    </Link>
                 </nav>
             </aside>
 
