@@ -12,7 +12,7 @@ export default function RankSystemPage() {
     return (
         <div className="container py-6 md:py-10 space-y-8 max-w-4xl mx-auto">
             <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Rank Score & XP System</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Ranking System</h1>
                 <p className="text-muted-foreground text-lg">
                     Understanding how your career rank is calculated.
                 </p>
@@ -121,7 +121,9 @@ export default function RankSystemPage() {
                         <CardContent className="space-y-4 text-sm text-yellow-600/90">
                             <p>
                                 <strong>Co-op (Bot) Rounds:</strong> These rounds are <u>not tracked or stored</u> and do not contribute to your player stats.
-                                Only multiplayer rounds on ranked servers are counted.
+                            </p>
+                            <p>
+                                <strong>Ranked Game Modes:</strong> Currently, rounds played on <strong>Conquest, Team Deathmatch, and Capture the Flag (CTF)</strong> mode servers contribute towards your career ranking and stats.
                             </p>
                             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-md text-red-600">
                                 <strong className="block mb-1 flex items-center gap-2">
@@ -129,7 +131,7 @@ export default function RankSystemPage() {
                                     WARNING: Zero Tolerance Policy
                                 </strong>
                                 <p>
-                                    Stats padding and manipulation (e.g. killing AFK players, empty server farming) will <strong>not be tolerated</strong>.
+                                    Stats padding and manipulation (e.g. killing bots/AFK players, empty server farming, or using server-side mods to artificially inflate scores) will <strong>not be tolerated</strong>.
                                     Engaging in such behavior will result in your <strong>server and/or username being permanently blacklisted</strong> from the global ranking system.
                                 </p>
                             </div>
@@ -205,12 +207,7 @@ const ALL_ACHIEVEMENTS = [
     { name: "Dedicated (500h)", image: "milestone_playtime_500h.png", description: "Play on ranked servers for 500 hours." },
     { name: "Life-er (1000h)", image: "milestone_playtime_1000h.png", description: "Play on ranked servers for 1,000 hours." },
 
-    // Skill & Style
-    { name: "Sharpshooter (Bronze)", image: "sharpshooter_bronze.png", description: "Demonstrate skill with rifles." },
-    { name: "Sharpshooter (Silver)", image: "sharpshooter_silver.png", description: "Demonstrate high skill with rifles." },
-    { name: "Sharpshooter (Gold)", image: "sharpshooter_gold.png", description: "Demonstrate expert skill with rifles." },
-    { name: "Sharpshooter (Legend)", image: "sharpshooter_legend.png", description: "Demonstrate legendary skill with rifles." },
-
+    // --- Skill & Style ---
     { name: "Elite Warrior (Bronze)", image: "elite_warrior_bronze.png", description: "Top performing combatant." },
     { name: "Elite Warrior (Silver)", image: "elite_warrior_silver.png", description: "Superior combat performance." },
     { name: "Elite Warrior (Gold)", image: "elite_warrior_gold.png", description: "Exceptional combat performance." },
