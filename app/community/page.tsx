@@ -3,6 +3,12 @@ import { MessageCircle, Users, Globe } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Communities & Clans | BF1942 Command Center",
+  description: "Join the active Battlefield 1942 community. Find clans, Discord servers, and groups keeping the game alive.",
+};
 
 const communities = [
   {

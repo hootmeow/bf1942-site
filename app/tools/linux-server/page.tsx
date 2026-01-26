@@ -403,7 +403,6 @@ export default function LinuxServerPage() {
             </h2>
             <div className="text-sm text-muted-foreground">
               <p>Scripts released under the MIT License. All Battlefield 1942 game assets remain © Electronic Arts Inc.</p>
-              <p className="mt-2">Author: <Link href="https://github.com/hootmeow" className="text-primary hover:underline">OWLCAT</Link></p>
             </div>
           </section>
 

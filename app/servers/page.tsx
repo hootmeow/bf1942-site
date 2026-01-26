@@ -5,6 +5,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Server Browser",
+  description: "Live list of all active Battlefield 1942 servers. Filter by player count, map, and game mode.",
+};
+
 async function getServers() {
   // FIX: We intentionally hit the Next.js Proxy (port 3000)
   // This ensures the request goes through the 'rewrites' in next.config.mjs
