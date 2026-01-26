@@ -1,17 +1,32 @@
-import { GuideInfo } from './types';
+import { LucideIcon } from 'lucide-react';
+
+export interface GuideInfo {
+  slug: string;
+  title: string;
+  description: string;
+  category?: string;
+  color?: string;
+  bgColor?: string;
+}
 
 /**
  * A list of all guides for the /guide overview page.
  */
-export const guidesList: GuideInfo[] = [
+export const guidesList = [
   {
     slug: 'installation',
     title: 'Installation Guide',
+    category: 'Getting Started',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
     description: 'A complete step-by-step guide to install Battlefield 1942 on a modern PC, get online, and apply widescreen fixes.',
   },
   {
     slug: 'player-guide',
     title: "Ultimate Player's Guide",
+    category: 'Tactics & Strategy',
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10',
     description: "Veteran tactics, hidden mechanics, and advanced strategies for Infantry, Armor, and Air combat.",
   },
   // {
