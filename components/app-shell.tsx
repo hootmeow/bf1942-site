@@ -97,11 +97,7 @@ const navItems: NavItem[] = [
   {
     label: "Tools",
     icon: Wrench,
-    href: "/tools", // This is the parent "Overview" page
-    children: [
-      { label: "Map Alert Bot", href: "/tools/map-alert" },
-      { label: "Linux Server", href: "/tools/linux-server" },
-    ],
+    href: "/tools",
   },
 ];
 
