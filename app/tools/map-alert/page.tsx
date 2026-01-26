@@ -149,7 +149,7 @@ export default function MapAlertBotPage() {
             Add to Discord
           </Link>
         </Button>
-        <Button asChild size="lg" variant="outline">
+        <Button asChild size="lg" variant="secondary">
           <Link
             href="https://github.com/hootmeow/bf1942-map-alert"
             target="_blank"
@@ -159,6 +159,7 @@ export default function MapAlertBotPage() {
             View on GitHub
           </Link>
         </Button>
+
       </div>
       {/* --- END MODIFIED SECTION --- */}
 

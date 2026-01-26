@@ -82,14 +82,9 @@ const navItems: NavItem[] = [
   },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
   {
-    label: "Guides", // --- Changed from "Guide" to "Guides" ---
+    label: "Guides",
     icon: Download,
     href: "/guide",
-    // Dynamically build children from guidesList, limiting to 5
-    children: guidesList.slice(0, 5).map(guide => ({
-      label: guide.title,
-      href: `/guide/${guide.slug}`,
-    })),
   },
   {
     label: "Community",
