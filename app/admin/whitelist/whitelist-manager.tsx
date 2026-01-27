@@ -1,209 +1,238 @@
 "use client"
 
-import { useState } from "react"
-import { addWhitelistedServer, removeWhitelistedServer, toggleServerStatus } from "@/app/actions/whitelist"
+import { useState, useTransition } from "react"
+import { addWhitelistedServer, removeWhitelistedServer, toggleServerStatus, unignoreServer } from "@/app/actions/whitelist"
 import type { WhitelistedServer } from "@/app/actions/whitelist"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Trash2, CheckCircle2, XCircle, ShieldCheck } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
-export function WhitelistManager({ initialServers }: { initialServers: WhitelistedServer[] }) {
-    // We use optimistic updates or just rely on server action revalidation. 
-    // Since we pass initialServers from the server page, they will update on refresh/revalidate.
-    // But for immediate feedback, we might want local state or useRouter.refresh()
-    // However, server actions with revalidatePath usually handle this. 
-    // To keep it simple, we'll just accept that there might be a split second delay or rely on the props updating.
-    // Actually, in a client component, props don't auto-update unless the parent re-renders. 
-    // So we should probably just use the server page to fetch and pass down.
+interface WhitelistManagerProps {
+    initialServers: WhitelistedServer[]
+}
 
-    // Simpler: Just refresh the page logic is automatic with Server Actions if inside a form?
-    // Let's use `useOptimistic` if we wanted to be fancy, but simple form submission is fine.
+export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
+    const [isPending, startTransition] = useTransition()
+    const [error, setError] = useState<string | null>(null)
 
-    const [isPending, setIsPending] = useState(false)
-    const [error, setError] = useState("")
+    // Separate servers by status
+    const activeServers = initialServers.filter(s => s.is_active && !s.is_ignored)
+    const inactiveServers = initialServers.filter(s => !s.is_active && !s.is_ignored)
+    const ignoredServers = initialServers.filter(s => s.is_ignored)
 
-    async function handleAdd(formData: FormData) {
-        setIsPending(true)
-        setError("")
-        try {
-            const res = await addWhitelistedServer(formData)
-            if (res.error) {
-                setError(res.error)
+    async function handleAddServer(formData: FormData) {
+        setError(null)
+        startTransition(async () => {
+            const result = await addWhitelistedServer(formData)
+            if (result.error) {
+                setError(result.error)
             } else {
-                // creating a ref to the form would be better to reset it, 
-                // but we can just target the event target if we used onSubmit
+                // Clear the form
                 const form = document.getElementById("add-server-form") as HTMLFormElement
-                form?.reset()
+                form.reset()
             }
-        } catch (e) {
-            setError("Something went wrong")
-        } finally {
-            setIsPending(false)
-        }
+        })
     }
 
-    const activeServers = initialServers.filter(s => s.is_active)
-    const pendingServers = initialServers.filter(s => !s.is_active)
-
     return (
-        <div className="space-y-6">
-            {/* --- ADD NEW FORM --- */}
-            <Card className="bg-secondary/20 border-border/50">
+        <div className="space-y-8">
+            <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <ShieldCheck className="w-5 h-5 text-green-500" />
-                        Add New Trusted Server
-                    </CardTitle>
+                    <CardTitle>Add New Server</CardTitle>
+                    <CardDescription>Manually add a server to the whitelist (or re-activate an existing one).</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form id="add-server-form" action={handleAdd} className="flex flex-col md:flex-row gap-4 items-end">
-                        <div className="flex-1 space-y-2 w-full">
-                            <label className="text-sm font-medium text-muted-foreground">Server IP (IPv4 or IPv6)</label>
-                            <Input
-                                name="ip"
-                                placeholder="e.g. 192.168.1.1"
-                                required
-                                className="bg-background"
-                            />
+                    <form id="add-server-form" action={handleAddServer} className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="grid w-full gap-1.5">
+                            <label htmlFor="ip" className="text-sm font-medium">Server IP</label>
+                            <Input name="ip" id="ip" placeholder="1.2.3.4" required />
                         </div>
-                        <div className="flex-1 space-y-2 w-full">
-                            <label className="text-sm font-medium text-muted-foreground">Server Name / Description</label>
-                            <Input
-                                name="name"
-                                placeholder="e.g. My Official Server #1"
-                                required
-                                className="bg-background"
-                            />
+                        <div className="grid w-full gap-1.5">
+                            <label htmlFor="name" className="text-sm font-medium">Server Name (Optional)</label>
+                            <Input name="name" id="name" placeholder="My BF1942 Server" />
                         </div>
                         <Button type="submit" disabled={isPending}>
-                            {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                            Whitelist Server
+                            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Server"}
                         </Button>
                     </form>
-                    {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                    {error && (
+                        <Alert variant="destructive" className="mt-4">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
                 </CardContent>
             </Card>
 
-            {/* --- PENDING SERVERS TABLE --- */}
-            {pendingServers.length > 0 && (
-                <div className="space-y-4">
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-yellow-500">
-                        <Loader2 className="h-5 w-5" />
-                        Detected / Pending Servers ({pendingServers.length})
-                    </h2>
-                    <div className="border border-border/50 rounded-lg overflow-hidden bg-yellow-500/5">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-secondary/50 text-muted-foreground font-medium uppercase border-b border-border">
-                                <tr>
-                                    <th className="p-3">IP Address</th>
-                                    <th className="p-3">Detected Name</th>
-                                    <th className="p-3">Discovered</th>
-                                    <th className="p-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {pendingServers.map((server) => (
-                                    <tr key={server.ip} className="hover:bg-secondary/20 transition-colors">
-                                        <td className="p-3 font-mono">{server.ip}</td>
-                                        <td className="p-3 font-medium text-muted-foreground">{server.server_name || "Unknown"}</td>
-                                        <td className="p-3 text-xs text-muted-foreground">
-                                            {new Date(server.added_at).toLocaleString()}
-                                        </td>
-                                        <td className="p-3 text-right flex justify-end gap-2">
-                                            <Button
-                                                size="sm" variant="default" className="bg-green-600 hover:bg-green-700"
-                                                onClick={() => toggleServerStatus(server.ip, true)}
-                                            >
-                                                Approve
-                                            </Button>
-                                            <Button
-                                                size="sm" variant="ghost" className="text-red-500"
-                                                onClick={() => {
-                                                    if (confirm("Ignore/Remove this server? It will act as a block.")) {
-                                                        removeWhitelistedServer(server.ip)
-                                                    }
-                                                }}
-                                            >
-                                                Ignore
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-
-            {/* --- APPROVED SERVERS TABLE --- */}
-            <div className="space-y-4">
-                <h2 className="text-xl font-bold flex items-center gap-2 text-green-500">
-                    <CheckCircle2 className="h-5 w-5" />
-                    Approved Active Servers ({activeServers.length})
-                </h2>
-
-                <div className="border border-border rounded-lg overflow-hidden">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-secondary/50 text-muted-foreground font-medium uppercase border-b border-border">
-                            <tr>
-                                <th className="p-3">Status</th>
-                                <th className="p-3">IP Address</th>
-                                <th className="p-3">Name</th>
-                                <th className="p-3">Added By</th>
-                                <th className="p-3">Date</th>
-                                <th className="p-3 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {activeServers.map((server) => (
-                                <tr key={server.ip} className="hover:bg-secondary/20 transition-colors">
-                                    <td className="p-3">
-                                        <div
-                                            className="cursor-pointer"
-                                            onClick={() => toggleServerStatus(server.ip, !server.is_active)}
-                                        >
-                                            <Badge variant="outline" className="text-green-500 border-green-500/50 bg-green-500/10 hover:bg-green-500/20">
-                                                Active
-                                            </Badge>
+            <div className="grid grid-cols-1 gap-8">
+                {/* Active Servers */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <ShieldCheck className="w-5 h-5 text-green-500" />
+                                Active Whitelist
+                            </span>
+                            <Badge variant="secondary">{activeServers.length}</Badge>
+                        </CardTitle>
+                        <CardDescription>Servers currently being tracked and displayed.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {activeServers.length === 0 ? (
+                            <p className="text-sm text-muted-foreground italic">No active servers.</p>
+                        ) : (
+                            <div className="rounded-md border">
+                                <div className="divide-y">
+                                    {activeServers.map((server) => (
+                                        <div key={server.ip} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                                            <div className="space-y-1">
+                                                <div className="font-medium flex items-center gap-2">
+                                                    {server.server_name || "Unknown Server"}
+                                                    <Badge variant="outline" className="text-xs font-normal font-mono">{server.ip}</Badge>
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Added by {server.added_by || "System"} on {new Date(server.added_at).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm text-muted-foreground hidden md:inline">Tracking</span>
+                                                    <Switch
+                                                        checked={server.is_active}
+                                                        onCheckedChange={(checked) => startTransition(async () => await toggleServerStatus(server.ip, checked))}
+                                                        disabled={isPending}
+                                                    />
+                                                </div>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="text-muted-foreground hover:text-destructive"
+                                                    onClick={() => {
+                                                        if (confirm("Are you sure you want to ignore this server? It will be removed from lists.")) {
+                                                            startTransition(async () => await removeWhitelistedServer(server.ip))
+                                                        }
+                                                    }}
+                                                    disabled={isPending}
+                                                    title="Ignore Server"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </td>
-                                    <td className="p-3 font-mono text-xs md:text-sm">{server.ip}</td>
-                                    <td className="p-3 font-medium">{server.server_name}</td>
-                                    <td className="p-3 text-muted-foreground text-xs">{server.added_by}</td>
-                                    <td className="p-3 text-muted-foreground text-xs">
-                                        {new Date(server.added_at).toLocaleDateString()}
-                                    </td>
-                                    <td className="p-3 text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-8 w-8 p-0"
-                                            onClick={() => {
-                                                if (confirm("Are you sure you want to remove this server? It will stop being tracked immediately.")) {
-                                                    removeWhitelistedServer(server.ip)
-                                                }
-                                            }}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                            <span className="sr-only">Delete</span>
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {activeServers.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                        No active servers. Check the "Detected" list or add one manually.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Pending Servers */}
+                {inactiveServers.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                                <span className="flex items-center gap-2">
+                                    <AlertCircle className="w-5 h-5 text-yellow-500" />
+                                    Detected / Inactive
+                                </span>
+                                <Badge variant="secondary">{inactiveServers.length}</Badge>
+                            </CardTitle>
+                            <CardDescription>Known servers that are currently disabled or pending approval.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="rounded-md border bg-yellow-500/5 border-yellow-200 dark:border-yellow-900/50">
+                                <div className="divide-y divide-yellow-200 dark:divide-yellow-900/50">
+                                    {inactiveServers.map((server) => (
+                                        <div key={server.ip} className="flex items-center justify-between p-4">
+                                            <div className="space-y-1">
+                                                <div className="font-medium flex items-center gap-2">
+                                                    {server.server_name || "Unknown Server"}
+                                                    <Badge variant="outline" className="text-xs font-normal font-mono">{server.ip}</Badge>
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Added by {server.added_by || "System"}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                                    onClick={() => startTransition(async () => await toggleServerStatus(server.ip, true))}
+                                                    disabled={isPending}
+                                                >
+                                                    <ShieldCheck className="w-4 h-4 mr-2" />
+                                                    Approve
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-destructive hover:bg-destructive/10 border-destructive/20"
+                                                    onClick={() => {
+                                                        if (confirm("Ignore this server? It will be hidden.")) {
+                                                            startTransition(async () => await removeWhitelistedServer(server.ip))
+                                                        }
+                                                    }}
+                                                    disabled={isPending}
+                                                >
+                                                    <ShieldAlert className="w-4 h-4 mr-2" />
+                                                    Ignore
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
+
+            {/* Ignored Servers Accordion */}
+            {ignoredServers.length > 0 && (
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="ignored" className="border rounded-lg px-4">
+                        <AccordionTrigger className="hover:no-underline py-4">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <ShieldAlert className="w-4 h-4" />
+                                <span>Ignored Servers</span>
+                                <Badge variant="outline" className="ml-2">{ignoredServers.length}</Badge>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2 pb-4">
+                                {ignoredServers.map((server) => (
+                                    <div key={server.ip} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                                        <div className="space-y-1 overflow-hidden min-w-0">
+                                            <div className="font-medium truncate text-sm" title={server.server_name || "Unknown"}>
+                                                {server.server_name || "Unknown"}
+                                            </div>
+                                            <div className="text-xs font-mono text-muted-foreground truncate">
+                                                {server.ip}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="ml-2 shrink-0"
+                                            onClick={() => startTransition(async () => await unignoreServer(server.ip))}
+                                            disabled={isPending}
+                                        >
+                                            <RotateCcw className="w-3 h-3 mr-2" />
+                                            Restore
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            )}
         </div>
     )
 }

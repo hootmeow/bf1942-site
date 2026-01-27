@@ -18,6 +18,7 @@ export type WhitelistedServer = {
     added_by: string | null
     added_at: Date
     is_active: boolean
+    is_ignored: boolean
 }
 
 async function verifyAdmin() {
@@ -35,7 +36,7 @@ export async function getWhitelistedServers(): Promise<WhitelistedServer[]> {
     const client = await pool.connect()
     try {
         const res = await client.query(`
-            SELECT ip, server_name, added_by, added_at, is_active 
+            SELECT ip, server_name, added_by, added_at, is_active, is_ignored 
             FROM whitelisted_servers 
             ORDER BY added_at DESC
         `)
@@ -68,7 +69,8 @@ export async function addWhitelistedServer(formData: FormData) {
              VALUES ($1, $2, $3)
              ON CONFLICT (ip) DO UPDATE SET 
                 server_name = EXCLUDED.server_name,
-                is_active = TRUE`,
+                is_active = TRUE,
+                is_ignored = FALSE`,
             [ip, name, user.name || "Admin"]
         )
         revalidatePath("/admin/whitelist")
@@ -86,11 +88,27 @@ export async function removeWhitelistedServer(ip: string) {
 
     const client = await pool.connect()
     try {
-        await client.query("DELETE FROM whitelisted_servers WHERE ip = $1", [ip])
+        // Soft delete by setting is_ignored = TRUE
+        await client.query("UPDATE whitelisted_servers SET is_ignored = TRUE, is_active = FALSE WHERE ip = $1", [ip])
         revalidatePath("/admin/whitelist")
         return { success: true }
     } catch (e: any) {
         return { error: "Failed to remove server" }
+    } finally {
+        client.release()
+    }
+}
+
+export async function unignoreServer(ip: string) {
+    await verifyAdmin()
+
+    const client = await pool.connect()
+    try {
+        await client.query("UPDATE whitelisted_servers SET is_ignored = FALSE WHERE ip = $1", [ip])
+        revalidatePath("/admin/whitelist")
+        return { success: true }
+    } catch (e: any) {
+        return { error: "Failed to unignore server" }
     } finally {
         client.release()
     }
