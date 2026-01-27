@@ -19,6 +19,8 @@ export type WhitelistedServer = {
     added_at: Date
     is_active: boolean
     is_ignored: boolean
+    admin_notes: string | null
+    owner_contact: string | null
 }
 
 async function verifyAdmin() {
@@ -36,7 +38,7 @@ export async function getWhitelistedServers(): Promise<WhitelistedServer[]> {
     const client = await pool.connect()
     try {
         const res = await client.query(`
-            SELECT ip, server_name, added_by, added_at, is_active, is_ignored 
+            SELECT ip, server_name, added_by, added_at, is_active, is_ignored, admin_notes, owner_contact 
             FROM whitelisted_servers 
             ORDER BY added_at DESC
         `)
@@ -78,6 +80,24 @@ export async function addWhitelistedServer(formData: FormData) {
     } catch (e: any) {
         console.error("Failed to add server:", e)
         return { error: "Database error: " + e.message }
+    } finally {
+        client.release()
+    }
+}
+
+export async function updateServerDetails(ip: string, notes: string, contact: string) {
+    await verifyAdmin()
+
+    const client = await pool.connect()
+    try {
+        await client.query(
+            "UPDATE whitelisted_servers SET admin_notes = $2, owner_contact = $3 WHERE ip = $1",
+            [ip, notes, contact]
+        )
+        revalidatePath("/admin/whitelist")
+        return { success: true }
+    } catch (e: any) {
+        return { error: "Failed to update details" }
     } finally {
         client.release()
     }
