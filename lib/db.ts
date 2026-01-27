@@ -22,6 +22,9 @@ const config: PoolConfig = {
     connectionTimeoutMillis: 5000, // Increased timeout
 };
 
+// If connecting to a remote DB (not localhost/127.0.0.1), we might need SSL
+const isRemote = !connectionString.includes("localhost") && !connectionString.includes("127.0.0.1");
+
 // Only add SSL if explicitly needed or usually for remote connections
 if (isRemote || process.env.POSTGRES_SSL === 'true') {
     config.ssl = {
