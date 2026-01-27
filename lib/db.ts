@@ -5,10 +5,15 @@ const globalForDb = globalThis as unknown as {
 }
 
 // Determine connection settings
-const connectionString = process.env.POSTGRES_DSN || "postgresql://bf1942_db_user:core2duo@127.0.0.1:5432/bf1942_data";
+const connectionString = process.env.POSTGRES_DSN || "";
 
-// If connecting to a remote DB (not localhost/127.0.0.1), we might need SSL
-const isRemote = !connectionString.includes("localhost") && !connectionString.includes("127.0.0.1");
+if (!connectionString) {
+    console.error("CRITICAL: POSTGRES_DSN is not set!");
+} else {
+    // Mask password for logging
+    const masked = connectionString.replace(/:([^:@]+)@/, ":****@");
+    console.log(`[DB] initializing pool with: ${masked}`);
+}
 
 const config: PoolConfig = {
     connectionString,
