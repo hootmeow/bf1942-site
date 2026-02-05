@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Crown, Medal, Award } from "lucide-react";
 
 // Define a flexible interface that covers both live server players and historical round players
 export interface ScoreboardPlayer {
@@ -33,17 +34,63 @@ export interface ScoreboardPlayer {
     avg_ping?: number;
 }
 
-function getPingColorClass(ping: number): string {
-    if (ping <= 80) return "text-green-500";
-    if (ping <= 120) return "text-yellow-500";
-    if (ping <= 160) return "text-orange-500";
-    return "text-red-500";
+function getPingColor(ping: number): { text: string; bg: string } {
+    if (ping <= 80) return { text: "text-green-500", bg: "bg-green-500" };
+    if (ping <= 120) return { text: "text-yellow-500", bg: "bg-yellow-500" };
+    if (ping <= 160) return { text: "text-orange-500", bg: "bg-orange-500" };
+    return { text: "text-red-500", bg: "bg-red-500" };
 }
 
-export function ScoreboardTable({ players }: { players: ScoreboardPlayer[] }) {
+function getKDRatio(kills: number, deaths: number): { ratio: string; color: string } {
+    if (deaths === 0) {
+        return { ratio: kills > 0 ? `${kills}.00` : "0.00", color: kills > 0 ? "text-green-500" : "text-muted-foreground" };
+    }
+    const kd = kills / deaths;
+    let color = "text-muted-foreground";
+    if (kd >= 2) color = "text-green-500";
+    else if (kd >= 1) color = "text-emerald-400";
+    else if (kd >= 0.5) color = "text-yellow-500";
+    else color = "text-red-400";
+    return { ratio: kd.toFixed(2), color };
+}
+
+function RankBadge({ rank }: { rank: number }) {
+    if (rank === 1) {
+        return (
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-500">
+                <Crown className="w-3.5 h-3.5" />
+            </div>
+        );
+    }
+    if (rank === 2) {
+        return (
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-300/20 text-slate-300">
+                <Medal className="w-3.5 h-3.5" />
+            </div>
+        );
+    }
+    if (rank === 3) {
+        return (
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-600/20 text-amber-600">
+                <Award className="w-3.5 h-3.5" />
+            </div>
+        );
+    }
+    return (
+        <div className="flex items-center justify-center w-6 h-6 text-xs text-muted-foreground font-mono">
+            {rank}
+        </div>
+    );
+}
+
+interface ScoreboardTableProps {
+    players: ScoreboardPlayer[];
+    topThreeNames?: string[]; // Names of top 3 players overall (across all teams)
+}
+
+export function ScoreboardTable({ players, topThreeNames = [] }: ScoreboardTableProps) {
     const totals = players.reduce(
         (acc, player) => {
-            // Handle both naming conventions
             const score = player.final_score ?? player.score ?? 0;
             const kills = player.final_kills ?? player.kills ?? 0;
             const deaths = player.final_deaths ?? player.deaths ?? 0;
@@ -56,55 +103,101 @@ export function ScoreboardTable({ players }: { players: ScoreboardPlayer[] }) {
         { score: 0, kills: 0, deaths: 0 }
     );
 
+    const teamKD = getKDRatio(totals.kills, totals.deaths);
+
+    if (players.length === 0) {
+        return (
+            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+                No players on this team
+            </div>
+        );
+    }
+
     return (
         <Table>
             <TableHeader>
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-10">#</TableHead>
                     <TableHead>Player</TableHead>
                     <TableHead className="text-right">Score</TableHead>
-                    <TableHead className="text-right">Kills</TableHead>
-                    <TableHead className="text-right">Deaths</TableHead>
-                    <TableHead className="text-right">Ping</TableHead>
+                    <TableHead className="text-right">K</TableHead>
+                    <TableHead className="text-right">D</TableHead>
+                    <TableHead className="text-right">K/D</TableHead>
+                    <TableHead className="text-right w-20">Ping</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {players.map((player, index) => {
-                    // Determine display values based on available fields
                     const name = player.last_known_name || player.player_name || "Unknown";
                     const score = player.final_score ?? player.score ?? 0;
                     const kills = player.final_kills ?? player.kills ?? 0;
                     const deaths = player.final_deaths ?? player.deaths ?? 0;
                     const ping = player.avg_ping ?? player.ping ?? 0;
-                    const playerId = player.player_id;
+                    const kd = getKDRatio(kills, deaths);
+                    const pingColor = getPingColor(ping);
+
+                    // Check if this player is in the overall top 3
+                    const overallRank = topThreeNames.indexOf(name) + 1; // 1, 2, 3 or 0 if not found
+                    const teamRank = index + 1;
 
                     return (
-                        <TableRow key={`${name}-${index}`}>
-                            <TableCell className="font-medium text-foreground">
+                        <TableRow
+                            key={`${name}-${index}`}
+                            className={cn(
+                                "transition-colors",
+                                overallRank === 1 && "bg-yellow-500/5",
+                                overallRank === 2 && "bg-slate-300/5",
+                                overallRank === 3 && "bg-amber-600/5"
+                            )}
+                        >
+                            <TableCell className="py-2">
+                                {overallRank > 0 ? (
+                                    <RankBadge rank={overallRank} />
+                                ) : (
+                                    <div className="flex items-center justify-center w-6 h-6 text-xs text-muted-foreground font-mono">
+                                        {teamRank}
+                                    </div>
+                                )}
+                            </TableCell>
+                            <TableCell className="font-medium text-foreground py-2">
                                 {name && name !== "Unknown" ? (
-                                    <Link href={`/player/${encodeURIComponent(name)}`} className="hover:underline">
+                                    <Link
+                                        href={`/player/${encodeURIComponent(name)}`}
+                                        className="hover:text-primary hover:underline underline-offset-2 transition-colors"
+                                    >
                                         {name}
                                     </Link>
                                 ) : (
-                                    name
+                                    <span className="text-muted-foreground">{name}</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-right">{score}</TableCell>
-                            <TableCell className="text-right">{kills}</TableCell>
-                            <TableCell className="text-right">{deaths}</TableCell>
-                            <TableCell className={cn("text-right font-medium", getPingColorClass(ping))}>
-                                {ping}
+                            <TableCell className="text-right font-semibold py-2">{score}</TableCell>
+                            <TableCell className="text-right text-green-400 py-2">{kills}</TableCell>
+                            <TableCell className="text-right text-red-400 py-2">{deaths}</TableCell>
+                            <TableCell className={cn("text-right font-mono text-sm py-2", kd.color)}>
+                                {kd.ratio}
+                            </TableCell>
+                            <TableCell className="text-right py-2">
+                                <div className="flex items-center justify-end gap-2">
+                                    <div className={cn("w-1.5 h-1.5 rounded-full", pingColor.bg)} />
+                                    <span className={cn("font-mono text-sm", pingColor.text)}>{ping}</span>
+                                </div>
                             </TableCell>
                         </TableRow>
                     );
                 })}
             </TableBody>
             <TableFooter>
-                <TableRow>
-                    <TableCell className="font-semibold text-foreground">Team Totals</TableCell>
-                    <TableCell className="text-right font-semibold text-foreground">{totals.score}</TableCell>
-                    <TableCell className="text-right font-semibold text-foreground">{totals.kills}</TableCell>
-                    <TableCell className="text-right font-semibold text-foreground">{totals.deaths}</TableCell>
-                    <TableCell className="text-right"></TableCell>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableCell></TableCell>
+                    <TableCell className="font-semibold text-foreground">Team Total</TableCell>
+                    <TableCell className="text-right font-bold text-foreground">{totals.score}</TableCell>
+                    <TableCell className="text-right font-semibold text-green-400">{totals.kills}</TableCell>
+                    <TableCell className="text-right font-semibold text-red-400">{totals.deaths}</TableCell>
+                    <TableCell className={cn("text-right font-mono font-semibold", teamKD.color)}>
+                        {teamKD.ratio}
+                    </TableCell>
+                    <TableCell></TableCell>
                 </TableRow>
             </TableFooter>
         </Table>

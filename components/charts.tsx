@@ -1,8 +1,8 @@
 "use client";
 
-import { ResponsiveContainer, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, AreaChart, Area, Legend, ComposedChart, Label, LabelList, ReferenceLine } from "recharts";
+import { ResponsiveContainer, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, AreaChart, Area, Legend, ComposedChart, Label } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PieChart, Pie, Cell, LineChart, Line, BarChart, Bar } from "recharts";
+import { PieChart, Pie, Cell, LineChart, Line } from "recharts";
 
 // --- Mock / Static Data (unchanged) ---
 const uptimeData = Array.from({ length: 7 }).map((_, index) => ({
@@ -306,51 +306,220 @@ const processMetricsData = (playerData: any[], pingData: any[]) => {
 export function ServerActivityChart({ playerData, pingData }: { playerData: any[], pingData: any[] }) {
   const chartData = processMetricsData(playerData, pingData);
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-        <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-        <ReTooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }} />
-        <Legend verticalAlign="top" height={36} />
-        <Line yAxisId="left" type="monotone" dataKey="avg_players" name="Avg Players" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-        <Line yAxisId="left" type="monotone" dataKey="max_players" name="Max Players" stroke="hsl(var(--primary))" strokeWidth={1} strokeDasharray="5 5" dot={false} />
-        <Line yAxisId="right" type="monotone" dataKey="avg_ping" name="Avg Ping (ms)" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
-      </LineChart>
+    <ResponsiveContainer width="100%" height={280}>
+      <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="playerGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.3} />
+        <XAxis
+          dataKey="hour"
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          fontSize={11}
+          tickMargin={8}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          yAxisId="left"
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          fontSize={11}
+          width={35}
+          tickMargin={8}
+        />
+        <YAxis
+          yAxisId="right"
+          orientation="right"
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          fontSize={11}
+          width={35}
+          tickMargin={8}
+          tickFormatter={(value) => `${value}ms`}
+        />
+        <ReTooltip
+          cursor={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1, strokeDasharray: '4 4' }}
+          contentStyle={{
+            backgroundColor: "hsl(var(--card)/0.95)",
+            borderRadius: 8,
+            border: "1px solid hsl(var(--border))",
+            backdropFilter: "blur(4px)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+          }}
+          labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600, marginBottom: 4 }}
+        />
+        <Legend
+          verticalAlign="top"
+          height={40}
+          iconType="circle"
+          wrapperStyle={{ paddingBottom: "8px", fontSize: "12px" }}
+        />
+        <Area
+          yAxisId="left"
+          type="monotone"
+          dataKey="avg_players"
+          name="Avg Players"
+          stroke="hsl(var(--primary))"
+          fill="url(#playerGradient)"
+          strokeWidth={2}
+        />
+        <Line
+          yAxisId="left"
+          type="monotone"
+          dataKey="max_players"
+          name="Max Players"
+          stroke="hsl(var(--primary))"
+          strokeWidth={1.5}
+          strokeDasharray="4 4"
+          dot={false}
+          opacity={0.6}
+        />
+        <Line
+          yAxisId="right"
+          type="monotone"
+          dataKey="avg_ping"
+          name="Avg Ping"
+          stroke="hsl(var(--chart-2))"
+          strokeWidth={2}
+          dot={false}
+        />
+      </ComposedChart>
     </ResponsiveContainer>
   );
 }
 
 export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
-  const chartColors = [
-    "hsl(var(--chart-1))",
-    "hsl(var(--chart-2))",
-    "hsl(var(--chart-3))",
-    "hsl(var(--chart-4))",
-    "hsl(var(--chart-5))",
+  // Vibrant gradient color pairs [start, end]
+  const gradientColors = [
+    ["#8b5cf6", "#a78bfa"], // Purple
+    ["#06b6d4", "#22d3ee"], // Cyan
+    ["#f59e0b", "#fbbf24"], // Amber
+    ["#ec4899", "#f472b6"], // Pink
+    ["#10b981", "#34d399"], // Emerald
+    ["#6366f1", "#818cf8"], // Indigo
+    ["#ef4444", "#f87171"], // Red
   ];
+
+  // Calculate total for percentages
+  const total = mapData.reduce((sum, item) => sum + item.rounds_played, 0);
+
+  // Custom legend with percentages and progress bars
+  const CustomLegend = () => (
+    <div className="space-y-2.5 mt-3">
+      {mapData.map((entry, index) => {
+        const percent = total > 0 ? ((entry.rounds_played / total) * 100) : 0;
+        const colors = gradientColors[index % gradientColors.length];
+        return (
+          <div key={entry.map_name} className="group">
+            <div className="flex items-center gap-3 text-sm mb-1">
+              <div
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-offset-1 ring-offset-background"
+                style={{
+                  background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+                  ringColor: colors[0] + "40"
+                }}
+              />
+              <span className="flex-1 truncate text-foreground font-medium" title={entry.map_name}>
+                {entry.map_name}
+              </span>
+              <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                {entry.rounds_played}
+              </span>
+              <span className="font-bold w-12 text-right tabular-nums" style={{ color: colors[0] }}>
+                {percent.toFixed(0)}%
+              </span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-muted/30 overflow-hidden ml-5">
+              <div
+                className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                style={{
+                  width: `${percent}%`,
+                  background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <PieChart>
-        <Pie
-          data={mapData}
-          dataKey="rounds_played"
-          nameKey="map_name"
-          cx="50%"
-          cy="50%"
-          innerRadius={50}
-          outerRadius={90}
-          paddingAngle={5}
-        >
-          {mapData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-          ))}
-        </Pie>
-        <Legend verticalAlign="bottom" height={36} iconType="circle" />
-        <ReTooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }} />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="space-y-2">
+      <ResponsiveContainer width="100%" height={200}>
+        <PieChart>
+          <defs>
+            {mapData.map((_, index) => {
+              const colors = gradientColors[index % gradientColors.length];
+              return (
+                <linearGradient key={`gradient-${index}`} id={`mapGradient-${index}`} x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor={colors[0]} />
+                  <stop offset="100%" stopColor={colors[1]} />
+                </linearGradient>
+              );
+            })}
+            {/* Glow filter */}
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <Pie
+            data={mapData}
+            dataKey="rounds_played"
+            nameKey="map_name"
+            cx="50%"
+            cy="50%"
+            innerRadius={50}
+            outerRadius={80}
+            paddingAngle={2}
+            strokeWidth={0}
+            animationBegin={0}
+            animationDuration={800}
+            animationEasing="ease-out"
+          >
+            {mapData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={`url(#mapGradient-${index})`}
+                style={{
+                  filter: "url(#glow)",
+                  cursor: "pointer",
+                  transition: "transform 0.2s ease"
+                }}
+              />
+            ))}
+          </Pie>
+          <ReTooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--card)/0.95)",
+              borderRadius: 10,
+              border: "1px solid hsl(var(--border))",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+              backdropFilter: "blur(8px)"
+            }}
+            formatter={(value: number, name: string) => {
+              const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+              return [
+                <span key="value" className="font-bold text-base">{value} rounds <span className="text-muted-foreground font-normal">({percent}%)</span></span>,
+                <span key="name" className="text-foreground font-medium">{name}</span>
+              ];
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <CustomLegend />
+    </div>
   );
 }
 
@@ -409,108 +578,129 @@ export function PlayerPlaytimeChart({ data }: { data: number[] }) {
 // --- New Player Profile Charts ---
 
 export function PlayerTopMapsChart({ data }: { data: { map_name: string; map_play_count: number }[] }) {
+  const maxValue = Math.max(...data.map(d => d.map_play_count), 1);
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-        <defs>
-          <linearGradient id="colorMaps" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={1} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-        <XAxis type="number" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} hide />
-        <YAxis
-          dataKey="map_name"
-          type="category"
-          stroke="hsl(var(--foreground))"
-          width={120}
-          tickLine={false}
-          axisLine={false}
-          tick={{ fontSize: 13, fontWeight: 500 }}
-        />
-        <ReTooltip
-          cursor={{ fill: "hsl(var(--accent)/0.2)" }}
-          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 8, border: "1px solid hsl(var(--border))" }}
-        />
-        <Bar
-          dataKey="map_play_count"
-          name="Rounds Played"
-          fill="url(#colorMaps)"
-          radius={[0, 4, 4, 0]}
-          barSize={20}
-          background={{ fill: 'hsl(var(--muted)/0.3)', radius: 4 }}
-        >
-          <LabelList dataKey="map_play_count" position="right" fill="hsl(var(--foreground))" fontSize={12} />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="space-y-3">
+      {data.map((item, index) => {
+        const percent = (item.map_play_count / maxValue) * 100;
+        return (
+          <div key={item.map_name} className="group">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-foreground truncate flex-1 mr-4" title={item.map_name}>
+                {item.map_name}
+              </span>
+              <span className="text-sm font-semibold text-primary">
+                {item.map_play_count}
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-muted/40 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all group-hover:from-primary group-hover:to-primary/90"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 export function PlayerTopServersChart({ data }: { data: { current_server_name: string; server_play_count: number }[] }) {
+  const maxValue = Math.max(...data.map(d => d.server_play_count), 1);
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-        <defs>
-          <linearGradient id="colorServers" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8} />
-            <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={1} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-        <XAxis type="number" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} hide />
-        <YAxis
-          dataKey="current_server_name"
-          type="category"
-          stroke="hsl(var(--foreground))"
-          width={180}
-          tickLine={false}
-          axisLine={false}
-          tick={{ fontSize: 12, fontWeight: 500 }}
-        />
-        <ReTooltip
-          cursor={{ fill: "hsl(var(--accent)/0.2)" }}
-          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 8, border: "1px solid hsl(var(--border))" }}
-        />
-        <Bar
-          dataKey="server_play_count"
-          name="Rounds Played"
-          fill="url(#colorServers)"
-          radius={[0, 4, 4, 0]}
-          barSize={20}
-          background={{ fill: 'hsl(var(--muted)/0.3)', radius: 4 }}
-        >
-          <LabelList dataKey="server_play_count" position="right" fill="hsl(var(--foreground))" fontSize={12} />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="space-y-3">
+      {data.map((item, index) => {
+        const percent = (item.server_play_count / maxValue) * 100;
+        return (
+          <div key={item.current_server_name} className="group">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-foreground truncate flex-1 mr-4" title={item.current_server_name}>
+                {item.current_server_name}
+              </span>
+              <span className="text-sm font-semibold text-[hsl(var(--chart-2))]">
+                {item.server_play_count}
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-muted/40 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--chart-2)/0.8)] to-[hsl(var(--chart-2))] transition-all group-hover:opacity-90"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 export function PlayerTeamPreferenceChart({ data }: { data: { name: string; value: number }[] }) {
-  const teamColors = ["hsl(var(--destructive))", "hsl(var(--chart-1))"];
+  const teamColors = ["#ef4444", "#3b82f6"]; // Red for Axis, Blue for Allied
+  const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={40}
-          outerRadius={60}
-          paddingAngle={5}
-          dataKey="value"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={teamColors[index % teamColors.length]} />
-          ))}
-        </Pie>
-        <ReTooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 8, border: "1px solid hsl(var(--border))" }} />
-        <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="flex items-center gap-6">
+      <ResponsiveContainer width={140} height={140}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={35}
+            outerRadius={55}
+            paddingAngle={4}
+            dataKey="value"
+            strokeWidth={2}
+            stroke="hsl(var(--background))"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={teamColors[index % teamColors.length]} />
+            ))}
+          </Pie>
+          <ReTooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--card))",
+              borderRadius: 8,
+              border: "1px solid hsl(var(--border))",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="flex-1 space-y-3">
+        {data.map((entry, index) => {
+          const percent = total > 0 ? ((entry.value / total) * 100).toFixed(0) : 0;
+          return (
+            <div key={entry.name} className="flex items-center gap-3">
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: teamColors[index % teamColors.length] }}
+              />
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">{entry.name}</span>
+                  <span className="text-sm font-bold" style={{ color: teamColors[index % teamColors.length] }}>
+                    {percent}%
+                  </span>
+                </div>
+                <div className="mt-1 h-1.5 w-full rounded-full bg-muted/50 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${percent}%`,
+                      backgroundColor: teamColors[index % teamColors.length]
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

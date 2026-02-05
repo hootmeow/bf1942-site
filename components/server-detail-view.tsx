@@ -223,6 +223,13 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
     return [t1, t2];
   }, [scoreboard]);
 
+  // Calculate top 3 players overall (across both teams)
+  const topThreeNames = useMemo(() => {
+    if (!scoreboard || scoreboard.length === 0) return [];
+    const sorted = [...scoreboard].sort((a, b) => (b.score || 0) - (a.score || 0));
+    return sorted.slice(0, 3).map(p => p.player_name || p.last_known_name || "Unknown");
+  }, [scoreboard]);
+
   const winner = (server_info.tickets1 || 0) > (server_info.tickets2 || 0) ? 1 : (server_info.tickets2 || 0) > (server_info.tickets1 || 0) ? 2 : 0;
 
   if (!initialData) {
@@ -391,7 +398,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
               <div className="text-2xl font-bold text-red-500">{server_info.tickets1 ?? 'N/A'} Tickets</div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6"><ScoreboardTable players={team1} /></CardContent>
+          <CardContent className="pt-6"><ScoreboardTable players={team1} topThreeNames={topThreeNames} /></CardContent>
         </Card>
         <Card className={cn("border-border/60", winner === 2 && "border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]")}>
           <CardHeader className={cn("bg-blue-950/20 border-b border-blue-900/20", winner === 2 && "bg-blue-900/30")}>
@@ -402,7 +409,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
               <div className="text-2xl font-bold text-blue-500">{server_info.tickets2 ?? 'N/A'} Tickets</div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6"><ScoreboardTable players={team2} /></CardContent>
+          <CardContent className="pt-6"><ScoreboardTable players={team2} topThreeNames={topThreeNames} /></CardContent>
         </Card>
       </div>
 

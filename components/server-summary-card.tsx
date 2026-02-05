@@ -30,41 +30,69 @@ function getGameModeIcon(mode: string | null | undefined) {
 }
 
 export function ServerSummaryCard({ server }: { server: LiveServer }) {
-    const isPopulated = server.current_player_count > 0;
+    const fillPercent = (server.current_player_count / server.current_max_players) * 100;
+    const isHot = server.current_player_count > 20;
+    const isActive = server.current_player_count > 0;
 
     return (
-        <Card className="bg-card/40 border-l-4 border-l-primary hover:bg-card/60 transition-colors">
+        <Card className="group bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/60 transition-all duration-200 overflow-hidden">
             <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                    <div className="space-y-1 overflow-hidden flex-1">
-                        <h3 className="font-bold flex items-center gap-2 text-lg truncate pr-2">
-                            <ServerFlag ip={server.ip} />
-                            <Link href={`/servers/${server.server_id}`} className="hover:underline truncate text-foreground hover:text-primary transition-colors">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="space-y-1.5 overflow-hidden flex-1 min-w-0">
+                        <h3 className="font-bold flex items-center gap-2 text-base">
+                            <ServerFlag ip={server.ip} className="flex-shrink-0" />
+                            <Link
+                                href={`/servers/${server.server_id}`}
+                                className="hover:underline underline-offset-2 truncate text-foreground group-hover:text-primary transition-colors"
+                            >
                                 {server.current_server_name || "Unknown Server"}
                             </Link>
                         </h3>
-                        <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
-                            <span className="flex items-center gap-1 truncate"><MapIcon className="h-3 w-3" /> {server.current_map || "Unknown"}</span>
-                            <span className="flex items-center gap-1 truncate" title={`Game Mode: ${server.current_gametype || 'Unknown'}`}>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1.5 truncate">
+                                <MapIcon className="h-3 w-3 text-primary/70" />
+                                <span className="truncate">{server.current_map || "Unknown"}</span>
+                            </span>
+                            <span className="flex items-center gap-1.5" title={`Game Mode: ${server.current_gametype || 'Unknown'}`}>
                                 {getGameModeIcon(server.current_gametype)}
-                                <span className="uppercase">{server.current_gametype || "CONQ"}</span>
+                                <span className="uppercase font-medium">{server.current_gametype || "CONQ"}</span>
                             </span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                        <Badge variant={server.current_player_count > 20 ? "default" : "secondary"} className="font-mono">
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                        <Badge
+                            variant={isHot ? "default" : isActive ? "secondary" : "outline"}
+                            className="font-mono text-xs"
+                        >
                             {server.current_player_count} / {server.current_max_players}
                         </Badge>
+                        {server.history && server.history.length > 0 && (
+                            <div className="h-4 w-14 opacity-70">
+                                <Sparkline data={server.history} width={56} height={16} />
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Visual Player Bar */}
-                <div className="h-2 w-full bg-secondary/50 rounded-full overflow-hidden flex">
+                <div className="relative h-1.5 w-full bg-muted/40 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-primary transition-all duration-1000"
-                        style={{ width: `${(server.current_player_count / server.current_max_players) * 100}%` }}
-                    ></div>
+                        className={`h-full rounded-full transition-all duration-500 ${
+                            isHot
+                                ? "bg-gradient-to-r from-primary to-primary/80"
+                                : isActive
+                                ? "bg-primary/70"
+                                : "bg-muted-foreground/30"
+                        }`}
+                        style={{ width: `${fillPercent}%` }}
+                    />
+                    {isHot && (
+                        <div
+                            className="absolute top-0 h-full bg-primary/30 animate-pulse rounded-full"
+                            style={{ width: `${fillPercent}%` }}
+                        />
+                    )}
                 </div>
             </CardContent>
         </Card>
