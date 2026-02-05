@@ -435,7 +435,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
       {server_info?.server_id && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ServerRegularsList serverId={server_info.server_id} />
-          <ServerLeaderboard serverId={server_info.server_id} />
+          <ServerLeaderboard serverId={server_info.server_id} slug={slug} />
         </div>
       )}
 

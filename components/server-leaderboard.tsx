@@ -58,7 +58,7 @@ const STAT_CONFIG = {
 
 const ITEMS_PER_PAGE = 5;
 
-export function ServerLeaderboard({ serverId }: ServerLeaderboardProps) {
+export function ServerLeaderboard({ serverId, slug }: ServerLeaderboardProps) {
   const [stat, setStat] = useState<StatType>("score");
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -218,35 +218,56 @@ export function ServerLeaderboard({ serverId }: ServerLeaderboardProps) {
         )}
       </CardContent>
 
-      {/* Pagination */}
-      {!loading && !error && totalPages > 1 && (
+      {/* Pagination & View All Link */}
+      {!loading && !error && leaderboard.length > 0 && (
         <CardFooter className="flex items-center justify-between border-t border-border/40 pt-4">
-          <span className="text-xs text-muted-foreground">
-            Showing {startIndex + 1}–{Math.min(endIndex, leaderboard.length)} of {leaderboard.length}
-          </span>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="h-7 w-7 p-0"
+          {totalPages > 1 ? (
+            <>
+              <span className="text-xs text-muted-foreground">
+                Showing {startIndex + 1}–{Math.min(endIndex, leaderboard.length)} of {leaderboard.length}
+              </span>
+              <div className="flex items-center gap-3">
+                {slug && (
+                  <Link
+                    href={`/servers/${slug}/rankings`}
+                    className="text-xs text-primary hover:underline underline-offset-2"
+                  >
+                    View All Rankings →
+                  </Link>
+                )}
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                    className="h-7 w-7 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center px-2 text-xs text-muted-foreground">
+                    {currentPage} / {totalPages}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="h-7 w-7 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : slug ? (
+            <Link
+              href={`/servers/${slug}/rankings`}
+              className="w-full text-center text-xs text-primary hover:underline underline-offset-2"
             >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center px-2 text-xs text-muted-foreground">
-              {currentPage} / {totalPages}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className="h-7 w-7 p-0"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+              View All Rankings →
+            </Link>
+          ) : null}
         </CardFooter>
       )}
     </Card>
