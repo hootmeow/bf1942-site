@@ -423,8 +423,8 @@ export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-offset-1 ring-offset-background"
                 style={{
                   background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
-                  ringColor: colors[0] + "40"
-                }}
+                  "--tw-ring-color": colors[0] + "40"
+                } as React.CSSProperties}
               />
               <span className="flex-1 truncate text-foreground font-medium" title={entry.map_name}>
                 {entry.map_name}
