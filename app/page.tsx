@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Activity, Users, BarChart, Loader2, AlertTriangle, ArrowRight, Server as ServerIcon } from "lucide-react";
+import { Activity, Users, BarChart, Loader2, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, Globe, Zap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,107 +96,123 @@ export default function Page() {
     );
   }
 
+  const activeServerCount = topServers.filter(s => s.current_state === "ACTIVE").length;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-8">
       {/* --- Command Center Hero --- */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card/80 via-card/50 to-background p-6 shadow-sm sm:p-10">
-        {/* Ambient Glow */}
-        <div className="absolute -right-20 -top-20 h-[300px] w-[300px] rounded-full bg-primary/10 blur-[100px]" />
+      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 px-6 py-12 shadow-2xl sm:px-12 sm:py-16">
+        {/* Background Effects */}
+        <div className="absolute -right-20 -top-20 h-[500px] w-[500px] rounded-full bg-green-500/10 blur-[120px]" />
+        <div className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full bg-blue-500/10 blur-[100px]" />
 
-        <div className="relative z-10 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
-              </span>
-              <span className="font-mono text-sm font-medium tracking-wider text-green-500">
-                SYSTEM ONLINE // MONITORING ACTIVE FRONTS
-              </span>
-            </div>
+        <div className="relative z-10">
+          {/* Status Badge */}
+          <div className="flex items-center gap-2 mb-6">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
+            </span>
+            <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 font-mono">
+              SYSTEM ONLINE // MONITORING ACTIVE FRONTS
+            </Badge>
+          </div>
 
-            <div className="space-y-1">
-              <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-7xl">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-4">
+              <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-7xl">
                 {data.current_active_players}
-                <span className="ml-2 text-2xl font-light text-muted-foreground sm:text-3xl">Soldiers Deployed</span>
+                <span className="ml-3 text-2xl font-normal text-slate-400 sm:text-3xl">Soldiers Deployed</span>
               </h1>
-              <p className="max-w-[600px] text-lg text-muted-foreground">
-                Live telemetry from {topServers.length} active battlefields worldwide.
+              <p className="max-w-[500px] text-lg text-slate-400">
+                Live telemetry from {activeServerCount} active battlefields worldwide.
               </p>
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-x-8 gap-y-4 rounded-xl border border-border/40 bg-background/40 p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
-                <Users className="h-5 w-5" />
+            {/* Stats Cards */}
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4">
+                <div className="rounded-lg bg-blue-500/20 p-2.5 text-blue-400">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-500">Total Players</p>
+                  <p className="font-mono text-xl font-bold text-white">{data.total_players_seen.toLocaleString()}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-medium uppercase text-muted-foreground">Total Players</p>
-                <p className="font-mono text-xl font-bold">{data.total_players_seen.toLocaleString()}</p>
-              </div>
-            </div>
-            <div className="h-10 w-px bg-border/60 hidden sm:block"></div>
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
-                <Activity className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase text-muted-foreground">Rounds Logged</p>
-                <p className="font-mono text-xl font-bold">{data.total_rounds_processed.toLocaleString()}</p>
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4">
+                <div className="rounded-lg bg-amber-500/20 p-2.5 text-amber-400">
+                  <Activity className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-500">Rounds Logged</p>
+                  <p className="font-mono text-xl font-bold text-white">{data.total_rounds_processed.toLocaleString()}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* --- Compact Top Servers --- */}
-      <div className="rounded-xl border border-border/60 overflow-hidden bg-gradient-to-br from-card/80 via-card/50 to-background shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div>
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <ServerIcon className="h-5 w-5 text-primary" />
-              Top Active Servers
-            </CardTitle>
+      {/* --- Top Active Servers Section --- */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+              <ServerIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Top Active Servers</h2>
+              <p className="text-sm text-muted-foreground">Live battlefields with the most action</p>
+            </div>
           </div>
-          <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+          <Button asChild variant="outline" size="sm" className="hidden sm:flex">
             <Link href="/servers">
-              View Full List <ArrowRight className="ml-2 h-4 w-4" />
+              View All Servers <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-        </CardHeader>
+        </div>
 
-        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0 bg-transparent border-0">
-          {/* Integrated Live Ticker */}
-          <LiveTicker className="mb-2 rounded-md border border-white/5 bg-black/20" />
-          {topServers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {topServers.map(server => (
-                <ServerSummaryCard key={server.server_id} server={server} />
-              ))}
-            </div>
-          ) : (
-            <div className="py-12 text-center text-muted-foreground border border-dashed rounded-lg bg-card/50">
-              <ServerIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No active fronts detected.</p>
-            </div>
-          )}
-        </CardContent>
-        {/* Mobile-only view all button */}
-        <div className="flex items-center justify-center p-4 sm:hidden border-t border-border/60">
+        {/* Live Ticker */}
+        <LiveTicker className="rounded-lg border border-border/60 bg-card/50" />
+
+        {/* Server Grid */}
+        {topServers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {topServers.map(server => (
+              <ServerSummaryCard key={server.server_id} server={server} />
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 text-center text-muted-foreground border border-dashed border-border/60 rounded-xl bg-card/30">
+            <ServerIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            <p className="font-medium">No active fronts detected</p>
+            <p className="text-sm mt-1">Check back soon for live battlefield intel.</p>
+          </div>
+        )}
+
+        {/* Mobile View All Button */}
+        <div className="flex sm:hidden">
           <Button asChild variant="outline" size="sm" className="w-full">
-            <Link href="/servers">View Full Server List</Link>
+            <Link href="/servers">View All Servers</Link>
           </Button>
         </div>
       </div>
 
-      {/* --- Charts Grid --- */}
-      <div className="grid grid-cols-1 gap-6">
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle as="h2">Player Activity History</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
+      {/* --- Activity Chart Section --- */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Player Activity</h2>
+            <p className="text-sm text-muted-foreground">Global player count over time</p>
+          </div>
+        </div>
+
+        <Card className="border-border/60 overflow-hidden">
+          <CardContent className="p-6">
             <PlayerActivityChart
               data24h={data.global_concurrency_timeline_24h || data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_timeline_7d || data.global_concurrency_heatmap_7d}
@@ -205,6 +220,6 @@ export default function Page() {
           </CardContent>
         </Card>
       </div>
-    </div >
+    </div>
   );
 }

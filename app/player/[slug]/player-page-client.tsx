@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck } from "lucide-react";
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
@@ -103,11 +104,19 @@ interface RecentRound {
   final_deaths: number;
 }
 
+interface OnlineStatus {
+  is_online: boolean;
+  current_server: string | null;
+  last_seen_timestamp: string | null;
+  minutes_ago?: number | null;
+}
+
 interface PlayerProfileApiResponse {
   ok: boolean;
   player_info: PlayerInfo;
   linked_aliases?: LinkedAlias[];
   achievements?: Achievement[];
+  online_status?: OnlineStatus;
   lifetime_stats: LifetimeStats | null;
   personal_bests: PersonalBests | null;
   playstyle_habits: PlaystyleHabits | null;
@@ -371,7 +380,7 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
   }
 
   // DESTRUCTURING HAPPENS HERE, SAFE AFTER CHECKS
-  const { player_info, linked_aliases, lifetime_stats, personal_bests, playstyle_habits, recent_rounds } = profile;
+  const { player_info, linked_aliases, online_status, lifetime_stats, personal_bests, playstyle_habits, recent_rounds } = profile;
 
   return (
     <div className="space-y-6">
@@ -425,6 +434,26 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
                 {player_info.last_known_name}
               </h1>
 
+              {/* Online Badge */}
+              {online_status?.is_online && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-2.5 py-0.5 text-xs font-semibold text-green-500 cursor-help">
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                        </span>
+                        Online
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-muted-foreground">Playing on {online_status.current_server}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
               {/* Custom Title Badge */}
               {player_info.custom_title && (
                 <span className="inline-flex items-center rounded-md bg-yellow-500/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-500/20">
@@ -432,7 +461,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
                 </span>
               )}
 
-              {/* GLOBAL RANK BADGE */}
               {/* GLOBAL RANK BADGE */}
               {(advancedProfile?.skill_rating?.global_rank || player_info.is_flagged) && (
                 <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ${player_info.is_flagged ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/80"}`}>

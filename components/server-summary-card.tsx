@@ -30,8 +30,8 @@ function getGameModeIcon(mode: string | null | undefined) {
 }
 
 export function ServerSummaryCard({ server }: { server: LiveServer }) {
-    const fillPercent = (server.current_player_count / server.current_max_players) * 100;
-    const isHot = server.current_player_count > 20;
+    const fillPercent = (server.current_player_count / (server.current_max_players || 64)) * 100;
+    const isHot = server.current_player_count >= 20;
     const isActive = server.current_player_count > 0;
 
     return (
@@ -61,12 +61,18 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                     </div>
 
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                        <Badge
-                            variant={isHot ? "default" : isActive ? "secondary" : "outline"}
-                            className="font-mono text-xs"
-                        >
-                            {server.current_player_count} / {server.current_max_players}
-                        </Badge>
+                        <div className="flex items-center gap-1.5 font-mono text-xs">
+                            <span className={
+                                isHot
+                                    ? "text-green-500 font-semibold"
+                                    : isActive
+                                    ? "text-foreground font-semibold"
+                                    : "text-muted-foreground"
+                            }>
+                                {server.current_player_count}
+                            </span>
+                            <span className="text-muted-foreground">/ {server.current_max_players}</span>
+                        </div>
                         {server.history && server.history.length > 0 && (
                             <div className="h-4 w-14 opacity-70">
                                 <Sparkline data={server.history} width={56} height={16} />
@@ -80,16 +86,16 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                     <div
                         className={`h-full rounded-full transition-all duration-500 ${
                             isHot
-                                ? "bg-gradient-to-r from-primary to-primary/80"
+                                ? "bg-gradient-to-r from-green-500 to-emerald-400"
                                 : isActive
-                                ? "bg-primary/70"
-                                : "bg-muted-foreground/30"
+                                ? "bg-primary/60"
+                                : "bg-transparent"
                         }`}
                         style={{ width: `${fillPercent}%` }}
                     />
                     {isHot && (
                         <div
-                            className="absolute top-0 h-full bg-primary/30 animate-pulse rounded-full"
+                            className="absolute top-0 h-full bg-green-500/30 animate-pulse rounded-full"
                             style={{ width: `${fillPercent}%` }}
                         />
                     )}

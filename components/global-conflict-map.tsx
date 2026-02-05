@@ -297,13 +297,10 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                 {clusters.map(cluster => {
                     const count = cluster.servers.length;
                     const sizePx = 6 + (Math.min(count, 10) * 3);
+                    const isSingleServer = count === 1;
 
-                    return (
-                        <div
-                            key={cluster.id}
-                            className="absolute group z-20 cursor-pointer"
-                            style={{ left: `${cluster.x}%`, top: `${cluster.y}%`, transform: 'translate(-50%, -50%)' }}
-                        >
+                    const clusterDot = (
+                        <>
                             {/* Radar Scan Effect */}
                             <div className="absolute -inset-2 rounded-full border border-green-500/30 animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100"></div>
 
@@ -320,6 +317,22 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                             >
                                 {count > 1 && count}
                             </span>
+                        </>
+                    );
+
+                    return (
+                        <div
+                            key={cluster.id}
+                            className="absolute group z-20 cursor-pointer"
+                            style={{ left: `${cluster.x}%`, top: `${cluster.y}%`, transform: 'translate(-50%, -50%)' }}
+                        >
+                            {isSingleServer ? (
+                                <Link href={`/servers/${cluster.servers[0].server_id}`} className="block">
+                                    {clusterDot}
+                                </Link>
+                            ) : (
+                                clusterDot
+                            )}
 
                             {/* Location Label (Always visible for large clusters?) No, keeps clutter down. tooltip only. */}
 
@@ -332,12 +345,14 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                                     </div>
                                     <div className="p-1 max-h-[200px] overflow-y-auto custom-scrollbar">
                                         {cluster.servers.map(s => (
-                                            <div key={s.server_id} className="flex justify-between items-center p-2 hover:bg-white/5 rounded transition-colors border-b border-dashed border-white/10 last:border-0">
-                                                <span className="truncate max-w-[130px] font-medium text-slate-200">{s.current_server_name}</span>
-                                                <Badge variant="outline" className="text-[9px] h-4 border-slate-600 font-mono text-green-400 bg-green-950/30">
-                                                    {s.current_player_count}/{s.current_max_players}
-                                                </Badge>
-                                            </div>
+                                            <Link href={`/servers/${s.server_id}`} key={s.server_id} className="block">
+                                                <div className="flex justify-between items-center p-2 hover:bg-green-500/20 rounded transition-colors border-b border-dashed border-white/10 last:border-0 cursor-pointer">
+                                                    <span className="truncate max-w-[130px] font-medium text-slate-200 hover:text-green-300">{s.current_server_name}</span>
+                                                    <Badge variant="outline" className="text-[9px] h-4 border-slate-600 font-mono text-green-400 bg-green-950/30">
+                                                        {s.current_player_count}/{s.current_max_players}
+                                                    </Badge>
+                                                </div>
+                                            </Link>
                                         ))}
                                     </div>
                                 </div>
