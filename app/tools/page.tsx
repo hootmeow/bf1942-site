@@ -1,6 +1,5 @@
-
 import Link from "next/link";
-import { ArrowRight, Drill, Shield, Wrench } from "lucide-react";
+import { ArrowRight, Drill, Shield, Wrench, ExternalLink, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toolsList } from "@/lib/tools-list";
 
@@ -52,16 +51,40 @@ export default function ToolsOverviewPage() {
               <p className="text-sm leading-relaxed text-muted-foreground/90">
                 {tool.description}
               </p>
+              <div className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground">
+                <User className="h-3 w-3" />
+                <span>Created by{" "}
+                  <a
+                    href={tool.authorUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-foreground hover:text-primary hover:underline underline-offset-2 transition-colors"
+                  >
+                    {tool.author}
+                  </a>
+                </span>
+              </div>
             </div>
 
             {/* Footer / Action */}
             <div className="border-t border-border/40 bg-muted/20 px-6 py-4">
-              <Link
-                href={tool.href}
-                className="flex items-center gap-2 text-sm font-medium text-primary transition-all group-hover:gap-3 group-hover:text-primary/80"
-              >
-                Go to Tool <ArrowRight className="h-4 w-4" />
-              </Link>
+              {tool.external ? (
+                <a
+                  href={tool.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm font-medium text-primary transition-all group-hover:gap-3 group-hover:text-primary/80"
+                >
+                  Visit Site <ExternalLink className="h-4 w-4" />
+                </a>
+              ) : (
+                <Link
+                  href={tool.href}
+                  className="flex items-center gap-2 text-sm font-medium text-primary transition-all group-hover:gap-3 group-hover:text-primary/80"
+                >
+                  Go to Tool <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
             </div>
 
             {/* Decorative Gradient Overlay on Hover */}
