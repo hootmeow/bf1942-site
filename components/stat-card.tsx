@@ -7,22 +7,74 @@ interface StatCardProps {
     icon: LucideIcon | React.ElementType;
     className?: string;
     description?: string;
+    trend?: "up" | "down" | "neutral";
+    highlight?: boolean;
 }
 
-export function StatCard({ title, value, icon: Icon, className, description }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, className, description, trend, highlight }: StatCardProps) {
     return (
-        <div className={cn("rounded-lg border border-border/60 bg-card/40 p-4", className)}>
-            <div className="flex items-center gap-3">
-                <div className="rounded-full bg-primary/10 p-2 text-primary">
+        <div className={cn(
+            "group relative rounded-xl border border-border/60 bg-card/40 p-4 transition-all duration-300",
+            "hover:border-primary/30 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5",
+            highlight && "border-primary/40 bg-primary/5",
+            className
+        )}>
+            {/* Subtle gradient overlay on hover */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+            <div className="relative flex items-center gap-3">
+                <div className={cn(
+                    "rounded-lg p-2.5 transition-colors",
+                    highlight
+                        ? "bg-primary/20 text-primary"
+                        : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                )}>
                     <Icon className="h-4 w-4" />
                 </div>
-                <div>
-                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</h3>
-                    <p className="text-xl font-bold text-foreground">{value}</p>
+                <div className="min-w-0 flex-1">
+                    <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{title}</h3>
+                    <div className="flex items-baseline gap-2">
+                        <p className={cn(
+                            "text-xl font-bold text-foreground tabular-nums",
+                            highlight && "text-primary"
+                        )}>
+                            {value}
+                        </p>
+                        {trend && (
+                            <span className={cn(
+                                "text-xs font-medium",
+                                trend === "up" && "text-green-500",
+                                trend === "down" && "text-red-500",
+                                trend === "neutral" && "text-muted-foreground"
+                            )}>
+                                {trend === "up" && "↑"}
+                                {trend === "down" && "↓"}
+                            </span>
+                        )}
+                    </div>
                     {description && (
-                        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
                     )}
                 </div>
+            </div>
+        </div>
+    );
+}
+
+// Compact variant for dense grids
+export function StatCardCompact({ title, value, icon: Icon, className }: Omit<StatCardProps, 'description' | 'trend' | 'highlight'>) {
+    return (
+        <div className={cn(
+            "group flex items-center gap-3 rounded-lg border border-border/40 bg-card/30 px-3 py-2.5 transition-all",
+            "hover:border-border/60 hover:bg-card/50",
+            className
+        )}>
+            <div className="rounded-md bg-primary/10 p-1.5 text-primary">
+                <Icon className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{title}</p>
+                <p className="text-base font-bold text-foreground tabular-nums truncate">{value}</p>
             </div>
         </div>
     );

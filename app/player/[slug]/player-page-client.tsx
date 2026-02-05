@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, User, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck } from "lucide-react";
+import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck } from "lucide-react";
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
 import { Button } from "@/components/ui/button";
@@ -561,61 +561,77 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
       {/* Advanced Stats: Skill Rating */}
       {advancedProfile?.skill_rating && (
-        <div className="mb-6">
-          <SkillRatingCard rating={advancedProfile.skill_rating} />
-        </div>
+        <SkillRatingCard rating={advancedProfile.skill_rating} />
       )}
 
+      {/* Lifetime Stats Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <BarChart className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Lifetime Stats</h2>
+            <p className="text-sm text-muted-foreground">Career performance across all servers</p>
+          </div>
+        </div>
 
+        {/* Core Stats - Highlighted */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <StatCard title="Playtime" value={formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)} icon={Clock} highlight />
+          <StatCard title="Total Score" value={lifetime_stats?.total_score?.toLocaleString() ?? 0} icon={Star} highlight />
+          <StatCard title="K/D Ratio" value={lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'} icon={Target} highlight />
+          <StatCard title="Win Rate" value={lifetime_stats?.win_rate ? `${lifetime_stats.win_rate}%` : 'N/A'} icon={Trophy} highlight />
+        </div>
 
-      {/* Lifetime Stats */}
-      <h3 className="text-xl font-semibold tracking-tight">Lifetime Stats</h3>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
-        <StatCard title="Playtime" value={formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)} icon={Clock} />
-        <StatCard title="Rounds Played" value={lifetime_stats?.total_rounds_played ?? 0} icon={Hash} />
-        <StatCard title="Total Score" value={lifetime_stats?.total_score?.toLocaleString() ?? 0} icon={Star} />
-        <StatCard title="Win Rate" value={lifetime_stats?.win_rate ? `${lifetime_stats.win_rate}%` : 'N/A'} icon={Trophy} />
-        <StatCard title="Total Kills" value={lifetime_stats?.total_kills?.toLocaleString() ?? 0} icon={Target} />
-        <StatCard title="Total Deaths" value={lifetime_stats?.total_deaths?.toLocaleString() ?? 0} icon={Ghost} />
+        {/* Secondary Stats */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <StatCard title="Rounds Played" value={lifetime_stats?.total_rounds_played ?? 0} icon={Hash} />
+          <StatCard title="Total Kills" value={lifetime_stats?.total_kills?.toLocaleString() ?? 0} icon={Target} />
+          <StatCard title="Total Deaths" value={lifetime_stats?.total_deaths?.toLocaleString() ?? 0} icon={Ghost} />
+          <StatCard title="KPM" value={lifetime_stats?.overall_kpm?.toFixed(2) ?? '0.00'} icon={Zap} />
+          <StatCard title="Score/Min" value={lifetime_stats?.score_per_minute?.toFixed(2) ?? '0.00'} icon={TrendingUp} />
+        </div>
 
-        <StatCard title="K/D Ratio" value={lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'} icon={Trophy} />
-        <StatCard title="Avg. Kills/Round" value={lifetime_stats?.kills_per_round?.toFixed(2) ?? '0.00'} icon={Skull} />
-        <StatCard title="Avg. Deaths/Round" value={lifetime_stats?.deaths_per_round?.toFixed(2) ?? '0.00'} icon={Ghost} />
-        <StatCard title="KPM" value={lifetime_stats?.overall_kpm?.toFixed(2) ?? '0.00'} icon={Zap} />
-        <StatCard title="Score/Min" value={lifetime_stats?.score_per_minute?.toFixed(2) ?? '0.00'} icon={BarChart} />
-
-        <StatCard title="Avg Score/Round" value={lifetime_stats?.average_score_per_round?.toFixed(2) ?? '0.00'} icon={TrendingUp} />
-        <StatCard title="Avg Ping" value={Math.round(lifetime_stats?.average_ping ?? 0)} icon={Wifi} />
-        <StatCard title="Unique Servers" value={lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0} icon={Server} />
-        <StatCard title="Unique Maps" value={lifetime_stats?.unique_maps ?? lifetime_stats?.unique_maps_played ?? 0} icon={Map} />
+        {/* Tertiary Stats */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <StatCard title="Kills/Round" value={lifetime_stats?.kills_per_round?.toFixed(2) ?? '0.00'} icon={Skull} />
+          <StatCard title="Deaths/Round" value={lifetime_stats?.deaths_per_round?.toFixed(2) ?? '0.00'} icon={Ghost} />
+          <StatCard title="Avg Score/Round" value={lifetime_stats?.average_score_per_round?.toFixed(0) ?? '0'} icon={Star} />
+          <StatCard title="Avg Ping" value={`${Math.round(lifetime_stats?.average_ping ?? 0)}ms`} icon={Wifi} />
+          <StatCard title="Servers Played" value={lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0} icon={Server} />
+        </div>
       </div>
 
-      {/* Personal Bests */}
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle as="h2">Personal Bests</CardTitle>
+      {/* Personal Bests Section */}
+      <Card className="border-border/60 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-b border-border/40">
+          <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-amber-500/20">
+              <Trophy className="h-4 w-4 text-amber-500" />
+            </div>
+            Personal Bests
+          </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Best Round Score"
-            value={personal_bests?.best_round_score ?? 0}
-            icon={Star}
-          />
-          <StatCard
-            title="Best Round Kills"
-            value={personal_bests?.best_round_kills ?? 0}
-            icon={Target}
-          />
-          <StatCard
-            title="Best Round KPM"
-            value={personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00'}
-            icon={Zap}
-          />
-          <StatCard
-            title="Best Kill Round ID"
-            value={personal_bests?.best_kill_round_id ? `#${personal_bests.best_kill_round_id}` : 'N/A'}
-            icon={Hash}
-          />
+        <CardContent className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4">
+          <div className="text-center p-4 rounded-lg bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20">
+            <div className="text-3xl font-bold text-amber-500 tabular-nums">{personal_bests?.best_round_score ?? 0}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Best Score</div>
+          </div>
+          <div className="text-center p-4 rounded-lg bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20">
+            <div className="text-3xl font-bold text-red-500 tabular-nums">{personal_bests?.best_round_kills ?? 0}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Best Kills</div>
+          </div>
+          <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20">
+            <div className="text-3xl font-bold text-purple-500 tabular-nums">{personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00'}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Best KPM</div>
+          </div>
+          <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20">
+            <div className="text-2xl font-bold text-blue-500 tabular-nums">
+              {personal_bests?.best_kill_round_id ? `#${personal_bests.best_kill_round_id}` : 'N/A'}
+            </div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Round ID</div>
+          </div>
         </CardContent>
       </Card>
 
@@ -626,12 +642,27 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </div>
       )}
 
-      {/* Activity Charts Row (Side-by-Side) */}
+      {/* Activity Section Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-emerald-500/10">
+          <TrendingUp className="h-5 w-5 text-emerald-500" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Activity Patterns</h2>
+          <p className="text-sm text-muted-foreground">When and how often you play</p>
+        </div>
+      </div>
+
+      {/* Activity Charts Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 24h Activity Chart */}
         <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle as="h2">24 Hour Activity (UTC)</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle as="h3" className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              24 Hour Activity
+              <span className="text-xs font-normal text-muted-foreground">(UTC)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {playstyle_habits?.playtime_by_hour_utc ? (
@@ -644,8 +675,12 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
         {/* Activity Last 7 Days */}
         <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle as="h3">Activity (Last 7 Days)</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle as="h3" className="text-base flex items-center gap-2">
+              <BarChart className="h-4 w-4 text-emerald-500" />
+              Weekly Activity
+              <span className="text-xs font-normal text-muted-foreground">(Last 7 Days)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {playstyle_habits?.activity_last_7_days && playstyle_habits.activity_last_7_days.length > 0 ? (
@@ -657,12 +692,26 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </Card>
       </div>
 
+      {/* Playstyle Section Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-purple-500/10">
+          <Map className="h-5 w-5 text-purple-500" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Playstyle</h2>
+          <p className="text-sm text-muted-foreground">Your preferred maps, servers, and teams</p>
+        </div>
+      </div>
+
       {/* Team Preference, Maps, Servers Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Team Preference */}
         <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle as="h3">Team Preference</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle as="h3" className="text-base flex items-center gap-2">
+              <Users className="h-4 w-4 text-purple-500" />
+              Team Preference
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {playstyle_habits?.team_preference ? (
@@ -680,8 +729,11 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
         {/* Top Maps */}
         <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle as="h3">Top Maps</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle as="h3" className="text-base flex items-center gap-2">
+              <Map className="h-4 w-4 text-amber-500" />
+              Favorite Maps
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {playstyle_habits?.top_maps && playstyle_habits.top_maps.length > 0 ? (
@@ -694,8 +746,11 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
         {/* Top Servers */}
         <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle as="h3">Top Servers</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle as="h3" className="text-base flex items-center gap-2">
+              <Server className="h-4 w-4 text-cyan-500" />
+              Favorite Servers
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {playstyle_habits?.top_servers && playstyle_habits.top_servers.length > 0 ? (
@@ -707,7 +762,18 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </Card>
       </div>
 
-      {/* Social & History Row (Session Stats, Battle Buddies, Recent Rounds, Rank History) */}
+      {/* Social & History Section Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-blue-500/10">
+          <Users className="h-5 w-5 text-blue-500" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Social & History</h2>
+          <p className="text-sm text-muted-foreground">Sessions, teammates, and recent matches</p>
+        </div>
+      </div>
+
+      {/* Social & History Row */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         {/* Session Stats */}
         <div className="h-full">

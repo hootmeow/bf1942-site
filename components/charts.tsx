@@ -529,49 +529,80 @@ export function PlayerPlaytimeChart({ data }: { data: number[] }) {
     hour: `${index.toString().padStart(2, '0')}:00`,
     activity: value,
   }));
+
+  const maxActivity = Math.max(...data);
+  const peakHour = data.indexOf(maxActivity);
+
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <AreaChart data={chartData}>
-        <defs>
-          <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-        <XAxis
-          dataKey="hour"
-          stroke="hsl(var(--muted-foreground))"
-          tickLine={false}
-          axisLine={false}
-          fontSize={12}
-          interval={3}
-        >
-          <Label value="Hour (UTC)" offset={-5} position="insideBottom" fill="hsl(var(--muted-foreground))" fontSize={12} />
-        </XAxis>
-        <YAxis
-          stroke="hsl(var(--muted-foreground))"
-          tickLine={false}
-          axisLine={false}
-          fontSize={12}
-          allowDecimals={false}
-          width={30}
-        />
-        <ReTooltip
-          cursor={{ fill: "hsl(var(--accent)/0.3)" }}
-          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 12, border: "1px solid hsl(var(--border))" }}
-          labelFormatter={(label) => `Hour: ${label} (UTC)`}
-        />
-        <Area
-          type="monotone"
-          dataKey="activity"
-          name="Rounds Played"
-          stroke="hsl(var(--primary))"
-          fillOpacity={1}
-          fill="url(#colorActivity)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div className="space-y-3">
+      <ResponsiveContainer width="100%" height={180}>
+        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorActivityPlayer" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.6} />
+              <stop offset="50%" stopColor="#8b5cf6" stopOpacity={0.2} />
+              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+            </linearGradient>
+            <filter id="glowActivity" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.3} />
+          <XAxis
+            dataKey="hour"
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            fontSize={10}
+            interval={5}
+            tickMargin={8}
+          />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            fontSize={10}
+            allowDecimals={false}
+            width={28}
+            tickMargin={4}
+          />
+          <ReTooltip
+            cursor={{ stroke: "#8b5cf6", strokeWidth: 1, strokeDasharray: '4 4' }}
+            contentStyle={{
+              backgroundColor: "hsl(var(--card)/0.95)",
+              borderRadius: 10,
+              border: "1px solid hsl(var(--border))",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+              backdropFilter: "blur(8px)"
+            }}
+            labelFormatter={(label) => `${label} UTC`}
+            formatter={(value: number) => [`${value} rounds`, "Activity"]}
+          />
+          <Area
+            type="monotone"
+            dataKey="activity"
+            name="Rounds"
+            stroke="#8b5cf6"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorActivityPlayer)"
+            style={{ filter: "url(#glowActivity)" }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+      {/* Peak hour indicator */}
+      <div className="flex items-center justify-between px-2 py-2 rounded-lg bg-muted/30 border border-border/40">
+        <span className="text-xs text-muted-foreground">Peak Activity</span>
+        <span className="text-sm font-semibold text-primary">
+          {peakHour.toString().padStart(2, '0')}:00 UTC
+          <span className="text-muted-foreground font-normal ml-2">({maxActivity} rounds)</span>
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -579,25 +610,50 @@ export function PlayerPlaytimeChart({ data }: { data: number[] }) {
 
 export function PlayerTopMapsChart({ data }: { data: { map_name: string; map_play_count: number }[] }) {
   const maxValue = Math.max(...data.map(d => d.map_play_count), 1);
+  const total = data.reduce((sum, d) => sum + d.map_play_count, 0);
+
+  // Gradient colors for each map
+  const mapColors = [
+    ["#8b5cf6", "#a78bfa"], // Purple
+    ["#06b6d4", "#22d3ee"], // Cyan
+    ["#f59e0b", "#fbbf24"], // Amber
+    ["#ec4899", "#f472b6"], // Pink
+    ["#10b981", "#34d399"], // Emerald
+  ];
 
   return (
-    <div className="space-y-3">
-      {data.map((item, index) => {
+    <div className="space-y-2.5">
+      {data.slice(0, 5).map((item, index) => {
         const percent = (item.map_play_count / maxValue) * 100;
+        const sharePercent = total > 0 ? ((item.map_play_count / total) * 100).toFixed(0) : 0;
+        const colors = mapColors[index % mapColors.length];
         return (
           <div key={item.map_name} className="group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-foreground truncate flex-1 mr-4" title={item.map_name}>
+            <div className="flex items-center gap-3 mb-1.5">
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0 ring-2 ring-offset-1 ring-offset-background"
+                style={{
+                  background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+                  "--tw-ring-color": colors[0] + "30"
+                } as React.CSSProperties}
+              />
+              <span className="text-sm font-medium text-foreground truncate flex-1" title={item.map_name}>
                 {item.map_name}
               </span>
-              <span className="text-sm font-semibold text-primary">
+              <span className="text-xs text-muted-foreground tabular-nums">
                 {item.map_play_count}
               </span>
+              <span className="text-xs font-bold tabular-nums w-10 text-right" style={{ color: colors[0] }}>
+                {sharePercent}%
+              </span>
             </div>
-            <div className="h-2 w-full rounded-full bg-muted/40 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden ml-5">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all group-hover:from-primary group-hover:to-primary/90"
-                style={{ width: `${percent}%` }}
+                className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                style={{
+                  width: `${percent}%`,
+                  background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`
+                }}
               />
             </div>
           </div>
@@ -609,25 +665,50 @@ export function PlayerTopMapsChart({ data }: { data: { map_name: string; map_pla
 
 export function PlayerTopServersChart({ data }: { data: { current_server_name: string; server_play_count: number }[] }) {
   const maxValue = Math.max(...data.map(d => d.server_play_count), 1);
+  const total = data.reduce((sum, d) => sum + d.server_play_count, 0);
+
+  // Gradient colors for servers (different palette)
+  const serverColors = [
+    ["#06b6d4", "#22d3ee"], // Cyan
+    ["#3b82f6", "#60a5fa"], // Blue
+    ["#8b5cf6", "#a78bfa"], // Purple
+    ["#14b8a6", "#2dd4bf"], // Teal
+    ["#6366f1", "#818cf8"], // Indigo
+  ];
 
   return (
-    <div className="space-y-3">
-      {data.map((item, index) => {
+    <div className="space-y-2.5">
+      {data.slice(0, 5).map((item, index) => {
         const percent = (item.server_play_count / maxValue) * 100;
+        const sharePercent = total > 0 ? ((item.server_play_count / total) * 100).toFixed(0) : 0;
+        const colors = serverColors[index % serverColors.length];
         return (
           <div key={item.current_server_name} className="group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-foreground truncate flex-1 mr-4" title={item.current_server_name}>
+            <div className="flex items-center gap-3 mb-1.5">
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0 ring-2 ring-offset-1 ring-offset-background"
+                style={{
+                  background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+                  "--tw-ring-color": colors[0] + "30"
+                } as React.CSSProperties}
+              />
+              <span className="text-sm font-medium text-foreground truncate flex-1" title={item.current_server_name}>
                 {item.current_server_name}
               </span>
-              <span className="text-sm font-semibold text-[hsl(var(--chart-2))]">
+              <span className="text-xs text-muted-foreground tabular-nums">
                 {item.server_play_count}
               </span>
+              <span className="text-xs font-bold tabular-nums w-10 text-right" style={{ color: colors[0] }}>
+                {sharePercent}%
+              </span>
             </div>
-            <div className="h-2 w-full rounded-full bg-muted/40 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden ml-5">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--chart-2)/0.8)] to-[hsl(var(--chart-2))] transition-all group-hover:opacity-90"
-                style={{ width: `${percent}%` }}
+                className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                style={{
+                  width: `${percent}%`,
+                  background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`
+                }}
               />
             </div>
           </div>
@@ -638,63 +719,114 @@ export function PlayerTopServersChart({ data }: { data: { current_server_name: s
 }
 
 export function PlayerTeamPreferenceChart({ data }: { data: { name: string; value: number }[] }) {
-  const teamColors = ["#ef4444", "#3b82f6"]; // Red for Axis, Blue for Allied
+  // Gradient color pairs for Axis (red) and Allied (blue)
+  const teamGradients = [
+    ["#dc2626", "#ef4444", "#fca5a5"], // Red gradient for Axis
+    ["#2563eb", "#3b82f6", "#93c5fd"], // Blue gradient for Allied
+  ];
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
+  // Determine dominant team
+  const dominant = data[0]?.value >= data[1]?.value ? 0 : 1;
+
   return (
-    <div className="flex items-center gap-6">
-      <ResponsiveContainer width={140} height={140}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={35}
-            outerRadius={55}
-            paddingAngle={4}
-            dataKey="value"
-            strokeWidth={2}
-            stroke="hsl(var(--background))"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={teamColors[index % teamColors.length]} />
-            ))}
-          </Pie>
-          <ReTooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              borderRadius: 8,
-              border: "1px solid hsl(var(--border))",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="flex-1 space-y-3">
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative">
+        <ResponsiveContainer width={160} height={160}>
+          <PieChart>
+            <defs>
+              {data.map((_, index) => (
+                <linearGradient key={`teamGrad-${index}`} id={`teamGradient-${index}`} x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor={teamGradients[index][0]} />
+                  <stop offset="100%" stopColor={teamGradients[index][1]} />
+                </linearGradient>
+              ))}
+              <filter id="teamGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={45}
+              outerRadius={70}
+              paddingAngle={3}
+              dataKey="value"
+              strokeWidth={0}
+              animationBegin={0}
+              animationDuration={800}
+            >
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={`url(#teamGradient-${index})`}
+                  style={{ filter: "url(#teamGlow)", cursor: "pointer" }}
+                />
+              ))}
+            </Pie>
+            <ReTooltip
+              contentStyle={{
+                backgroundColor: "hsl(var(--card)/0.95)",
+                borderRadius: 10,
+                border: "1px solid hsl(var(--border))",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                backdropFilter: "blur(8px)"
+              }}
+              formatter={(value: number, name: string) => {
+                const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                return [`${value} rounds (${percent}%)`, name];
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        {/* Center label */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <div className="text-2xl font-bold" style={{ color: teamGradients[dominant][0] }}>
+              {total > 0 ? ((data[dominant].value / total) * 100).toFixed(0) : 0}%
+            </div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              {data[dominant]?.name}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="w-full space-y-2">
         {data.map((entry, index) => {
-          const percent = total > 0 ? ((entry.value / total) * 100).toFixed(0) : 0;
+          const percent = total > 0 ? ((entry.value / total) * 100) : 0;
+          const colors = teamGradients[index];
           return (
-            <div key={entry.name} className="flex items-center gap-3">
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: teamColors[index % teamColors.length] }}
-              />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
+            <div key={entry.name} className="group">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-sm"
+                    style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
+                  />
                   <span className="text-sm font-medium text-foreground">{entry.name}</span>
-                  <span className="text-sm font-bold" style={{ color: teamColors[index % teamColors.length] }}>
-                    {percent}%
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground tabular-nums">{entry.value} rounds</span>
+                  <span className="text-sm font-bold tabular-nums w-12 text-right" style={{ color: colors[0] }}>
+                    {percent.toFixed(0)}%
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 w-full rounded-full bg-muted/50 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${percent}%`,
-                      backgroundColor: teamColors[index % teamColors.length]
-                    }}
-                  />
-                </div>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${percent}%`,
+                    background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`
+                  }}
+                />
               </div>
             </div>
           );
@@ -705,40 +837,89 @@ export function PlayerTeamPreferenceChart({ data }: { data: { name: string; valu
 }
 
 export function PlayerActivityLast7DaysChart({ data }: { data: { date: string; rounds: number }[] }) {
+  const totalRounds = data.reduce((sum, d) => sum + d.rounds, 0);
+  const avgRounds = data.length > 0 ? Math.round(totalRounds / data.length) : 0;
+  const maxRounds = Math.max(...data.map(d => d.rounds));
+  const peakDay = data.find(d => d.rounds === maxRounds);
+
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <AreaChart data={data}>
-        <defs>
-          <linearGradient id="colorActivity7d" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-        <XAxis
-          dataKey="date"
-          stroke="hsl(var(--muted-foreground))"
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { weekday: 'short' })}
-          fontSize={12}
-        />
-        <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} fontSize={12} width={30} />
-        <ReTooltip
-          cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: '4 4' }}
-          contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 8, border: "1px solid hsl(var(--border))" }}
-          labelFormatter={(label) => new Date(label).toLocaleDateString()}
-        />
-        <Area
-          type="monotone"
-          dataKey="rounds"
-          name="Rounds Played"
-          stroke="hsl(var(--primary))"
-          fillOpacity={1}
-          fill="url(#colorActivity7d)"
-          strokeWidth={2}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div className="space-y-3">
+      <ResponsiveContainer width="100%" height={160}>
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorActivity7dNew" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.5} />
+              <stop offset="50%" stopColor="#10b981" stopOpacity={0.2} />
+              <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+            </linearGradient>
+            <filter id="glow7d" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.3} />
+          <XAxis
+            dataKey="date"
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { weekday: 'short' })}
+            fontSize={10}
+            tickMargin={8}
+          />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            fontSize={10}
+            width={28}
+            tickMargin={4}
+            allowDecimals={false}
+          />
+          <ReTooltip
+            cursor={{ stroke: "#10b981", strokeWidth: 1, strokeDasharray: '4 4' }}
+            contentStyle={{
+              backgroundColor: "hsl(var(--card)/0.95)",
+              borderRadius: 10,
+              border: "1px solid hsl(var(--border))",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+              backdropFilter: "blur(8px)"
+            }}
+            labelFormatter={(label) => new Date(label).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+            formatter={(value: number) => [`${value} rounds`, "Activity"]}
+          />
+          <Area
+            type="monotone"
+            dataKey="rounds"
+            name="Rounds"
+            stroke="#10b981"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorActivity7dNew)"
+            style={{ filter: "url(#glow7d)" }}
+            dot={{ r: 3, fill: "#10b981", strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+      {/* Stats summary */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="text-center px-2 py-1.5 rounded-lg bg-muted/30 border border-border/40">
+          <div className="text-lg font-bold text-emerald-500 tabular-nums">{totalRounds}</div>
+          <div className="text-[10px] text-muted-foreground uppercase">Total</div>
+        </div>
+        <div className="text-center px-2 py-1.5 rounded-lg bg-muted/30 border border-border/40">
+          <div className="text-lg font-bold text-foreground tabular-nums">{avgRounds}</div>
+          <div className="text-[10px] text-muted-foreground uppercase">Avg/Day</div>
+        </div>
+        <div className="text-center px-2 py-1.5 rounded-lg bg-muted/30 border border-border/40">
+          <div className="text-lg font-bold text-foreground tabular-nums">{maxRounds}</div>
+          <div className="text-[10px] text-muted-foreground uppercase">Peak</div>
+        </div>
+      </div>
+    </div>
   );
 }
