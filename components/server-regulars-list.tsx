@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Trophy, Hash, Loader2, Crosshair } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, Trophy, Hash, Loader2, Crosshair, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlayerFlag } from "@/components/player-flag";
 
@@ -23,11 +24,14 @@ interface ServerRegularsListProps {
   serverId: number;
 }
 
+const ITEMS_PER_PAGE = 5;
+
 export function ServerRegularsList({ serverId }: ServerRegularsListProps) {
   const [regulars, setRegulars] = useState<ServerRegular[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalUnique, setTotalUnique] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     async function fetchRegulars() {
@@ -91,7 +95,14 @@ export function ServerRegularsList({ serverId }: ServerRegularsListProps) {
     );
   }
 
+  const totalPages = Math.ceil(regulars.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentRegulars = regulars.slice(startIndex, endIndex);
   const maxRounds = Math.max(...regulars.map(r => r.rounds_played));
+
+  const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
 
   return (
     <Card className="border-border/60">
@@ -100,15 +111,16 @@ export function ServerRegularsList({ serverId }: ServerRegularsListProps) {
           <Users className="h-5 w-5 text-primary" />
           Server Regulars
           <span className="text-sm font-normal text-muted-foreground ml-auto">
-            Top {regulars.length} of {totalUnique.toLocaleString()} players
+            {regulars.length} of {totalUnique.toLocaleString()} players
           </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-1">
-          {regulars.map((player, index) => {
+          {currentRegulars.map((player, index) => {
+            const globalIndex = startIndex + index;
             const fillPercent = (player.rounds_played / maxRounds) * 100;
-            const isTopThree = index < 3;
+            const isTopThree = globalIndex < 3;
 
             return (
               <div
@@ -121,16 +133,16 @@ export function ServerRegularsList({ serverId }: ServerRegularsListProps) {
                 {/* Rank Badge */}
                 <div className={cn(
                   "flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold shrink-0",
-                  index === 0
+                  globalIndex === 0
                     ? "bg-amber-500/20 text-amber-500 ring-1 ring-amber-500/30"
-                    : index === 1
+                    : globalIndex === 1
                     ? "bg-slate-400/20 text-slate-400 ring-1 ring-slate-400/30"
-                    : index === 2
+                    : globalIndex === 2
                     ? "bg-orange-600/20 text-orange-600 ring-1 ring-orange-600/30"
                     : "bg-muted/50 text-muted-foreground"
                 )}>
                   {isTopThree && <Trophy className="w-3 h-3 mr-0.5" />}
-                  {index + 1}
+                  {globalIndex + 1}
                 </div>
 
                 {/* Player Info */}
@@ -197,6 +209,38 @@ export function ServerRegularsList({ serverId }: ServerRegularsListProps) {
           })}
         </div>
       </CardContent>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <CardFooter className="flex items-center justify-between border-t border-border/40 pt-4">
+          <span className="text-xs text-muted-foreground">
+            Showing {startIndex + 1}–{Math.min(endIndex, regulars.length)} of {regulars.length}
+          </span>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="h-7 w-7 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center px-2 text-xs text-muted-foreground">
+              {currentPage} / {totalPages}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="h-7 w-7 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }
