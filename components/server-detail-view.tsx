@@ -10,6 +10,7 @@ import { ServerActivityChart, ServerMapsPieChart } from "@/components/charts";
 import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
 import { ServerPeakHeatmap } from "@/components/server-peak-heatmap";
 import { MapBalanceTable, MapBalanceStat } from "@/components/map-balance-table";
+import { ServerRegularsList } from "@/components/server-regulars-list";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -428,6 +429,11 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
           </div>
         )
       }
+
+      {/* Server Regulars */}
+      {server_info?.server_id && (
+        <ServerRegularsList serverId={server_info.server_id} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {metrics && (

@@ -32,6 +32,7 @@ import { submitClaimRequest } from "@/app/actions/claim-actions";
 import { loginAction } from "@/app/actions/auth-actions";
 import { PlayerFlag } from "@/components/player-flag";
 import { AchievementsList, Achievement } from "@/components/achievements-list";
+import { PlayerSessionStats } from "@/components/player-session-stats";
 
 // --- Interfaces ---
 interface PlayerInfo {
@@ -706,8 +707,13 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </Card>
       </div>
 
-      {/* Social & History Row (Battle Buddies, Recent Rounds, Rank History) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Social & History Row (Session Stats, Battle Buddies, Recent Rounds, Rank History) */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {/* Session Stats */}
+        <div className="h-full">
+          <PlayerSessionStats playerName={player_info.last_known_name} />
+        </div>
+
         {/* Battle Buddies */}
         <div className="h-full">
           {advancedProfile?.related_players ? (
