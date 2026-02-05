@@ -1,100 +1,260 @@
-import { MetadataRoute } from 'next'
-import { modsList } from '@/lib/mods-list'
-import { articles } from '@/lib/articles'
+import { MetadataRoute } from "next";
+import { modsList } from "@/lib/mods-list";
+import { articles } from "@/lib/articles";
 
-type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+type ChangeFrequency =
+  | "always"
+  | "hourly"
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
+  | "never";
+
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online";
+
+// Map slugs organized by mod
+const MAP_SLUGS: Record<string, string[]> = {
+  "desert-combat": ["dc_al_khafji_docks", "dc_lostvillage"],
+};
+
+interface ServerResponse {
+  server_id: number;
+}
+
+interface PlayerResponse {
+  player_keyhash_id: number;
+  name: string;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // SET YOUR REAL DOMAIN HERE
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.bf1942.online';
+  const now = new Date();
 
-  // Dynamic Mod Pages
-  const modEntries: MetadataRoute.Sitemap = modsList.map((mod) => ({
-    url: `${siteUrl}/mods/${mod.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as ChangeFrequency,
-  }));
-
-  // Dynamic News Pages
-  const newsEntries: MetadataRoute.Sitemap = articles.map((article) => ({
-    url: `${siteUrl}/news/${article.slug}`,
-    lastModified: new Date(article.date),
-    changeFrequency: 'yearly' as ChangeFrequency,
-  }));
-
-  // Static Pages
-  const staticRoutes = [
-    '/',
-    '/about',
-    '/community',
-    '/guide',
-    '/login',
-    '/mods',
-    '/news',
-    '/profile',
-    '/search',
-    '/servers',
-    '/signup',
-    '/stats',
-    '/system-status',
-    '/tools',
-    '/tools/linux-server',
-    '/tools/map-alert',
-    '/tools/server-config',
-    '/tos-privacy'
+  // Static pages - excludes auth pages (/login, /signup, /profile) per robots.txt
+  const staticPages: MetadataRoute.Sitemap = [
+    // High priority - main pages
+    {
+      url: BASE_URL,
+      lastModified: now,
+      changeFrequency: "hourly" as ChangeFrequency,
+      priority: 1.0,
+    },
+    {
+      url: `${BASE_URL}/servers`,
+      lastModified: now,
+      changeFrequency: "always" as ChangeFrequency,
+      priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/stats`,
+      lastModified: now,
+      changeFrequency: "hourly" as ChangeFrequency,
+      priority: 0.8,
+    },
+    // Leaderboards
+    {
+      url: `${BASE_URL}/rank-info`,
+      lastModified: now,
+      changeFrequency: "hourly" as ChangeFrequency,
+      priority: 0.8,
+    },
+    {
+      url: `${BASE_URL}/rank-info/weekly`,
+      lastModified: now,
+      changeFrequency: "daily" as ChangeFrequency,
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/rank-info/monthly`,
+      lastModified: now,
+      changeFrequency: "daily" as ChangeFrequency,
+      priority: 0.7,
+    },
+    // Rounds & stats
+    {
+      url: `${BASE_URL}/stats/rounds`,
+      lastModified: now,
+      changeFrequency: "hourly" as ChangeFrequency,
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/stats/compare`,
+      lastModified: now,
+      changeFrequency: "weekly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/search`,
+      lastModified: now,
+      changeFrequency: "weekly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    // Community
+    {
+      url: `${BASE_URL}/clans`,
+      lastModified: now,
+      changeFrequency: "daily" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/community`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/news`,
+      lastModified: now,
+      changeFrequency: "weekly" as ChangeFrequency,
+      priority: 0.7,
+    },
+    // Mods & guides
+    {
+      url: `${BASE_URL}/mods`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/guide`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/guide/installation`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/guide/player-guide`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    // Tools
+    {
+      url: `${BASE_URL}/tools`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/tools/linux-server`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/tools/map-alert`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    // Info pages
+    {
+      url: `${BASE_URL}/about`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.4,
+    },
+    {
+      url: `${BASE_URL}/rank-system`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/system-status`,
+      lastModified: now,
+      changeFrequency: "daily" as ChangeFrequency,
+      priority: 0.3,
+    },
+    {
+      url: `${BASE_URL}/tos-privacy`,
+      lastModified: now,
+      changeFrequency: "yearly" as ChangeFrequency,
+      priority: 0.2,
+    },
   ];
 
-  const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
-    url: `${siteUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as ChangeFrequency,
-    priority: route === '/' ? 1.0 : 0.8,
+  // Mod pages from modsList
+  const modPages: MetadataRoute.Sitemap = modsList.map((mod) => ({
+    url: `${BASE_URL}/mods/${mod.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly" as ChangeFrequency,
+    priority: 0.6,
   }));
 
-  // Fetch active servers
-  let serverEntries: MetadataRoute.Sitemap = [];
+  // Map pages (nested under mods)
+  const mapPages: MetadataRoute.Sitemap = Object.entries(MAP_SLUGS).flatMap(
+    ([modSlug, mapSlugs]) =>
+      mapSlugs.map((mapSlug) => ({
+        url: `${BASE_URL}/mods/${modSlug}/${mapSlug}`,
+        lastModified: now,
+        changeFrequency: "monthly" as ChangeFrequency,
+        priority: 0.5,
+      }))
+  );
+
+  // News articles
+  const newsPages: MetadataRoute.Sitemap = articles.map((article) => ({
+    url: `${BASE_URL}/news/${article.slug}`,
+    lastModified: new Date(article.date),
+    changeFrequency: "yearly" as ChangeFrequency,
+    priority: 0.6,
+  }));
+
+  // Dynamic: Active servers (uses the site's API proxy)
+  let serverPages: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch('http://127.0.0.1:8000/api/v1/servers', { next: { revalidate: 3600 } });
+    const res = await fetch(`${BASE_URL}/api/v1/servers`, {
+      next: { revalidate: 3600 },
+    });
     if (res.ok) {
       const data = await res.json();
       if (data.ok && Array.isArray(data.servers)) {
-        serverEntries = data.servers.map((server: any) => ({
-          url: `${siteUrl}/servers/${server.server_id}`,
-          lastModified: new Date(),
-          changeFrequency: 'hourly' as ChangeFrequency,
+        serverPages = data.servers.map((server: ServerResponse) => ({
+          url: `${BASE_URL}/servers/${server.server_id}`,
+          lastModified: now,
+          changeFrequency: "hourly" as ChangeFrequency,
           priority: 0.7,
         }));
       }
     }
   } catch (e) {
-    console.error("Failed to fetch servers for sitemap", e);
+    console.error("Failed to fetch servers for sitemap:", e);
   }
 
-  // Fetch top players (Leaderboard)
-  let playerEntries: MetadataRoute.Sitemap = [];
+  // Dynamic: Top players from leaderboard (uses the site's API proxy)
+  let playerPages: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch('http://127.0.0.1:8000/api/v1/leaderboard', { next: { revalidate: 3600 } });
+    const res = await fetch(`${BASE_URL}/api/v1/leaderboard?limit=500`, {
+      next: { revalidate: 3600 },
+    });
     if (res.ok) {
       const data = await res.json();
       if (data.ok && Array.isArray(data.leaderboard)) {
-        // Limit to top 500 active players
-        playerEntries = data.leaderboard.slice(0, 500).map((player: any) => ({
-          url: `${siteUrl}/player/${encodeURIComponent(player.name)}`,
-          lastModified: new Date(),
-          changeFrequency: 'daily' as ChangeFrequency,
+        playerPages = data.leaderboard.map((player: PlayerResponse) => ({
+          url: `${BASE_URL}/player/${player.player_keyhash_id}`,
+          lastModified: now,
+          changeFrequency: "daily" as ChangeFrequency,
           priority: 0.6,
         }));
       }
     }
   } catch (e) {
-    console.error("Failed to fetch players for sitemap", e);
+    console.error("Failed to fetch players for sitemap:", e);
   }
 
   return [
-    ...staticEntries,
-    ...modEntries,
-    ...newsEntries,
-    ...serverEntries,
-    ...playerEntries,
+    ...staticPages,
+    ...modPages,
+    ...mapPages,
+    ...newsPages,
+    ...serverPages,
+    ...playerPages,
   ];
 }

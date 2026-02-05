@@ -10,20 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlayerActivityChart } from "@/components/charts";
 import { cn } from "@/lib/utils";
-import { GlobalMetrics, GlobalMetricsSchema } from "@/lib/schemas";
-import { Server } from "@/components/server-directory"; // Import Server type
+import { GlobalMetrics, GlobalMetricsSchema, ServerListSchema } from "@/lib/schemas";
+import { Server } from "@/components/server-directory";
 import { ServerSummaryCard } from "@/components/server-summary-card";
 import { LiveTicker } from "@/components/live-ticker";
-
-interface MetricsApiResponse {
-  ok: boolean;
-  [key: string]: any;
-}
-
-interface ServerListResponse {
-  ok: boolean;
-  servers: Server[];
-}
 
 // Mirror the sort order from components/server-directory.tsx
 const SERVER_STATUS_ORDER: Record<string, number> = {
@@ -45,25 +35,24 @@ export default function Page() {
         const metricsRes = await fetch("/api/v1/metrics/global");
         if (!metricsRes.ok) throw new Error("Failed to fetch metrics");
 
-        const metricsJson: MetricsApiResponse = await metricsRes.json();
-        if (metricsJson.ok) {
-          const parsed = GlobalMetricsSchema.safeParse(metricsJson);
-          if (parsed.success) {
-            setData(parsed.data);
-          } else {
-            console.error("Validation Error:", parsed.error);
-          }
+        const metricsJson = await metricsRes.json();
+        const parsed = GlobalMetricsSchema.safeParse(metricsJson);
+        if (parsed.success) {
+          setData(parsed.data);
+        } else {
+          console.error("Metrics validation error:", parsed.error);
         }
 
         // 2. Fetch Active Servers for Top 5 List
         const serversRes = await fetch("/api/v1/servers");
         if (serversRes.ok) {
-          const serversJson: ServerListResponse = await serversRes.json();
-          if (serversJson.ok) {
+          const serversJson = await serversRes.json();
+          const serversParsed = ServerListSchema.safeParse(serversJson);
+          if (serversParsed.success) {
             // Sort to mirror the /servers page logic:
             // 1. Status (Active -> Empty -> Offline)
             // 2. Player Count (High -> Low)
-            const sorted = serversJson.servers.sort((a, b) => {
+            const sorted = [...serversParsed.data.servers].sort((a, b) => {
               const statusA = SERVER_STATUS_ORDER[a.current_state] ?? 99;
               const statusB = SERVER_STATUS_ORDER[b.current_state] ?? 99;
 
@@ -184,10 +173,8 @@ export default function Page() {
           {topServers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {topServers.map(server => (
-                <ServerSummaryCard key={server.server_id} server={server as any} />
+                <ServerSummaryCard key={server.server_id} server={server} />
               ))}
-              {/* Note: casting as any or updating interfaces if slight mismatch between Server and LiveServer types. 
-                   Usually they should match if using same API response logic. */}
             </div>
           ) : (
             <div className="py-12 text-center text-muted-foreground border border-dashed rounded-lg bg-card/50">

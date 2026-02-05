@@ -9,12 +9,11 @@ import { Sparkline } from "@/components/sparkline";
 
 interface LiveServer {
     server_id: number;
-    current_server_name: string;
-    current_map: string;
+    current_server_name: string | null;
+    current_map: string | null;
     current_player_count: number;
     current_max_players: number;
     ip: string;
-    port: number;
     current_gametype?: string | null;
     history?: number[];
 }
@@ -41,11 +40,11 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                         <h3 className="font-bold flex items-center gap-2 text-lg truncate pr-2">
                             <ServerFlag ip={server.ip} />
                             <Link href={`/servers/${server.server_id}`} className="hover:underline truncate text-foreground hover:text-primary transition-colors">
-                                {server.current_server_name}
+                                {server.current_server_name || "Unknown Server"}
                             </Link>
                         </h3>
                         <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
-                            <span className="flex items-center gap-1 truncate"><MapIcon className="h-3 w-3" /> {server.current_map}</span>
+                            <span className="flex items-center gap-1 truncate"><MapIcon className="h-3 w-3" /> {server.current_map || "Unknown"}</span>
                             <span className="flex items-center gap-1 truncate" title={`Game Mode: ${server.current_gametype || 'Unknown'}`}>
                                 {getGameModeIcon(server.current_gametype)}
                                 <span className="uppercase">{server.current_gametype || "CONQ"}</span>

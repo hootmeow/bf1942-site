@@ -33,6 +33,12 @@ export interface Server {
   history?: number[];
 }
 
+interface ServerRanking {
+  server_id: number;
+  rank: number;
+  activity_hours_7d: number;
+}
+
 type SortKey = "name" | "map" | "players" | "status" | "activity";
 type SortDirection = "asc" | "desc";
 
@@ -60,7 +66,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
           const data = await res.json();
           if (data.ok && data.rankings) {
             const map: Record<number, { rank: number; activity_hours_7d: number }> = {};
-            data.rankings.forEach((r: any) => {
+            data.rankings.forEach((r: ServerRanking) => {
               map[r.server_id] = { rank: r.rank, activity_hours_7d: r.activity_hours_7d };
             });
             setActivityRanks(map);
