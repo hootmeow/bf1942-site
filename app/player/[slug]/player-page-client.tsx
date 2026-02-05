@@ -33,6 +33,7 @@ import { loginAction } from "@/app/actions/auth-actions";
 import { PlayerFlag } from "@/components/player-flag";
 import { AchievementsList, Achievement } from "@/components/achievements-list";
 import { PlayerSessionStats } from "@/components/player-session-stats";
+import { PlayerServerRanks } from "@/components/player-server-ranks";
 
 // --- Interfaces ---
 interface PlayerInfo {
@@ -761,6 +762,19 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           </CardContent>
         </Card>
       </div>
+
+      {/* Server Rankings Section */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-amber-500/10">
+          <Trophy className="h-5 w-5 text-amber-500" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Server Rankings</h2>
+          <p className="text-sm text-muted-foreground">Your rank on each server you&apos;ve played</p>
+        </div>
+      </div>
+
+      <PlayerServerRanks playerName={player_info.last_known_name} />
 
       {/* Social & History Section Header */}
       <div className="flex items-center gap-3">
