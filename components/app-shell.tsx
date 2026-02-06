@@ -65,15 +65,7 @@ const navItems: NavItem[] = [
     href: "/stats",
     overviewLabel: null,
     children: [
-      {
-        label: "Ranked Stats",
-        href: "/rank-info",
-        children: [
-          { label: "All Time", href: "/rank-info" },
-          { label: "Weekly (Last 7 Days)", href: "/rank-info/weekly" },
-          { label: "Monthly (Last 30 Days)", href: "/rank-info/monthly" },
-        ]
-      },
+      { label: "Leaderboards", href: "/rank-info" },
       { label: "Global Challenges", href: "/challenges" },
       { label: "Search & Browse", href: "/search" },
       { label: "Stats FAQ", href: "/rank-system" },
