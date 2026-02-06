@@ -90,7 +90,7 @@ export default function TosPrivacyPage() {
                     <div className="mt-4 flex items-center justify-center gap-3">
                         <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-slate-300">
                             <Clock className="h-3 w-3 mr-1" />
-                            Last Updated: January 14, 2026
+                            Last Updated: February 6, 2026
                         </Badge>
                     </div>
                 </div>
@@ -291,10 +291,9 @@ export default function TosPrivacyPage() {
                                     <div className="p-4 rounded-lg border border-border/60 bg-card/60">
                                         <h4 className="font-semibold text-foreground mb-2">Technical Data</h4>
                                         <p className="text-sm">
-                                            Our servers and service providers (such as Cloudflare) automatically collect standard
-                                            technical data including IP addresses, browser type, device information, and access
-                                            times for security, analytics, and performance monitoring. This data is anonymized
-                                            and not linked to individual identities.
+                                            Our servers automatically collect standard technical data including IP addresses,
+                                            browser type, device information, and access times for security, analytics, and
+                                            performance monitoring. This data is anonymized and not linked to individual identities.
                                         </p>
                                     </div>
                                 </div>
@@ -347,7 +346,7 @@ export default function TosPrivacyPage() {
                                     <li>Database encryption at rest</li>
                                     <li>Regular security audits and updates</li>
                                     <li>Access controls and authentication for administrative functions</li>
-                                    <li>DDoS protection via Cloudflare</li>
+                                    <li>DDoS protection and rate limiting</li>
                                 </ul>
                                 <p>
                                     While we strive to protect your data, no method of transmission over the Internet is 100% secure.

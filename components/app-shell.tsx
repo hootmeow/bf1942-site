@@ -73,9 +73,19 @@ const navItems: NavItem[] = [
   },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
   {
-    label: "Guides",
+    label: "Game Wiki",
     icon: Download,
-    href: "/guide",
+    href: "/wiki",
+    overviewLabel: "Wiki Home",
+    children: [
+      { label: "Maps", href: "/wiki/maps" },
+      { label: "Basic Training", href: "/wiki/basic-training" },
+      { label: "Soldier Kits", href: "/wiki/kits" },
+      { label: "Weapons", href: "/wiki/weapons" },
+      { label: "Vehicles", href: "/wiki/vehicles" },
+      { label: "Tactics", href: "/wiki/tactics" },
+      { label: "Guides", href: "/guide" },
+    ],
   },
   {
     label: "Community",
