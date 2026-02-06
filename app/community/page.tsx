@@ -47,12 +47,6 @@ const communities = [
     website: "http://www.IS82.com",
     discord: "https://discord.com/invite/CHM7AApBAP",
   },
-  {
-    title: "The Lazy Bastards (TLB)",
-    description: "Founded by a group of mature Battlefield 1942 players, TLB's main goal is to enjoy 'idiot-free' gaming. It's a community for those who appreciate playing online games as intended.",
-    website: null,
-    discord: "https://discord.gg/3N6JVpt3",
-  },
 ];
 
 export default function CommunityPage() {
@@ -97,15 +91,6 @@ export default function CommunityPage() {
         ))}
       </div>
 
-      <div className="pt-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          Is your community missing? Contact us on the{" "}
-          <Link href="httpsD://discord.gg/n2FXvJU4zJ" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
-            bf1942.online discord
-          </Link>{" "}
-          to have your community added or information updated.
-        </p>
-      </div>
     </div>
   );
 }

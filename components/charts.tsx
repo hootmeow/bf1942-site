@@ -923,3 +923,185 @@ export function PlayerActivityLast7DaysChart({ data }: { data: { date: string; r
     </div>
   );
 }
+
+
+// --- ROUND TIMELINE CHART ---
+interface TicketDataPoint {
+  timestamp: string;
+  tickets1: number | null;
+  tickets2: number | null;
+  time_remain?: number | null;
+}
+
+interface KeyMoment {
+  timestamp: string;
+  event: string;
+  tickets1: number;
+  tickets2: number;
+}
+
+interface RoundTimelineChartProps {
+  ticketTimeline: TicketDataPoint[];
+  keyMoments?: KeyMoment[];
+}
+
+export function RoundTimelineChart({ ticketTimeline, keyMoments = [] }: RoundTimelineChartProps) {
+  if (!ticketTimeline || ticketTimeline.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+        No timeline data available for this round.
+      </div>
+    );
+  }
+
+  // Process data for chart
+  const chartData = ticketTimeline.map((point, index) => {
+    const timestamp = new Date(point.timestamp);
+    const minutes = index; // Use index as relative time
+
+    return {
+      time: minutes,
+      label: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      axis: point.tickets1 ?? 0,
+      allies: point.tickets2 ?? 0,
+      delta: (point.tickets1 ?? 0) - (point.tickets2 ?? 0)
+    };
+  });
+
+  // Calculate stats
+  const startAxis = chartData[0]?.axis ?? 0;
+  const startAllies = chartData[0]?.allies ?? 0;
+  const endAxis = chartData[chartData.length - 1]?.axis ?? 0;
+  const endAllies = chartData[chartData.length - 1]?.allies ?? 0;
+
+  const axisLost = startAxis - endAxis;
+  const alliesLost = startAllies - endAllies;
+  const winner = endAxis > endAllies ? "Axis" : endAllies > endAxis ? "Allies" : "Draw";
+  const ticketDiff = Math.abs(endAxis - endAllies);
+
+  return (
+    <div className="space-y-4">
+      {/* Chart */}
+      <ResponsiveContainer width="100%" height={300}>
+        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="axisGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="alliesGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+          <XAxis
+            dataKey="time"
+            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+            tickLine={false}
+            axisLine={{ stroke: "hsl(var(--border))" }}
+            interval="preserveStartEnd"
+            tickFormatter={(value) => {
+              const point = chartData[value];
+              return point?.label || '';
+            }}
+          />
+          <YAxis
+            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+            tickLine={false}
+            axisLine={{ stroke: "hsl(var(--border))" }}
+            domain={['dataMin - 10', 'dataMax + 10']}
+          />
+          <ReTooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--card))",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: "8px",
+              fontSize: "12px"
+            }}
+            labelFormatter={(value) => {
+              const point = chartData[value as number];
+              return point?.label || '';
+            }}
+            formatter={(value: number, name: string) => {
+              const displayName = name === 'axis' ? 'Axis' : 'Allies';
+              const color = name === 'axis' ? '#ef4444' : '#3b82f6';
+              return [<span style={{ color }}>{value} tickets</span>, displayName];
+            }}
+          />
+          <Legend
+            verticalAlign="top"
+            height={36}
+            formatter={(value) => (
+              <span style={{ color: value === 'axis' ? '#ef4444' : '#3b82f6', fontWeight: 500 }}>
+                {value === 'axis' ? 'Axis' : 'Allies'}
+              </span>
+            )}
+          />
+          <Area
+            type="monotone"
+            dataKey="axis"
+            stroke="#ef4444"
+            strokeWidth={2}
+            fill="url(#axisGradient)"
+            dot={false}
+            activeDot={{ r: 4, fill: "#ef4444", stroke: "#fff", strokeWidth: 2 }}
+          />
+          <Area
+            type="monotone"
+            dataKey="allies"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            fill="url(#alliesGradient)"
+            dot={false}
+            activeDot={{ r: 4, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="text-center p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+          <div className="text-xs text-red-400 uppercase mb-1">Axis Tickets Lost</div>
+          <div className="text-xl font-bold text-red-500 tabular-nums">{axisLost}</div>
+        </div>
+        <div className="text-center p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+          <div className="text-xs text-blue-400 uppercase mb-1">Allies Tickets Lost</div>
+          <div className="text-xl font-bold text-blue-500 tabular-nums">{alliesLost}</div>
+        </div>
+        <div className="text-center p-3 rounded-lg bg-muted/30 border border-border/40">
+          <div className="text-xs text-muted-foreground uppercase mb-1">Final Margin</div>
+          <div className="text-xl font-bold text-foreground tabular-nums">{ticketDiff}</div>
+        </div>
+        <div className={`text-center p-3 rounded-lg border ${winner === 'Axis' ? 'bg-red-500/10 border-red-500/20' : winner === 'Allies' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-muted/30 border-border/40'}`}>
+          <div className="text-xs text-muted-foreground uppercase mb-1">Winner</div>
+          <div className={`text-xl font-bold tabular-nums ${winner === 'Axis' ? 'text-red-500' : winner === 'Allies' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+            {winner}
+          </div>
+        </div>
+      </div>
+
+      {/* Key Moments */}
+      {keyMoments && keyMoments.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground">Key Moments</h4>
+          <div className="space-y-2">
+            {keyMoments.slice(0, 5).map((moment, index) => (
+              <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20 border border-border/40 text-sm">
+                <div className="text-xs text-muted-foreground font-mono">
+                  {new Date(moment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <div className="flex-1 text-foreground">{moment.event}</div>
+                <div className="text-xs">
+                  <span className="text-red-500">{moment.tickets1}</span>
+                  <span className="text-muted-foreground mx-1">vs</span>
+                  <span className="text-blue-500">{moment.tickets2}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

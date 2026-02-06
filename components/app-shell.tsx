@@ -75,9 +75,7 @@ const navItems: NavItem[] = [
         ]
       },
       { label: "Global Challenges", href: "/challenges" },
-      { label: "Search", href: "/search" },
-      { label: "Rounds", href: "/stats/rounds" },
-      { label: "Compare Players", href: "/stats/compare" },
+      { label: "Search & Browse", href: "/search" },
       { label: "Stats FAQ", href: "/rank-system" },
     ],
   },

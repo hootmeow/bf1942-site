@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, Loader2, Clock, Map, Users, Server } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, Map, Users, Server, TrendingUp, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronLeft, Trophy, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RoundTimelineChart } from "@/components/charts";
 
 interface RoundData {
     round_id: number;
@@ -29,6 +30,27 @@ interface RoundDetailsResponse {
     ok: boolean;
     round: RoundData;
     player_stats: ScoreboardPlayer[];
+}
+
+interface TimelineDataPoint {
+    timestamp: string;
+    tickets1: number | null;
+    tickets2: number | null;
+    time_remain?: number | null;
+}
+
+interface KeyMoment {
+    timestamp: string;
+    event: string;
+    tickets1: number;
+    tickets2: number;
+}
+
+interface TimelineResponse {
+    ok: boolean;
+    ticket_timeline: TimelineDataPoint[];
+    key_moments: KeyMoment[];
+    player_scores?: Record<string, Array<{ timestamp: string; score: number; kills: number; deaths: number }>>;
 }
 
 function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ElementType }) {
@@ -55,6 +77,8 @@ export default function RoundDetailPage() {
     const [data, setData] = useState<RoundDetailsResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [timeline, setTimeline] = useState<TimelineResponse | null>(null);
+    const [timelineLoading, setTimelineLoading] = useState(true);
 
     useEffect(() => {
         async function fetchRoundDetails() {
@@ -77,6 +101,29 @@ export default function RoundDetailPage() {
             }
         }
         fetchRoundDetails();
+    }, [roundId]);
+
+    // Fetch timeline data separately
+    useEffect(() => {
+        async function fetchTimeline() {
+            if (!roundId) return;
+
+            setTimelineLoading(true);
+            try {
+                const res = await fetch(`/api/v1/rounds/${roundId}/timeline`);
+                if (res.ok) {
+                    const jsonData: TimelineResponse = await res.json();
+                    if (jsonData.ok) {
+                        setTimeline(jsonData);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch timeline:", err);
+            } finally {
+                setTimelineLoading(false);
+            }
+        }
+        fetchTimeline();
     }, [roundId]);
 
     const [team1, team2] = useMemo(() => {
@@ -209,6 +256,33 @@ export default function RoundDetailPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Round Timeline Chart */}
+            <Card className="border-border/60">
+                <CardHeader>
+                    <CardTitle as="h3" className="flex items-center gap-2">
+                        <Activity className="h-5 w-5 text-primary" />
+                        Battle Timeline
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {timelineLoading ? (
+                        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                            Loading timeline...
+                        </div>
+                    ) : timeline && timeline.ticket_timeline && timeline.ticket_timeline.length > 0 ? (
+                        <RoundTimelineChart
+                            ticketTimeline={timeline.ticket_timeline}
+                            keyMoments={timeline.key_moments}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                            No timeline data available for this round.
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Axis Card */}
