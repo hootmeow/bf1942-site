@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ServerFlag } from "@/components/server-flag";
@@ -35,7 +36,14 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
     const isActive = server.current_player_count > 0;
 
     return (
-        <Card className="group bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/60 transition-all duration-200 overflow-hidden hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5">
+        <Card className={cn(
+            "group bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/60 transition-all duration-200 overflow-hidden hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 card-glow border-l-2",
+            isHot
+                ? "border-l-green-500"
+                : isActive
+                ? "border-l-primary/60"
+                : "border-l-transparent"
+        )}>
             <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="space-y-1.5 overflow-hidden flex-1 min-w-0">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Server } from "@/components/server-directory";
 import { Globe, Users, Trophy, Crosshair, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -122,6 +122,20 @@ export function LiveTicker({ className }: { className?: string }) {
         return () => clearInterval(interval);
     }, []);
 
+    // Measure content width and compute a readable scroll duration (~50px/s)
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [duration, setDuration] = useState(120);
+
+    useEffect(() => {
+        if (scrollRef.current && news.length > 0) {
+            // The element is tripled, so one "copy" is 1/3 of scrollWidth
+            const oneThirdWidth = scrollRef.current.scrollWidth / 3;
+            // Target ~50px per second for comfortable reading
+            const computed = Math.max(oneThirdWidth / 50, 30);
+            setDuration(computed);
+        }
+    }, [news]);
+
     if (loading || news.length === 0) return null;
 
     return (
@@ -135,7 +149,11 @@ export function LiveTicker({ className }: { className?: string }) {
             </div>
 
             {/* Scrolling Content */}
-            <div className="flex animate-marquee whitespace-nowrap items-center gap-8 pl-[100px]">
+            <div
+                ref={scrollRef}
+                className="flex whitespace-nowrap items-center gap-8 pl-[100px]"
+                style={{ animation: `marquee ${duration}s linear infinite` }}
+            >
                 {[...news, ...news, ...news].map((item, i) => (
                     <div key={`${item.id}-${i}`} className="flex items-center gap-2 text-xs font-mono">
                         <item.icon className="w-3 h-3 text-primary/70" />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, Loader2, Clock, Map, Users, Server, TrendingUp, Activity } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, Map, Users, Server, TrendingUp, Activity, Swords, ArrowLeftRight, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
@@ -11,6 +11,8 @@ import Link from "next/link";
 import { ChevronLeft, Trophy, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RoundTimelineChart } from "@/components/charts";
+import { RoundTopPerformers } from "@/components/round-top-performers";
+import { RoundPlayerTimelineChart } from "@/components/round-player-timeline-chart";
 
 interface RoundData {
     round_id: number;
@@ -46,11 +48,19 @@ interface KeyMoment {
     tickets2: number;
 }
 
+interface PlayerHighlights {
+    top_5_scorers: { player_name: string; final_score: number; final_kills: number; final_deaths: number; team: number }[];
+    biggest_streak: { player_name: string; streak: number } | null;
+    closest_margin: number;
+    lead_changes: number;
+}
+
 interface TimelineResponse {
     ok: boolean;
     ticket_timeline: TimelineDataPoint[];
     key_moments: KeyMoment[];
     player_scores?: Record<string, Array<{ timestamp: string; score: number; kills: number; deaths: number }>>;
+    player_highlights?: PlayerHighlights;
 }
 
 function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ElementType }) {
@@ -128,7 +138,6 @@ export default function RoundDetailPage() {
 
     const [team1, team2] = useMemo(() => {
         if (!data?.player_stats) return [[], []];
-        // Sort by score descending
         const t1 = data.player_stats.filter((p) => p.team === 1).sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
         const t2 = data.player_stats.filter((p) => p.team === 2).sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
         return [t1, t2];
@@ -147,7 +156,7 @@ export default function RoundDetailPage() {
         const stats = data.player_stats;
         const mvp = [...stats].sort((a, b) => (b.final_score || 0) - (a.final_score || 0))[0];
         const deadliest = [...stats].sort((a, b) => (b.final_kills || 0) - (a.final_kills || 0))[0];
-        const survivor = [...stats].sort((a, b) => (a.final_deaths || 0) - (b.final_deaths || 0))[0]; // Least deaths
+        const survivor = [...stats].sort((a, b) => (a.final_deaths || 0) - (b.final_deaths || 0))[0];
 
         return { mvp, deadliest, survivor };
     }, [data]);
@@ -159,13 +168,22 @@ export default function RoundDetailPage() {
         const loserName = winnerName === "Axis" ? "Allies" : "Axis";
         const ticketDiff = Math.abs(round.tickets1 - round.tickets2);
 
+        // Use timeline highlight data for closeness if available
+        const closestMargin = timeline?.player_highlights?.closest_margin;
+        const leadChanges = timeline?.player_highlights?.lead_changes || 0;
+
         let intensity = "skirmish";
         if (ticketDiff < 10) intensity = "nail-biting finish";
         else if (ticketDiff < 50) intensity = "hard-fought battle";
         else intensity = "decisive victory";
 
-        return `The ${winnerName} secured a ${intensity} on ${round.map_name}, defeating the ${loserName} by ${ticketDiff} tickets. The battle lasted for ${Math.floor(round.duration_seconds / 60)} minutes.`;
-    }, [data]);
+        let extra = "";
+        if (leadChanges > 0) {
+            extra = ` The lead changed hands ${leadChanges} time${leadChanges > 1 ? "s" : ""} throughout the match.`;
+        }
+
+        return `The ${winnerName} secured a ${intensity} on ${round.map_name}, defeating the ${loserName} by ${ticketDiff} tickets. The battle lasted for ${Math.floor(round.duration_seconds / 60)} minutes.${extra}`;
+    }, [data, timeline]);
 
     if (loading) {
         return (
@@ -188,41 +206,105 @@ export default function RoundDetailPage() {
 
     const { round } = data;
     const winner = round.tickets1 > round.tickets2 ? 1 : round.tickets2 > round.tickets1 ? 2 : 0;
+    const ticketDiff = Math.abs(round.tickets1 - round.tickets2);
+    const winnerLabel = winner === 1 ? "Axis Victory" : winner === 2 ? "Allied Victory" : "Draw";
+    const closenessBadge = ticketDiff < 20 ? "NAIL-BITER" : ticketDiff < 50 ? "HARD-FOUGHT" : null;
+
+    const playerHighlights = timeline?.player_highlights;
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" asChild>
-                    <Link href="/stats/rounds">
-                        <ChevronLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
-                <div>
-                    <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                        Round #{round.round_id}
-                    </h1>
-                    <p className="mt-1 text-muted-foreground">
-                        Played on {new Date(round.start_time).toLocaleString()}
-                    </p>
+            {/* Hero Banner */}
+            <div className="relative overflow-hidden rounded-xl border border-border/60">
+                <div className={cn(
+                    "relative p-6 md:p-8",
+                    winner === 1
+                        ? "bg-gradient-to-br from-red-950/60 via-background to-background"
+                        : winner === 2
+                            ? "bg-gradient-to-br from-blue-950/60 via-background to-background"
+                            : "bg-gradient-to-br from-muted/40 via-background to-background"
+                )}>
+                    {/* Back button */}
+                    <div className="absolute top-4 left-4">
+                        <Button variant="outline" size="icon" asChild className="bg-background/50 backdrop-blur-sm">
+                            <Link href="/stats/rounds">
+                                <ChevronLeft className="h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </div>
+
+                    <div className="text-center space-y-3 pt-4">
+                        {/* Map name - large */}
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+                            {round.map_name}
+                        </h1>
+
+                        {/* Server + gamemode */}
+                        <p className="text-sm text-muted-foreground">
+                            {round.current_server_name}
+                            {round.gamemode && <span> &middot; {round.gamemode}</span>}
+                        </p>
+
+                        {/* Winner badge */}
+                        <div className="flex items-center justify-center gap-3">
+                            <div className={cn(
+                                "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold border",
+                                winner === 1
+                                    ? "bg-red-500/20 text-red-400 border-red-500/40"
+                                    : winner === 2
+                                        ? "bg-blue-500/20 text-blue-400 border-blue-500/40"
+                                        : "bg-muted/30 text-muted-foreground border-border/60"
+                            )}>
+                                <Trophy className="h-4 w-4" />
+                                {winnerLabel}
+                            </div>
+
+                            {closenessBadge && (
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                                    <Zap className="h-3 w-3" />
+                                    {closenessBadge}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Quick stats row */}
+                        <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground pt-2">
+                            <div className="flex items-center gap-1.5">
+                                <Clock className="h-3.5 w-3.5" />
+                                {formatDuration(round.duration_seconds)}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Users className="h-3.5 w-3.5" />
+                                {data.player_stats.length} players
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Swords className="h-3.5 w-3.5" />
+                                {ticketDiff} ticket margin
+                            </div>
+                        </div>
+
+                        {/* Ticket scores */}
+                        <div className="flex items-center justify-center gap-8 pt-2">
+                            <div className="text-center">
+                                <div className="text-xs text-red-400 font-medium uppercase tracking-wider">Axis</div>
+                                <div className="text-2xl font-bold text-red-500">{round.tickets1}</div>
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium">VS</div>
+                            <div className="text-center">
+                                <div className="text-xs text-blue-400 font-medium uppercase tracking-wider">Allies</div>
+                                <div className="text-2xl font-bold text-blue-500">{round.tickets2}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <Card className="border-border/60">
-                <CardHeader><CardTitle as="h2">Round Summary</CardTitle></CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                    <StatCard title="Server" value={round.current_server_name} icon={Server} />
-                    <StatCard title="Map" value={round.map_name} icon={Map} />
-                    <StatCard title="Duration" value={formatDuration(round.duration_seconds)} icon={Clock} />
-                    <StatCard title="Total Players" value={data.player_stats.length} icon={Users} />
-                </CardContent>
-            </Card>
 
             {/* Battle Highlights & Narrative */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="md:col-span-2 border-border/60 bg-muted/10">
                     <CardHeader><CardTitle as="h3" className="text-lg">Battle Report</CardTitle></CardHeader>
                     <CardContent>
-                        <p className="text-lg italic text-muted-foreground leading-relaxed">"{narrative}"</p>
+                        <p className="text-lg italic text-muted-foreground leading-relaxed">&ldquo;{narrative}&rdquo;</p>
                     </CardContent>
                 </Card>
 
@@ -253,9 +335,43 @@ export default function RoundDetailPage() {
                                 </div>
                             </div>
                         )}
+                        {/* Enhanced highlights from timeline data */}
+                        {playerHighlights && playerHighlights.lead_changes > 0 && (
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-purple-500/10 text-purple-500 rounded-full"><ArrowLeftRight className="h-4 w-4" /></div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase">Lead Changes</p>
+                                    <p className="font-bold">{playerHighlights.lead_changes} time{playerHighlights.lead_changes > 1 ? "s" : ""}</p>
+                                </div>
+                            </div>
+                        )}
+                        {playerHighlights && playerHighlights.closest_margin !== undefined && (
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-amber-500/10 text-amber-500 rounded-full"><Zap className="h-4 w-4" /></div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase">Closest Margin</p>
+                                    <p className="font-bold">{playerHighlights.closest_margin} tickets</p>
+                                </div>
+                            </div>
+                        )}
+                        {playerHighlights?.biggest_streak && (
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-500/10 text-orange-500 rounded-full"><TrendingUp className="h-4 w-4" /></div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase">Kill Streak</p>
+                                    <Link href={`/player/${encodeURIComponent(playerHighlights.biggest_streak.player_name)}`} className="font-bold hover:underline">
+                                        {playerHighlights.biggest_streak.player_name}
+                                    </Link>
+                                    <span className="text-xs ml-2 opacity-70">({playerHighlights.biggest_streak.streak} kills)</span>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Top Performers */}
+            <RoundTopPerformers playerStats={data.player_stats} />
 
             {/* Round Timeline Chart */}
             <Card className="border-border/60">
@@ -283,6 +399,11 @@ export default function RoundDetailPage() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Top Scorers Over Time */}
+            {timeline?.player_scores && Object.keys(timeline.player_scores).length > 0 && (
+                <RoundPlayerTimelineChart playerScores={timeline.player_scores} />
+            )}
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Axis Card */}

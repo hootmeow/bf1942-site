@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Activity, Users, BarChart, Loader2, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, Globe, Zap } from "lucide-react";
+import { Activity, Users, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,6 +14,7 @@ import { GlobalMetrics, GlobalMetricsSchema, ServerListSchema } from "@/lib/sche
 import { Server } from "@/components/server-directory";
 import { ServerSummaryCard } from "@/components/server-summary-card";
 import { LiveTicker } from "@/components/live-ticker";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Mirror the sort order from components/server-directory.tsx
 const SERVER_STATUS_ORDER: Record<string, number> = {
@@ -80,9 +81,37 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center gap-2 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <p>Loading dashboard data...</p>
+      <div className="space-y-8 pb-8">
+        {/* Skeleton Hero Banner */}
+        <Skeleton className="h-[280px] rounded-3xl sm:h-[240px]" />
+
+        {/* Skeleton Server Cards */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-[120px] rounded-xl" />
+            ))}
+          </div>
+        </div>
+
+        {/* Skeleton Chart Area */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="h-4 w-52" />
+            </div>
+          </div>
+          <Skeleton className="h-[300px] rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -109,7 +138,7 @@ export default function Page() {
 
         <div className="relative z-10">
           {/* Status Badge */}
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-6 animate-fade-in-up">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
@@ -121,17 +150,17 @@ export default function Page() {
 
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-7xl">
+              <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-7xl animate-fade-in-up stagger-1">
                 <AnimatedCounter value={data.current_active_players} duration={1500} />
                 <span className="ml-3 text-2xl font-normal text-slate-400 sm:text-3xl">Soldiers Deployed</span>
               </h1>
-              <p className="max-w-[500px] text-lg text-slate-400">
+              <p className="max-w-[500px] text-lg text-slate-400 animate-fade-in-up stagger-2">
                 Live telemetry from {activeServerCount} active battlefields worldwide.
               </p>
             </div>
 
             {/* Stats Cards */}
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 animate-fade-in-up stagger-3">
               <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4 card-hover">
                 <div className="rounded-lg bg-blue-500/20 p-2.5 text-blue-400">
                   <Users className="h-5 w-5" />

@@ -425,7 +425,11 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
               </CardContent>
             </Card>
             <div className="lg:col-span-1">
-              <ServerPeakHeatmap data={metrics.player_count_24h} />
+              <ServerPeakHeatmap
+                data={metrics.player_count_24h}
+                peakTimes7d={metrics.peak_times_7d}
+                peakDays7d={metrics.peak_days_7d}
+              />
             </div>
           </div>
         )

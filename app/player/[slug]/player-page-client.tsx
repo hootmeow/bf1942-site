@@ -35,6 +35,7 @@ import { PlayerFlag } from "@/components/player-flag";
 import { AchievementsList, Achievement } from "@/components/achievements-list";
 import { PlayerSessionStats } from "@/components/player-session-stats";
 import { PlayerServerRanks } from "@/components/player-server-ranks";
+import { PlayerMapPerformance, MapPerformanceStat } from "@/components/player-map-performance";
 
 // --- Interfaces ---
 interface PlayerInfo {
@@ -329,6 +330,29 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
     fetchAdvancedProfile();
     fetchRankHistory();
+  }, [playerName]);
+
+  // Map Performance data
+  const [mapPerformance, setMapPerformance] = useState<MapPerformanceStat[] | null>(null);
+
+  useEffect(() => {
+    if (!playerName) return;
+
+    async function fetchMapPerformance() {
+      try {
+        const res = await fetch(`/api/v1/players/search/map_performance?name=${playerName}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok) {
+            setMapPerformance(data.map_performance);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch map performance", e);
+      }
+    }
+
+    fetchMapPerformance();
   }, [playerName]);
 
   const handleShare = () => {
@@ -790,6 +814,23 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           </CardContent>
         </Card>
       </div>
+
+      {/* Map Performance Section */}
+      {mapPerformance && mapPerformance.length > 0 && (
+        <>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Map className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">Map Performance</h2>
+              <p className="text-sm text-muted-foreground">Your stats breakdown across every map</p>
+            </div>
+          </div>
+
+          <PlayerMapPerformance stats={mapPerformance} />
+        </>
+      )}
 
       {/* Server Rankings Section */}
       <div className="flex items-center gap-3">

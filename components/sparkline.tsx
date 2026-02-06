@@ -37,6 +37,12 @@ export function Sparkline({ data, width = 100, height = 30, color, className }: 
         }).join(" ");
     }, [data, width, height]);
 
+    // Build polygon points for the gradient fill area (points + bottom-right + bottom-left)
+    const fillPoints = useMemo(() => {
+        if (!points) return "";
+        return `${points} ${width},${height} 0,${height}`;
+    }, [points, width, height]);
+
     if (!points) return null; // Only bail if no points generated
 
     // Determine trend color if not provided
@@ -44,9 +50,21 @@ export function Sparkline({ data, width = 100, height = 30, color, className }: 
     const end = data[data.length - 1];
     const trendColor = color ? color : (end >= start ? "#22c55e" : "#ef4444"); // green-500 : red-500
 
+    const gradientId = `sparkline-gradient-${trendColor.replace('#', '')}`;
+
     return (
         <svg width={width} height={height} className={className} overflow="visible">
-            {/* Optional: Fill area? Maybe too noisy. Just line for now */}
+            <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={trendColor} stopOpacity="0.3" />
+                    <stop offset="100%" stopColor={trendColor} stopOpacity="0" />
+                </linearGradient>
+            </defs>
+            {/* Gradient fill under the curve */}
+            <polygon
+                points={fillPoints}
+                fill={`url(#${gradientId})`}
+            />
             <polyline
                 points={points}
                 fill="none"
