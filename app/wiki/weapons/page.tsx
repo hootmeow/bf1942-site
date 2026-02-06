@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,7 +24,7 @@ import {
     BookOpen,
 } from "lucide-react";
 import { weapons, emplacements, getWeaponsByAffiliation } from "@/lib/wiki-gameplay";
-import { detailedWeapons, weaponCategories, getWeaponsByCategory } from "@/lib/wiki-weapons-detailed";
+import { detailedWeapons, weaponCategories, getWeaponsByCategory, type TechnicalStats } from "@/lib/wiki-weapons-detailed";
 
 export const metadata = {
     title: "Weapons & Emplacements | BF1942 Wiki",
@@ -31,6 +32,7 @@ export const metadata = {
 };
 
 const rangeColors: Record<string, string> = {
+    'Melee': 'bg-zinc-500/20 text-zinc-400',
     'Short': 'bg-red-500/20 text-red-400',
     'Short-Intermediate': 'bg-orange-500/20 text-orange-400',
     'Intermediate-Long': 'bg-blue-500/20 text-blue-400',
@@ -38,6 +40,7 @@ const rangeColors: Record<string, string> = {
 };
 
 const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
+    'Melee': { bg: 'bg-zinc-500/10', text: 'text-zinc-400', border: 'border-zinc-500/30' },
     'Sidearm': { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30' },
     'SMG': { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
     'Assault Rifle': { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30' },
@@ -298,18 +301,29 @@ export default function WeaponsPage() {
                                     <Card key={weapon.id} className={`${colors.border} border bg-card/40`}>
                                         <CardHeader className="pb-3">
                                             <div className="flex flex-wrap items-start justify-between gap-2">
-                                                <div>
-                                                    <CardTitle className="flex items-center gap-2">
-                                                        {weapon.name}
-                                                    </CardTitle>
-                                                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                        <Badge variant="outline" className={weapon.affiliation === 'Allies' ? 'border-blue-500/50 text-blue-400' : weapon.affiliation === 'Axis' ? 'border-red-500/50 text-red-400' : 'border-purple-500/50 text-purple-400'}>
-                                                            {weapon.affiliation}
-                                                        </Badge>
-                                                        <Badge variant="outline" className="text-xs">
-                                                            {weapon.kit}
-                                                        </Badge>
-                                                        <span className="text-xs text-muted-foreground">{weapon.nationality}</span>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg bg-black/20 border border-border/40 overflow-hidden">
+                                                        <Image
+                                                            src={weapon.icon}
+                                                            alt={weapon.name}
+                                                            width={64}
+                                                            height={64}
+                                                            className="object-contain"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <CardTitle className="flex items-center gap-2">
+                                                            {weapon.name}
+                                                        </CardTitle>
+                                                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                            <Badge variant="outline" className={weapon.affiliation === 'Allies' ? 'border-blue-500/50 text-blue-400' : weapon.affiliation === 'Axis' ? 'border-red-500/50 text-red-400' : 'border-purple-500/50 text-purple-400'}>
+                                                                {weapon.affiliation}
+                                                            </Badge>
+                                                            <Badge variant="outline" className="text-xs">
+                                                                {weapon.kit}
+                                                            </Badge>
+                                                            <span className="text-xs text-muted-foreground">{weapon.nationality}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="text-right text-sm">
@@ -332,6 +346,129 @@ export default function WeaponsPage() {
                                                     <span className="text-muted-foreground">{weapon.effectiveRange}</span>
                                                 </div>
                                             </div>
+
+                                            {/* Technical Stats Grid - Only shown if weapon has technicalStats */}
+                                            {weapon.technicalStats && (
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    {/* Damage Section */}
+                                                    <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                                                        <p className="text-xs font-semibold uppercase text-red-400 mb-2">Damage</p>
+                                                        <div className="space-y-1 text-xs">
+                                                            {weapon.technicalStats.baseDamage && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Base</span>
+                                                                    <span className="font-mono text-foreground">{weapon.technicalStats.baseDamage}</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.headMultiplier && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Head</span>
+                                                                    <span className="font-mono text-red-400">{weapon.technicalStats.headMultiplier}x</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.bodyMultiplier && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Body</span>
+                                                                    <span className="font-mono text-foreground">{weapon.technicalStats.bodyMultiplier}x</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.legMultiplier && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Legs</span>
+                                                                    <span className="font-mono text-muted-foreground">{weapon.technicalStats.legMultiplier}x</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Accuracy Section */}
+                                                    <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                                                        <p className="text-xs font-semibold uppercase text-blue-400 mb-2">Accuracy</p>
+                                                        <div className="space-y-1 text-xs">
+                                                            {weapon.technicalStats.baseDeviation && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Base Dev</span>
+                                                                    <span className="font-mono text-foreground">{weapon.technicalStats.baseDeviation}</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.stanceModifiers && (
+                                                                <>
+                                                                    <div className="flex justify-between">
+                                                                        <span className="text-muted-foreground">Standing</span>
+                                                                        <span className="font-mono text-foreground">{weapon.technicalStats.stanceModifiers.standing}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between">
+                                                                        <span className="text-muted-foreground">Crouch</span>
+                                                                        <span className="font-mono text-green-400">{weapon.technicalStats.stanceModifiers.crouching}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between">
+                                                                        <span className="text-muted-foreground">Prone</span>
+                                                                        <span className="font-mono text-green-400">{weapon.technicalStats.stanceModifiers.prone}</span>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Movement Section */}
+                                                    <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                                                        <p className="text-xs font-semibold uppercase text-amber-400 mb-2">Movement</p>
+                                                        <div className="space-y-1 text-xs">
+                                                            {weapon.technicalStats.movementDeviation && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Move Pen</span>
+                                                                    <span className="font-mono text-amber-400">+{weapon.technicalStats.movementDeviation}</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.jumpDeviation && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Jump Pen</span>
+                                                                    <span className="font-mono text-red-400">+{weapon.technicalStats.jumpDeviation}</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.distanceDropOff && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Drop-off</span>
+                                                                    <span className={`font-mono text-xs ${weapon.technicalStats.distanceDropOff === 'None' ? 'text-green-400' : 'text-red-400'}`}>
+                                                                        {weapon.technicalStats.distanceDropOff === 'None' ? 'None' : 'Yes'}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Recoil Section */}
+                                                    <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
+                                                        <p className="text-xs font-semibold uppercase text-purple-400 mb-2">Recoil</p>
+                                                        <div className="space-y-1 text-xs">
+                                                            {weapon.technicalStats.verticalRecoil && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Vertical</span>
+                                                                    <span className="font-mono text-foreground">{weapon.technicalStats.verticalRecoil}</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.horizontalRecoil && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Horizontal</span>
+                                                                    <span className="font-mono text-foreground">{weapon.technicalStats.horizontalRecoil}</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.rateOfFire && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">ROF</span>
+                                                                    <span className="font-mono text-foreground">{weapon.technicalStats.rateOfFire} rpm</span>
+                                                                </div>
+                                                            )}
+                                                            {weapon.technicalStats.reloadTime && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Reload</span>
+                                                                    <span className="font-mono text-foreground">{weapon.technicalStats.reloadTime}s</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* Three Column Info */}
                                             <div className="grid md:grid-cols-3 gap-4">

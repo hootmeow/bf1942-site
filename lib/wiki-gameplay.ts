@@ -64,7 +64,7 @@ export const soldierKits: SoldierKit[] = [
             'Heavy recoil makes sustained automatic fire inaccurate',
             'Very limited effectiveness against armored vehicles',
         ],
-        primaryWeapon: 'BAR 1918 / StG44 / Breda Assault Rifle',
+        primaryWeapon: 'BAR 1918 / StG44 / DP-28 / Type 99 LMG / Johnson M1941',
         sidearm: 'Colt Pistol / Walther P38',
         gadgets: [],
         grenades: 3,
@@ -170,11 +170,13 @@ export interface Weapon {
     nationality: string;
     magCapacity: number;
     ammoCount: number;
-    effectiveRange: 'Short' | 'Short-Intermediate' | 'Intermediate-Long' | 'Long';
-    type: 'Pistol' | 'Rifle' | 'Sniper' | 'SMG' | 'Assault Rifle' | 'Rocket Launcher';
+    effectiveRange: 'Melee' | 'Short' | 'Short-Intermediate' | 'Intermediate-Long' | 'Long';
+    type: 'Melee' | 'Pistol' | 'Rifle' | 'Sniper' | 'SMG' | 'Assault Rifle' | 'Rocket Launcher';
 }
 
 export const weapons: Weapon[] = [
+    // Melee
+    { name: 'Combat Knife', affiliation: 'Both', kit: 'All', nationality: 'All', magCapacity: 0, ammoCount: 0, effectiveRange: 'Melee', type: 'Melee' },
     // Pistols
     { name: 'Colt M1911', affiliation: 'Allies', kit: 'All', nationality: 'All Allies', magCapacity: 8, ammoCount: 32, effectiveRange: 'Short', type: 'Pistol' },
     { name: 'Walther P38', affiliation: 'Axis', kit: 'All', nationality: 'All Axis', magCapacity: 8, ammoCount: 32, effectiveRange: 'Short', type: 'Pistol' },
@@ -189,10 +191,12 @@ export const weapons: Weapon[] = [
     { name: 'MP18', affiliation: 'Both', kit: 'Medic', nationality: 'Japan & USSR', magCapacity: 32, ammoCount: 160, effectiveRange: 'Short-Intermediate', type: 'SMG' },
     { name: 'Sten', affiliation: 'Allies', kit: 'Medic', nationality: 'Free French', magCapacity: 32, ammoCount: 160, effectiveRange: 'Short-Intermediate', type: 'SMG' },
     { name: 'MP40', affiliation: 'Axis', kit: 'Medic', nationality: 'German & Italian', magCapacity: 32, ammoCount: 160, effectiveRange: 'Short-Intermediate', type: 'SMG' },
-    // Assault Rifles
-    { name: 'BAR 1918', affiliation: 'Allies', kit: 'Assault', nationality: 'All Allies', magCapacity: 20, ammoCount: 100, effectiveRange: 'Short-Intermediate', type: 'Assault Rifle' },
-    { name: 'StG44', affiliation: 'Axis', kit: 'Assault', nationality: 'German & Japan', magCapacity: 30, ammoCount: 150, effectiveRange: 'Short-Intermediate', type: 'Assault Rifle' },
-    { name: 'Breda', affiliation: 'Axis', kit: 'Assault', nationality: 'Italian', magCapacity: 20, ammoCount: 100, effectiveRange: 'Short-Intermediate', type: 'Assault Rifle' },
+    // Assault Rifles / LMGs
+    { name: 'BAR 1918', affiliation: 'Allies', kit: 'Assault', nationality: 'US & UK', magCapacity: 20, ammoCount: 100, effectiveRange: 'Short-Intermediate', type: 'Assault Rifle' },
+    { name: 'DP-28', affiliation: 'Allies', kit: 'Assault', nationality: 'USSR', magCapacity: 47, ammoCount: 141, effectiveRange: 'Short-Intermediate', type: 'Assault Rifle' },
+    { name: 'Johnson M1941', affiliation: 'Allies', kit: 'Assault', nationality: 'Canada', magCapacity: 20, ammoCount: 100, effectiveRange: 'Short-Intermediate', type: 'Assault Rifle' },
+    { name: 'StG44', affiliation: 'Axis', kit: 'Assault', nationality: 'German', magCapacity: 30, ammoCount: 150, effectiveRange: 'Short-Intermediate', type: 'Assault Rifle' },
+    { name: 'Type 99 LMG', affiliation: 'Axis', kit: 'Assault', nationality: 'Japan', magCapacity: 30, ammoCount: 150, effectiveRange: 'Short-Intermediate', type: 'Assault Rifle' },
     // Rocket Launchers
     { name: 'Bazooka', affiliation: 'Allies', kit: 'Anti-Tank', nationality: 'All Allies', magCapacity: 1, ammoCount: 6, effectiveRange: 'Intermediate-Long', type: 'Rocket Launcher' },
     { name: 'Panzerschreck', affiliation: 'Axis', kit: 'Anti-Tank', nationality: 'All Axis', magCapacity: 1, ammoCount: 6, effectiveRange: 'Intermediate-Long', type: 'Rocket Launcher' },
@@ -532,3 +536,477 @@ export function getVehiclesByType(type: string): Vehicle[] {
 export function getWeaponsByAffiliation(affiliation: 'Allies' | 'Axis'): Weapon[] {
     return weapons.filter(w => w.affiliation === affiliation || w.affiliation === 'Both');
 }
+
+// === ADVANCED BALLISTICS & ENGINE MECHANICS ===
+export interface BallisticMechanic {
+    id: string;
+    title: string;
+    icon: string;
+    description: string;
+    details: string[];
+}
+
+export const ballisticMechanics: BallisticMechanic[] = [
+    {
+        id: 'projectile-physics',
+        title: 'Projectile Physics',
+        icon: 'Zap',
+        description: 'Unlike hitscan shooters, BF1942 uses the Refractor 2 engine where bullets exist as physical objects with mass, velocity, and trajectory affected by gravity.',
+        details: [
+            'Muzzle Velocity: Each weapon has distinct velocity. Bolt-action rifles have highest velocity, requiring minimal lead. Rockets have low velocity with significant drop.',
+            'Bullet Drop: Projectiles follow parabolic arcs based on gravity constants. Most noticeable with Bazooka/Panzerschreck at long range.',
+            'Cone of Fire: Accuracy is simulated via "deviation" - the cone expands when moving/jumping and contracts when still, crouching, or prone.',
+            'Settle Time: The milliseconds required for accuracy to reset after movement stops. Critical for precision shooting.',
+        ],
+    },
+    {
+        id: 'damage-formula',
+        title: 'Damage Calculation',
+        icon: 'Calculator',
+        description: 'Damage in BF1942 is deterministic, not random. Understanding the formula allows prediction of engagement outcomes.',
+        details: [
+            'Formula: Damage = MaterialDamage × DamageMod × AngleFalloff × DistanceMod',
+            'MaterialDamage: Base damage value of the projectile type (BAR/Type 99 have high base damage vs SMGs).',
+            'DamageMod: Multiplier based on hit zone (Head, Torso, Legs, or vehicle armor zones).',
+            'AngleFalloff: Perpendicular hits (90°) deal 100% damage. Acute angles reduce damage by the cosine of impact angle.',
+            'DistanceMod: Some weapons lose damage over distance. The BAR uniquely has NO distance falloff.',
+        ],
+    },
+    {
+        id: 'distance-dropoff',
+        title: 'Distance Drop-off by Weapon',
+        icon: 'TrendingDown',
+        description: 'Not all weapons suffer from distance-based damage reduction. This creates distinct tiers of long-range viability.',
+        details: [
+            'No Drop-off: BAR 1918, DP-28, Johnson M1941, all Sniper Rifles, all Bolt-Action Rifles. These deal full damage at any range.',
+            'Type 99 LMG: Suffers from DistanceMod - damage decays starting at 50m, reduced by ~50% at 100m. Axis support gunners must close distance.',
+            'SMGs (Thompson, MP40, Sten, MP18): Severe drop-off. Beyond 50-60m they become "pea shooters" requiring 8+ hits to kill.',
+            'Pistols: Moderate drop-off. Effective only at close range for finishing wounded targets.',
+        ],
+    },
+];
+
+// === HITBOX SYSTEM ===
+export interface HitboxZone {
+    zone: string;
+    multiplier: string;
+    tacticalNote: string;
+}
+
+export const hitboxZones: HitboxZone[] = [
+    {
+        zone: 'Head',
+        multiplier: '2.5x - 3.0x',
+        tacticalNote: 'Critical aim point. Single headshot from sniper rifle is lethal. Automatic weapons achieve near-instant TTK with headshots.',
+    },
+    {
+        zone: 'Torso',
+        multiplier: '1.0x - 1.6x',
+        tacticalNote: 'Standard center-of-mass target. Most engagement calculations assume torso hits. Requires sustained fire from SMGs.',
+    },
+    {
+        zone: 'Legs',
+        multiplier: '0.5x - 1.0x',
+        tacticalNote: 'Sub-optimal. Damage frequently halved. Aiming low is severely penalized - even high-caliber weapons become survivable.',
+    },
+];
+
+// === TANK DAMAGE ZONES ===
+export interface TankDamageZone {
+    zone: string;
+    effectiveness: string;
+    analysis: string;
+}
+
+export const tankDamageZones: TankDamageZone[] = [
+    {
+        zone: 'Rear Armor',
+        effectiveness: 'Critical',
+        analysis: 'The "Golden Rule" - a 90° hit to the rear engine block deals 50-100% of tank health. Always prioritize rear shots.',
+    },
+    {
+        zone: 'Side Armor',
+        effectiveness: 'Moderate',
+        analysis: 'Requires 2-3 rocket hits. Better than frontal but still requires multiple engagements.',
+    },
+    {
+        zone: 'Front Armor',
+        effectiveness: 'Poor',
+        analysis: 'High deflection chance. Rockets may ricochet. Only engage frontally as last resort - aim for flat surfaces.',
+    },
+    {
+        zone: 'Tracks/Suspension',
+        effectiveness: 'Specific',
+        analysis: 'Tiger Tank Weakness: The Tiger has a specific vulnerability in its tracks that takes ~30 extra damage. Aim low on Tigers.',
+    },
+    {
+        zone: 'Turret Ring',
+        effectiveness: 'Consistent',
+        analysis: 'The "neck" between turret and hull offers a flat surface, avoiding sloped armor of turret cheeks or hull glacis.',
+    },
+];
+
+// === COMPETITIVE TECHNIQUES ===
+export interface CompetitiveTechnique {
+    id: string;
+    name: string;
+    difficulty: 'Basic' | 'Intermediate' | 'Advanced';
+    description: string;
+    execution: string[];
+    benefit: string;
+}
+
+export const competitiveTechniques: CompetitiveTechnique[] = [
+    {
+        id: 'circle-strafing',
+        name: 'Circle Strafing',
+        difficulty: 'Basic',
+        description: 'Standard 1v1 infantry dueling technique to maximize your angular velocity while keeping target centered.',
+        execution: [
+            'In a 1v1 duel, never move in a straight line.',
+            'Hold a strafe key (A or D) while tracking the enemy with mouse.',
+            'Move in a circle around your target.',
+        ],
+        benefit: 'Forces enemy to make large mouse adjustments while your target remains relatively centered on screen.',
+    },
+    {
+        id: 'finisher-combo',
+        name: 'The Finisher Combo',
+        difficulty: 'Intermediate',
+        description: 'Scout technique for faster kills than cycling the bolt twice.',
+        execution: [
+            'Land one body shot with sniper rifle (leaves enemy at ~33% HP).',
+            'Immediately switch to pistol.',
+            'Finish with 1-2 pistol shots.',
+        ],
+        benefit: 'Faster than cycling bolt for second rifle shot. Essential for aggressive Scout play.',
+    },
+    {
+        id: 'no-scoping',
+        name: 'No-Scoping',
+        difficulty: 'Advanced',
+        description: 'Using bolt-action rifles without the scope at close range.',
+        execution: [
+            'The center of screen is perfectly accurate when standing still or crouching.',
+            'At close range (<10m), crouch-tap (crouch → fire instantly) for reliable defense.',
+            'Practice centering targets without relying on the scope.',
+        ],
+        benefit: 'Reliable defense against rushing SMG users. Faster than scoping at close range.',
+    },
+    {
+        id: 'hip-fire-doctrine',
+        name: 'SMG Hip-Fire Doctrine',
+        difficulty: 'Basic',
+        description: 'Medic combat technique prioritizing movement over precision.',
+        execution: [
+            'In CQB, hip-fire instead of aiming down sights (ADS slows movement).',
+            'Maintain maximum strafe speed while firing.',
+            'Aim at upper chest and let recoil walk crosshair into headbox.',
+        ],
+        benefit: 'Makes you harder to hit while maintaining high damage output. Essential for Medic duels.',
+    },
+    {
+        id: 'engine-targeting',
+        name: 'Aircraft Engine Targeting',
+        difficulty: 'Advanced',
+        description: 'Small arms can destroy aircraft by targeting engines rather than fuselage.',
+        execution: [
+            'When strafed by aircraft, do not hide - return fire.',
+            'Aim specifically at the propeller hub or engine nacelles.',
+            'Concentrated fire from assault rifles (~150 rounds from StG44) can destroy even a B-17.',
+        ],
+        benefit: 'Infantry can defend against air attacks. Engine hitbox is vulnerable while fuselage has armor threshold.',
+    },
+];
+
+// === WEAPON BALLISTIC PROFILES ===
+export interface WeaponBallisticProfile {
+    weapon: string;
+    class: string;
+    rateOfFire: string;
+    headDamage: string;
+    torsoDamage: string;
+    hasDistanceDropoff: boolean;
+    dropoffNote?: string;
+    reloadTime: string;
+    tacticalNotes: string[];
+}
+
+export const weaponBallisticProfiles: WeaponBallisticProfile[] = [
+    // Melee
+    {
+        weapon: 'Combat Knife',
+        class: 'Melee (All Kits)',
+        rateOfFire: 'Slow',
+        headDamage: '~50%',
+        torsoDamage: '~50%',
+        hasDistanceDropoff: false,
+        dropoffNote: 'N/A - Melee weapon.',
+        reloadTime: 'N/A',
+        tacticalNotes: [
+            'Backstab deals 100% damage for instant kill.',
+            'Frontal attacks require 2 hits to kill.',
+            'Silent - does not reveal position on minimap.',
+            'Use for stealth kills on unaware enemies (snipers, MG gunners).',
+        ],
+    },
+    // Pistols
+    {
+        weapon: 'Colt M1911 / Walther P38',
+        class: 'Pistol',
+        rateOfFire: 'Low',
+        headDamage: '~58%',
+        torsoDamage: '~34%',
+        hasDistanceDropoff: true,
+        reloadTime: '~2.5s',
+        tacticalNotes: [
+            'Primary use is finishing wounded targets or emergency defense during rocket launcher reload.',
+            'P38 has 1 extra round (8 vs 7) - can be decisive in pistol duels.',
+        ],
+    },
+    // SMGs
+    {
+        weapon: 'Thompson M1A1',
+        class: 'SMG (Medic)',
+        rateOfFire: 'High (~550 RPM)',
+        headDamage: '~50%',
+        torsoDamage: '~30%',
+        hasDistanceDropoff: true,
+        dropoffNote: 'Severe. Beyond 50m, may require 8+ hits to kill.',
+        reloadTime: '~4.5s',
+        tacticalNotes: [
+            'High ROF ideal for hip-firing while circle-strafing.',
+            'Best Allied CQB weapon. Dominates capture circles.',
+        ],
+    },
+    {
+        weapon: 'MP40',
+        class: 'SMG (Medic)',
+        rateOfFire: 'Medium (~500 RPM)',
+        headDamage: '~50%',
+        torsoDamage: '~30%',
+        hasDistanceDropoff: true,
+        dropoffNote: 'Severe. Beyond 50m, may require 8+ hits to kill.',
+        reloadTime: '~4.5s',
+        tacticalNotes: [
+            'Slightly slower ROF than Thompson = better controllability at range.',
+            'More accurate at the edge of SMG effective range.',
+        ],
+    },
+    {
+        weapon: 'Sten',
+        class: 'SMG (Medic)',
+        rateOfFire: 'Medium (~500 RPM)',
+        headDamage: '~50%',
+        torsoDamage: '~30%',
+        hasDistanceDropoff: true,
+        dropoffNote: 'Severe. Beyond 50m, may require 8+ hits to kill.',
+        reloadTime: '~4.5s',
+        tacticalNotes: [
+            'Side-mounted magazine blocks portion of left screen.',
+            'Visual recoil can be disorienting - practice tracking leftward-moving targets.',
+        ],
+    },
+    {
+        weapon: 'MP18',
+        class: 'SMG (Medic)',
+        rateOfFire: 'Medium (~500 RPM)',
+        headDamage: '~50%',
+        torsoDamage: '~30%',
+        hasDistanceDropoff: true,
+        dropoffNote: 'Severe. Beyond 50m, may require 8+ hits to kill.',
+        reloadTime: '~4.5s',
+        tacticalNotes: [
+            'Side-mounted stick magazine partially obscures view.',
+            'Functionally identical to MP40 in damage and handling.',
+        ],
+    },
+    // Assault Rifles / LMGs
+    {
+        weapon: 'BAR 1918',
+        class: 'LMG (Assault)',
+        rateOfFire: 'Medium (~450 RPM)',
+        headDamage: '~75%',
+        torsoDamage: '~48%',
+        hasDistanceDropoff: false,
+        dropoffNote: 'UNIQUE: No distance drop-off. Full damage at any range.',
+        reloadTime: '~4.0s',
+        tacticalNotes: [
+            'Arguably the best all-around weapon in the game due to no damage falloff.',
+            'Can counter Snipers at long range with tap-firing (1-2 shots at a time).',
+            'Slow ROF is liability in CQB vs SMGs - pre-fire corners.',
+            '20-round magazine depletes in under 3 seconds of continuous fire.',
+        ],
+    },
+    {
+        weapon: 'DP-28',
+        class: 'LMG (Assault)',
+        rateOfFire: 'Medium (~450 RPM)',
+        headDamage: '~56%',
+        torsoDamage: '~33%',
+        hasDistanceDropoff: false,
+        reloadTime: '~3.6s',
+        tacticalNotes: [
+            'Pan magazine on top obstructs lower peripheral vision.',
+            'Slightly more erratic horizontal recoil than BAR.',
+            '47-round magazine allows true suppressive fire - more than double BAR capacity.',
+            'Excels in mid-range street fighting (Stalingrad).',
+        ],
+    },
+    {
+        weapon: 'Johnson M1941',
+        class: 'LMG (Assault)',
+        rateOfFire: 'High (~600 RPM)',
+        headDamage: '~75%',
+        torsoDamage: '~48%',
+        hasDistanceDropoff: false,
+        dropoffNote: 'No distance drop-off. Full damage at any range like the BAR.',
+        reloadTime: '~3.8s',
+        tacticalNotes: [
+            'Faster ROF than BAR makes it more forgiving and better in CQB.',
+            'Same 20-round magazine as BAR - depletes quickly at high ROF.',
+            'Side-mounted magazine offers cleaner sight picture than top-fed LMGs.',
+            'Canadian exclusive on Liberation of Caen map.',
+        ],
+    },
+    {
+        weapon: 'StG 44',
+        class: 'Assault Rifle',
+        rateOfFire: 'Medium-High (~500 RPM)',
+        headDamage: '~63%',
+        torsoDamage: '~37%',
+        hasDistanceDropoff: false,
+        reloadTime: '~3.8s',
+        tacticalNotes: [
+            'The world\'s first true assault rifle.',
+            'Lower per-bullet damage than BAR but higher rate of fire.',
+            'Cleanest iron sights in the game (open hood design).',
+            'Smooth, predictable recoil - easiest to control in full-auto.',
+            'Dominates the 10-40m bracket due to handling and volume of fire.',
+        ],
+    },
+    {
+        weapon: 'Type 99 LMG',
+        class: 'LMG (Assault)',
+        rateOfFire: 'Medium (~450 RPM)',
+        headDamage: '~75%',
+        torsoDamage: '~48%',
+        hasDistanceDropoff: true,
+        dropoffNote: 'Damage decays starting at 50m, ~50% reduction at 100m.',
+        reloadTime: '~4.0s',
+        tacticalNotes: [
+            'Top-mounted magazine creates significant blind spot in center of screen.',
+            'Despite visual obstruction, highly accurate and powerful within effective range.',
+            'Japanese Assault players MUST close distance to compete with Allied BAR users.',
+            'Use jungle foliage for flanking on Pacific maps to get within 50m.',
+        ],
+    },
+    // Bolt-Action Rifles
+    {
+        weapon: 'K98k / No.4 Rifle',
+        class: 'Bolt-Action (Engineer)',
+        rateOfFire: 'Bolt-Action',
+        headDamage: '~100%+ (Kill)',
+        torsoDamage: '~67%',
+        hasDistanceDropoff: false,
+        reloadTime: '~3.0s',
+        tacticalNotes: [
+            'Same damage as sniper variants but without scope.',
+            'Skilled Engineers can out-shoot Assault players at long range.',
+            'Bayonet is 1-hit kill - useful for trench clearing.',
+        ],
+    },
+    {
+        weapon: 'K98k / No.4 Sniper',
+        class: 'Sniper Rifle (Scout)',
+        rateOfFire: 'Bolt-Action',
+        headDamage: '~100%+ (Kill)',
+        torsoDamage: '~67%',
+        hasDistanceDropoff: false,
+        reloadTime: '~3.0s',
+        tacticalNotes: [
+            'Highest velocity projectiles - minimal lead time required.',
+            'Headshots are always instant kills.',
+            'Use "Finisher Combo" for faster kills: body shot → switch to pistol → finish.',
+        ],
+    },
+    // Rocket Launchers
+    {
+        weapon: 'Bazooka / Panzerschreck',
+        class: 'Rocket Launcher (Anti-Tank)',
+        rateOfFire: '1 Shot',
+        headDamage: 'Kill (Direct)',
+        torsoDamage: 'Kill (Direct)',
+        hasDistanceDropoff: false,
+        dropoffNote: 'Affected by gravity (arc trajectory), not distance damage.',
+        reloadTime: 'Slow (~4-5s)',
+        tacticalNotes: [
+            'Low velocity with significant arc - practice elevation adjustment.',
+            'Splash damage unreliable against infantry - direct hits required.',
+            'Panzerschreck has slightly flatter trajectory than Bazooka.',
+            'Always switch to pistol after firing - vulnerable during reload.',
+        ],
+    },
+];
+
+// === MAP STRATEGY PROFILES ===
+export interface MapStrategyProfile {
+    mapType: string;
+    terrain: string;
+    engagementRange: string;
+    optimalClasses: string[];
+    weaponNotes: string[];
+    tactics: string[];
+}
+
+export const mapStrategyProfiles: MapStrategyProfile[] = [
+    {
+        mapType: 'Desert Maps',
+        terrain: 'Open rolling dunes, visibility > 200m',
+        engagementRange: 'Long (100-300m)',
+        optimalClasses: ['Scout', 'Engineer (for vehicle repair)', 'Assault (BAR only)'],
+        weaponNotes: [
+            'Allied BAR is superior due to no damage drop-off.',
+            'Axis StG44 is viable but weaker at extreme range.',
+            'Type 99 LMG is functionally useless for cross-dune combat - damage too degraded.',
+            'SMGs are emergency weapons only.',
+        ],
+        tactics: [
+            'Infantry must move valley-to-valley. Cresting dunes silhouettes you against the sky.',
+            'Scouts are essential for spotting and long-range elimination.',
+            'Armor dominates - infantry should support vehicles, not operate independently.',
+        ],
+    },
+    {
+        mapType: 'Urban Maps',
+        terrain: 'Dense rubble, multi-story buildings, chokepoints < 50m',
+        engagementRange: 'Short (0-50m)',
+        optimalClasses: ['Medic', 'Assault', 'Engineer (for explosives)'],
+        weaponNotes: [
+            'SMGs are king. High ROF and hip-fire mobility clears rooms.',
+            'StG44 and DP-28 excel in street-level suppression.',
+            'Expacks are vital for trapping buildings and destroying tanks in alleys.',
+        ],
+        tactics: [
+            '"Grenade Spam" is standard opener - throw grenade before entering any building.',
+            'Use medpack aggressively - retreat, heal to 100%, re-engage.',
+            'Control rooftops for overwatch positions.',
+        ],
+    },
+    {
+        mapType: 'Pacific Maps',
+        terrain: 'Mix of open beaches and dense jungle foliage',
+        engagementRange: 'Variable (depends on zone)',
+        optimalClasses: ['Assault', 'Anti-Tank', 'Engineer'],
+        weaponNotes: [
+            'Allied BAR gunners can suppress beach landings at 80m+ with full lethality.',
+            'Japanese Type 99 users MUST use jungle to close within 50m to compete.',
+            'Control of AA guns is critical for air defense.',
+        ],
+        tactics: [
+            'Use foliage for concealment during flanking maneuvers.',
+            'Beach zones favor defenders heavily - coordinate with armor.',
+            'Airfield control often decides the match.',
+        ],
+    },
+];
