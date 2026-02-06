@@ -85,15 +85,65 @@ const desertCombatData: ModData = {
   
   
   maps: [
-    { 
-      slug: 'dc_al_khafji_docks', 
-      name: 'DC Al Khafji Docks',  
-      description: 'amphibious assault map where US forces must launch a helicopter-based invasion from a carrier against a heavily-defended Iraqi-held port.',
+    {
+      slug: 'dc_73_easting',
+      name: '73 Easting',
+      description: 'Desert tank battle featuring armored warfare across open terrain.',
     },
-    { 
-      slug: 'dc_lostvillage', 
-      name: 'DC Lost Village', 
-      description: 'Intense infantry combat supported by light armor and transport helicopters.',
+    {
+      slug: 'dc_al_khafji_docks',
+      name: 'Al Khafji Docks',
+      description: 'Urban/Industrial harbor with amphibious assault opportunities.',
+    },
+    {
+      slug: 'dc_basrahs_edge',
+      name: "Basrah's Edge",
+      description: 'Urban desert city with intense street-to-street combat.',
+    },
+    {
+      slug: 'dc_battle_of_73_easting',
+      name: 'Battle of 73 Easting',
+      description: 'Night variant of the famous desert tank engagement.',
+    },
+    {
+      slug: 'dc_desert_shield',
+      name: 'Desert Shield',
+      description: 'Large scale air/ground combat at an airbase.',
+    },
+    {
+      slug: 'dc_inshasi_airbase',
+      name: 'Inshasi Airbase',
+      description: 'Inland airfield with combined arms warfare.',
+    },
+    {
+      slug: 'dc_lostvillage',
+      name: 'Lost Village',
+      description: 'Infantry-focused rural valley combat.',
+    },
+    {
+      slug: 'dc_no_fly_zone',
+      name: 'No Fly Zone',
+      description: 'Mountainous terrain with anti-aircraft focus.',
+    },
+    {
+      slug: 'dc_oil_fields',
+      name: 'Oil Fields',
+      description: 'Open desert warfare around oil derricks.',
+    },
+    {
+      slug: 'dc_sea_rigs',
+      name: 'Sea Rigs',
+      description: 'Ocean combat around oil platforms.',
+    },
+    {
+      slug: 'dc_urban_siege',
+      name: 'Urban Siege',
+      description: 'Dense city combat in an urban environment.',
+    },
+    {
+      slug: 'dc_weapon_storage',
+      name: 'Weapon Storage',
+      description: 'Bunker and interior focused combat.',
     },
   ]
 };
