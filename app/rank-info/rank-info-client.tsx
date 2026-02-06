@@ -6,6 +6,7 @@ import Link from "next/link";
 import { LeaderboardItem } from "@/components/leaderboard-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, Info, ChevronRight, Loader2, Trophy, Crown, Medal, Target, Skull, Swords, TrendingUp, Calendar, CalendarDays, Clock } from "lucide-react";
+import { AnimatedCounter } from "@/components/animated-counter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -66,23 +67,23 @@ function TopThreeCard({ player, position }: { player: LeaderboardItem; position:
                         {player.rank_label.split('(')[1]?.replace(')', '') || 'PVT'}
                     </Badge>
                     <div className={`text-2xl font-bold ${style.text} mb-2`}>
-                        {player.total_score.toLocaleString()}
+                        <AnimatedCounter value={player.total_score} duration={1200} />
                         <span className="text-xs font-normal text-muted-foreground ml-1">XP</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
                         <div className="flex flex-col items-center">
                             <Target className="h-3 w-3 mb-0.5" />
-                            <span>{player.kills.toLocaleString()}</span>
+                            <AnimatedCounter value={player.kills} duration={1000} />
                         </div>
                         <div className="flex flex-col items-center">
                             <TrendingUp className="h-3 w-3 mb-0.5" />
                             <span className={player.kdr >= 2.0 ? "text-green-500 font-medium" : ""}>
-                                {player.kdr.toFixed(2)}
+                                <AnimatedCounter value={player.kdr} decimals={2} duration={1000} />
                             </span>
                         </div>
                         <div className="flex flex-col items-center">
                             <Swords className="h-3 w-3 mb-0.5" />
-                            <span>{player.rounds}</span>
+                            <AnimatedCounter value={player.rounds} duration={1000} />
                         </div>
                     </div>
                 </CardContent>

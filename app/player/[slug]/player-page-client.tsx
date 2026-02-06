@@ -608,27 +608,27 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         {/* Core Stats - Highlighted */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard title="Playtime" value={formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)} icon={Clock} highlight />
-          <StatCard title="Total Score" value={lifetime_stats?.total_score?.toLocaleString() ?? 0} icon={Star} highlight />
-          <StatCard title="K/D Ratio" value={lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'} icon={Target} highlight />
-          <StatCard title="Win Rate" value={lifetime_stats?.win_rate ? `${lifetime_stats.win_rate}%` : 'N/A'} icon={Trophy} highlight />
+          <StatCard title="Total Score" value={lifetime_stats?.total_score ?? 0} icon={Star} highlight animate />
+          <StatCard title="K/D Ratio" value={lifetime_stats?.overall_kdr ?? 0} icon={Target} highlight animate decimals={2} />
+          <StatCard title="Win Rate" value={lifetime_stats?.win_rate ?? 0} icon={Trophy} highlight animate suffix="%" />
         </div>
 
         {/* Secondary Stats */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          <StatCard title="Rounds Played" value={lifetime_stats?.total_rounds_played ?? 0} icon={Hash} />
-          <StatCard title="Total Kills" value={lifetime_stats?.total_kills?.toLocaleString() ?? 0} icon={Target} />
-          <StatCard title="Total Deaths" value={lifetime_stats?.total_deaths?.toLocaleString() ?? 0} icon={Ghost} />
-          <StatCard title="KPM" value={lifetime_stats?.overall_kpm?.toFixed(2) ?? '0.00'} icon={Zap} />
-          <StatCard title="Score/Min" value={lifetime_stats?.score_per_minute?.toFixed(2) ?? '0.00'} icon={TrendingUp} />
+          <StatCard title="Rounds Played" value={lifetime_stats?.total_rounds_played ?? 0} icon={Hash} animate />
+          <StatCard title="Total Kills" value={lifetime_stats?.total_kills ?? 0} icon={Target} animate />
+          <StatCard title="Total Deaths" value={lifetime_stats?.total_deaths ?? 0} icon={Ghost} animate />
+          <StatCard title="KPM" value={lifetime_stats?.overall_kpm ?? 0} icon={Zap} animate decimals={2} />
+          <StatCard title="Score/Min" value={lifetime_stats?.score_per_minute ?? 0} icon={TrendingUp} animate decimals={2} />
         </div>
 
         {/* Tertiary Stats */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          <StatCard title="Kills/Round" value={lifetime_stats?.kills_per_round?.toFixed(2) ?? '0.00'} icon={Skull} />
-          <StatCard title="Deaths/Round" value={lifetime_stats?.deaths_per_round?.toFixed(2) ?? '0.00'} icon={Ghost} />
-          <StatCard title="Avg Score/Round" value={lifetime_stats?.average_score_per_round?.toFixed(0) ?? '0'} icon={Star} />
-          <StatCard title="Avg Ping" value={`${Math.round(lifetime_stats?.average_ping ?? 0)}ms`} icon={Wifi} />
-          <StatCard title="Servers Played" value={lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0} icon={Server} />
+          <StatCard title="Kills/Round" value={lifetime_stats?.kills_per_round ?? 0} icon={Skull} animate decimals={2} />
+          <StatCard title="Deaths/Round" value={lifetime_stats?.deaths_per_round ?? 0} icon={Ghost} animate decimals={2} />
+          <StatCard title="Avg Score/Round" value={lifetime_stats?.average_score_per_round ?? 0} icon={Star} animate />
+          <StatCard title="Avg Ping" value={lifetime_stats?.average_ping ?? 0} icon={Wifi} animate suffix="ms" />
+          <StatCard title="Servers Played" value={lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0} icon={Server} animate />
         </div>
       </div>
 

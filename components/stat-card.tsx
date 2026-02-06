@@ -1,5 +1,8 @@
+"use client";
+
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnimatedCounter } from "@/components/animated-counter";
 
 interface StatCardProps {
     title: string;
@@ -9,9 +12,28 @@ interface StatCardProps {
     description?: string;
     trend?: "up" | "down" | "neutral";
     highlight?: boolean;
+    animate?: boolean;
+    decimals?: number;
+    suffix?: string;
+    prefix?: string;
 }
 
-export function StatCard({ title, value, icon: Icon, className, description, trend, highlight }: StatCardProps) {
+export function StatCard({
+    title,
+    value,
+    icon: Icon,
+    className,
+    description,
+    trend,
+    highlight,
+    animate = false,
+    decimals = 0,
+    suffix = "",
+    prefix = ""
+}: StatCardProps) {
+    const numericValue = typeof value === 'number' ? value : parseFloat(String(value).replace(/,/g, ''));
+    const canAnimate = animate && !isNaN(numericValue);
+
     return (
         <div className={cn(
             "group relative rounded-xl border border-border/60 bg-card/40 p-4 transition-all duration-300",
@@ -38,7 +60,16 @@ export function StatCard({ title, value, icon: Icon, className, description, tre
                             "text-xl font-bold text-foreground tabular-nums",
                             highlight && "text-primary"
                         )}>
-                            {value}
+                            {canAnimate ? (
+                                <AnimatedCounter
+                                    value={numericValue}
+                                    decimals={decimals}
+                                    prefix={prefix}
+                                    suffix={suffix}
+                                />
+                            ) : (
+                                <>{prefix}{value}{suffix}</>
+                            )}
                         </p>
                         {trend && (
                             <span className={cn(
@@ -62,7 +93,30 @@ export function StatCard({ title, value, icon: Icon, className, description, tre
 }
 
 // Compact variant for dense grids
-export function StatCardCompact({ title, value, icon: Icon, className }: Omit<StatCardProps, 'description' | 'trend' | 'highlight'>) {
+interface StatCardCompactProps {
+    title: string;
+    value: string | number;
+    icon: LucideIcon | React.ElementType;
+    className?: string;
+    animate?: boolean;
+    decimals?: number;
+    suffix?: string;
+    prefix?: string;
+}
+
+export function StatCardCompact({
+    title,
+    value,
+    icon: Icon,
+    className,
+    animate = false,
+    decimals = 0,
+    suffix = "",
+    prefix = ""
+}: StatCardCompactProps) {
+    const numericValue = typeof value === 'number' ? value : parseFloat(String(value).replace(/,/g, ''));
+    const canAnimate = animate && !isNaN(numericValue);
+
     return (
         <div className={cn(
             "group flex items-center gap-3 rounded-lg border border-border/40 bg-card/30 px-3 py-2.5 transition-all",
@@ -74,7 +128,19 @@ export function StatCardCompact({ title, value, icon: Icon, className }: Omit<St
             </div>
             <div className="min-w-0 flex-1">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{title}</p>
-                <p className="text-base font-bold text-foreground tabular-nums truncate">{value}</p>
+                <p className="text-base font-bold text-foreground tabular-nums truncate">
+                    {canAnimate ? (
+                        <AnimatedCounter
+                            value={numericValue}
+                            decimals={decimals}
+                            prefix={prefix}
+                            suffix={suffix}
+                            duration={800}
+                        />
+                    ) : (
+                        <>{prefix}{value}{suffix}</>
+                    )}
+                </p>
             </div>
         </div>
     );

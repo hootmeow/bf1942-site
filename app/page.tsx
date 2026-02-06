@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Activity, Users, BarChart, Loader2, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, Globe, Zap } from "lucide-react";
+import { AnimatedCounter } from "@/components/animated-counter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -121,7 +122,7 @@ export default function Page() {
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
               <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-7xl">
-                {data.current_active_players}
+                <AnimatedCounter value={data.current_active_players} duration={1500} />
                 <span className="ml-3 text-2xl font-normal text-slate-400 sm:text-3xl">Soldiers Deployed</span>
               </h1>
               <p className="max-w-[500px] text-lg text-slate-400">
@@ -131,22 +132,26 @@ export default function Page() {
 
             {/* Stats Cards */}
             <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4">
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4 card-hover">
                 <div className="rounded-lg bg-blue-500/20 p-2.5 text-blue-400">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase text-slate-500">Total Players</p>
-                  <p className="font-mono text-xl font-bold text-white">{data.total_players_seen.toLocaleString()}</p>
+                  <p className="font-mono text-xl font-bold text-white">
+                    <AnimatedCounter value={data.total_players_seen} duration={1200} />
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4">
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4 card-hover">
                 <div className="rounded-lg bg-amber-500/20 p-2.5 text-amber-400">
                   <Activity className="h-5 w-5" />
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase text-slate-500">Rounds Logged</p>
-                  <p className="font-mono text-xl font-bold text-white">{data.total_rounds_processed.toLocaleString()}</p>
+                  <p className="font-mono text-xl font-bold text-white">
+                    <AnimatedCounter value={data.total_rounds_processed} duration={1200} />
+                  </p>
                 </div>
               </div>
             </div>

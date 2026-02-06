@@ -35,7 +35,7 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
     const isActive = server.current_player_count > 0;
 
     return (
-        <Card className="group bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/60 transition-all duration-200 overflow-hidden">
+        <Card className="group bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/60 transition-all duration-200 overflow-hidden hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5">
             <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="space-y-1.5 overflow-hidden flex-1 min-w-0">

@@ -155,6 +155,36 @@ body {
   .animate-marquee {
     animation: marquee 60s linear infinite;
   }
+
+  /* Subtle card hover effect - gentle lift and shadow */
+  .card-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-hover:hover {
+    @apply -translate-y-0.5;
+    box-shadow: 0 4px 12px -2px hsl(var(--primary) / 0.08),
+                0 2px 6px -2px hsl(var(--primary) / 0.04);
+  }
+
+  /* Interactive card - slightly more pronounced for clickable items */
+  .card-interactive {
+    @apply transition-all duration-200 ease-out cursor-pointer;
+  }
+  .card-interactive:hover {
+    @apply -translate-y-1 border-primary/30;
+    box-shadow: 0 8px 16px -4px hsl(var(--primary) / 0.1),
+                0 4px 8px -4px hsl(var(--primary) / 0.06);
+  }
+
+  /* Subtle glow on hover for stats/numbers */
+  .stat-glow:hover {
+    text-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+
+  /* Pulse glow animation for active elements */
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
 }
 
 @keyframes marquee {
@@ -167,4 +197,13 @@ body {
   }
 
   /* 33.33% because we triplicated the content (original + clone + clone) */
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px 1px hsl(var(--primary) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px hsl(var(--primary) / 0.5);
+  }
 }
