@@ -50,6 +50,24 @@ interface SortConfig {
 
 const ITEMS_PER_PAGE = 30; // Increased items per page
 
+function getPlayerTier(count: number) {
+  if (count === 0) return {
+    label: "empty", barClass: "bg-transparent", countClass: "text-foreground", pulse: false,
+  };
+  if (count >= 40) return {
+    label: "packed", barClass: "bg-gradient-to-r from-green-500 to-emerald-400", countClass: "text-green-500 font-semibold", pulse: true,
+  };
+  if (count >= 20) return {
+    label: "active", barClass: "bg-gradient-to-r from-amber-500 to-yellow-400", countClass: "text-amber-400 font-semibold", pulse: true,
+  };
+  if (count >= 5) return {
+    label: "warming", barClass: "bg-primary/70", countClass: "text-foreground font-semibold", pulse: false,
+  };
+  return {
+    label: "low", barClass: "bg-primary/40", countClass: "text-foreground font-semibold", pulse: false,
+  };
+}
+
 export function ServerDirectory({ initialServers }: { initialServers: Server[] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -255,7 +273,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
               const rankData = activityRanks[server.server_id];
               const statusStyles = getStatusStyles(server.current_state);
               const fillPercent = (server.current_player_count / (server.current_max_players || 64)) * 100;
-              const isHot = server.current_player_count >= 20;
+              const tier = getPlayerTier(server.current_player_count);
 
               return (
                 <TableRow
@@ -319,26 +337,30 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
                     <div className="flex items-center gap-2">
                       <div className="flex-1 min-w-[60px]">
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className={cn(
-                            "font-semibold tabular-nums",
-                            isHot ? "text-green-500" : server.current_player_count > 0 ? "text-foreground" : "text-muted-foreground"
-                          )}>
+                          <span className={cn("tabular-nums", tier.countClass)}>
                             {server.current_player_count}
                           </span>
                           <span className="text-muted-foreground">/ {server.current_max_players || 64}</span>
                         </div>
-                        <div className="h-1.5 w-full rounded-full bg-muted/50 overflow-hidden">
-                          <div
-                            className={cn(
-                              "h-full rounded-full transition-all",
-                              isHot
-                                ? "bg-gradient-to-r from-green-500 to-emerald-400"
-                                : server.current_player_count > 0
-                                ? "bg-primary/60"
-                                : "bg-transparent"
-                            )}
-                            style={{ width: `${fillPercent}%` }}
-                          />
+                        <div className="relative">
+                          <div className={cn(
+                            "w-full bg-muted/50 rounded-full overflow-hidden transition-all duration-300",
+                            tier.pulse ? "h-2" : "h-1.5"
+                          )}>
+                            <div
+                              className={cn("h-full rounded-full transition-all duration-500", tier.barClass)}
+                              style={{ width: `${fillPercent}%` }}
+                            />
+                          </div>
+                          {tier.pulse && fillPercent > 0 && (
+                            <div
+                              className={cn(
+                                "absolute top-1/2 -translate-y-1/2 h-4 rounded-full blur-md animate-pulse",
+                                tier.label === "packed" ? "bg-green-500/40" : "bg-amber-500/35"
+                              )}
+                              style={{ width: `${fillPercent}%` }}
+                            />
+                          )}
                         </div>
                       </div>
                     </div>

@@ -400,7 +400,7 @@ export const detailedWeapons: DetailedWeapon[] = [
         nationality: 'UK, Canada, US (Europe)',
         mechanism: 'Bolt-action (highest velocity)',
         magCapacity: 10,
-        totalAmmo: '50 rounds (5 clips)',
+        totalAmmo: '25 rounds (5 clips)',
         effectiveRange: 'Long (500m+) - NO DISTANCE DROP-OFF',
         historicalContext: 'Famous for its smooth bolt action and 10-round magazine—double that of most contemporaries. The cock-on-closing action allowed trained soldiers to fire 15+ aimed rounds per minute.',
         inGamePerformance: 'Same damage profile as sniper variant. No distance drop-off. The 10-round capacity is a massive advantage - double the Kar98k. Clear iron sights with manageable ballistic drop.',

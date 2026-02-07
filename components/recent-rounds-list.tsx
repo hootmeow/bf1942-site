@@ -57,24 +57,23 @@ export function RecentRoundsList({ rounds, playerName }: { rounds: RecentRound[]
                                 key={round.round_id}
                                 href={`/stats/rounds/${round.round_id}`}
                                 className={cn(
-                                    "group flex items-center gap-3 rounded-lg border border-border/40 bg-card/30 p-3 transition-all",
+                                    "group flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 p-3 transition-all",
                                     "hover:border-primary/30 hover:bg-card/50"
                                 )}
                             >
-                                {/* Map indicator */}
-                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50 shrink-0 text-xs font-bold text-muted-foreground">
-                                    {round.map_name.slice(0, 2).toUpperCase()}
-                                </div>
+                                {/* Map color indicator */}
+                                <div className="h-2 w-2 rounded-full bg-primary/60 shrink-0" />
 
                                 {/* Round info */}
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 space-y-1">
                                     <div className="font-medium text-sm text-foreground group-hover:text-primary truncate">
                                         {round.map_name}
                                     </div>
-                                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                                        <span>{new Date(round.end_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                                        <span className="opacity-40">•</span>
-                                        <span className="truncate">{round.server_name}</span>
+                                    <div className="text-xs text-muted-foreground">
+                                        {new Date(round.end_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground truncate">
+                                        {round.server_name}
                                     </div>
                                 </div>
 
@@ -97,6 +96,11 @@ export function RecentRoundsList({ rounds, playerName }: { rounds: RecentRound[]
                         );
                     })}
                 </div>
+                <Link href={`/player/${encodeURIComponent(playerName)}/rounds`} className="block mt-4">
+                    <Button variant="outline" size="sm" className="w-full gap-1" asChild>
+                        <span>View All Rounds <ArrowRight className="h-3 w-3" /></span>
+                    </Button>
+                </Link>
             </CardContent>
         </Card>
     );

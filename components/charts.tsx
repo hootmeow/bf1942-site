@@ -98,7 +98,7 @@ const processChartDataSimple = (data: any[], period: "24h" | "7d") => {
 function ActivityAreaChart({
   data,
   period,
-  color = "hsl(var(--primary))", // Purple
+  color = "hsl(var(--primary))",
   gradientId
 }: {
   data: any[];
@@ -109,85 +109,118 @@ function ActivityAreaChart({
   const { chartData, stats, isHourly7d } = processChartDataSimple(data, period);
 
   return (
-    <ResponsiveContainer width="100%" height={320}>
-      <AreaChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.6} />
-            <stop offset="95%" stopColor={color} stopOpacity={0} />
-          </linearGradient>
-        </defs>
+    <div className="space-y-4">
+      {/* Stats summary bar */}
+      <div className="flex items-center gap-6 text-sm">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-green-500" />
+          <span className="text-muted-foreground">Peak</span>
+          <span className="font-bold text-foreground tabular-nums">{stats.max}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-primary/60" />
+          <span className="text-muted-foreground">Avg</span>
+          <span className="font-bold text-foreground tabular-nums">{stats.avg}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+          <span className="text-muted-foreground">Low</span>
+          <span className="font-bold text-foreground tabular-nums">{stats.min}</span>
+        </div>
+      </div>
 
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.2} />
+      <ResponsiveContainer width="100%" height={300}>
+        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.5} />
+              <stop offset="50%" stopColor={color} stopOpacity={0.15} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id={`${gradientId}-stroke`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor={color} stopOpacity={0.6} />
+              <stop offset="50%" stopColor={color} stopOpacity={1} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.6} />
+            </linearGradient>
+            <filter id={`${gradientId}-glow`}>
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
 
-        <XAxis
-          dataKey="label"
-          stroke="hsl(var(--muted-foreground))"
-          tickLine={false}
-          axisLine={false}
-          fontSize={11}
-          minTickGap={30}
-          tickMargin={10}
-          interval={isHourly7d ? 23 : 'preserveStartEnd'}
-          tickFormatter={(val) => {
-            if (isHourly7d) {
-              const d = new Date(val);
-              return d.toLocaleDateString([], { weekday: 'short' });
-            }
-            return val;
-          }}
-        />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.15} />
 
-        {/* Increased width to 45 to prevent truncation of 3-digit numbers */}
-        <YAxis
-          stroke="hsl(var(--muted-foreground))"
-          tickLine={false}
-          axisLine={false}
-          fontSize={11}
-          width={45}
-          tickMargin={10}
-          domain={[0, 'auto']}
-        />
+          <XAxis
+            dataKey="label"
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            fontSize={11}
+            minTickGap={30}
+            tickMargin={10}
+            interval={isHourly7d ? 23 : 'preserveStartEnd'}
+            tickFormatter={(val) => {
+              if (isHourly7d) {
+                const d = new Date(val);
+                return d.toLocaleDateString([], { weekday: 'short' });
+              }
+              return val;
+            }}
+          />
 
-        <ReTooltip
-          cursor={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1, strokeDasharray: '4 4' }}
-          contentStyle={{
-            backgroundColor: "hsl(var(--card)/0.95)",
-            borderRadius: 8,
-            border: "1px solid hsl(var(--border))",
-            backdropFilter: "blur(4px)"
-          }}
-          labelStyle={{ color: "hsl(var(--muted-foreground))", marginBottom: "0.5rem", fontSize: "12px" }}
-          itemStyle={{ fontSize: "12px", padding: "1px 0" }}
-          labelFormatter={(label) => {
-            if (isHourly7d) {
-              const d = new Date(label);
-              return d.toLocaleString([], { weekday: 'short', hour: 'numeric', hour12: true });
-            }
-            return label;
-          }}
-        />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            fontSize={11}
+            width={45}
+            tickMargin={10}
+            domain={[0, 'auto']}
+          />
 
-        <Legend
-          verticalAlign="top"
-          height={36}
-          iconType="circle"
-          wrapperStyle={{ paddingBottom: "10px", fontSize: "12px", opacity: 0.8 }}
-        />
+          <ReTooltip
+            cursor={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1, strokeDasharray: '4 4' }}
+            contentStyle={{
+              backgroundColor: "hsl(var(--card)/0.95)",
+              borderRadius: 8,
+              border: "1px solid hsl(var(--border))",
+              backdropFilter: "blur(4px)"
+            }}
+            labelStyle={{ color: "hsl(var(--muted-foreground))", marginBottom: "0.5rem", fontSize: "12px" }}
+            itemStyle={{ fontSize: "12px", padding: "1px 0" }}
+            labelFormatter={(label) => {
+              if (isHourly7d) {
+                const d = new Date(label);
+                return d.toLocaleString([], { weekday: 'short', hour: 'numeric', hour12: true });
+              }
+              return label;
+            }}
+          />
 
-        {/* SINGLE ROBUST AREA */}
-        <Area
-          type="monotone"
-          dataKey="total"
-          name="Total Players"
-          stroke={color}
-          fill={`url(#${gradientId})`}
-          fillOpacity={0.6}
-          strokeWidth={2}
-        />
+          <Area
+            type="monotone"
+            dataKey="total"
+            name="Total Players"
+            stroke={`url(#${gradientId}-stroke)`}
+            fill={`url(#${gradientId})`}
+            fillOpacity={1}
+            strokeWidth={2.5}
+            dot={false}
+            activeDot={{
+              r: 5,
+              stroke: color,
+              strokeWidth: 2,
+              fill: "hsl(var(--background))",
+              filter: `url(#${gradientId}-glow)`
+            }}
+          />
 
-      </AreaChart>
-    </ResponsiveContainer>
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
