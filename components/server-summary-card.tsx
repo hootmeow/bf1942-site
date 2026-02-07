@@ -101,7 +101,7 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                             </span>
                             <span className="flex items-center gap-1.5" title={`Game Mode: ${server.current_gametype || 'Unknown'}`}>
                                 {getGameModeIcon(server.current_gametype)}
-                                <span className="uppercase font-medium">{server.current_gametype || "CONQ"}</span>
+                                <span className="uppercase font-medium">{server.current_gametype || "N/A"}</span>
                             </span>
                         </div>
                     </div>

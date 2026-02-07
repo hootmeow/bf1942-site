@@ -235,14 +235,21 @@ export default function Page() {
 
       {/* --- Activity Chart Section --- */}
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2 text-primary">
-            <TrendingUp className="h-5 w-5" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Player Activity</h2>
+              <p className="text-sm text-muted-foreground">Global player count over time</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground">Player Activity</h2>
-            <p className="text-sm text-muted-foreground">Global player count over time</p>
-          </div>
+          <Button asChild variant="outline" size="sm" className="hidden sm:flex">
+            <Link href="/game-health">
+              30-Day Report <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
 
         <Card className="border-border/60 overflow-hidden">
@@ -253,6 +260,12 @@ export default function Page() {
             />
           </CardContent>
         </Card>
+
+        <div className="flex sm:hidden">
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link href="/game-health">30-Day Report</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

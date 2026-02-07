@@ -68,11 +68,7 @@ export default async function ServersPage() {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Connection Error</AlertTitle>
           <AlertDescription>
-            Could not retrieve live server data.
-            <br />
-            <span className="text-xs opacity-80 font-mono">
-              Target: http://127.0.0.1:3000/api/v1/servers
-            </span>
+            Could not retrieve live server data. Please try again later.
           </AlertDescription>
         </Alert>
       )}

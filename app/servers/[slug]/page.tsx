@@ -14,7 +14,8 @@ async function getServerData(slug: string) {
     console.log(`[ServerDetail Fetch] Fetching: ${targetUrl}`);
 
     const res = await fetch(targetUrl, {
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!res.ok) {

@@ -58,7 +58,14 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Dashboard", icon: Home, href: "/" },
   { label: "News & Updates", icon: Newspaper, href: "/news" },
-  { label: "Server Info", icon: Server, href: "/servers" },
+  {
+    label: "Server Info",
+    icon: Server,
+    href: "/servers",
+    children: [
+      { label: "Game Health", href: "/game-health" },
+    ],
+  },
   {
     label: "Player Stats",
     icon: BarChart,
