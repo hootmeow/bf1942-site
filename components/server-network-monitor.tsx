@@ -12,6 +12,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip as ReTooltip,
+  Legend,
 } from "recharts";
 
 interface PingCurrent {
@@ -46,7 +47,19 @@ const LOCATION_LABELS: Record<string, string> = {
   eu_central: "Frankfurt",
   ap_southeast: "Sydney",
   ap_east: "Tokyo",
+  Virginia: "Virginia",
+  London: "London",
+  Sydney: "Sydney",
 };
+
+const LOCATION_COLORS: string[] = [
+  "hsl(var(--primary))",
+  "hsl(var(--chart-2, 280 65% 60%))",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+];
 
 function getLocationLabel(id: string) {
   return LOCATION_LABELS[id] || id;
@@ -68,8 +81,7 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
   const [current, setCurrent] = useState<PingCurrent[]>([]);
   const [history, setHistory] = useState<PingHistory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [traceOpen, setTraceOpen] = useState(false);
+  const [openTraces, setOpenTraces] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function fetchNetwork() {
@@ -80,9 +92,6 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
           if (data.ok) {
             setCurrent(data.current || []);
             setHistory(data.history || []);
-            if (data.current?.length > 0) {
-              setSelectedLocation(data.current[0].monitor_location_id);
-            }
           }
         }
       } catch (e) {
@@ -96,21 +105,31 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
 
   const locations = useMemo(() => current.map((c) => c.monitor_location_id), [current]);
 
-  const selectedCurrent = useMemo(
-    () => current.find((c) => c.monitor_location_id === selectedLocation),
-    [current, selectedLocation]
-  );
-
+  // Merge all locations into a single time-series for the chart
   const chartData = useMemo(() => {
-    if (!selectedLocation) return [];
-    return history
-      .filter((h) => h.monitor_location_id === selectedLocation)
-      .map((h) => ({
-        time: new Date(h.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        latency: h.latency_ms,
-        jitter: h.jitter_ms,
-      }));
-  }, [history, selectedLocation]);
+    if (history.length === 0) return [];
+
+    // Group by timestamp, create one row per unique time with a column per location
+    const timeMap = new Map<string, Record<string, number | string>>();
+
+    history.forEach((h) => {
+      const time = new Date(h.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const key = h.timestamp; // use raw timestamp for ordering
+      if (!timeMap.has(key)) {
+        timeMap.set(key, { time, _ts: key });
+      }
+      const row = timeMap.get(key)!;
+      row[`${h.monitor_location_id}_latency`] = h.latency_ms;
+    });
+
+    return Array.from(timeMap.values()).sort((a, b) =>
+      String(a._ts).localeCompare(String(b._ts))
+    );
+  }, [history]);
+
+  const toggleTrace = (loc: string) => {
+    setOpenTraces((prev) => ({ ...prev, [loc]: !prev[loc] }));
+  };
 
   if (loading) return null;
 
@@ -131,57 +150,50 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
         </CardContent>
       ) : (
       <CardContent className="space-y-3">
-        {/* Location pill tabs */}
-        <div className="flex flex-wrap gap-1.5">
-          {locations.map((loc) => (
-            <button
-              key={loc}
-              onClick={() => { setSelectedLocation(loc); setTraceOpen(false); }}
-              className={cn(
-                "rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors border",
-                selectedLocation === loc
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted/30 text-muted-foreground border-border/60 hover:bg-muted/50"
-              )}
-            >
-              {getLocationLabel(loc)}
-            </button>
-          ))}
-        </div>
-
-        {/* Stat tiles */}
-        {selectedCurrent && (
-          <div className="grid grid-cols-3 gap-2">
-            <div className={cn("rounded-lg border p-2 text-center", latencyBgColor(selectedCurrent.latency_ms))}>
-              <div className="text-[10px] font-medium text-muted-foreground">Latency</div>
-              <div className={cn("text-lg font-bold", latencyColor(selectedCurrent.latency_ms))}>
-                {selectedCurrent.latency_ms.toFixed(0)}ms
-              </div>
+        {/* Stat tiles — one row per location */}
+        {current.map((loc, i) => (
+          <div key={loc.monitor_location_id}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <div
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: LOCATION_COLORS[i % LOCATION_COLORS.length] }}
+              />
+              <span className="text-xs font-medium text-muted-foreground">
+                {getLocationLabel(loc.monitor_location_id)}
+              </span>
             </div>
-            <div className="rounded-lg border border-border/60 bg-muted/30 p-2 text-center">
-              <div className="text-[10px] font-medium text-muted-foreground">Jitter</div>
-              <div className="text-lg font-bold text-foreground">
-                {selectedCurrent.jitter_ms.toFixed(1)}ms
+            <div className="grid grid-cols-3 gap-2">
+              <div className={cn("rounded-lg border p-2 text-center", latencyBgColor(loc.latency_ms))}>
+                <div className="text-[10px] font-medium text-muted-foreground">Latency</div>
+                <div className={cn("text-lg font-bold", latencyColor(loc.latency_ms))}>
+                  {loc.latency_ms.toFixed(0)}ms
+                </div>
               </div>
-            </div>
-            <div className={cn(
-              "rounded-lg border p-2 text-center",
-              selectedCurrent.packet_loss_percent > 0
-                ? "bg-red-400/10 border-red-400/20"
-                : "border-border/60 bg-muted/30"
-            )}>
-              <div className="text-[10px] font-medium text-muted-foreground">Pkt Loss</div>
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-2 text-center">
+                <div className="text-[10px] font-medium text-muted-foreground">Jitter</div>
+                <div className="text-lg font-bold text-foreground">
+                  {loc.jitter_ms.toFixed(1)}ms
+                </div>
+              </div>
               <div className={cn(
-                "text-lg font-bold",
-                selectedCurrent.packet_loss_percent > 0 ? "text-red-400" : "text-foreground"
+                "rounded-lg border p-2 text-center",
+                loc.packet_loss_percent > 0
+                  ? "bg-red-400/10 border-red-400/20"
+                  : "border-border/60 bg-muted/30"
               )}>
-                {selectedCurrent.packet_loss_percent.toFixed(1)}%
+                <div className="text-[10px] font-medium text-muted-foreground">Pkt Loss</div>
+                <div className={cn(
+                  "text-lg font-bold",
+                  loc.packet_loss_percent > 0 ? "text-red-400" : "text-foreground"
+                )}>
+                  {loc.packet_loss_percent.toFixed(1)}%
+                </div>
               </div>
             </div>
           </div>
-        )}
+        ))}
 
-        {/* Latency chart */}
+        {/* Combined latency chart — all locations overlaid */}
         {chartData.length > 1 && (
           <div>
             <div className="flex items-center gap-2 mb-1 text-sm text-muted-foreground">
@@ -216,73 +228,85 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
                   }}
                   labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600, marginBottom: 4 }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="latency"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={false}
-                  name="Latency (ms)"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="jitter"
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeWidth={1}
-                  strokeDasharray="4 4"
-                  dot={false}
-                  name="Jitter (ms)"
-                />
+                {locations.length > 1 && (
+                  <Legend
+                    verticalAlign="top"
+                    height={24}
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: "10px" }}
+                  />
+                )}
+                {locations.map((loc, i) => (
+                  <Line
+                    key={loc}
+                    type="monotone"
+                    dataKey={`${loc}_latency`}
+                    stroke={LOCATION_COLORS[i % LOCATION_COLORS.length]}
+                    strokeWidth={2}
+                    dot={false}
+                    name={getLocationLabel(loc)}
+                    connectNulls
+                  />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </div>
         )}
 
-        {/* Traceroute collapsible */}
-        {selectedCurrent?.trace_route_hops && selectedCurrent.trace_route_hops.length > 0 && (
-          <div>
-            <button
-              onClick={() => setTraceOpen(!traceOpen)}
-              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {traceOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              Traceroute Details
-            </button>
-            {traceOpen && (
-              <div className="mt-1.5 rounded-lg border border-border/60 overflow-hidden max-h-48 overflow-y-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border/60 bg-muted/30">
-                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">#</th>
-                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Host</th>
-                      <th className="text-right px-2 py-1.5 font-medium text-muted-foreground">Avg</th>
-                      <th className="text-right px-2 py-1.5 font-medium text-muted-foreground">Loss</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedCurrent.trace_route_hops.map((hop) => (
-                      <tr key={hop.hop} className="border-b border-border/40 last:border-0">
-                        <td className="px-2 py-1 text-muted-foreground">{hop.hop}</td>
-                        <td className="px-2 py-1 font-mono truncate max-w-[120px]" title={`${hop.host || "???"} (${hop.ip})`}>
-                          {hop.host || hop.ip}
-                        </td>
-                        <td className={cn("px-2 py-1 text-right", latencyColor(hop.avg_ms))}>
-                          {hop.avg_ms.toFixed(1)}ms
-                        </td>
-                        <td className={cn(
-                          "px-2 py-1 text-right font-medium",
-                          hop.loss_percent > 5 ? "text-red-400" : "text-muted-foreground"
-                        )}>
-                          {hop.loss_percent.toFixed(1)}%
-                        </td>
+        {/* Traceroute — one collapsible per location */}
+        {current.map((loc, i) => (
+          loc.trace_route_hops && loc.trace_route_hops.length > 0 && (
+            <div key={`trace-${loc.monitor_location_id}`}>
+              <button
+                onClick={() => toggleTrace(loc.monitor_location_id)}
+                className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {openTraces[loc.monitor_location_id]
+                  ? <ChevronDown className="h-3.5 w-3.5" />
+                  : <ChevronRight className="h-3.5 w-3.5" />}
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: LOCATION_COLORS[i % LOCATION_COLORS.length] }}
+                />
+                Traceroute — {getLocationLabel(loc.monitor_location_id)}
+              </button>
+              {openTraces[loc.monitor_location_id] && (
+                <div className="mt-1.5 rounded-lg border border-border/60 overflow-hidden max-h-48 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border/60 bg-muted/30">
+                        <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">#</th>
+                        <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Host</th>
+                        <th className="text-right px-2 py-1.5 font-medium text-muted-foreground">Avg</th>
+                        <th className="text-right px-2 py-1.5 font-medium text-muted-foreground">Loss</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+                    </thead>
+                    <tbody>
+                      {loc.trace_route_hops.map((hop) => (
+                        <tr key={hop.hop} className="border-b border-border/40 last:border-0">
+                          <td className="px-2 py-1 text-muted-foreground">{hop.hop}</td>
+                          <td className="px-2 py-1 font-mono truncate max-w-[120px]" title={`${hop.host || "???"} (${hop.ip})`}>
+                            {hop.host || hop.ip}
+                          </td>
+                          <td className={cn("px-2 py-1 text-right", latencyColor(hop.avg_ms))}>
+                            {hop.avg_ms.toFixed(1)}ms
+                          </td>
+                          <td className={cn(
+                            "px-2 py-1 text-right font-medium",
+                            hop.loss_percent > 5 ? "text-red-400" : "text-muted-foreground"
+                          )}>
+                            {hop.loss_percent.toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )
+        ))}
       </CardContent>
       )}
     </Card>
