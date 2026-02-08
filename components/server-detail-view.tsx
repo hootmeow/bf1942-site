@@ -25,6 +25,7 @@ import {
 import { ServerFlag } from "@/components/server-flag";
 import { useServerGeo } from "@/hooks/use-server-geo";
 import { Sparkline } from "@/components/sparkline";
+import { ServerNetworkMonitor } from "@/components/server-network-monitor";
 
 // Types
 interface ServerInfo {
@@ -415,25 +416,24 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         </Card>
       </div>
 
-      {
-        metrics && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="border-border/60 lg:col-span-2">
-              <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
-              <CardContent>
-                <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
-              </CardContent>
-            </Card>
-            <div className="lg:col-span-1">
-              <ServerPeakHeatmap
-                data={metrics.player_count_24h}
-                peakTimes7d={metrics.peak_times_7d}
-                peakDays7d={metrics.peak_days_7d}
-              />
-            </div>
-          </div>
-        )
-      }
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {metrics && (
+          <Card className="border-border/60">
+            <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
+            <CardContent>
+              <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
+            </CardContent>
+          </Card>
+        )}
+        {server_info?.ip && <ServerNetworkMonitor serverIp={server_info.ip} />}
+        {metrics && (
+          <ServerPeakHeatmap
+            data={metrics.player_count_24h}
+            peakTimes7d={metrics.peak_times_7d}
+            peakDays7d={metrics.peak_days_7d}
+          />
+        )}
+      </div>
 
       {/* Server Player Stats */}
       {server_info?.server_id && (
