@@ -2,17 +2,16 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, Loader2, Clock, Users, TrendingUp, Activity, Swords, ArrowLeftRight, Zap } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, Users, Activity, Swords, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScoreboardPlayer } from "@/components/scoreboard-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronLeft, Trophy, Target } from "lucide-react";
+import { ChevronLeft, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RoundTimelineChart } from "@/components/charts";
-import { RoundTopPerformers } from "@/components/round-top-performers";
-import { BattleReplay } from "@/components/battle-replay";
+import { useBattleReplayState, BattleReplayCard, BattleReplayScoreboards } from "@/components/battle-replay";
 
 interface RoundData {
     round_id: number;
@@ -62,23 +61,6 @@ interface TimelineResponse {
     player_scores?: Record<string, Array<{ timestamp: string; score: number; kills: number; deaths: number }>>;
     player_teams?: Record<string, number>;
     player_highlights?: PlayerHighlights;
-}
-
-function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ElementType }) {
-    const Icon = icon;
-    return (
-        <div className="rounded-lg border border-border/60 bg-card/40 p-4">
-            <div className="flex items-center gap-3">
-                <div className="rounded-full bg-primary/10 p-2 text-primary">
-                    <Icon className="h-4 w-4" />
-                </div>
-                <div>
-                    <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
-                    <p className="text-base font-semibold text-foreground">{value}</p>
-                </div>
-            </div>
-        </div>
-    );
 }
 
 export default function RoundDetailPage() {
@@ -289,121 +271,129 @@ export default function RoundDetailPage() {
                                 <div className="text-2xl font-bold text-blue-500">{round.tickets2}</div>
                             </div>
                         </div>
+
+                        {/* Narrative */}
+                        {narrative && (
+                            <p className="text-sm italic text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto pt-2">
+                                &ldquo;{narrative}&rdquo;
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Battle Highlights & Narrative */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="md:col-span-2 border-border/60 bg-muted/10">
-                    <CardHeader><CardTitle as="h3" className="text-lg">Battle Report</CardTitle></CardHeader>
-                    <CardContent>
-                        <p className="text-lg italic text-muted-foreground leading-relaxed">&ldquo;{narrative}&rdquo;</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-border/60">
-                    <CardHeader><CardTitle as="h3" className="text-lg">Match Highlights</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        {highlights?.mvp && (
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-yellow-500/10 text-yellow-500 rounded-full"><Trophy className="h-4 w-4" /></div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground uppercase">MVP</p>
-                                    <Link href={`/player/${encodeURIComponent(highlights.mvp.last_known_name || "")}`} className="font-bold hover:underline">
-                                        {highlights.mvp.last_known_name}
-                                    </Link>
-                                    <span className="text-xs ml-2 opacity-70">({highlights.mvp.final_score} Score)</span>
-                                </div>
-                            </div>
-                        )}
-                        {highlights?.deadliest && (
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-red-500/10 text-red-500 rounded-full"><Target className="h-4 w-4" /></div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground uppercase">Most Dangerous</p>
-                                    <Link href={`/player/${encodeURIComponent(highlights.deadliest.last_known_name || "")}`} className="font-bold hover:underline">
-                                        {highlights.deadliest.last_known_name}
-                                    </Link>
-                                    <span className="text-xs ml-2 opacity-70">({highlights.deadliest.final_kills} Kills)</span>
-                                </div>
-                            </div>
-                        )}
-                        {/* Enhanced highlights from timeline data */}
-                        {playerHighlights && playerHighlights.lead_changes > 0 && (
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-purple-500/10 text-purple-500 rounded-full"><ArrowLeftRight className="h-4 w-4" /></div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground uppercase">Lead Changes</p>
-                                    <p className="font-bold">{playerHighlights.lead_changes} time{playerHighlights.lead_changes > 1 ? "s" : ""}</p>
-                                </div>
-                            </div>
-                        )}
-                        {playerHighlights && playerHighlights.closest_margin !== undefined && (
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-amber-500/10 text-amber-500 rounded-full"><Zap className="h-4 w-4" /></div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground uppercase">Closest Margin</p>
-                                    <p className="font-bold">{playerHighlights.closest_margin} tickets</p>
-                                </div>
-                            </div>
-                        )}
-                        {playerHighlights?.biggest_streak && (
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-orange-500/10 text-orange-500 rounded-full"><TrendingUp className="h-4 w-4" /></div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground uppercase">Kill Streak</p>
-                                    <Link href={`/player/${encodeURIComponent(playerHighlights.biggest_streak.player_name)}`} className="font-bold hover:underline">
-                                        {playerHighlights.biggest_streak.player_name}
-                                    </Link>
-                                    <span className="text-xs ml-2 opacity-70">({playerHighlights.biggest_streak.streak} kills)</span>
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+            {/* Quick Highlights Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {highlights?.mvp && (
+                    <div className="rounded-lg border border-border/60 bg-card/40 px-3 py-2.5">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">MVP</p>
+                        <Link href={`/player/${encodeURIComponent(highlights.mvp.last_known_name || "")}`} className="text-sm font-semibold text-foreground hover:underline truncate block">
+                            {highlights.mvp.last_known_name}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">{highlights.mvp.final_score} pts</span>
+                    </div>
+                )}
+                {highlights?.deadliest && (
+                    <div className="rounded-lg border border-border/60 bg-card/40 px-3 py-2.5">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Top Fragger</p>
+                        <Link href={`/player/${encodeURIComponent(highlights.deadliest.last_known_name || "")}`} className="text-sm font-semibold text-foreground hover:underline truncate block">
+                            {highlights.deadliest.last_known_name}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">{highlights.deadliest.final_kills} kills</span>
+                    </div>
+                )}
+                {playerHighlights?.biggest_streak && (
+                    <div className="rounded-lg border border-border/60 bg-card/40 px-3 py-2.5">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Kill Streak</p>
+                        <Link href={`/player/${encodeURIComponent(playerHighlights.biggest_streak.player_name)}`} className="text-sm font-semibold text-foreground hover:underline truncate block">
+                            {playerHighlights.biggest_streak.player_name}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">{playerHighlights.biggest_streak.streak} streak</span>
+                    </div>
+                )}
+                {playerHighlights && playerHighlights.lead_changes > 0 && (
+                    <div className="rounded-lg border border-border/60 bg-card/40 px-3 py-2.5">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Lead Changes</p>
+                        <p className="text-sm font-semibold text-foreground">{playerHighlights.lead_changes}</p>
+                        <span className="text-xs text-muted-foreground">time{playerHighlights.lead_changes > 1 ? "s" : ""}</span>
+                    </div>
+                )}
+                {playerHighlights && playerHighlights.closest_margin !== undefined && (
+                    <div className="rounded-lg border border-border/60 bg-card/40 px-3 py-2.5">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Closest Margin</p>
+                        <p className="text-sm font-semibold text-foreground">{playerHighlights.closest_margin}</p>
+                        <span className="text-xs text-muted-foreground">tickets</span>
+                    </div>
+                )}
+                <div className="rounded-lg border border-border/60 bg-card/40 px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Players</p>
+                    <p className="text-sm font-semibold text-foreground">{data.player_stats.length}</p>
+                    <span className="text-xs text-muted-foreground">{formatDuration(round.duration_seconds)}</span>
+                </div>
             </div>
 
-            {/* Top Performers */}
-            <RoundTopPerformers playerStats={data.player_stats} />
+            {/* Battle Timeline + Battle Replay + Scoreboards */}
+            <BattleSection
+                timeline={timeline}
+                timelineLoading={timelineLoading}
+                playerStats={data.player_stats}
+                round={round}
+            />
+        </div>
+    );
+}
 
-            {/* Round Timeline Chart */}
-            <Card className="border-border/60">
-                <CardHeader>
-                    <CardTitle as="h3" className="flex items-center gap-2">
-                        <Activity className="h-5 w-5 text-primary" />
-                        Battle Timeline
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {timelineLoading ? (
-                        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                            Loading timeline...
-                        </div>
-                    ) : timeline && timeline.ticket_timeline && timeline.ticket_timeline.length > 0 ? (
-                        <RoundTimelineChart
-                            ticketTimeline={timeline.ticket_timeline}
-                            keyMoments={timeline.key_moments}
-                        />
-                    ) : (
-                        <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-                            No timeline data available for this round.
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+function BattleSection({ timeline, timelineLoading, playerStats, round }: {
+    timeline: TimelineResponse | null;
+    timelineLoading: boolean;
+    playerStats: ScoreboardPlayer[];
+    round: RoundData;
+}) {
+    const hasReplayData = timeline?.player_scores && Object.keys(timeline.player_scores).length > 0;
 
-            {/* Battle Replay — Interactive score chart + scrubber + scoreboards */}
-            {timeline?.player_scores && Object.keys(timeline.player_scores).length > 0 && (
-                <BattleReplay
-                    playerScores={timeline.player_scores}
-                    playerTeams={timeline.player_teams || {}}
-                    playerStats={data.player_stats}
-                    roundStartTime={round.start_time}
-                    roundEndTime={round.end_time}
-                />
-            )}
+    const replayState = useBattleReplayState({
+        playerScores: timeline?.player_scores || {},
+        playerTeams: timeline?.player_teams || {},
+        playerStats,
+        roundStartTime: round.start_time,
+        roundEndTime: round.end_time,
+    });
+
+    return (
+        <div className="space-y-6">
+            {/* Side-by-side: Timeline + Replay card */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-border/60">
+                    <CardHeader>
+                        <CardTitle as="h3" className="flex items-center gap-2">
+                            <Activity className="h-5 w-5 text-primary" />
+                            Battle Timeline
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {timelineLoading ? (
+                            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                Loading timeline...
+                            </div>
+                        ) : timeline && timeline.ticket_timeline && timeline.ticket_timeline.length > 0 ? (
+                            <RoundTimelineChart
+                                ticketTimeline={timeline.ticket_timeline}
+                                keyMoments={timeline.key_moments}
+                            />
+                        ) : (
+                            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                                No timeline data available for this round.
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {hasReplayData && <BattleReplayCard state={replayState} />}
+            </div>
+
+            {/* Full-width scoreboards below */}
+            {hasReplayData && <BattleReplayScoreboards state={replayState} />}
         </div>
     );
 }

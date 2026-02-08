@@ -13,7 +13,7 @@ import {
   TableFooter,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Trophy, Play, Pause } from "lucide-react";
+import { Trophy, Play, Pause, Crosshair, Skull } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -57,14 +57,10 @@ function getKDRatio(kills: number, deaths: number): { ratio: string; color: stri
   return { ratio: kd.toFixed(2), color };
 }
 
-export function BattleReplay({
-  playerScores,
-  playerTeams,
-  playerStats,
-  roundStartTime,
-  roundEndTime,
-}: BattleReplayProps) {
-  // Build sorted unique timestamps
+// Shared state hook used by both card and scoreboards
+function useBattleReplayState(props: BattleReplayProps) {
+  const { playerScores, playerTeams, playerStats } = props;
+
   const allTimestamps = useMemo(() => {
     const tsSet = new Set<string>();
     for (const snapshots of Object.values(playerScores)) {
@@ -75,7 +71,6 @@ export function BattleReplay({
     return [...tsSet].sort();
   }, [playerScores]);
 
-  // All player names sorted by final score descending
   const allPlayerNames = useMemo(() => {
     return Object.keys(playerScores).sort((a, b) => {
       const aSnaps = playerScores[a];
@@ -86,19 +81,29 @@ export function BattleReplay({
     });
   }, [playerScores]);
 
-  // Default: top 5 selected
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(() => {
     return new Set(allPlayerNames.slice(0, 5));
   });
 
   const [scrubberIndex, setScrubberIndex] = useState(allTimestamps.length - 1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [activeTab, setActiveTab] = useState<"chart" | "log">("log");
   const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const previousSelectionRef = useRef<Set<string> | null>(null);
+  const hasInitializedRef = useRef(false);
+
+  // When data first loads (allPlayerNames goes from empty to populated), set default selection
+  useEffect(() => {
+    if (!hasInitializedRef.current && allPlayerNames.length > 0) {
+      hasInitializedRef.current = true;
+      setSelectedPlayers(new Set(allPlayerNames.slice(0, 5)));
+      setScrubberIndex(allTimestamps.length - 1);
+    }
+  }, [allPlayerNames, allTimestamps]);
 
   const currentTimestamp = allTimestamps[scrubberIndex] || allTimestamps[allTimestamps.length - 1];
   const isAtEnd = scrubberIndex >= allTimestamps.length - 1;
 
-  // Auto-play
   useEffect(() => {
     if (isPlaying) {
       playIntervalRef.current = setInterval(() => {
@@ -116,7 +121,6 @@ export function BattleReplay({
     };
   }, [isPlaying, allTimestamps.length]);
 
-  // Assign a stable color index to each player (by their sort rank)
   const playerColorIndex = useMemo(() => {
     const map: Record<string, number> = {};
     allPlayerNames.forEach((name, i) => {
@@ -125,13 +129,10 @@ export function BattleReplay({
     return map;
   }, [allPlayerNames]);
 
-  // Currently visible player names (for chart)
   const visibleNames = useMemo(() => {
     return allPlayerNames.filter((n) => selectedPlayers.has(n));
   }, [allPlayerNames, selectedPlayers]);
 
-  // ---- CHART DATA: exact same pattern as the working RoundPlayerTimelineChart ----
-  // Uses player names directly as keys, carry-forward scores, numeric time index
   const chartData = useMemo(() => {
     const names = visibleNames;
     if (names.length === 0 || allTimestamps.length === 0) return [];
@@ -146,7 +147,6 @@ export function BattleReplay({
       };
       names.forEach((name) => {
         const playerData = playerScores[name];
-        // Find closest score at or before this timestamp (carry-forward)
         const match = [...playerData].reverse().find((d) => d.timestamp <= ts);
         point[name] = match ? match.score : 0;
       });
@@ -154,7 +154,6 @@ export function BattleReplay({
     });
   }, [allTimestamps, visibleNames, playerScores]);
 
-  // Stats at scrubber time
   const statsAtTime = useMemo(() => {
     if (isAtEnd) return null;
     const result: Record<string, { score: number; kills: number; deaths: number }> = {};
@@ -180,7 +179,49 @@ export function BattleReplay({
     });
   }, []);
 
-  // Team split for scoreboards
+  const handleLegendClick = useCallback((dataKey: string) => {
+    setSelectedPlayers((prev) => {
+      if (prev.size === 1 && prev.has(dataKey) && previousSelectionRef.current) {
+        const restored = previousSelectionRef.current;
+        previousSelectionRef.current = null;
+        return restored;
+      }
+      previousSelectionRef.current = new Set(prev);
+      return new Set([dataKey]);
+    });
+  }, []);
+
+  const combatLog = useMemo(() => {
+    const events: Array<{
+      timestamp: string;
+      player: string;
+      type: "kills" | "deaths";
+      count: number;
+      totalKills: number;
+      totalDeaths: number;
+    }> = [];
+
+    for (const name of Object.keys(playerScores)) {
+      const snapshots = playerScores[name];
+      for (let i = 1; i < snapshots.length; i++) {
+        const prev = snapshots[i - 1];
+        const curr = snapshots[i];
+        const killDelta = curr.kills - prev.kills;
+        const deathDelta = curr.deaths - prev.deaths;
+
+        if (killDelta > 0) {
+          events.push({ timestamp: curr.timestamp, player: name, type: "kills", count: killDelta, totalKills: curr.kills, totalDeaths: curr.deaths });
+        }
+        if (deathDelta > 0) {
+          events.push({ timestamp: curr.timestamp, player: name, type: "deaths", count: deathDelta, totalKills: curr.kills, totalDeaths: curr.deaths });
+        }
+      }
+    }
+
+    events.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    return events;
+  }, [playerScores]);
+
   const teamPlayers = useMemo(() => {
     const axis: ScoreboardPlayer[] = [];
     const allies: ScoreboardPlayer[] = [];
@@ -204,162 +245,273 @@ export function BattleReplay({
     catch { return ts; }
   };
 
+  return {
+    allTimestamps, allPlayerNames, selectedPlayers, setSelectedPlayers,
+    scrubberIndex, setScrubberIndex, isPlaying, setIsPlaying,
+    activeTab, setActiveTab, currentTimestamp, isAtEnd,
+    playerColorIndex, visibleNames, chartData, statsAtTime,
+    togglePlayer, handleLegendClick, combatLog,
+    teamPlayers, winner, formatTimestamp,
+    playerTeams, playerScores,
+  };
+}
+
+type BattleReplayState = ReturnType<typeof useBattleReplayState>;
+
+// ── Exported wrapper that manages state and renders card + scoreboards separately ──
+
+export function BattleReplay(props: BattleReplayProps) {
+  const state = useBattleReplayState(props);
+
   return (
-    <div className="space-y-4">
-      {/* Score Progression Chart */}
-      <Card className="border-border/60">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <>
+      <BattleReplayCard state={state} />
+      <BattleReplayScoreboards state={state} />
+    </>
+  );
+}
+
+// ── Card only (chart / combat log) — for use inside a grid column ──
+
+export function BattleReplayCard({ state }: { state: BattleReplayState }) {
+  const {
+    activeTab, setActiveTab, selectedPlayers, setSelectedPlayers,
+    allPlayerNames, visibleNames, chartData, playerColorIndex,
+    handleLegendClick, isAtEnd, scrubberIndex, setScrubberIndex,
+    isPlaying, setIsPlaying, allTimestamps, currentTimestamp,
+    formatTimestamp, combatLog, playerTeams,
+  } = state;
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-4">
             <CardTitle as="h3" className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-yellow-500" />
               Battle Replay
             </CardTitle>
+            <div className="flex items-center rounded-lg border border-border/60 bg-muted/20 p-0.5">
+              <button
+                className={cn(
+                  "px-3 py-1 rounded-md text-xs font-medium transition-colors",
+                  activeTab === "chart"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setActiveTab("chart")}
+              >
+                Score Chart
+              </button>
+              <button
+                className={cn(
+                  "px-3 py-1 rounded-md text-xs font-medium transition-colors",
+                  activeTab === "log"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setActiveTab("log")}
+              >
+                Combat Log
+              </button>
+            </div>
+          </div>
+          {activeTab === "chart" && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{selectedPlayers.size} player{selectedPlayers.size !== 1 ? "s" : ""} shown</span>
-              <button
-                className="text-primary hover:underline"
-                onClick={() => setSelectedPlayers(new Set(allPlayerNames.slice(0, 5)))}
-              >
-                Top 5
-              </button>
-              <button
-                className="text-primary hover:underline"
-                onClick={() => setSelectedPlayers(new Set(allPlayerNames))}
-              >
-                All
-              </button>
-              <button
-                className="text-primary hover:underline"
-                onClick={() => setSelectedPlayers(new Set())}
-              >
-                None
-              </button>
+              <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set(allPlayerNames.slice(0, 5)))}>Top 5</button>
+              <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set(allPlayerNames))}>All</button>
+              <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set())}>None</button>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* ---- Chart: copied structure from working RoundPlayerTimelineChart ---- */}
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-              <XAxis
-                dataKey="time"
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))" }}
-                interval="preserveStartEnd"
-                tickFormatter={(value) => {
-                  const point = chartData[value];
-                  return point?.label || "";
-                }}
-              />
-              <YAxis
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))" }}
-              />
-              <ReTooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-                labelFormatter={(value) => {
-                  const point = chartData[value as number];
-                  return point?.label || "";
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: "12px" }} />
-              {visibleNames.map((name) => (
-                <Line
-                  key={name}
-                  type="monotone"
-                  dataKey={name}
-                  stroke={COLORS[playerColorIndex[name] % COLORS.length]}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-              ))}
-              {!isAtEnd && (
-                <ReferenceLine
-                  x={scrubberIndex}
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                />
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[400px]">
+          {activeTab === "chart" ? (
+            <div className="flex flex-col h-full">
+              <div className="flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                    <XAxis
+                      dataKey="time"
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
+                      interval="preserveStartEnd"
+                      tickFormatter={(value) => {
+                        const point = chartData[value];
+                        return point?.label || "";
+                      }}
+                    />
+                    <YAxis
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
+                    />
+                    <ReTooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                      }}
+                      labelFormatter={(value) => {
+                        const point = chartData[value as number];
+                        return point?.label || "";
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: "12px", cursor: "pointer" }}
+                      onClick={(e: any) => {  // eslint-disable-line @typescript-eslint/no-explicit-any
+                        if (e?.dataKey) handleLegendClick(e.dataKey);
+                      }}
+                    />
+                    {visibleNames.map((name) => (
+                      <Line
+                        key={name}
+                        type="monotone"
+                        dataKey={name}
+                        stroke={COLORS[playerColorIndex[name] % COLORS.length]}
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                    ))}
+                    {!isAtEnd && (
+                      <ReferenceLine
+                        x={scrubberIndex}
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        strokeDasharray="4 4"
+                      />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="pt-3 flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      if (isPlaying) {
+                        setIsPlaying(false);
+                      } else {
+                        if (scrubberIndex >= allTimestamps.length - 1) setScrubberIndex(0);
+                        setIsPlaying(true);
+                      }
+                    }}
+                  >
+                    {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  </Button>
+                  <input
+                    type="range"
+                    min={0}
+                    max={allTimestamps.length - 1}
+                    value={scrubberIndex}
+                    onChange={(e) => {
+                      setScrubberIndex(Number(e.target.value));
+                      setIsPlaying(false);
+                    }}
+                    className="flex-1 h-2 rounded-full appearance-none cursor-pointer bg-muted/50
+                      [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
+                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer
+                      [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full
+                      [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                  />
+                  <span className="text-xs text-muted-foreground font-mono min-w-[70px] text-right">
+                    {formatTimestamp(currentTimestamp)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full overflow-y-auto space-y-0.5 font-mono text-xs">
+              {combatLog.length === 0 ? (
+                <p className="text-sm text-muted-foreground font-sans">No combat events detected.</p>
+              ) : (
+                combatLog.map((event, i) => {
+                  const team = playerTeams[event.player] || 0;
+                  const teamColor = team === 1 ? "text-red-400" : team === 2 ? "text-blue-400" : "text-muted-foreground";
+                  const time = (() => {
+                    try { return new Date(event.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }); }
+                    catch { return event.timestamp; }
+                  })();
+
+                  return (
+                    <div
+                      key={`${event.timestamp}-${event.player}-${event.type}-${i}`}
+                      className={cn(
+                        "flex items-center gap-2 py-1 px-2 rounded",
+                        selectedPlayers.has(event.player) ? "bg-muted/20" : "opacity-40"
+                      )}
+                    >
+                      <span className="text-muted-foreground w-[70px] flex-shrink-0">{time}</span>
+                      {event.type === "kills" ? (
+                        <Crosshair className="h-3 w-3 text-green-400 flex-shrink-0" />
+                      ) : (
+                        <Skull className="h-3 w-3 text-red-400 flex-shrink-0" />
+                      )}
+                      <span className={cn("font-medium", teamColor)}>{event.player}</span>
+                      <span className="text-muted-foreground">
+                        {event.type === "kills"
+                          ? `got ${event.count} kill${event.count > 1 ? "s" : ""}`
+                          : `died${event.count > 1 ? ` ${event.count}x` : ""}`}
+                      </span>
+                      <span className="text-muted-foreground/60 ml-auto">
+                        K:{event.totalKills} D:{event.totalDeaths}
+                      </span>
+                    </div>
+                  );
+                })
               )}
-            </LineChart>
-          </ResponsiveContainer>
-
-          {/* Time Scrubber */}
-          <div className="mt-4">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => {
-                  if (isPlaying) {
-                    setIsPlaying(false);
-                  } else {
-                    if (scrubberIndex >= allTimestamps.length - 1) setScrubberIndex(0);
-                    setIsPlaying(true);
-                  }
-                }}
-              >
-                {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-              </Button>
-              <input
-                type="range"
-                min={0}
-                max={allTimestamps.length - 1}
-                value={scrubberIndex}
-                onChange={(e) => {
-                  setScrubberIndex(Number(e.target.value));
-                  setIsPlaying(false);
-                }}
-                className="flex-1 h-2 rounded-full appearance-none cursor-pointer bg-muted/50
-                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
-                  [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer
-                  [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full
-                  [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-              />
-              <span className="text-xs text-muted-foreground font-mono min-w-[70px] text-right">
-                {formatTimestamp(currentTimestamp)}
-              </span>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-      {/* Team Scoreboards */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <TeamScoreboard
-          title="Axis"
-          team={1}
-          players={teamPlayers.axis}
-          isWinner={winner === 1}
-          selectedPlayers={selectedPlayers}
-          onTogglePlayer={togglePlayer}
-          playerColorIndex={playerColorIndex}
-          statsAtTime={statsAtTime}
-        />
-        <TeamScoreboard
-          title="Allies"
-          team={2}
-          players={teamPlayers.allies}
-          isWinner={winner === 2}
-          selectedPlayers={selectedPlayers}
-          onTogglePlayer={togglePlayer}
-          playerColorIndex={playerColorIndex}
-          statsAtTime={statsAtTime}
-        />
-      </div>
+// ── Scoreboards only — for use as a full-width section ──
+
+export function BattleReplayScoreboards({ state }: { state: BattleReplayState }) {
+  const { teamPlayers, winner, selectedPlayers, togglePlayer, playerColorIndex, statsAtTime } = state;
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <TeamScoreboard
+        title="Axis"
+        team={1}
+        players={teamPlayers.axis}
+        isWinner={winner === 1}
+        selectedPlayers={selectedPlayers}
+        onTogglePlayer={togglePlayer}
+        playerColorIndex={playerColorIndex}
+        statsAtTime={statsAtTime}
+      />
+      <TeamScoreboard
+        title="Allies"
+        team={2}
+        players={teamPlayers.allies}
+        isWinner={winner === 2}
+        selectedPlayers={selectedPlayers}
+        onTogglePlayer={togglePlayer}
+        playerColorIndex={playerColorIndex}
+        statsAtTime={statsAtTime}
+      />
     </div>
   );
 }
+
+// ── Hook export for page-level usage ──
+
+export { useBattleReplayState };
+export type { BattleReplayProps, BattleReplayState };
 
 function TeamScoreboard({
   title,
