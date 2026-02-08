@@ -17,6 +17,11 @@ import {
   Activity,
   Gamepad2,
   Info,
+  Map,
+  UserPlus,
+  Shield,
+  Wifi,
+  Flame,
 } from "lucide-react";
 import {
   ComposedChart,
@@ -53,12 +58,56 @@ interface GamemodeEntry {
   rounds_played: number;
 }
 
+interface MapTrendEntry {
+  map_name: string;
+  total_rounds: number;
+  recent_7d: number;
+  prev_7d: number;
+  trend_pct: number;
+}
+
+interface PlayerRetentionEntry {
+  day: string;
+  new_players: number;
+  returning_players: number;
+}
+
+interface FactionBalanceEntry {
+  map_name: string;
+  total_rounds: number;
+  allied_wins: number;
+  axis_wins: number;
+  draws: number;
+  allied_win_pct: number;
+}
+
+interface PingTrendEntry {
+  day: string;
+  avg_ping: number;
+  median_ping: number;
+  p95_ping: number;
+}
+
+interface MapIntensityEntry {
+  map_name: string;
+  rounds_played: number;
+  avg_duration_sec: number;
+  avg_kpm: number;
+  total_kills: number;
+  unique_players: number;
+}
+
 interface HealthData {
   ok: boolean;
   population_trend: PopulationEntry[];
   server_trend: ServerTrendEntry[];
   rounds_trend: RoundsTrendEntry[];
   gamemode_breakdown: GamemodeEntry[];
+  map_trends?: MapTrendEntry[];
+  player_retention?: PlayerRetentionEntry[];
+  faction_balance?: FactionBalanceEntry[];
+  ping_trends?: PingTrendEntry[];
+  map_intensity?: MapIntensityEntry[];
 }
 
 interface GameHealthDashboardProps {
@@ -107,12 +156,29 @@ function formatDay(day: string) {
   });
 }
 
+function formatDuration(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  const remainMins = mins % 60;
+  return `${hrs}h ${remainMins}m`;
+}
+
 export function GameHealthDashboard({
   healthData,
   globalMetrics,
 }: GameHealthDashboardProps) {
-  const { population_trend, server_trend, rounds_trend, gamemode_breakdown } =
-    healthData;
+  const {
+    population_trend,
+    server_trend,
+    rounds_trend,
+    gamemode_breakdown,
+    map_trends = [],
+    player_retention = [],
+    faction_balance = [],
+    ping_trends = [],
+    map_intensity = [],
+  } = healthData;
 
   // Compute summary stats
   const stats = useMemo(() => {
@@ -176,6 +242,28 @@ export function GameHealthDashboard({
     return { avg30d, peakDay, trendPct, serversToday, roundsToday, serversPct, roundsPct };
   }, [population_trend, server_trend, rounds_trend]);
 
+  // Player retention summary stats
+  const retentionStats = useMemo(() => {
+    if (player_retention.length === 0) return null;
+    const totalNew = player_retention.reduce((s, d) => s + d.new_players, 0);
+    const totalReturning = player_retention.reduce((s, d) => s + d.returning_players, 0);
+    const avgReturnRate = totalReturning + totalNew > 0
+      ? Math.round((totalReturning / (totalReturning + totalNew)) * 100)
+      : 0;
+    return { totalNew, avgReturnRate };
+  }, [player_retention]);
+
+  // Ping summary stats
+  const pingStats = useMemo(() => {
+    if (ping_trends.length === 0) return null;
+    const latest = ping_trends[ping_trends.length - 1];
+    const allMedians = ping_trends.map((d) => d.median_ping);
+    const overall30dMedian = Math.round(
+      allMedians.reduce((s, v) => s + v, 0) / allMedians.length
+    );
+    return { currentAvg: latest.avg_ping, median30d: overall30dMedian };
+  }, [ping_trends]);
+
   const gamemodeTotal = gamemode_breakdown.reduce(
     (s, g) => s + g.rounds_played,
     0
@@ -184,6 +272,9 @@ export function GameHealthDashboard({
     ...gamemode_breakdown.map((g) => g.rounds_played),
     1
   );
+
+  const mapTrendsMax = Math.max(...map_trends.map((m) => m.total_rounds), 1);
+  const mapIntensityMax = Math.max(...map_intensity.map((m) => m.avg_kpm), 0.1);
 
   return (
     <div className="space-y-6">
@@ -372,6 +463,106 @@ export function GameHealthDashboard({
         </CardContent>
       </Card>
 
+      {/* NEW: New vs Returning Players */}
+      {player_retention.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-green-400" />
+                New vs Returning Players (30 Days)
+              </CardTitle>
+              {retentionStats && (
+                <div className="flex flex-wrap gap-3 text-sm">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                    <span className="text-muted-foreground">30d New Players:</span>
+                    <span className="font-bold tabular-nums text-green-400">
+                      {retentionStats.totalNew.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                    <span className="text-muted-foreground">Avg Return Rate:</span>
+                    <span className="font-bold tabular-nums text-blue-400">
+                      {retentionStats.avgReturnRate}%
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] sm:h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={player_retention}>
+                  <defs>
+                    <linearGradient id="returningGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
+                    </linearGradient>
+                    <linearGradient id="newPlayersGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                    opacity={0.3}
+                  />
+                  <XAxis
+                    dataKey="day"
+                    tickFormatter={formatDay}
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                    width={45}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                    }}
+                    labelFormatter={formatDay}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="returning_players"
+                    stackId="1"
+                    stroke="#3b82f6"
+                    fill="url(#returningGrad)"
+                    strokeWidth={2}
+                    name="Returning Players"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="new_players"
+                    stackId="1"
+                    stroke="#22c55e"
+                    fill="url(#newPlayersGrad)"
+                    strokeWidth={2}
+                    name="New Players"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                Returning Players
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                New Players
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Server & Rounds Trend — 2-column grid */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Active Servers */}
@@ -527,6 +718,133 @@ export function GameHealthDashboard({
         </Card>
       </div>
 
+      {/* NEW: Map Popularity Trends */}
+      {map_trends.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <CardTitle as="h2" className="flex items-center gap-2">
+              <Map className="h-5 w-5 text-cyan-400" />
+              Map Popularity (30 Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2.5">
+              {map_trends.map((item) => {
+                const percent = (item.total_rounds / mapTrendsMax) * 100;
+                return (
+                  <div key={item.map_name} className="group">
+                    <div className="flex items-center gap-3 mb-1.5">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0 bg-cyan-400" />
+                      <span className="text-sm font-medium text-foreground truncate flex-1">
+                        {item.map_name}
+                      </span>
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {item.total_rounds.toLocaleString()} rounds
+                      </span>
+                      {item.trend_pct > 5 ? (
+                        <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 text-xs px-1.5 py-0">
+                          <TrendingUp className="h-3 w-3 mr-0.5" />+{item.trend_pct}%
+                        </Badge>
+                      ) : item.trend_pct < -5 ? (
+                        <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-400 text-xs px-1.5 py-0">
+                          <TrendingDown className="h-3 w-3 mr-0.5" />{item.trend_pct}%
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-border/40 bg-muted/30 text-muted-foreground text-xs px-1.5 py-0">
+                          {item.trend_pct > 0 ? "+" : ""}{item.trend_pct}%
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden ml-5">
+                      <div
+                        className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                        style={{
+                          width: `${percent}%`,
+                          background: "linear-gradient(90deg, #06b6d4, #22d3ee)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* NEW: Faction Win Rates by Map */}
+      {faction_balance.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <CardTitle as="h2" className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-amber-400" />
+              Faction Balance by Map (30 Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {faction_balance.map((item) => {
+                const alliedPct = item.allied_win_pct ?? 50;
+                const axisPct = 100 - alliedPct;
+                const isBalanced = alliedPct >= 40 && alliedPct <= 60;
+                return (
+                  <div key={item.map_name} className="group">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium text-foreground truncate flex-1">
+                        {item.map_name}
+                      </span>
+                      <span className="text-xs text-muted-foreground tabular-nums ml-2">
+                        {item.total_rounds} rounds
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-blue-400 tabular-nums w-10 text-right">
+                        {alliedPct.toFixed(0)}%
+                      </span>
+                      <div className="flex-1 flex h-2.5 rounded-full overflow-hidden bg-muted/20">
+                        <div
+                          className="h-full transition-all duration-500"
+                          style={{
+                            width: `${alliedPct}%`,
+                            background: "linear-gradient(90deg, #3b82f6, #60a5fa)",
+                          }}
+                        />
+                        <div
+                          className="h-full transition-all duration-500"
+                          style={{
+                            width: `${axisPct}%`,
+                            background: "linear-gradient(90deg, #f87171, #ef4444)",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-red-400 tabular-nums w-10">
+                        {axisPct.toFixed(0)}%
+                      </span>
+                    </div>
+                    {!isBalanced && (
+                      <p className="text-xs text-muted-foreground mt-0.5 ml-12">
+                        Favors {alliedPct > 50 ? "Allies" : "Axis"}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                Allies
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
+                Axis
+              </div>
+              <span className="text-muted-foreground/60">Min 5 decisive rounds</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Game Mode Breakdown */}
       <Card className="border-border/60 bg-card/40">
         <CardHeader>
@@ -593,6 +911,158 @@ export function GameHealthDashboard({
           </div>
         </CardContent>
       </Card>
+
+      {/* NEW: Map Intensity Rankings */}
+      {map_intensity.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <CardTitle as="h2" className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-400" />
+              Map Intensity Rankings (Last 7 Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2.5">
+              {map_intensity.map((item, index) => {
+                const percent = (item.avg_kpm / mapIntensityMax) * 100;
+                return (
+                  <div key={item.map_name} className="group">
+                    <div className="flex items-center gap-3 mb-1.5">
+                      <span className="text-xs font-bold text-muted-foreground tabular-nums w-5 text-right">
+                        #{index + 1}
+                      </span>
+                      <span className="text-sm font-medium text-foreground truncate flex-1">
+                        {item.map_name}
+                      </span>
+                      <Badge variant="outline" className="border-border/40 bg-muted/30 text-muted-foreground text-xs px-1.5 py-0">
+                        {formatDuration(item.avg_duration_sec)} avg
+                      </Badge>
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {item.total_kills.toLocaleString()} kills
+                      </span>
+                      <span className="text-xs font-bold text-orange-400 tabular-nums w-16 text-right">
+                        {item.avg_kpm.toFixed(2)} KPM
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden ml-8">
+                      <div
+                        className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                        style={{
+                          width: `${percent}%`,
+                          background: "linear-gradient(90deg, #f97316, #fb923c)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* NEW: Network Quality / Ping Trends */}
+      {ping_trends.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <Wifi className="h-5 w-5 text-sky-400" />
+                Network Quality (30 Days)
+              </CardTitle>
+              {pingStats && (
+                <div className="flex flex-wrap gap-3 text-sm">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                    <span className="text-muted-foreground">Current Avg:</span>
+                    <span className="font-bold tabular-nums text-amber-400">
+                      {pingStats.currentAvg.toFixed(0)}ms
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                    <span className="text-muted-foreground">30d Median:</span>
+                    <span className="font-bold tabular-nums text-blue-400">
+                      {pingStats.median30d}ms
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] sm:h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={ping_trends}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                    opacity={0.3}
+                  />
+                  <XAxis
+                    dataKey="day"
+                    tickFormatter={formatDay}
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                    width={45}
+                    unit="ms"
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                    }}
+                    labelFormatter={formatDay}
+                    formatter={(value: number) => [`${value.toFixed(1)}ms`]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="median_ping"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={false}
+                    name="Median"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="avg_ping"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={false}
+                    name="Average"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="p95_ping"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                    name="P95"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                Median Ping
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                Average Ping
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-0.5 w-4 border-t-2 border-dashed border-red-500" />
+                P95 Ping
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Peak Times Heatmap */}
       {globalMetrics && (
