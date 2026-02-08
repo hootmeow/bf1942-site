@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, Loader2, Clock, Map, Users, Server, TrendingUp, Activity, Swords, ArrowLeftRight, Zap } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, Users, TrendingUp, Activity, Swords, ArrowLeftRight, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ScoreboardTable, ScoreboardPlayer } from "@/components/scoreboard-table";
+import { ScoreboardPlayer } from "@/components/scoreboard-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronLeft, Trophy, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RoundTimelineChart } from "@/components/charts";
 import { RoundTopPerformers } from "@/components/round-top-performers";
-import { RoundPlayerTimelineChart } from "@/components/round-player-timeline-chart";
+import { BattleReplay } from "@/components/battle-replay";
 
 interface RoundData {
     round_id: number;
@@ -60,6 +60,7 @@ interface TimelineResponse {
     ticket_timeline: TimelineDataPoint[];
     key_moments: KeyMoment[];
     player_scores?: Record<string, Array<{ timestamp: string; score: number; kills: number; deaths: number }>>;
+    player_teams?: Record<string, number>;
     player_highlights?: PlayerHighlights;
 }
 
@@ -135,13 +136,6 @@ export default function RoundDetailPage() {
         }
         fetchTimeline();
     }, [roundId]);
-
-    const [team1, team2] = useMemo(() => {
-        if (!data?.player_stats) return [[], []];
-        const t1 = data.player_stats.filter((p) => p.team === 1).sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
-        const t2 = data.player_stats.filter((p) => p.team === 2).sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
-        return [t1, t2];
-    }, [data]);
 
     const formatDuration = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -400,40 +394,16 @@ export default function RoundDetailPage() {
                 </CardContent>
             </Card>
 
-            {/* Top Scorers Over Time */}
+            {/* Battle Replay — Interactive score chart + scrubber + scoreboards */}
             {timeline?.player_scores && Object.keys(timeline.player_scores).length > 0 && (
-                <RoundPlayerTimelineChart playerScores={timeline.player_scores} />
+                <BattleReplay
+                    playerScores={timeline.player_scores}
+                    playerTeams={timeline.player_teams || {}}
+                    playerStats={data.player_stats}
+                    roundStartTime={round.start_time}
+                    roundEndTime={round.end_time}
+                />
             )}
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {/* Axis Card */}
-                <Card className={cn("border-border/60", winner === 1 && "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]")}>
-                    <CardHeader className={cn("bg-red-950/20 border-b border-red-900/20", winner === 1 && "bg-red-900/30")}>
-                        <div className="flex items-center justify-between">
-                            <CardTitle as="h2" className="text-red-500 flex items-center gap-2">
-                                Axis
-                                {winner === 1 && <Trophy className="h-4 w-4" />}
-                            </CardTitle>
-                            <div className="text-2xl font-bold text-red-500">{round.tickets1} Tickets</div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="pt-6"><ScoreboardTable players={team1} /></CardContent>
-                </Card>
-
-                {/* Allies Card */}
-                <Card className={cn("border-border/60", winner === 2 && "border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]")}>
-                    <CardHeader className={cn("bg-blue-950/20 border-b border-blue-900/20", winner === 2 && "bg-blue-900/30")}>
-                        <div className="flex items-center justify-between">
-                            <CardTitle as="h2" className="text-blue-500 flex items-center gap-2">
-                                Allies
-                                {winner === 2 && <Trophy className="h-4 w-4" />}
-                            </CardTitle>
-                            <div className="text-2xl font-bold text-blue-500">{round.tickets2} Tickets</div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="pt-6"><ScoreboardTable players={team2} /></CardContent>
-                </Card>
-            </div>
         </div>
     );
 }

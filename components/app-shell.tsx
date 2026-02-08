@@ -62,6 +62,7 @@ const navItems: NavItem[] = [
     label: "Server Info",
     icon: Server,
     href: "/servers",
+    overviewLabel: "Server Browser",
     children: [
       { label: "Game Health", href: "/game-health" },
     ],

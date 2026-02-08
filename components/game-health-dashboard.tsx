@@ -19,9 +19,7 @@ import {
   Info,
   Map,
   UserPlus,
-  Shield,
   Wifi,
-  Flame,
 } from "lucide-react";
 import {
   ComposedChart,
@@ -72,29 +70,11 @@ interface PlayerRetentionEntry {
   returning_players: number;
 }
 
-interface FactionBalanceEntry {
-  map_name: string;
-  total_rounds: number;
-  allied_wins: number;
-  axis_wins: number;
-  draws: number;
-  allied_win_pct: number;
-}
-
 interface PingTrendEntry {
   day: string;
   avg_ping: number;
   median_ping: number;
   p95_ping: number;
-}
-
-interface MapIntensityEntry {
-  map_name: string;
-  rounds_played: number;
-  avg_duration_sec: number;
-  avg_kpm: number;
-  total_kills: number;
-  unique_players: number;
 }
 
 interface HealthData {
@@ -105,9 +85,7 @@ interface HealthData {
   gamemode_breakdown: GamemodeEntry[];
   map_trends?: MapTrendEntry[];
   player_retention?: PlayerRetentionEntry[];
-  faction_balance?: FactionBalanceEntry[];
   ping_trends?: PingTrendEntry[];
-  map_intensity?: MapIntensityEntry[];
 }
 
 interface GameHealthDashboardProps {
@@ -156,14 +134,6 @@ function formatDay(day: string) {
   });
 }
 
-function formatDuration(seconds: number) {
-  const mins = Math.floor(seconds / 60);
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  const remainMins = mins % 60;
-  return `${hrs}h ${remainMins}m`;
-}
-
 export function GameHealthDashboard({
   healthData,
   globalMetrics,
@@ -175,9 +145,7 @@ export function GameHealthDashboard({
     gamemode_breakdown,
     map_trends = [],
     player_retention = [],
-    faction_balance = [],
     ping_trends = [],
-    map_intensity = [],
   } = healthData;
 
   // Compute summary stats
@@ -274,7 +242,6 @@ export function GameHealthDashboard({
   );
 
   const mapTrendsMax = Math.max(...map_trends.map((m) => m.total_rounds), 1);
-  const mapIntensityMax = Math.max(...map_intensity.map((m) => m.avg_kpm), 0.1);
 
   return (
     <div className="space-y-6">
@@ -772,79 +739,6 @@ export function GameHealthDashboard({
         </Card>
       )}
 
-      {/* NEW: Faction Win Rates by Map */}
-      {faction_balance.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-amber-400" />
-              Faction Balance by Map (30 Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {faction_balance.map((item) => {
-                const alliedPct = item.allied_win_pct ?? 50;
-                const axisPct = 100 - alliedPct;
-                const isBalanced = alliedPct >= 40 && alliedPct <= 60;
-                return (
-                  <div key={item.map_name} className="group">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-medium text-foreground truncate flex-1">
-                        {item.map_name}
-                      </span>
-                      <span className="text-xs text-muted-foreground tabular-nums ml-2">
-                        {item.total_rounds} rounds
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-blue-400 tabular-nums w-10 text-right">
-                        {alliedPct.toFixed(0)}%
-                      </span>
-                      <div className="flex-1 flex h-2.5 rounded-full overflow-hidden bg-muted/20">
-                        <div
-                          className="h-full transition-all duration-500"
-                          style={{
-                            width: `${alliedPct}%`,
-                            background: "linear-gradient(90deg, #3b82f6, #60a5fa)",
-                          }}
-                        />
-                        <div
-                          className="h-full transition-all duration-500"
-                          style={{
-                            width: `${axisPct}%`,
-                            background: "linear-gradient(90deg, #f87171, #ef4444)",
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-bold text-red-400 tabular-nums w-10">
-                        {axisPct.toFixed(0)}%
-                      </span>
-                    </div>
-                    {!isBalanced && (
-                      <p className="text-xs text-muted-foreground mt-0.5 ml-12">
-                        Favors {alliedPct > 50 ? "Allies" : "Axis"}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                Allies
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
-                Axis
-              </div>
-              <span className="text-muted-foreground/60">Min 5 decisive rounds</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Game Mode Breakdown */}
       <Card className="border-border/60 bg-card/40">
         <CardHeader>
@@ -912,56 +806,7 @@ export function GameHealthDashboard({
         </CardContent>
       </Card>
 
-      {/* NEW: Map Intensity Rankings */}
-      {map_intensity.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-orange-400" />
-              Map Intensity Rankings (Last 7 Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2.5">
-              {map_intensity.map((item, index) => {
-                const percent = (item.avg_kpm / mapIntensityMax) * 100;
-                return (
-                  <div key={item.map_name} className="group">
-                    <div className="flex items-center gap-3 mb-1.5">
-                      <span className="text-xs font-bold text-muted-foreground tabular-nums w-5 text-right">
-                        #{index + 1}
-                      </span>
-                      <span className="text-sm font-medium text-foreground truncate flex-1">
-                        {item.map_name}
-                      </span>
-                      <Badge variant="outline" className="border-border/40 bg-muted/30 text-muted-foreground text-xs px-1.5 py-0">
-                        {formatDuration(item.avg_duration_sec)} avg
-                      </Badge>
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {item.total_kills.toLocaleString()} kills
-                      </span>
-                      <span className="text-xs font-bold text-orange-400 tabular-nums w-16 text-right">
-                        {item.avg_kpm.toFixed(2)} KPM
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden ml-8">
-                      <div
-                        className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
-                        style={{
-                          width: `${percent}%`,
-                          background: "linear-gradient(90deg, #f97316, #fb923c)",
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* NEW: Network Quality / Ping Trends */}
+      {/* Network Quality / Ping Trends */}
       {ping_trends.length > 0 && (
         <Card className="border-border/60 bg-card/40">
           <CardHeader>
