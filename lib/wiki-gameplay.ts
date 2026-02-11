@@ -418,7 +418,7 @@ export const basicTraining: TrainingTopic[] = [
             'Control points provide spawn points and vehicle/asset access',
             'To capture: Be inside the capture radius (white flag icon appears)',
             'Cannot capture if ANY enemy is also in the radius (contested)',
-            'Each team has an uncapturable main base as fallback spawn',
+            'Most maps have an uncapturable main base as fallback spawn, but some maps do not. Check the map layout for details.',
         ],
     },
     {
@@ -426,12 +426,13 @@ export const basicTraining: TrainingTopic[] = [
         title: 'Communication',
         icon: 'MessageSquare',
         content: [
-            'J = Global chat (all players)',
-            'K = Team chat',
+            'K = All chat (everyone)',
+            'L = Team chat (your team only)',
             'F1-F8 = Radio commands menu (voice + text callouts)',
         ],
         tips: [
             'Radio commands are fastest in combat - "Medic!", "Armor spotted!", etc.',
+            'Spotting enemies does NOT mark them on the mini map; it only sends a radio message.',
         ],
     },
 ];
@@ -479,7 +480,7 @@ export const advancedTactics: Tactic[] = [
         points: [
             'Use rear gunner seat of two-seaters (Stuka, Dauntless, BF-110) for drops',
             'B-17 with two gunner seats is best for dropping small squads',
-            'Soldiers are completely defenseless while parachuting',
+            'Soldiers can shoot while parachuting, but are vulnerable to ground fire.',
             'Touch-and-go pickups allow rapid ferrying without full landing',
         ],
     },

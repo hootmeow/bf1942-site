@@ -1,15 +1,28 @@
 # BF1942 Command Center
 
-A modern, responsive Battlefield 1942 community hub built with Next.js 14, the App Router, Tailwind CSS, and shadcn-inspired UI components. The dashboard delivers player analytics, server listings, community resources, and authentication flows with light/dark theming.
+A modern, responsive Battlefield 1942 community hub built with Next.js 15, the App Router, Tailwind CSS, and shadcn-inspired UI components. The dashboard delivers player analytics, server listings, community resources, authentication flows, and administrative tools with light/dark theming.
+
+## Features
+
+- **Player Statistics & Analytics** - Comprehensive player profiles, session tracking, and performance metrics
+- **Server Directory** - Live server listings with real-time player counts and map rotation
+- **Authentication System** - Secure login/signup with NextAuth 5.0 and PostgreSQL session management
+- **Admin Panel** - Administrative tools for player management, claims, and whitelisting
+- **Community Features** - Clans, challenges, achievements, battle buddies, and leaderboards
+- **Content Hub** - Guides, mods, wiki (maps, weapons, gameplay), and news articles
+- **Interactive Tools** - Signature generation, search functionality, and player comparison views
+- **Game Health Dashboard** - Real-time server monitoring and network statistics
+- **API Integration** - Proxy configuration for backend API communication
 
 ## Prerequisites
 
-Ensure the following tools are available on your Ubuntu 24.04 LTS (24.0.3) server before setting up the project:
+Ensure the following tools are available before setting up the project:
 
 - **Git** for cloning the repository
-- **cURL** and **build-essential** packages for compiling native dependencies
-- **Node.js 20 LTS** (Next.js 14 requires Node.js 18.17 or newer; Node 20 is recommended)
+- **Node.js 20 LTS** (Next.js 15 requires Node.js 18.17 or newer; Node 20 is recommended)
 - **npm 10+** (installed with Node.js)
+- **PostgreSQL 12+** for database functionality
+- **cURL** and **build-essential** packages for compiling native dependencies (Linux/Ubuntu)
 
 You can install everything with:
 
@@ -67,13 +80,27 @@ The project depends on several `@radix-ui/*` packages. When working behind a cor
 
 ## Running the Development Server
 
-Start the Next.js dev server with hot reloading:
+Start the Next.js dev server with Turbo mode for faster hot reloading:
 
 ```bash
 npm run dev
 ```
 
 By default the app is available at [http://localhost:3000](http://localhost:3000). Use `CTRL+C` to stop the server.
+
+### Windows Development
+
+For Windows developers, a PowerShell script is included to generate placeholder achievement images:
+
+```powershell
+.\fill_placeholders.ps1
+```
+
+To generate static assets for signature images:
+
+```bash
+node generate-static.js
+```
 
 ### Recommended Development Workflow
 
@@ -86,7 +113,81 @@ By default the app is available at [http://localhost:3000](http://localhost:3000
 
 Compile the optimized production build:
 
+Create a `.env.local` file at the project root with the following required variables:
+
+```env
+# PostgreSQL Database Connection
+This will also run the post-build notification script (`scripts/notify-deploy.js`).
+
+Launch the production server:
+
 ```bash
+npm run start
+```
+
+The server listens on port `3000` by default. Configure reverse proxies (Nginx, Caddy, etc.) as needed for public access.
+
+## Database Setup
+
+TheProject Structure
+
+```
+app/              # Next.js app router pages and API routes
+  ├── actions/    # Server actions for data mutations
+  ├── admin/      # Admin panel pages
+  ├── api/        # API route handlers
+  └── ...         # Feature-specific page routes
+components/       # Reusable React components
+  └── ui/         # Base UI components (shadcn-based)
+content/          # Static content (maps, mods documentation)
+hooks/            # Custom React hooks
+lib/              # Utility functions, database, auth, schemas
+public/           # Static assets (images, fonts)
+scripts/          # Build and deployment scripts
+```
+
+## Key Technologies
+
+- **Next.js 15** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **PostgreSQL** - Primary database with pg driver
+- **NextAuth 5.0** - Authentication and session management
+- **Tailwind CSS** - Utility-first styling
+- **Radix UI** - Accessible component primitives
+- **Recharts** - Data visualization and charts
+- **React Hook Form + Zod** - Form validation and handling
+- **Lucide React** - Icon library
+
+## Maintenance Tasks
+
+- **Dependency updates:** `npm outdated` and `npm update`
+| Database connection errors | Verify `POSTGRES_DSN` is correctly set in `.env.local`. Check PostgreSQL server is running and accessible. For remote connections, ensure `POSTGRES_SSL=true` is set if required. |
+| Authentication not working | Ensure `NEXTAUTH_SECRET` and `NEXTAUTH_URL` are properly configured in environment variables. |
+- **Code quality:** `npm run lint`
+- **Static type checks:** `npx tsc --noEmit`
+- **Regenerate static assets:** `node generate-static.js`
+- Achievement tracking and challenge systems
+- `next.config.mjs` – Next.js configuration including API rewrites
+- `lib/schemas.ts` – Zod validation schemas
+- `lib/db.ts` – PostgreSQL connection pool configuration
+
+## Scripts
+
+- `npm run dev` - Start development server with Turbo mode
+- `npm run build` - Build for production (includes post-build notification)
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint code quality checks
+- `node generate-static.js` - Generate base64-encoded static assets for signatures
+- `.\fill_placeholders.ps1` - (Windows) Generate placeholder achievement images
+
+With these steps, yourerly configured and the connection string is set in the `POSTGRES_DSN` environment variable. The application expects the database schema to be initialized before first run
+
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here
+```
+
+**Important:** Never commit the `.env.local` file or any secrets to version control. The `.gitignore` file is configured to exclude environment files
 npm run build
 ```
 

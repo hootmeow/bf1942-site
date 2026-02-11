@@ -141,11 +141,11 @@ export function AppShell({ children, user }: AppShellProps) {
         <SiteSidebar isCollapsed={isCollapsed} isMobileOpen={isMobileOpen} onCloseMobile={closeMobile} />
         <div className="flex min-h-screen flex-1 flex-col">
           <AppHeader onToggleSidebar={toggleSidebar} user={user} />
-          <main className="flex-1 bg-background px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+          <main className="flex-1 bg-background px-3 pb-8 pt-4 sm:px-4 sm:pb-10 sm:pt-6 lg:px-8">
             <div className="mx-auto max-w-7xl">{children}</div>
           </main>
-          <footer className="border-t border-border/60 bg-background/90 px-4 py-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl text-center text-xs text-muted-foreground">
+          <footer className="border-t border-border/60 bg-background/90 px-3 py-3 sm:px-4 sm:py-4 lg:px-8">
+            <div className="mx-auto max-w-7xl text-center text-[10px] sm:text-xs text-muted-foreground">
               <Link href="/about" className="px-2 hover:underline">
                 About
               </Link>
@@ -170,24 +170,21 @@ interface AppHeaderProps {
 function AppHeader({ onToggleSidebar, user }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border/60 bg-background/90 backdrop-blur">
-      <div className="flex items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="flex items-center gap-2 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-8">
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10"
+          className="h-9 w-9 sm:h-10 sm:w-10 shrink-0"
           onClick={onToggleSidebar}
           aria-label="Toggle navigation"
         >
-          <PanelLeft className="h-5 w-5" />
+          <PanelLeft className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
-        <div className="flex w-full items-center gap-3">
-          <div className="flex w-full items-center md:hidden">
+        <div className="flex w-full items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex w-full items-center min-w-0">
             <PlayerSearch />
           </div>
-          <div className="hidden w-full items-center md:flex">
-            <PlayerSearch />
-          </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1 sm:gap-2 shrink-0">
             <ThemeToggle />
 
             <Button variant="ghost" size="icon" className="h-9 w-9 hidden" aria-label="Notifications">
@@ -220,20 +217,20 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
   const sidebarContent = (
     <div
       className={cn(
-        "flex h-full flex-col border-r border-border/60 bg-background/95 backdrop-blur transition-all",
-        collapsed ? "w-20" : "w-64"
+        "flex h-full flex-col border-r border-border/60 bg-background/95 backdrop-blur transition-all duration-200",
+        collapsed ? "w-16 sm:w-20" : "w-64"
       )}
     >
-      <div className="flex items-center gap-3 px-4 py-6">
+      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-4 sm:py-6">
         {/* --- REVERTED to Avatar and ADDED animate-pulse-glow --- */}
-        <Avatar className="h-10 w-10 border border-primary/50 animate-pulse-glow">
-          <AvatarFallback className="bg-primary/20 text-primary">BF</AvatarFallback>
+        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border border-primary/50 animate-pulse-glow">
+          <AvatarFallback className="bg-primary/20 text-primary text-xs sm:text-sm">BF</AvatarFallback>
         </Avatar>
         {/* --- END MODIFIED SECTION --- */}
         {!collapsed && (
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Command Center</p>
-            <p className="text-lg font-bold text-foreground">BF1942.online</p>
+            <p className="text-[10px] sm:text-sm font-semibold uppercase tracking-wide text-muted-foreground leading-tight">Command Center</p>
+            <p className="text-sm sm:text-lg font-bold text-foreground">BF1942.online</p>
           </div>
         )}
       </div>
@@ -406,11 +403,11 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
 
   return (
     <>
-      <aside className={cn("hidden md:block", isCollapsed ? "w-20" : "w-64")}>{sidebarContent}</aside>
+      <aside className={cn("hidden md:block", isCollapsed ? "w-16 sm:w-20" : "w-64")}>{sidebarContent}</aside>
       {isMobileOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={onCloseMobile} aria-hidden />
-          <div className="relative z-50 w-64">{sidebarContent}</div>
+          <div className="relative z-50 w-[280px] max-w-[85vw]">{sidebarContent}</div>
         </div>
       )}
     </>

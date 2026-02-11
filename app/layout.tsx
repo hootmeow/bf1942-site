@@ -9,6 +9,18 @@ import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
+// --- VIEWPORT CONFIGURATION ---
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' }
+  ],
+};
+
 // --- MODIFIED METADATA ---
 export const metadata: Metadata = {
   // Set your canonical URL base

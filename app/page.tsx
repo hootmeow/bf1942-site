@@ -129,56 +129,57 @@ export default function Page() {
   const activeServerCount = topServers.filter(s => s.current_state === "ACTIVE").length;
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className="space-y-6 pb-8 sm:space-y-8">
       {/* --- Command Center Hero --- */}
-      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 px-6 py-12 shadow-2xl sm:px-12 sm:py-16">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 px-4 py-8 shadow-2xl sm:px-12 sm:py-16">
         {/* Background Effects */}
-        <div className="absolute -right-20 -top-20 h-[500px] w-[500px] rounded-full bg-green-500/10 blur-[120px]" />
-        <div className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full bg-blue-500/10 blur-[100px]" />
+        <div className="absolute -right-20 -top-20 h-[300px] w-[300px] sm:h-[500px] sm:w-[500px] rounded-full bg-green-500/10 blur-[80px] sm:blur-[120px]" />
+        <div className="absolute -bottom-20 -left-20 h-[250px] w-[250px] sm:h-[400px] sm:w-[400px] rounded-full bg-blue-500/10 blur-[70px] sm:blur-[100px]" />
 
         <div className="relative z-10">
           {/* Status Badge */}
-          <div className="flex items-center gap-2 mb-6 animate-fade-in-up">
-            <span className="relative flex h-2.5 w-2.5">
+          <div className="flex items-center gap-2 mb-4 sm:mb-6 animate-fade-in-up">
+            <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
+              <span className="relative inline-flex h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-green-500"></span>
             </span>
-            <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 font-mono">
-              SYSTEM ONLINE // MONITORING ACTIVE FRONTS
+            <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 font-mono text-[10px] sm:text-xs">
+              <span className="hidden sm:inline">SYSTEM ONLINE // MONITORING ACTIVE FRONTS</span>
+              <span className="sm:hidden">SYSTEM ONLINE</span>
             </Badge>
           </div>
 
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-7xl animate-fade-in-up stagger-1">
+          <div className="flex flex-col gap-6 sm:gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-3 sm:space-y-4">
+              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-7xl animate-fade-in-up stagger-1">
                 <AnimatedCounter value={data.current_active_players} duration={1500} />
-                <span className="ml-3 text-2xl font-normal text-slate-400 sm:text-3xl">Soldiers Deployed</span>
+                <span className="block sm:inline sm:ml-3 mt-1 sm:mt-0 text-base sm:text-2xl lg:text-3xl font-normal text-slate-400">Soldiers Deployed</span>
               </h1>
-              <p className="max-w-[500px] text-lg text-slate-400 animate-fade-in-up stagger-2">
+              <p className="max-w-[500px] text-sm sm:text-lg text-slate-400 animate-fade-in-up stagger-2">
                 Live telemetry from {activeServerCount} active battlefields worldwide.
               </p>
             </div>
 
             {/* Stats Cards */}
-            <div className="flex flex-wrap gap-4 animate-fade-in-up stagger-3">
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4 card-hover">
-                <div className="rounded-lg bg-blue-500/20 p-2.5 text-blue-400">
-                  <Users className="h-5 w-5" />
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4 animate-fade-in-up stagger-3">
+              <div className="flex items-center gap-2 sm:gap-3 rounded-lg sm:rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-3 py-3 sm:px-5 sm:py-4 card-hover">
+                <div className="rounded-md sm:rounded-lg bg-blue-500/20 p-1.5 sm:p-2.5 text-blue-400">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-slate-500">Total Players</p>
-                  <p className="font-mono text-xl font-bold text-white">
+                  <p className="text-[10px] sm:text-xs font-medium uppercase text-slate-500">Total Players</p>
+                  <p className="font-mono text-base sm:text-xl font-bold text-white">
                     <AnimatedCounter value={data.total_players_seen} duration={1200} />
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-5 py-4 card-hover">
-                <div className="rounded-lg bg-amber-500/20 p-2.5 text-amber-400">
-                  <Activity className="h-5 w-5" />
+              <div className="flex items-center gap-2 sm:gap-3 rounded-lg sm:rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-3 py-3 sm:px-5 sm:py-4 card-hover">
+                <div className="rounded-md sm:rounded-lg bg-amber-500/20 p-1.5 sm:p-2.5 text-amber-400">
+                  <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-slate-500">Rounds Logged</p>
-                  <p className="font-mono text-xl font-bold text-white">
+                  <p className="text-[10px] sm:text-xs font-medium uppercase text-slate-500">Rounds Logged</p>
+                  <p className="font-mono text-base sm:text-xl font-bold text-white">
                     <AnimatedCounter value={data.total_rounds_processed} duration={1200} />
                   </p>
                 </div>
@@ -189,15 +190,15 @@ export default function Page() {
       </div>
 
       {/* --- Top Active Servers Section --- */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-2 text-primary">
-              <ServerIcon className="h-5 w-5" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="rounded-md sm:rounded-lg bg-primary/10 p-1.5 sm:p-2 text-primary">
+              <ServerIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">Top Active Servers</h2>
-              <p className="text-sm text-muted-foreground">Live battlefields with the most action</p>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">Top Active Servers</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">Live battlefields with the most action</p>
             </div>
           </div>
           <Button asChild variant="outline" size="sm" className="hidden sm:flex">
@@ -212,7 +213,7 @@ export default function Page() {
 
         {/* Server Grid */}
         {topServers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {topServers.map(server => (
               <ServerSummaryCard key={server.server_id} server={server} />
             ))}
@@ -234,15 +235,15 @@ export default function Page() {
       </div>
 
       {/* --- Activity Chart Section --- */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-2 text-primary">
-              <TrendingUp className="h-5 w-5" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="rounded-md sm:rounded-lg bg-primary/10 p-1.5 sm:p-2 text-primary">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">Player Activity</h2>
-              <p className="text-sm text-muted-foreground">Global player count over time</p>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">Player Activity</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">Global player count over time</p>
             </div>
           </div>
           <Button asChild variant="outline" size="sm" className="hidden sm:flex">
@@ -253,7 +254,7 @@ export default function Page() {
         </div>
 
         <Card className="border-border/60 overflow-hidden">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <PlayerActivityChart
               data24h={data.global_concurrency_timeline_24h || data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_timeline_7d || data.global_concurrency_heatmap_7d}
