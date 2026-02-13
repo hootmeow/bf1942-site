@@ -114,7 +114,7 @@ export async function deleteOrganization(orgId: number) {
     }
 }
 
-export async function removeMember(orgId: number, targetUserId: number) {
+export async function removeMember(orgId: number, targetUserId: string) {
     const session = await auth()
     if (!session?.user?.id) return { error: "Login required" }
 
@@ -142,7 +142,7 @@ export async function removeMember(orgId: number, targetUserId: number) {
     return { ok: true }
 }
 
-export async function updateMemberRole(orgId: number, targetUserId: number, newRole: string) {
+export async function updateMemberRole(orgId: number, targetUserId: string, newRole: string) {
     const session = await auth()
     if (!session?.user?.id) return { error: "Login required" }
 

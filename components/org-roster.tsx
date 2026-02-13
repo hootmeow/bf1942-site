@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Crown, Shield, User, Trash2 } from "lucide-react"
 
 interface Member {
-  user_id: number
+  user_id: string
   name: string
   image?: string | null
   role: string
@@ -17,8 +17,8 @@ interface OrgRosterProps {
   roster: Member[]
   isLeader?: boolean
   currentUserId?: string | null
-  onRemove?: (userId: number) => void
-  onChangeRole?: (userId: number, newRole: string) => void
+  onRemove?: (userId: string) => void
+  onChangeRole?: (userId: string, newRole: string) => void
 }
 
 const ROLE_ICONS: Record<string, React.ReactNode> = {

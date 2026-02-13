@@ -177,7 +177,7 @@ export default function OrgDetailPage() {
     setEditLoading(false)
   }
 
-  async function handleRemoveMember(userId: number) {
+  async function handleRemoveMember(userId: string) {
     const res = await removeMember(orgId, userId)
     if (res.ok) {
       setRoster(roster.filter(m => String(m.user_id) !== String(userId)))
@@ -185,7 +185,7 @@ export default function OrgDetailPage() {
     }
   }
 
-  async function handleChangeRole(userId: number, newRole: string) {
+  async function handleChangeRole(userId: string, newRole: string) {
     const res = await updateMemberRole(orgId, userId, newRole)
     if (res.ok) {
       setRoster(roster.map(m => String(m.user_id) === String(userId) ? { ...m, role: newRole } : m))
