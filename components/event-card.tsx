@@ -8,9 +8,14 @@ import Link from "next/link"
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   tournament: { label: "Tournament", color: "bg-red-500/10 text-red-500 border-red-500/20" },
   themed_night: { label: "Themed Night", color: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
-  training: { label: "Training", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
   casual: { label: "Casual", color: "bg-green-500/10 text-green-500 border-green-500/20" },
   other: { label: "Event", color: "bg-secondary text-muted-foreground" },
+}
+
+const RECURRENCE_SHORT: Record<string, string> = {
+  weekly: "Weekly",
+  biweekly: "Biweekly",
+  monthly: "Monthly",
 }
 
 export interface EventSummary {
@@ -26,6 +31,8 @@ export interface EventSummary {
   org_tag?: string | null
   going_count: number
   maybe_count: number
+  recurrence_frequency?: string | null
+  recurrence_end?: string | null
 }
 
 interface EventCardProps {
@@ -47,9 +54,16 @@ export function EventCard({ event }: EventCardProps) {
         )}
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <Badge variant="outline" className={typeInfo.color}>
-              {typeInfo.label}
-            </Badge>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Badge variant="outline" className={typeInfo.color}>
+                {typeInfo.label}
+              </Badge>
+              {event.recurrence_frequency && (
+                <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[10px]">
+                  {RECURRENCE_SHORT[event.recurrence_frequency] || "Recurring"}
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Users className="h-3 w-3" />
               {event.going_count}

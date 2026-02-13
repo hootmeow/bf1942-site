@@ -26,6 +26,7 @@ import { ServerFlag } from "@/components/server-flag";
 import { useServerGeo } from "@/hooks/use-server-geo";
 import { Sparkline } from "@/components/sparkline";
 import { ServerNetworkMonitor } from "@/components/server-network-monitor";
+import { ServerEvents } from "@/components/server-events";
 
 // Types
 interface ServerInfo {
@@ -434,6 +435,9 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
           />
         )}
       </div>
+
+      {/* Events tagged to this server */}
+      {server_info?.server_id && <ServerEvents serverId={server_info.server_id} />}
 
       {/* Server Player Stats */}
       {server_info?.server_id && (

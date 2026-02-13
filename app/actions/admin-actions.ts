@@ -19,6 +19,12 @@ async function checkAdmin() {
     return session.user
 }
 
+export async function getIsAdmin(): Promise<boolean> {
+    const session = await auth()
+    if (!session?.user?.id) return false
+    return isUserAdmin(session.user.id)
+}
+
 export async function approveClaim(claimId: string) { // Changed to string (UUID)
     await checkAdmin()
 

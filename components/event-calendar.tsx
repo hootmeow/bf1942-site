@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -10,6 +10,8 @@ interface CalendarEvent {
   title: string
   event_date: string
   event_type: string
+  recurrence_frequency?: string | null
+  recurrence_end?: string | null
 }
 
 interface EventCalendarProps {
@@ -20,12 +22,59 @@ interface EventCalendarProps {
 const EVENT_TYPE_DOT: Record<string, string> = {
   tournament: "bg-red-500",
   themed_night: "bg-purple-500",
-  training: "bg-blue-500",
   casual: "bg-green-500",
   other: "bg-muted-foreground",
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+function addInterval(date: Date, frequency: string): Date {
+  const d = new Date(date)
+  if (frequency === "weekly") d.setDate(d.getDate() + 7)
+  else if (frequency === "biweekly") d.setDate(d.getDate() + 14)
+  else if (frequency === "monthly") d.setMonth(d.getMonth() + 1)
+  return d
+}
+
+function expandRecurringEvents(events: CalendarEvent[], year: number, month: number): { day: number; event: CalendarEvent }[] {
+  const monthStart = new Date(year, month, 1)
+  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59)
+  const results: { day: number; event: CalendarEvent }[] = []
+
+  for (const ev of events) {
+    const eventDate = new Date(ev.event_date)
+
+    if (!ev.recurrence_frequency) {
+      // Non-recurring: just check if it falls in this month
+      if (eventDate.getFullYear() === year && eventDate.getMonth() === month) {
+        results.push({ day: eventDate.getDate(), event: ev })
+      }
+      continue
+    }
+
+    // Recurring: generate occurrences within this month
+    const recEnd = ev.recurrence_end ? new Date(ev.recurrence_end + "T23:59:59") : new Date(year, month + 1, 0, 23, 59, 59)
+    const limit = recEnd < monthEnd ? recEnd : monthEnd
+    let current = new Date(eventDate)
+
+    // Fast-forward to near the start of this month
+    while (current < monthStart) {
+      current = addInterval(current, ev.recurrence_frequency)
+    }
+
+    // Generate occurrences within the month
+    let safety = 0
+    while (current <= limit && safety < 50) {
+      if (current >= monthStart && current <= monthEnd) {
+        results.push({ day: current.getDate(), event: ev })
+      }
+      current = addInterval(current, ev.recurrence_frequency)
+      safety++
+    }
+  }
+
+  return results
+}
 
 export function EventCalendar({ events, onDateClick }: EventCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -43,16 +92,16 @@ export function EventCalendar({ events, onDateClick }: EventCalendarProps) {
   const prevMonth = () => setCurrentMonth(new Date(year, month - 1, 1))
   const nextMonth = () => setCurrentMonth(new Date(year, month + 1, 1))
 
-  // Index events by day
-  const eventsByDay: Record<number, CalendarEvent[]> = {}
-  for (const ev of events) {
-    const d = new Date(ev.event_date)
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      const day = d.getDate()
-      if (!eventsByDay[day]) eventsByDay[day] = []
-      eventsByDay[day].push(ev)
+  // Expand recurring events into day occurrences
+  const eventsByDay = useMemo(() => {
+    const result: Record<number, CalendarEvent[]> = {}
+    const expanded = expandRecurringEvents(events, year, month)
+    for (const { day, event } of expanded) {
+      if (!result[day]) result[day] = []
+      result[day].push(event)
     }
-  }
+    return result
+  }, [events, year, month])
 
   const cells: (number | null)[] = []
   for (let i = 0; i < firstDay; i++) cells.push(null)
@@ -111,9 +160,9 @@ export function EventCalendar({ events, onDateClick }: EventCalendarProps) {
                   </span>
                   {dayEvents.length > 0 && (
                     <div className="flex flex-wrap gap-0.5 mt-0.5">
-                      {dayEvents.slice(0, 3).map((ev) => (
+                      {dayEvents.slice(0, 3).map((ev, idx) => (
                         <div
-                          key={ev.event_id}
+                          key={`${ev.event_id}-${idx}`}
                           className={cn("h-1.5 w-1.5 rounded-full", EVENT_TYPE_DOT[ev.event_type] || EVENT_TYPE_DOT.other)}
                           title={ev.title}
                         />

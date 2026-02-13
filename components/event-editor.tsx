@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,6 +14,10 @@ interface EventEditorProps {
   initialEventDate?: string
   initialEndDate?: string
   initialBannerUrl?: string
+  initialRecurrenceFrequency?: string
+  initialRecurrenceEnd?: string
+  initialServerId?: string
+  initialTimezone?: string
   loading?: boolean
   submitLabel?: string
 }
@@ -24,6 +29,32 @@ const EVENT_TYPES = [
   { value: "other", label: "Other" },
 ]
 
+const RECURRENCE_OPTIONS = [
+  { value: "", label: "None (One-time)" },
+  { value: "weekly", label: "Weekly" },
+  { value: "biweekly", label: "Every 2 Weeks" },
+  { value: "monthly", label: "Monthly" },
+]
+
+const TIMEZONES = [
+  { value: "", label: "Local Time (browser)" },
+  { value: "UTC", label: "UTC" },
+  { value: "America/New_York", label: "US Eastern" },
+  { value: "America/Chicago", label: "US Central" },
+  { value: "America/Denver", label: "US Mountain" },
+  { value: "America/Los_Angeles", label: "US Pacific" },
+  { value: "Europe/London", label: "UK / GMT" },
+  { value: "Europe/Berlin", label: "Central Europe" },
+  { value: "Europe/Helsinki", label: "Eastern Europe" },
+  { value: "Asia/Tokyo", label: "Japan" },
+  { value: "Australia/Sydney", label: "Australia Eastern" },
+]
+
+interface ServerOption {
+  server_id: number
+  name: string
+}
+
 export function EventEditor({
   initialTitle = "",
   initialDescription = "",
@@ -31,9 +62,33 @@ export function EventEditor({
   initialEventDate = "",
   initialEndDate = "",
   initialBannerUrl = "",
+  initialRecurrenceFrequency = "",
+  initialRecurrenceEnd = "",
+  initialServerId = "",
+  initialTimezone = "",
   loading,
   submitLabel = "Create Event",
 }: EventEditorProps) {
+  const [servers, setServers] = useState<ServerOption[]>([])
+
+  useEffect(() => {
+    async function fetchServers() {
+      try {
+        const res = await fetch("/api/v1/servers/search/metrics")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.ok && data.servers) {
+            setServers(data.servers.map((s: any) => ({
+              server_id: s.server_id,
+              name: s.current_server_name || `Server ${s.server_id}`,
+            })))
+          }
+        }
+      } catch {}
+    }
+    fetchServers()
+  }, [])
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -62,6 +117,54 @@ export function EventEditor({
           <Label htmlFor="ev-end">End Date & Time (optional)</Label>
           <Input id="ev-end" name="endDate" type="datetime-local" defaultValue={initialEndDate} />
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="ev-tz">Timezone</Label>
+        <select
+          id="ev-tz"
+          name="timezone"
+          defaultValue={initialTimezone}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          {TIMEZONES.map((tz) => (
+            <option key={tz.value} value={tz.value}>{tz.label}</option>
+          ))}
+        </select>
+        <p className="text-[0.8rem] text-muted-foreground">UTC time will always be shown alongside the selected timezone.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="ev-recurrence">Repeats</Label>
+          <select
+            id="ev-recurrence"
+            name="recurrenceFrequency"
+            defaultValue={initialRecurrenceFrequency}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            {RECURRENCE_OPTIONS.map((r) => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="ev-recurrence-end">Repeat Until (optional)</Label>
+          <Input id="ev-recurrence-end" name="recurrenceEnd" type="date" defaultValue={initialRecurrenceEnd} />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="ev-server">Server (optional)</Label>
+        <select
+          id="ev-server"
+          name="serverId"
+          defaultValue={initialServerId}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <option value="">No server</option>
+          {servers.map((s) => (
+            <option key={s.server_id} value={s.server_id}>{s.name}</option>
+          ))}
+        </select>
+        <p className="text-[0.8rem] text-muted-foreground">Tag a server so the event shows on its page.</p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="ev-desc">Description</Label>

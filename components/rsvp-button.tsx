@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Check, HelpCircle, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { rsvpEvent } from "@/app/actions/event-actions"
 
 interface RsvpButtonProps {
   eventId: number
@@ -24,17 +25,10 @@ export function RsvpButton({ eventId, currentStatus, onStatusChange }: RsvpButto
   async function handleRsvp(newStatus: string) {
     setLoading(true)
     try {
-      const res = await fetch(`/api/v1/events/${eventId}/rsvp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      })
+      const res = await rsvpEvent(eventId, newStatus)
       if (res.ok) {
-        const data = await res.json()
-        if (data.ok) {
-          setStatus(data.status === "not_going" ? null : data.status)
-          onStatusChange?.(data.status)
-        }
+        setStatus(res.status === "not_going" ? null : res.status)
+        onStatusChange?.(res.status!)
       }
     } catch {
     } finally {
