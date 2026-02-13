@@ -60,6 +60,7 @@ export const metadata: Metadata = {
 // --- END MODIFIED METADATA ---
 
 import { auth } from "@/lib/auth"; // Import auth
+import { SessionProvider } from "@/components/session-provider";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -94,9 +95,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         />
         {/* --- END ADDED SECTION --- */}
-        <ThemeProvider>
-          <AppShell user={session?.user}>{children}</AppShell>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider>
+            <AppShell user={session?.user}>{children}</AppShell>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -1,0 +1,102 @@
+"use server"
+
+import { auth } from "@/lib/auth"
+import { pool } from "@/lib/db"
+import { isUserAdmin } from "@/lib/admin-auth"
+import { revalidatePath } from "next/cache"
+
+export async function createEvent(formData: FormData) {
+    const session = await auth()
+    if (!session?.user?.id) return { error: "Login required" }
+
+    const title = (formData.get("title") as string)?.trim()
+    const description = (formData.get("description") as string)?.trim()
+    const eventType = (formData.get("eventType") as string) || "other"
+    const eventDate = formData.get("eventDate") as string
+    const endDate = (formData.get("endDate") as string) || null
+    const organizerOrgId = formData.get("organizerOrgId") ? Number(formData.get("organizerOrgId")) : null
+    const bannerUrl = (formData.get("bannerUrl") as string)?.trim()
+
+    if (!title || title.length > 200) return { error: "Title required, max 200 chars" }
+    if (!eventDate) return { error: "Event date required" }
+
+    const client = await pool.connect()
+    try {
+        const res = await client.query(
+            `INSERT INTO events (title, description, event_type, event_date, end_date, organizer_user_id, organizer_org_id, banner_url)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING event_id`,
+            [title, description || null, eventType, eventDate, endDate, session.user.id, organizerOrgId, bannerUrl || null]
+        )
+        revalidatePath("/events")
+        return { ok: true, eventId: res.rows[0].event_id }
+    } catch (e) {
+        console.error("Create event error:", e)
+        return { error: "Failed to create event" }
+    } finally {
+        client.release()
+    }
+}
+
+export async function updateEvent(eventId: number, formData: FormData) {
+    const session = await auth()
+    if (!session?.user?.id) return { error: "Login required" }
+
+    const isAdmin = await isUserAdmin(session.user.id)
+    const client = await pool.connect()
+
+    try {
+        const evRes = await client.query("SELECT organizer_user_id FROM events WHERE event_id = $1", [eventId])
+        if (evRes.rows.length === 0) return { error: "Event not found" }
+        if (String(evRes.rows[0].organizer_user_id) !== session.user.id && !isAdmin) {
+            return { error: "Not authorized" }
+        }
+
+        const title = (formData.get("title") as string)?.trim()
+        const description = (formData.get("description") as string)?.trim()
+        const eventType = (formData.get("eventType") as string) || "other"
+        const eventDate = formData.get("eventDate") as string
+        const endDate = (formData.get("endDate") as string) || null
+        const bannerUrl = (formData.get("bannerUrl") as string)?.trim()
+
+        if (!title) return { error: "Title required" }
+
+        await client.query(
+            `UPDATE events SET title = $1, description = $2, event_type = $3, event_date = $4,
+                    end_date = $5, banner_url = $6, updated_at = NOW()
+             WHERE event_id = $7`,
+            [title, description || null, eventType, eventDate, endDate, bannerUrl || null, eventId]
+        )
+        revalidatePath(`/events/${eventId}`)
+        return { ok: true }
+    } catch (e) {
+        console.error("Update event error:", e)
+        return { error: "Failed to update" }
+    } finally {
+        client.release()
+    }
+}
+
+export async function deleteEvent(eventId: number) {
+    const session = await auth()
+    if (!session?.user?.id) return { error: "Login required" }
+
+    const isAdmin = await isUserAdmin(session.user.id)
+    const client = await pool.connect()
+
+    try {
+        const evRes = await client.query("SELECT organizer_user_id FROM events WHERE event_id = $1", [eventId])
+        if (evRes.rows.length === 0) return { error: "Event not found" }
+        if (String(evRes.rows[0].organizer_user_id) !== session.user.id && !isAdmin) {
+            return { error: "Not authorized" }
+        }
+
+        await client.query("DELETE FROM events WHERE event_id = $1", [eventId])
+        revalidatePath("/events")
+        return { ok: true }
+    } catch (e) {
+        console.error("Delete event error:", e)
+        return { error: "Failed to delete" }
+    } finally {
+        client.release()
+    }
+}

@@ -36,6 +36,11 @@ import { AchievementsList, Achievement } from "@/components/achievements-list";
 import { PlayerSessionStats } from "@/components/player-session-stats";
 import { PlayerServerRanks } from "@/components/player-server-ranks";
 import { PlayerMapPerformance, MapPerformanceStat } from "@/components/player-map-performance";
+import { ProfileGallery } from "@/components/profile-gallery";
+import { WarStoryCard, type WarStory } from "@/components/war-story-card";
+import { WarStoryEditor } from "@/components/war-story-editor";
+import { getThemeClasses } from "@/components/theme-picker";
+import { ImageIcon as GalleryIcon, BookOpen, MapPin } from "lucide-react";
 
 // --- Interfaces ---
 interface PlayerInfo {
@@ -52,6 +57,9 @@ interface PlayerInfo {
   discord_image?: string | null;
   is_flagged?: boolean;
   flag_reason?: string | null;
+  profile_theme?: string | null;
+  favorite_maps?: string[] | null;
+  gallery_urls?: string[] | null;
 }
 
 interface LinkedAlias {
@@ -118,6 +126,7 @@ interface PlayerProfileApiResponse {
   linked_aliases?: LinkedAlias[];
   achievements?: Achievement[];
   online_status?: OnlineStatus;
+  war_stories?: WarStory[];
   lifetime_stats: LifetimeStats | null;
   personal_bests: PersonalBests | null;
   playstyle_habits: PlaystyleHabits | null;
@@ -406,8 +415,37 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
   // DESTRUCTURING HAPPENS HERE, SAFE AFTER CHECKS
   const { player_info, linked_aliases, online_status, lifetime_stats, personal_bests, playstyle_habits, recent_rounds } = profile;
 
+  const [warStories, setWarStories] = useState<WarStory[]>(profile.war_stories || []);
+  const isOwner = currentUser?.id === player_info.linked_user_id;
+
+  const refreshWarStories = async () => {
+    try {
+      const res = await fetch(`/api/v1/players/${player_info.player_id}/war-stories`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok) setWarStories(data.stories);
+      }
+    } catch {}
+  };
+
+  const handleDeleteStory = async (storyId: number) => {
+    try {
+      const res = await fetch(`/api/v1/players/${player_info.player_id}/war-stories/${storyId}`, { method: "DELETE" });
+      if (res.ok) refreshWarStories();
+    } catch {}
+  };
+
+  const handleToggleFeatured = async (storyId: number) => {
+    try {
+      const res = await fetch(`/api/v1/players/${player_info.player_id}/war-stories/${storyId}/feature`, { method: "PUT" });
+      if (res.ok) refreshWarStories();
+    } catch {}
+  };
+
+  const themeClass = getThemeClasses(player_info.profile_theme || "default");
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${themeClass}`}>
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
@@ -607,6 +645,9 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
               initialCountry={player_info.iso_country_code}
               initialTitle={player_info.custom_title}
               initialDiscordVisible={player_info.display_discord_id}
+              initialTheme={player_info.profile_theme}
+              initialFavoriteMaps={player_info.favorite_maps}
+              initialGalleryUrls={player_info.gallery_urls}
             />
           )}
         </div>
@@ -693,6 +734,80 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         <div className="mb-6">
           <AchievementsList achievements={profile.achievements} />
         </div>
+      )}
+
+      {/* Favorite Maps */}
+      {player_info.favorite_maps && player_info.favorite_maps.length > 0 && (
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle as="h2" className="text-base flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-amber-500" />
+              Favorite Maps
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {player_info.favorite_maps.map((mapName, i) => (
+                <span key={i} className="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-500 ring-1 ring-inset ring-amber-500/20">
+                  {mapName}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gallery */}
+      {player_info.gallery_urls && player_info.gallery_urls.length > 0 && (
+        <>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-pink-500/10">
+              <GalleryIcon className="h-5 w-5 text-pink-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">Gallery</h2>
+              <p className="text-sm text-muted-foreground">Screenshots and memories</p>
+            </div>
+          </div>
+          <ProfileGallery urls={player_info.gallery_urls} />
+        </>
+      )}
+
+      {/* War Stories */}
+      {(warStories.length > 0 || isOwner) && (
+        <>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <BookOpen className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">War Stories</h2>
+                <p className="text-sm text-muted-foreground">Memorable moments from the battlefield</p>
+              </div>
+            </div>
+            {isOwner && (
+              <WarStoryEditor playerId={player_info.player_id} onCreated={refreshWarStories} />
+            )}
+          </div>
+          {warStories.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {warStories.map((story) => (
+                <WarStoryCard
+                  key={story.story_id}
+                  story={story}
+                  isOwner={isOwner}
+                  onDelete={handleDeleteStory}
+                  onToggleFeatured={handleToggleFeatured}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="border-border/60 p-6 text-center">
+              <p className="text-sm text-muted-foreground">No war stories yet. Add your first one!</p>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Activity Section Header */}

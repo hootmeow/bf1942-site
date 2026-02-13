@@ -244,6 +244,52 @@ body {
   }
 }
 
+/* --- Profile Themes --- */
+.theme-axis {
+  --theme-accent: 0 84% 60%;
+  --theme-accent-soft: 0 84% 60%;
+}
+.theme-axis .stat-card-highlight {
+  border-color: hsl(0 84% 60% / 0.3);
+}
+
+.theme-allied {
+  --theme-accent: 217 91% 60%;
+  --theme-accent-soft: 217 91% 60%;
+}
+.theme-allied .stat-card-highlight {
+  border-color: hsl(217 91% 60% / 0.3);
+}
+
+.theme-desert {
+  --theme-accent: 38 92% 50%;
+  --theme-accent-soft: 38 92% 50%;
+}
+.theme-desert .stat-card-highlight {
+  border-color: hsl(38 92% 50% / 0.3);
+}
+
+.theme-pacific {
+  --theme-accent: 187 72% 50%;
+  --theme-accent-soft: 187 72% 50%;
+}
+.theme-pacific .stat-card-highlight {
+  border-color: hsl(187 72% 50% / 0.3);
+}
+
+.theme-arctic {
+  --theme-accent: 199 89% 75%;
+  --theme-accent-soft: 199 89% 75%;
+}
+.theme-arctic .stat-card-highlight {
+  border-color: hsl(199 89% 75% / 0.3);
+}
+
+/* Theme accent overrides for themed profiles */
+.theme-axis, .theme-allied, .theme-desert, .theme-pacific, .theme-arctic {
+  --primary: var(--theme-accent);
+}
+
 /* Accessibility: respect reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,

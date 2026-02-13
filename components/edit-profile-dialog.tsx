@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/components/ui/toast-simple" // Updated to use toast-simple as seen in other files
-import { Pencil, Loader2, Save } from "lucide-react"
+import { useToast } from "@/components/ui/toast-simple"
+import { Pencil, Loader2, Save, X, Plus } from "lucide-react"
 import { updateProfileSettings, type ProfileUpdateState } from "@/app/actions/profile-actions"
+import { ThemePicker } from "@/components/theme-picker"
 
-// --- ISO Country List (Partial for now, can be expanded) ---
+// --- ISO Country List ---
 const COUNTRIES = [
     { code: "", name: "No Flag" },
     { code: "US", name: "United States" },
@@ -43,6 +44,9 @@ interface EditProfileDialogProps {
     initialCountry?: string | null
     initialTitle?: string | null
     initialDiscordVisible?: boolean
+    initialTheme?: string | null
+    initialFavoriteMaps?: string[] | null
+    initialGalleryUrls?: string[] | null
 }
 
 function SubmitButton() {
@@ -60,24 +64,41 @@ export function EditProfileDialog({
     initialBio,
     initialCountry,
     initialTitle,
-    initialDiscordVisible
+    initialDiscordVisible,
+    initialTheme,
+    initialFavoriteMaps,
+    initialGalleryUrls,
 }: EditProfileDialogProps) {
     const [open, setOpen] = useState(false)
     const { toast } = useToast()
-
-    // Using simple action binding for now, effectively handling response in client wrapper if needed
-    // or utilizing standard useFormState
     const [state, formAction] = useFormState(updateProfileSettings, {})
 
-    // Effect to close dialog on success
+    const [theme, setTheme] = useState(initialTheme || "default")
+    const [favoriteMaps, setFavoriteMaps] = useState<string[]>(initialFavoriteMaps || [])
+    const [galleryUrls, setGalleryUrls] = useState<string[]>(initialGalleryUrls || [])
+    const [newMap, setNewMap] = useState("")
+    const [newUrl, setNewUrl] = useState("")
+
     if (state.ok && open) {
         setOpen(false)
         toast({ title: "Updated", description: state.message, variant: "success" })
-        // Reset state so it doesn't immediately close next time
         state.ok = false
-    } else if (state.error && open) {
-        // We can toast here too, but React rendering lifecycle might make it spammy if not careful.
-        // Better to show error in UI.
+    }
+
+    const addMap = () => {
+        const trimmed = newMap.trim()
+        if (trimmed && favoriteMaps.length < 10 && !favoriteMaps.includes(trimmed)) {
+            setFavoriteMaps([...favoriteMaps, trimmed])
+            setNewMap("")
+        }
+    }
+
+    const addGalleryUrl = () => {
+        const trimmed = newUrl.trim()
+        if (trimmed && galleryUrls.length < 6) {
+            setGalleryUrls([...galleryUrls, trimmed])
+            setNewUrl("")
+        }
     }
 
     return (
@@ -88,7 +109,7 @@ export function EditProfileDialog({
                     Edit Profile
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Profile</DialogTitle>
                     <DialogDescription>
@@ -98,8 +119,10 @@ export function EditProfileDialog({
 
                 <form action={formAction} className="space-y-6 pt-4">
                     <input type="hidden" name="playerId" value={playerId} />
+                    <input type="hidden" name="profileTheme" value={theme} />
+                    <input type="hidden" name="favoriteMaps" value={JSON.stringify(favoriteMaps)} />
+                    <input type="hidden" name="galleryUrls" value={JSON.stringify(galleryUrls)} />
 
-                    {/* Error Display */}
                     {state.error && (
                         <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
                             {state.error}
@@ -151,6 +174,73 @@ export function EditProfileDialog({
                             <p className="text-[0.8rem] text-muted-foreground">Max 280 characters.</p>
                         </div>
 
+                        {/* Profile Theme */}
+                        <div className="space-y-2">
+                            <Label>Profile Theme</Label>
+                            <ThemePicker value={theme} onChange={setTheme} />
+                        </div>
+
+                        {/* Favorite Maps */}
+                        <div className="space-y-2">
+                            <Label>Favorite Maps</Label>
+                            <div className="flex flex-wrap gap-1.5">
+                                {favoriteMaps.map((m, i) => (
+                                    <span key={i} className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-xs">
+                                        {m}
+                                        <button type="button" onClick={() => setFavoriteMaps(favoriteMaps.filter((_, idx) => idx !== i))}>
+                                            <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                            {favoriteMaps.length < 10 && (
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={newMap}
+                                        onChange={(e) => setNewMap(e.target.value)}
+                                        placeholder="e.g. El Alamein"
+                                        className="flex-1"
+                                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addMap() } }}
+                                    />
+                                    <Button type="button" variant="outline" size="sm" onClick={addMap}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                            <p className="text-[0.8rem] text-muted-foreground">Up to 10 maps.</p>
+                        </div>
+
+                        {/* Gallery URLs */}
+                        <div className="space-y-2">
+                            <Label>Gallery Images (URLs)</Label>
+                            <div className="space-y-1.5">
+                                {galleryUrls.map((url, i) => (
+                                    <div key={i} className="flex items-center gap-2 rounded-md bg-secondary/50 px-2 py-1">
+                                        <span className="text-xs truncate flex-1">{url}</span>
+                                        <button type="button" onClick={() => setGalleryUrls(galleryUrls.filter((_, idx) => idx !== i))}>
+                                            <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            {galleryUrls.length < 6 && (
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={newUrl}
+                                        onChange={(e) => setNewUrl(e.target.value)}
+                                        placeholder="https://i.imgur.com/..."
+                                        className="flex-1"
+                                        type="url"
+                                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addGalleryUrl() } }}
+                                    />
+                                    <Button type="button" variant="outline" size="sm" onClick={addGalleryUrl}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                            <p className="text-[0.8rem] text-muted-foreground">Up to 6 image URLs.</p>
+                        </div>
+
                         {/* Show Discord ID */}
                         <div className="flex items-center justify-between rounded-lg border p-4">
                             <div className="space-y-0.5">
@@ -177,7 +267,6 @@ export function EditProfileDialog({
     )
 }
 
-// Simple Utility to get emoji flag from country code
 function getFlagEmoji(countryCode: string) {
     const codePoints = countryCode
         .toUpperCase()

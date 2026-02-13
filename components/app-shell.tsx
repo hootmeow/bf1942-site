@@ -100,7 +100,8 @@ const navItems: NavItem[] = [
     icon: Users,
     href: "/community",
     children: [
-      { label: "Clan Headquarters", href: "/clans" },
+      { label: "Organizations", href: "/orgs" },
+      { label: "Events", href: "/events" },
     ]
   },
   {
