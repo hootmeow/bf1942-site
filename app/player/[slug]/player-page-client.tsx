@@ -364,6 +364,13 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
     fetchMapPerformance();
   }, [playerName]);
 
+  const [warStories, setWarStories] = useState<WarStory[]>(profile?.war_stories || []);
+
+  // Update war stories when profile loads
+  useEffect(() => {
+    if (profile?.war_stories) setWarStories(profile.war_stories);
+  }, [profile?.war_stories]);
+
   const handleShare = () => {
     const url = window.location.href;
     const kdr = profile?.lifetime_stats?.overall_kdr?.toFixed(2) || "N/A";
@@ -415,7 +422,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
   // DESTRUCTURING HAPPENS HERE, SAFE AFTER CHECKS
   const { player_info, linked_aliases, online_status, lifetime_stats, personal_bests, playstyle_habits, recent_rounds } = profile;
 
-  const [warStories, setWarStories] = useState<WarStory[]>(profile.war_stories || []);
   const isOwner = currentUser?.id === player_info.linked_user_id;
 
   const refreshWarStories = async () => {
