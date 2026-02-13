@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -20,12 +20,18 @@ import {
   Map,
   UserPlus,
   Wifi,
+  Shield,
+  UserMinus,
+  BarChart3,
 } from "lucide-react";
 import {
   ComposedChart,
   Area,
   Line,
   AreaChart,
+  BarChart,
+  Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -59,9 +65,23 @@ interface GamemodeEntry {
 interface MapTrendEntry {
   map_name: string;
   total_rounds: number;
+  avg_players?: number;
+  total_player_rounds?: number;
   recent_7d: number;
   prev_7d: number;
   trend_pct: number;
+}
+
+interface PlayerChurn {
+  churned_7d: number;
+  active_7d: number;
+  retention_rate: number;
+}
+
+interface PlayerExperience {
+  newcomers: number;
+  regulars: number;
+  veterans: number;
 }
 
 interface PlayerRetentionEntry {
@@ -86,6 +106,8 @@ interface HealthData {
   map_trends?: MapTrendEntry[];
   player_retention?: PlayerRetentionEntry[];
   ping_trends?: PingTrendEntry[];
+  player_churn?: PlayerChurn;
+  player_experience?: PlayerExperience;
 }
 
 interface GameHealthDashboardProps {
@@ -134,6 +156,8 @@ function formatDay(day: string) {
   });
 }
 
+const tickInterval = (dataLength: number) => Math.max(1, Math.floor(dataLength / 6));
+
 export function GameHealthDashboard({
   healthData,
   globalMetrics,
@@ -143,10 +167,35 @@ export function GameHealthDashboard({
     server_trend,
     rounds_trend,
     gamemode_breakdown,
-    map_trends = [],
+    map_trends: initialMapTrends = [],
     player_retention = [],
     ping_trends = [],
+    player_churn,
+    player_experience,
   } = healthData;
+
+  const [map_trends, setMapTrends] = useState<MapTrendEntry[]>(initialMapTrends);
+  const [activeRoundsOnly, setActiveRoundsOnly] = useState(true);
+  const [mapTrendsLoading, setMapTrendsLoading] = useState(false);
+
+  const toggleMapFilter = useCallback(async () => {
+    const newActive = !activeRoundsOnly;
+    setActiveRoundsOnly(newActive);
+    setMapTrendsLoading(true);
+    try {
+      const minPlayers = newActive ? 8 : 0;
+      const res = await fetch(`/api/v1/metrics/global/health?min_players=${minPlayers}`);
+      const data = await res.json();
+      if (data.ok && data.map_trends) {
+        setMapTrends(data.map_trends);
+      }
+    } catch {
+      // Revert on error
+      setActiveRoundsOnly(!newActive);
+    } finally {
+      setMapTrendsLoading(false);
+    }
+  }, [activeRoundsOnly]);
 
   // Compute summary stats
   const stats = useMemo(() => {
@@ -383,7 +432,7 @@ export function GameHealthDashboard({
                   dataKey="day"
                   tickFormatter={formatDay}
                   tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                  interval="preserveStartEnd"
+                  interval={tickInterval(population_trend.length)}
                 />
                 <YAxis
                   tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
@@ -480,7 +529,7 @@ export function GameHealthDashboard({
                     dataKey="day"
                     tickFormatter={formatDay}
                     tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    interval="preserveStartEnd"
+                    interval={tickInterval(player_retention.length)}
                   />
                   <YAxis
                     tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
@@ -576,7 +625,7 @@ export function GameHealthDashboard({
                       fontSize: 11,
                       fill: "hsl(var(--muted-foreground))",
                     }}
-                    interval="preserveStartEnd"
+                    interval={tickInterval(server_trend.length)}
                   />
                   <YAxis
                     tick={{
@@ -652,7 +701,7 @@ export function GameHealthDashboard({
                       fontSize: 11,
                       fill: "hsl(var(--muted-foreground))",
                     }}
-                    interval="preserveStartEnd"
+                    interval={tickInterval(rounds_trend.length)}
                   />
                   <YAxis
                     tick={{
@@ -689,13 +738,39 @@ export function GameHealthDashboard({
       {map_trends.length > 0 && (
         <Card className="border-border/60 bg-card/40">
           <CardHeader>
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <Map className="h-5 w-5 text-cyan-400" />
-              Map Popularity (30 Days)
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <Map className="h-5 w-5 text-cyan-400" />
+                Map Popularity (30 Days)
+              </CardTitle>
+              <div className="flex items-center gap-1 rounded-lg border border-border/40 bg-muted/30 p-0.5">
+                <button
+                  onClick={() => { if (!activeRoundsOnly) toggleMapFilter(); }}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    activeRoundsOnly
+                      ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  disabled={mapTrendsLoading}
+                >
+                  Active Rounds
+                </button>
+                <button
+                  onClick={() => { if (activeRoundsOnly) toggleMapFilter(); }}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    !activeRoundsOnly
+                      ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  disabled={mapTrendsLoading}
+                >
+                  All Rounds
+                </button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2.5">
+            <div className={`space-y-2.5 ${mapTrendsLoading ? "opacity-50" : ""}`}>
               {map_trends.map((item) => {
                 const percent = (item.total_rounds / mapTrendsMax) * 100;
                 return (
@@ -707,6 +782,9 @@ export function GameHealthDashboard({
                       </span>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {item.total_rounds.toLocaleString()} rounds
+                        {item.avg_players != null && (
+                          <span className="ml-1 text-muted-foreground/70">(avg {item.avg_players} players)</span>
+                        )}
                       </span>
                       {item.trend_pct > 5 ? (
                         <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 text-xs px-1.5 py-0">
@@ -737,6 +815,103 @@ export function GameHealthDashboard({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Player Churn & Experience — 2-column grid */}
+      {(player_churn || player_experience) && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Player Churn */}
+          {player_churn && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <UserMinus className="h-5 w-5 text-red-400" />
+                  Player Retention (7-Day)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-border/40 bg-muted/30 p-3 text-center">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Active</p>
+                    <p className="font-mono text-xl font-bold text-green-400 tabular-nums">
+                      {player_churn.active_7d.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border/40 bg-muted/30 p-3 text-center">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Churned</p>
+                    <p className="font-mono text-xl font-bold text-red-400 tabular-nums">
+                      {player_churn.churned_7d.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border/40 bg-muted/30 p-3 text-center">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Retention</p>
+                    <p className="font-mono text-xl font-bold text-blue-400 tabular-nums">
+                      {player_churn.retention_rate}%
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Churned = active 8-14 days ago but not seen in the last 7 days
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Player Experience Breakdown */}
+          {player_experience && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-purple-400" />
+                  Player Experience Mix (7-Day Active)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const total = player_experience.newcomers + player_experience.regulars + player_experience.veterans;
+                  if (total === 0) return <p className="text-sm text-muted-foreground">No data available</p>;
+                  const segments = [
+                    { label: "Newcomers", value: player_experience.newcomers, color: "#22c55e", desc: "<5 days" },
+                    { label: "Regulars", value: player_experience.regulars, color: "#3b82f6", desc: "5-19 days" },
+                    { label: "Veterans", value: player_experience.veterans, color: "#a855f7", desc: "20+ days" },
+                  ];
+                  return (
+                    <>
+                      <div className="h-4 w-full rounded-full overflow-hidden flex bg-muted/30">
+                        {segments.map((seg) => (
+                          <div
+                            key={seg.label}
+                            className="h-full transition-all duration-500"
+                            style={{
+                              width: `${(seg.value / total) * 100}%`,
+                              backgroundColor: seg.color,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 mt-4">
+                        {segments.map((seg) => (
+                          <div key={seg.label} className="text-center">
+                            <div className="flex items-center justify-center gap-1.5 mb-1">
+                              <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
+                              <span className="text-xs font-medium text-muted-foreground">{seg.label}</span>
+                            </div>
+                            <p className="font-mono text-lg font-bold text-foreground tabular-nums">
+                              {seg.value.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {Math.round((seg.value / total) * 100)}% &middot; {seg.desc}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Game Mode Breakdown */}
@@ -846,7 +1021,7 @@ export function GameHealthDashboard({
                     dataKey="day"
                     tickFormatter={formatDay}
                     tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    interval="preserveStartEnd"
+                    interval={tickInterval(ping_trends.length)}
                   />
                   <YAxis
                     tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
