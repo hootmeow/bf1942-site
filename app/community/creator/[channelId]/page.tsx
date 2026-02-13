@@ -60,8 +60,6 @@ export default function CreatorProfilePage() {
   const [videos, setVideos] = useState<CreatorVideo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [playingId, setPlayingId] = useState<string | null>(null)
-
   useEffect(() => {
     async function fetchCreator() {
       try {
@@ -142,38 +140,29 @@ export default function CreatorProfilePage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {videos.map((video) => (
           <Card key={video.video_id} className="border-border/60 bg-card/40 overflow-hidden">
-            <div className="relative aspect-video bg-muted/30">
-              {playingId === video.video_id ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${video.video_id}?autoplay=1`}
-                  className="absolute inset-0 w-full h-full"
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                />
-              ) : (
-                <button
-                  className="relative w-full h-full group"
-                  onClick={() => setPlayingId(video.video_id)}
-                >
-                  <img
-                    src={video.thumbnail_url}
-                    alt={video.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-                    <div className="rounded-full bg-red-600/90 p-3 group-hover:scale-110 transition-transform">
-                      <Play className="h-6 w-6 text-white fill-white" />
-                    </div>
-                  </div>
-                  {video.duration_seconds > 0 && (
-                    <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-mono px-1.5 py-0.5 rounded">
-                      {formatDuration(video.duration_seconds)}
-                    </span>
-                  )}
-                </button>
+            <a
+              href={`https://www.youtube.com/watch?v=${video.video_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative block aspect-video bg-muted/30 group"
+            >
+              <img
+                src={video.thumbnail_url}
+                alt={video.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                <div className="rounded-full bg-red-600/90 p-3 group-hover:scale-110 transition-transform">
+                  <Play className="h-6 w-6 text-white fill-white" />
+                </div>
+              </div>
+              {video.duration_seconds > 0 && (
+                <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-mono px-1.5 py-0.5 rounded">
+                  {formatDuration(video.duration_seconds)}
+                </span>
               )}
-            </div>
+            </a>
             <CardContent className="p-3">
               <h3 className="font-semibold text-sm line-clamp-2 leading-tight">{video.title}</h3>
               <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
