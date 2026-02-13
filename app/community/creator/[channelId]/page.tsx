@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Youtube, Eye, Film, ExternalLink, Play, Clock } from "lucide-react"
+import { Loader2, Youtube, Eye, Film, ExternalLink, Play, Clock, ThumbsUp, MessageCircle, Smartphone } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
 
@@ -18,11 +18,15 @@ interface CreatorProfile {
 
 interface CreatorVideo {
   video_id: string
+  url: string
   title: string
   thumbnail_url: string
   upload_date: string
   external_views: number
   duration_seconds: number
+  like_count?: number
+  comment_count?: number
+  is_short?: boolean
   detected_map?: string | null
   detected_tags?: string[] | null
 }
@@ -141,7 +145,7 @@ export default function CreatorProfilePage() {
         {videos.map((video) => (
           <Card key={video.video_id} className="border-border/60 bg-card/40 overflow-hidden">
             <a
-              href={`https://www.youtube.com/watch?v=${video.video_id}`}
+              href={video.url || `https://www.youtube.com/watch?v=${video.video_id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="relative block aspect-video bg-muted/30 group"
@@ -162,6 +166,11 @@ export default function CreatorProfilePage() {
                   {formatDuration(video.duration_seconds)}
                 </span>
               )}
+              {video.is_short && (
+                <span className="absolute top-2 left-2 bg-red-600/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                  SHORT
+                </span>
+              )}
             </a>
             <CardContent className="p-3">
               <h3 className="font-semibold text-sm line-clamp-2 leading-tight">{video.title}</h3>
@@ -170,6 +179,18 @@ export default function CreatorProfilePage() {
                   <Eye className="h-3 w-3" />
                   {formatViews(video.external_views)}
                 </span>
+                {(video.like_count ?? 0) > 0 && (
+                  <span className="flex items-center gap-0.5">
+                    <ThumbsUp className="h-3 w-3" />
+                    {formatViews(video.like_count!)}
+                  </span>
+                )}
+                {(video.comment_count ?? 0) > 0 && (
+                  <span className="flex items-center gap-0.5">
+                    <MessageCircle className="h-3 w-3" />
+                    {formatViews(video.comment_count!)}
+                  </span>
+                )}
                 <span>{timeAgo(video.upload_date)}</span>
               </div>
               {((video.detected_tags && video.detected_tags.length > 0) || video.detected_map) && (
