@@ -37,10 +37,8 @@ import { PlayerSessionStats } from "@/components/player-session-stats";
 import { PlayerServerRanks } from "@/components/player-server-ranks";
 import { PlayerMapPerformance, MapPerformanceStat } from "@/components/player-map-performance";
 import { ProfileGallery } from "@/components/profile-gallery";
-import { WarStoryCard, type WarStory } from "@/components/war-story-card";
-import { WarStoryEditor } from "@/components/war-story-editor";
 import { getThemeClasses } from "@/components/theme-picker";
-import { ImageIcon as GalleryIcon, BookOpen, MapPin } from "lucide-react";
+import { ImageIcon as GalleryIcon, MapPin } from "lucide-react";
 
 // --- Interfaces ---
 interface PlayerInfo {
@@ -126,7 +124,6 @@ interface PlayerProfileApiResponse {
   linked_aliases?: LinkedAlias[];
   achievements?: Achievement[];
   online_status?: OnlineStatus;
-  war_stories?: WarStory[];
   lifetime_stats: LifetimeStats | null;
   personal_bests: PersonalBests | null;
   playstyle_habits: PlaystyleHabits | null;
@@ -364,13 +361,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
     fetchMapPerformance();
   }, [playerName]);
 
-  const [warStories, setWarStories] = useState<WarStory[]>(profile?.war_stories || []);
-
-  // Update war stories when profile loads
-  useEffect(() => {
-    if (profile?.war_stories) setWarStories(profile.war_stories);
-  }, [profile?.war_stories]);
-
   const handleShare = () => {
     const url = window.location.href;
     const kdr = profile?.lifetime_stats?.overall_kdr?.toFixed(2) || "N/A";
@@ -423,30 +413,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
   const { player_info, linked_aliases, online_status, lifetime_stats, personal_bests, playstyle_habits, recent_rounds } = profile;
 
   const isOwner = currentUser?.id === player_info.linked_user_id;
-
-  const refreshWarStories = async () => {
-    try {
-      const res = await fetch(`/api/v1/players/${player_info.player_id}/war-stories`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ok) setWarStories(data.stories);
-      }
-    } catch {}
-  };
-
-  const handleDeleteStory = async (storyId: number) => {
-    try {
-      const res = await fetch(`/api/v1/players/${player_info.player_id}/war-stories/${storyId}`, { method: "DELETE" });
-      if (res.ok) refreshWarStories();
-    } catch {}
-  };
-
-  const handleToggleFeatured = async (storyId: number) => {
-    try {
-      const res = await fetch(`/api/v1/players/${player_info.player_id}/war-stories/${storyId}/feature`, { method: "PUT" });
-      if (res.ok) refreshWarStories();
-    } catch {}
-  };
 
   const themeClass = getThemeClasses(player_info.profile_theme || "default");
 
@@ -776,43 +742,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             </div>
           </div>
           <ProfileGallery urls={player_info.gallery_urls} />
-        </>
-      )}
-
-      {/* War Stories */}
-      {(warStories.length > 0 || isOwner) && (
-        <>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <BookOpen className="h-5 w-5 text-orange-500" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight">War Stories</h2>
-                <p className="text-sm text-muted-foreground">Memorable moments from the battlefield</p>
-              </div>
-            </div>
-            {isOwner && (
-              <WarStoryEditor playerId={player_info.player_id} onCreated={refreshWarStories} />
-            )}
-          </div>
-          {warStories.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {warStories.map((story) => (
-                <WarStoryCard
-                  key={story.story_id}
-                  story={story}
-                  isOwner={isOwner}
-                  onDelete={handleDeleteStory}
-                  onToggleFeatured={handleToggleFeatured}
-                />
-              ))}
-            </div>
-          ) : (
-            <Card className="border-border/60 p-6 text-center">
-              <p className="text-sm text-muted-foreground">No war stories yet. Add your first one!</p>
-            </Card>
-          )}
         </>
       )}
 
