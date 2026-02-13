@@ -12,9 +12,10 @@ import {
 } from "./ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import Link from "next/link"
-import { User, Settings, LogOut } from "lucide-react"
+import { User, Settings, LogOut, Shield } from "lucide-react"
 import { useEffect, useState, useTransition } from "react"
 import { getMyLinkedProfile } from "@/app/actions/profile-actions"
+import { getIsAdmin } from "@/app/actions/admin-actions"
 
 export function SignIn() {
     return (
@@ -26,6 +27,7 @@ export function SignIn() {
 
 export function UserNav({ user }: { user: any }) {
     const [profileSlug, setProfileSlug] = useState<string | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
@@ -33,6 +35,7 @@ export function UserNav({ user }: { user: any }) {
             getMyLinkedProfile(user.id).then((slug) => {
                 if (slug) setProfileSlug(slug);
             });
+            getIsAdmin().then(setIsAdmin);
         }
     }, [user]);
 
@@ -75,6 +78,19 @@ export function UserNav({ user }: { user: any }) {
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                 </DropdownMenuItem>
+
+                {isAdmin && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin" className="cursor-pointer text-primary">
+                                <Shield className="mr-2 h-4 w-4" />
+                                <span>Admin Panel</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    </>
+                )}
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     className="cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-50"

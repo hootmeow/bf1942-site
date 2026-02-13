@@ -4,7 +4,11 @@ import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Loader2, Play, Eye, Clock, Youtube, ThumbsUp, MessageCircle, Star, Film, Smartphone } from "lucide-react"
+import Link from "next/link"
+import {
+  Loader2, Play, Eye, Youtube, ThumbsUp, MessageCircle,
+  Star, Film, Smartphone, Users, TrendingUp
+} from "lucide-react"
 
 interface CommunityVideo {
   video_id: string
@@ -62,12 +66,14 @@ function timeAgo(date: string): string {
   if (days === 1) return "Yesterday"
   if (days < 7) return `${days} days ago`
   if (days < 30) return `${Math.floor(days / 7)} weeks ago`
-  return `${Math.floor(days / 30)} months ago`
+  if (days < 365) return `${Math.floor(days / 30)} months ago`
+  return `${Math.floor(days / 365)} years ago`
 }
 
 const TIME_FILTERS = [
   { value: "7", label: "7 Days" },
   { value: "30", label: "30 Days" },
+  { value: "90", label: "90 Days" },
   { value: "all", label: "All Time" },
 ]
 
@@ -79,7 +85,7 @@ const TYPE_FILTERS = [
 
 function VideoCard({ video }: { video: CommunityVideo }) {
   return (
-    <Card className="border-border/60 bg-card/40 overflow-hidden">
+    <Card className="border-border/60 bg-card/40 overflow-hidden hover:border-border transition-colors">
       <a
         href={video.url || `https://www.youtube.com/watch?v=${video.video_id}`}
         target="_blank"
@@ -92,8 +98,8 @@ function VideoCard({ video }: { video: CommunityVideo }) {
           className="w-full h-full object-cover"
           loading="lazy"
         />
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-          <div className="rounded-full bg-red-600/90 p-3 group-hover:scale-110 transition-transform">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+          <div className="rounded-full bg-red-600/90 p-3 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all">
             <Play className="h-6 w-6 text-white fill-white" />
           </div>
         </div>
@@ -103,7 +109,8 @@ function VideoCard({ video }: { video: CommunityVideo }) {
           </span>
         )}
         {video.is_short && (
-          <span className="absolute top-2 left-2 bg-red-600/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+          <span className="absolute top-2 left-2 bg-red-600/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+            <Smartphone className="h-2.5 w-2.5" />
             SHORT
           </span>
         )}
@@ -116,22 +123,28 @@ function VideoCard({ video }: { video: CommunityVideo }) {
       </a>
 
       <CardContent className="p-3">
-        <div className="flex gap-2">
-          {video.creator_avatar_url && (
-            <img
-              src={video.creator_avatar_url}
-              alt=""
-              className="h-8 w-8 rounded-full shrink-0 mt-0.5"
-            />
-          )}
+        <div className="flex gap-2.5">
+          <Link href={`/community/creator/${video.creator_id}`} className="shrink-0">
+            {video.creator_avatar_url ? (
+              <img
+                src={video.creator_avatar_url}
+                alt=""
+                className="h-9 w-9 rounded-full mt-0.5 hover:ring-2 hover:ring-primary/50 transition-all"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center mt-0.5">
+                <Youtube className="h-4 w-4 text-muted-foreground" />
+              </div>
+            )}
+          </Link>
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-sm line-clamp-2 leading-tight">{video.title}</h3>
-            <a
+            <Link
               href={`/community/creator/${video.creator_id}`}
               className="text-xs text-muted-foreground hover:text-primary transition-colors mt-0.5 block"
             >
               {video.creator_name}
-            </a>
+            </Link>
             <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
               <span className="flex items-center gap-0.5">
                 <Eye className="h-3 w-3" />
@@ -181,10 +194,11 @@ export default function HighlightsPage() {
   const [videos, setVideos] = useState<CommunityVideo[]>([])
   const [featured, setFeatured] = useState<CommunityVideo[]>([])
   const [loading, setLoading] = useState(true)
-  const [timeRange, setTimeRange] = useState("30")
+  const [timeRange, setTimeRange] = useState("all")
   const [contentType, setContentType] = useState("all")
   const [mapFilter, setMapFilter] = useState("")
   const [maps, setMaps] = useState<string[]>([])
+  const [total, setTotal] = useState(0)
 
   useEffect(() => {
     async function fetchVideos() {
@@ -194,6 +208,7 @@ export default function HighlightsPage() {
         if (timeRange !== "all") params.set("days", timeRange)
         if (mapFilter) params.set("map", mapFilter)
         if (contentType !== "all") params.set("content_type", contentType)
+        params.set("limit", "60")
         const res = await fetch(`/api/v1/community/videos?${params}`)
         if (res.ok) {
           const data = await res.json()
@@ -201,6 +216,7 @@ export default function HighlightsPage() {
             setVideos(data.videos)
             setFeatured(data.featured || [])
             if (data.maps) setMaps(data.maps)
+            if (data.total) setTotal(data.total)
           }
         }
       } catch (e) {
@@ -214,6 +230,7 @@ export default function HighlightsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-red-500/10">
@@ -221,13 +238,76 @@ export default function HighlightsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Community Highlights</h1>
-            <p className="text-sm text-muted-foreground">The best BF1942 content from the community</p>
+            <p className="text-sm text-muted-foreground">
+              The best BF1942 content from the community
+              {total > 0 && <span className="ml-1 text-muted-foreground/60">({total} videos)</span>}
+            </p>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/community/creators">
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              Creators
+            </Button>
+          </Link>
         </div>
       </div>
 
+      {/* Stats row */}
+      {!loading && total > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Card className="border-border/60 bg-card/40">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-red-500/10">
+                <Film className="h-4 w-4 text-red-500" />
+              </div>
+              <div>
+                <p className="text-lg font-bold tabular-nums">{total}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Videos</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/60 bg-card/40">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Star className="h-4 w-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-lg font-bold tabular-nums">{featured.length}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Staff Picks</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/60 bg-card/40">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-sky-500/10">
+                <Smartphone className="h-4 w-4 text-sky-500" />
+              </div>
+              <div>
+                <p className="text-lg font-bold tabular-nums">
+                  {videos.filter(v => v.is_short).length}
+                </p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Shorts</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/60 bg-card/40">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+              </div>
+              <div>
+                <p className="text-lg font-bold tabular-nums">{maps.length}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Maps Found</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Featured Section */}
-      {featured.length > 0 && (
+      {featured.length > 0 && contentType === "all" && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Star className="h-4 w-4 text-amber-500" fill="currentColor" />
@@ -242,50 +322,57 @@ export default function HighlightsPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex gap-1">
-          {TYPE_FILTERS.map((f) => {
-            const Icon = f.icon
-            return (
-              <Button
-                key={f.value}
-                variant={contentType === f.value ? "default" : "outline"}
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setContentType(f.value)}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {f.label}
-              </Button>
-            )
-          })}
-        </div>
-        <div className="h-4 w-px bg-border/60" />
-        <div className="flex gap-1">
-          {TIME_FILTERS.map((f) => (
-            <Button
-              key={f.value}
-              variant={timeRange === f.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTimeRange(f.value)}
-            >
-              {f.label}
-            </Button>
-          ))}
-        </div>
-        {maps.length > 0 && (
-          <select
-            value={mapFilter}
-            onChange={(e) => setMapFilter(e.target.value)}
-            className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            <option value="">All Maps</option>
-            {maps.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        )}
-      </div>
+      <Card className="border-border/60 bg-card/40">
+        <CardContent className="p-3">
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex gap-1">
+              {TYPE_FILTERS.map((f) => {
+                const Icon = f.icon
+                return (
+                  <Button
+                    key={f.value}
+                    variant={contentType === f.value ? "default" : "ghost"}
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setContentType(f.value)}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {f.label}
+                  </Button>
+                )
+              })}
+            </div>
+            <div className="h-4 w-px bg-border/60" />
+            <div className="flex gap-1">
+              {TIME_FILTERS.map((f) => (
+                <Button
+                  key={f.value}
+                  variant={timeRange === f.value ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setTimeRange(f.value)}
+                >
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+            {maps.length > 0 && (
+              <>
+                <div className="h-4 w-px bg-border/60" />
+                <select
+                  value={mapFilter}
+                  onChange={(e) => setMapFilter(e.target.value)}
+                  className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="">All Maps</option>
+                  {maps.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Video Grid */}
       {loading ? (
@@ -293,17 +380,26 @@ export default function HighlightsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : videos.length === 0 ? (
-        <div className="text-center py-12">
-          <Youtube className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <p className="mt-4 text-muted-foreground">No videos found</p>
-          <p className="text-xs text-muted-foreground mt-1">Videos are synced automatically every 6 hours</p>
-        </div>
+        <Card className="border-border/60 bg-card/40">
+          <CardContent className="text-center py-12">
+            <Youtube className="mx-auto h-12 w-12 text-muted-foreground/30" />
+            <p className="mt-4 text-muted-foreground">No videos found</p>
+            <p className="text-xs text-muted-foreground mt-1">Try adjusting the filters or check back later</p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {videos.map((video) => (
-            <VideoCard key={video.video_id} video={video} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {videos.map((video) => (
+              <VideoCard key={video.video_id} video={video} />
+            ))}
+          </div>
+          {videos.length >= 50 && (
+            <p className="text-center text-xs text-muted-foreground">
+              Showing top {videos.length} videos. Adjust filters to narrow results.
+            </p>
+          )}
+        </>
       )}
     </div>
   )

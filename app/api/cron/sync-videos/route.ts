@@ -15,17 +15,36 @@ export async function GET(request: Request) {
     }
 
     // days=0 means fetch ALL (no date filter) — useful for initial seed
-    // days=30 (default) for regular cron syncs
+    // default 90 days for regular cron syncs
     const days = parseInt(searchParams.get("days") || "90", 10)
 
     try {
         const videos = await fetchAllBF1942Videos(days)
         let inserted = 0
         let updated = 0
+        let skipped = 0
 
         const client = await pool.connect()
         try {
+            // Load blocked video IDs so we skip them
+            const blockedRes = await client.query(
+                "SELECT video_id FROM community_videos WHERE is_blocked = TRUE"
+            )
+            const blockedVideoIds = new Set(blockedRes.rows.map((r: { video_id: string }) => r.video_id))
+
+            // Load blocked channel IDs so we skip all their videos
+            const blockedChRes = await client.query(
+                "SELECT channel_id FROM blocked_channels"
+            )
+            const blockedChannelIds = new Set(blockedChRes.rows.map((r: { channel_id: string }) => r.channel_id))
+
             for (const video of videos) {
+                // Skip blocked videos and blocked channels
+                if (blockedVideoIds.has(video.video_id) || blockedChannelIds.has(video.creator_id)) {
+                    skipped++
+                    continue
+                }
+
                 const { detected_map, detected_tags } = parseVideoTags(video.title, video.description)
 
                 const res = await client.query(
@@ -44,6 +63,7 @@ export async function GET(request: Request) {
                         detected_map = EXCLUDED.detected_map,
                         detected_tags = EXCLUDED.detected_tags,
                         is_short = EXCLUDED.is_short
+                     WHERE community_videos.is_blocked IS NOT TRUE
                      RETURNING (xmax = 0) AS is_insert`,
                     [
                         video.video_id,
@@ -65,7 +85,9 @@ export async function GET(request: Request) {
                     ]
                 )
 
-                if (res.rows[0]?.is_insert) {
+                if (res.rows.length === 0) {
+                    skipped++ // blocked video that slipped through
+                } else if (res.rows[0]?.is_insert) {
                     inserted++
                 } else {
                     updated++
@@ -80,6 +102,7 @@ export async function GET(request: Request) {
             total_fetched: videos.length,
             inserted,
             updated,
+            skipped,
             timestamp: new Date().toISOString(),
         })
     } catch (e) {
