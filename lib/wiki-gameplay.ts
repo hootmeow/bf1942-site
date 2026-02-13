@@ -432,7 +432,36 @@ export const basicTraining: TrainingTopic[] = [
         ],
         tips: [
             'Radio commands are fastest in combat - "Medic!", "Armor spotted!", etc.',
-            'Spotting enemies does NOT mark them on the mini map; it only sends a radio message.',
+            'Spotting enemies (F3 menu) does NOT place icons on the minimap like later Battlefield games. It only sends a radio voice callout and briefly flashes directional arrows for nearby teammates.',
+        ],
+    },
+    {
+        id: 'voting',
+        title: 'Map & Kick Voting',
+        icon: 'Vote',
+        content: [
+            'Press Tab to open the scoreboard, then right-click and select "Lock" to access the vote menu',
+            'You can vote to change the map or kick a disruptive player',
+            'Votes require 50% of the server to pass',
+        ],
+        tips: [
+            'Use the console commands: game.voteMap [ID] and game.voteKickPlayer [ID] for direct voting',
+            'Type game.listMaps or game.listPlayers in console to see available IDs',
+        ],
+    },
+    {
+        id: 'teamkills',
+        title: 'Teamkill Rules (FTK/PTK)',
+        icon: 'ShieldAlert',
+        content: [
+            'Friendly fire is on by default in most servers',
+            'If teamkilled, open the console (~) and type ptk to punish or ftk to forgive',
+            'Punishing adds extra respawn time for the teamkiller',
+            'Accumulating too many punished teamkills results in auto-kick (server configurable)',
+        ],
+        tips: [
+            'The system is console-only — there is no on-screen prompt like later Battlefield games',
+            'Some servers set punish-by-default mode, where you must type ftk to forgive',
         ],
     },
 ];
@@ -466,7 +495,7 @@ export const advancedTactics: Tactic[] = [
         icon: 'Anchor',
         description: 'Use landing craft to bypass frontline defenses and attack from unexpected directions.',
         points: [
-            'Keep front landing ramp raised during approach for machine gun protection',
+            'The driver can open/close the front ramp with Up/Down Arrow keys. Keep the ramp closed during approach for protection.',
             'Land on undefended coastline sections for rear attacks',
             'LCVPs can patrol coastlines and destroy other landing craft',
             'Mounted machine gun is effective against infantry and light vehicles',
@@ -481,6 +510,7 @@ export const advancedTactics: Tactic[] = [
             'Use rear gunner seat of two-seaters (Stuka, Dauntless, BF-110) for drops',
             'B-17 with two gunner seats is best for dropping small squads',
             'Soldiers can shoot while parachuting, but are vulnerable to ground fire.',
+            'The default parachute key is 9 — rebind it to a mouse button (Options > Controls > Flight) for faster deployment. Press repeatedly if it doesn\'t register on the first try.',
             'Touch-and-go pickups allow rapid ferrying without full landing',
         ],
     },

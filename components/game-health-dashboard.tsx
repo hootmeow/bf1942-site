@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -108,6 +108,7 @@ interface HealthData {
   ping_trends?: PingTrendEntry[];
   player_churn?: PlayerChurn;
   player_experience?: PlayerExperience;
+  map_trends_all?: MapTrendEntry[];
 }
 
 interface GameHealthDashboardProps {
@@ -144,6 +145,21 @@ function getGamemodeColor(
   );
 }
 
+const MAP_COLORS: [string, string][] = [
+  ["#06b6d4", "#22d3ee"], // cyan
+  ["#3b82f6", "#60a5fa"], // blue
+  ["#8b5cf6", "#a78bfa"], // violet
+  ["#ec4899", "#f472b6"], // pink
+  ["#10b981", "#34d399"], // emerald
+  ["#f59e0b", "#fbbf24"], // amber
+  ["#ef4444", "#f87171"], // red
+  ["#6366f1", "#818cf8"], // indigo
+  ["#14b8a6", "#2dd4bf"], // teal
+  ["#f97316", "#fb923c"], // orange
+  ["#84cc16", "#a3e635"], // lime
+  ["#d946ef", "#e879f9"], // fuchsia
+];
+
 function formatDay(day: string) {
   // Handle both "2026-02-01" and "2026-02-01T00:00:00" formats
   const dateStr = day.includes("T") ? day : day + "T00:00:00Z";
@@ -172,30 +188,11 @@ export function GameHealthDashboard({
     ping_trends = [],
     player_churn,
     player_experience,
+    map_trends_all: initialMapTrendsAll = [],
   } = healthData;
 
-  const [map_trends, setMapTrends] = useState<MapTrendEntry[]>(initialMapTrends);
   const [activeRoundsOnly, setActiveRoundsOnly] = useState(true);
-  const [mapTrendsLoading, setMapTrendsLoading] = useState(false);
-
-  const toggleMapFilter = useCallback(async () => {
-    const newActive = !activeRoundsOnly;
-    setActiveRoundsOnly(newActive);
-    setMapTrendsLoading(true);
-    try {
-      const minPlayers = newActive ? 8 : 0;
-      const res = await fetch(`/api/v1/metrics/global/health?min_players=${minPlayers}`);
-      const data = await res.json();
-      if (data.ok && data.map_trends) {
-        setMapTrends(data.map_trends);
-      }
-    } catch {
-      // Revert on error
-      setActiveRoundsOnly(!newActive);
-    } finally {
-      setMapTrendsLoading(false);
-    }
-  }, [activeRoundsOnly]);
+  const map_trends = activeRoundsOnly ? initialMapTrends : initialMapTrendsAll;
 
   // Compute summary stats
   const stats = useMemo(() => {
@@ -745,24 +742,22 @@ export function GameHealthDashboard({
               </CardTitle>
               <div className="flex items-center gap-1 rounded-lg border border-border/40 bg-muted/30 p-0.5">
                 <button
-                  onClick={() => { if (!activeRoundsOnly) toggleMapFilter(); }}
+                  onClick={() => setActiveRoundsOnly(true)}
                   className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                     activeRoundsOnly
                       ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
-                  disabled={mapTrendsLoading}
                 >
                   Active Rounds
                 </button>
                 <button
-                  onClick={() => { if (activeRoundsOnly) toggleMapFilter(); }}
+                  onClick={() => setActiveRoundsOnly(false)}
                   className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                     !activeRoundsOnly
                       ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
-                  disabled={mapTrendsLoading}
                 >
                   All Rounds
                 </button>
@@ -770,13 +765,17 @@ export function GameHealthDashboard({
             </div>
           </CardHeader>
           <CardContent>
-            <div className={`space-y-2.5 ${mapTrendsLoading ? "opacity-50" : ""}`}>
-              {map_trends.map((item) => {
+            <div className="space-y-2.5">
+              {map_trends.map((item, index) => {
                 const percent = (item.total_rounds / mapTrendsMax) * 100;
+                const colors = MAP_COLORS[index % MAP_COLORS.length];
                 return (
                   <div key={item.map_name} className="group">
                     <div className="flex items-center gap-3 mb-1.5">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0 bg-cyan-400" />
+                      <div
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
+                      />
                       <span className="text-sm font-medium text-foreground truncate flex-1">
                         {item.map_name}
                       </span>
@@ -805,7 +804,7 @@ export function GameHealthDashboard({
                         className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
                         style={{
                           width: `${percent}%`,
-                          background: "linear-gradient(90deg, #06b6d4, #22d3ee)",
+                          background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`,
                         }}
                       />
                     </div>
