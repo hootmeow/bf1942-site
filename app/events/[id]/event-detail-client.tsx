@@ -9,10 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RsvpButton } from "@/components/rsvp-button"
 import { EventEditor } from "@/components/event-editor"
-import { Loader2, AlertTriangle, Calendar, Clock, User, Users, Trash2, Pencil, X, Server, Globe } from "lucide-react"
+import { Loader2, AlertTriangle, Calendar, Clock, User, Users, Trash2, Pencil, X, Server, Globe, CalendarClock } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { deleteEvent, updateEvent } from "@/app/actions/event-actions"
+import { getNextOccurrence } from "@/lib/event-utils"
 import { getIsAdmin } from "@/app/actions/admin-actions"
 import { useToast } from "@/components/ui/toast-simple"
 
@@ -151,7 +152,12 @@ export default function EventDetailPage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading event details...</p>
+      </div>
+    )
   }
 
   if (error || !event) {
@@ -166,7 +172,8 @@ export default function EventDetailPage() {
 
   const typeInfo = EVENT_TYPE_LABELS[event.event_type] || EVENT_TYPE_LABELS.other
   const date = new Date(event.event_date)
-  const isPast = date < new Date()
+  const nextDate = getNextOccurrence(event)
+  const isPast = nextDate < new Date()
 
   const RECURRENCE_LABELS: Record<string, string> = {
     weekly: "Weekly",
@@ -281,13 +288,26 @@ export default function EventDetailPage() {
             </div>
           )}
           {event.recurrence_frequency && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>
-                Repeats {RECURRENCE_LABELS[event.recurrence_frequency]?.toLowerCase() || event.recurrence_frequency}
-                {event.recurrence_end && <> until {new Date(event.recurrence_end).toLocaleDateString()}</>}
-              </span>
-            </div>
+            <>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Repeats {RECURRENCE_LABELS[event.recurrence_frequency]?.toLowerCase() || event.recurrence_frequency}
+                  {event.recurrence_end && <> until {new Date(event.recurrence_end).toLocaleDateString()}</>}
+                </span>
+              </div>
+              {!isPast && nextDate.getTime() !== date.getTime() && (
+                <div className="flex items-center gap-2 text-sm">
+                  <CalendarClock className="h-4 w-4 text-primary" />
+                  <span>
+                    Next occurrence:{" "}
+                    {nextDate.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                    {" at "}
+                    {nextDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              )}
+            </>
           )}
           <div className="flex items-center gap-2 text-sm">
             <User className="h-4 w-4 text-muted-foreground" />

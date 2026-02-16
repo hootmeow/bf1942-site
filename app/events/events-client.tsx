@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { EventCard, type EventSummary } from "@/components/event-card"
-import { EventCalendar } from "@/components/event-calendar"
-import { Loader2, Plus, Calendar } from "lucide-react"
+import { EventCalendar, expandRecurringEvents } from "@/components/event-calendar"
+import { Plus, Calendar, X } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const EVENT_TYPES = [
   { value: "", label: "All Types" },
@@ -22,6 +23,7 @@ export default function EventsPage() {
   const [typeFilter, setTypeFilter] = useState("")
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const { data: session } = useSession()
 
   useEffect(() => {
@@ -47,6 +49,19 @@ export default function EventsPage() {
     fetchEvents()
   }, [typeFilter, page])
 
+  // Filter events to the selected calendar date
+  const filteredEvents = useMemo(() => {
+    if (!selectedDate) return events
+    const year = selectedDate.getFullYear()
+    const month = selectedDate.getMonth()
+    const day = selectedDate.getDate()
+    const expanded = expandRecurringEvents(events, year, month)
+    const matchingIds = new Set(
+      expanded.filter((e) => e.day === day).map((e) => e.event.event_id)
+    )
+    return events.filter((e) => matchingIds.has(e.event_id))
+  }, [events, selectedDate])
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -55,7 +70,7 @@ export default function EventsPage() {
             <Calendar className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Events</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">Events</h1>
             <p className="text-sm text-muted-foreground">Tournaments, game nights, and community events</p>
           </div>
         </div>
@@ -70,7 +85,21 @@ export default function EventsPage() {
       </div>
 
       {/* Calendar view */}
-      <EventCalendar events={events} />
+      <EventCalendar events={events} onDateClick={(date) => setSelectedDate(date)} />
+
+      {/* Date filter indicator */}
+      {selectedDate && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+          <Calendar className="h-4 w-4 text-primary" />
+          <span>
+            Showing events for{" "}
+            <strong>{selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</strong>
+          </span>
+          <Button variant="ghost" size="icon" className="h-5 w-5 ml-auto" onClick={() => setSelectedDate(null)}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
@@ -88,18 +117,23 @@ export default function EventsPage() {
 
       {/* Event list */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-[180px] rounded-xl" />
+          ))}
         </div>
-      ) : events.length === 0 ? (
-        <div className="text-center py-12">
-          <Calendar className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <p className="mt-4 text-muted-foreground">No events found</p>
+      ) : filteredEvents.length === 0 ? (
+        <div className="border border-dashed border-border/60 rounded-xl bg-card/30 py-12 text-center">
+          <Calendar className="mx-auto h-10 w-10 opacity-40" />
+          <p className="mt-3 font-medium text-muted-foreground">No events found</p>
+          <p className="text-sm mt-1 text-muted-foreground">
+            {selectedDate ? "Try clearing the date filter or selecting a different date." : "Check back soon for upcoming events."}
+          </p>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
+            {filteredEvents.map((event) => (
               <EventCard key={event.event_id} event={event} />
             ))}
           </div>

@@ -32,10 +32,13 @@ export default function HomeClient() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        // 1. Fetch Global Metrics
-        const metricsRes = await fetch("/api/v1/metrics/global");
-        if (!metricsRes.ok) throw new Error("Failed to fetch metrics");
+        const [metricsRes, serversRes] = await Promise.all([
+          fetch("/api/v1/metrics/global"),
+          fetch("/api/v1/servers"),
+        ]);
 
+        // 1. Process Global Metrics
+        if (!metricsRes.ok) throw new Error("Failed to fetch metrics");
         const metricsJson = await metricsRes.json();
         const parsed = GlobalMetricsSchema.safeParse(metricsJson);
         if (parsed.success) {
@@ -44,27 +47,17 @@ export default function HomeClient() {
           console.error("Metrics validation error:", parsed.error);
         }
 
-        // 2. Fetch Active Servers for Top 5 List
-        const serversRes = await fetch("/api/v1/servers");
+        // 2. Process Active Servers for Top 12 List
         if (serversRes.ok) {
           const serversJson = await serversRes.json();
           const serversParsed = ServerListSchema.safeParse(serversJson);
           if (serversParsed.success) {
-            // Sort to mirror the /servers page logic:
-            // 1. Status (Active -> Empty -> Offline)
-            // 2. Player Count (High -> Low)
             const sorted = [...serversParsed.data.servers].sort((a, b) => {
               const statusA = SERVER_STATUS_ORDER[a.current_state] ?? 99;
               const statusB = SERVER_STATUS_ORDER[b.current_state] ?? 99;
-
-              if (statusA !== statusB) {
-                return statusA - statusB;
-              }
-
+              if (statusA !== statusB) return statusA - statusB;
               return b.current_player_count - a.current_player_count;
             });
-
-            // Take the top 12
             setTopServers(sorted.slice(0, 12));
           }
         }

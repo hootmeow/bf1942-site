@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Server } from "@/components/server-directory";
 import { Globe, Users, Trophy, Crosshair, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -136,6 +136,8 @@ export function LiveTicker({ className }: { className?: string }) {
         }
     }, [news]);
 
+    const tripledNews = useMemo(() => [...news, ...news, ...news], [news]);
+
     if (loading || news.length === 0) return null;
 
     return (
@@ -154,7 +156,7 @@ export function LiveTicker({ className }: { className?: string }) {
                 className="flex whitespace-nowrap items-center gap-8 pl-[100px]"
                 style={{ animation: `marquee ${duration}s linear infinite` }}
             >
-                {[...news, ...news, ...news].map((item, i) => (
+                {tripledNews.map((item, i) => (
                     <div key={`${item.id}-${i}`} className="flex items-center gap-2 text-xs font-mono">
                         <item.icon className="w-3 h-3 text-primary/70" />
                         <span className="text-muted-foreground/90 uppercase">{item.message}</span>

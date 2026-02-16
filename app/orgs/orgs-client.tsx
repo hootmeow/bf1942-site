@@ -4,9 +4,10 @@ import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { OrgCard } from "@/components/org-card"
-import { Loader2, Plus, Search, Users } from "lucide-react"
+import { Plus, Search, Users } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Org {
   org_id: number
@@ -56,7 +57,7 @@ export default function OrgsPage() {
             <Users className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Organizations</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">Organizations</h1>
             <p className="text-sm text-muted-foreground">Community-created groups and clans</p>
           </div>
         </div>
@@ -81,13 +82,16 @@ export default function OrgsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-[140px] rounded-xl" />
+          ))}
         </div>
       ) : orgs.length === 0 ? (
-        <div className="text-center py-12">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <p className="mt-4 text-muted-foreground">No organizations found</p>
+        <div className="border border-dashed border-border/60 rounded-xl bg-card/30 py-12 text-center">
+          <Users className="mx-auto h-10 w-10 opacity-40" />
+          <p className="mt-3 font-medium text-muted-foreground">No organizations found</p>
+          <p className="text-sm mt-1 text-muted-foreground">Try a different search or create your own.</p>
         </div>
       ) : (
         <>

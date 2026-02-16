@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, MapPin } from "lucide-react"
 import Link from "next/link"
+import { getNextOccurrence } from "@/lib/event-utils"
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   tournament: { label: "Tournament", color: "bg-red-500/10 text-red-500 border-red-500/20" },
@@ -41,8 +42,8 @@ interface EventCardProps {
 
 export function EventCard({ event }: EventCardProps) {
   const typeInfo = EVENT_TYPE_LABELS[event.event_type] || EVENT_TYPE_LABELS.other
-  const date = new Date(event.event_date)
-  const isPast = date < new Date()
+  const nextDate = getNextOccurrence(event)
+  const isPast = nextDate < new Date()
 
   return (
     <Link href={`/events/${event.event_id}`}>
@@ -79,9 +80,10 @@ export function EventCard({ event }: EventCardProps) {
           <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+              {event.recurrence_frequency ? "Next: " : ""}
+              {nextDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
               {" "}
-              {date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+              {nextDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
             </span>
             {(event.org_name || event.organizer_name) && (
               <span>

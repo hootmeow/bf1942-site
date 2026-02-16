@@ -33,7 +33,7 @@ export default async function AdminRoundsPage({
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="text-3xl font-bold">Rounds Management</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Rounds Management</h1>
                 <form action={searchAction} className="flex w-full sm:w-auto items-center gap-2">
                     <Input
                         name="query"
@@ -47,9 +47,9 @@ export default async function AdminRoundsPage({
                 </form>
             </div>
 
-            <div className="border rounded-md">
+            <div className="rounded-md border border-border/60 overflow-hidden">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-muted/50">
                         <TableRow>
                             <TableHead className="w-[100px]">ID</TableHead>
                             <TableHead>Date</TableHead>

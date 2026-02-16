@@ -4,6 +4,9 @@ import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { addInterval } from "@/lib/event-utils"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
 
 interface CalendarEvent {
   event_id: number
@@ -26,17 +29,16 @@ const EVENT_TYPE_DOT: Record<string, string> = {
   other: "bg-muted-foreground",
 }
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
-function addInterval(date: Date, frequency: string): Date {
-  const d = new Date(date)
-  if (frequency === "weekly") d.setDate(d.getDate() + 7)
-  else if (frequency === "biweekly") d.setDate(d.getDate() + 14)
-  else if (frequency === "monthly") d.setMonth(d.getMonth() + 1)
-  return d
+const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
+  tournament: { label: "Tournament", color: "bg-red-500/10 text-red-500 border-red-500/20" },
+  themed_night: { label: "Themed Night", color: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
+  casual: { label: "Casual", color: "bg-green-500/10 text-green-500 border-green-500/20" },
+  other: { label: "Event", color: "bg-secondary text-muted-foreground" },
 }
 
-function expandRecurringEvents(events: CalendarEvent[], year: number, month: number): { day: number; event: CalendarEvent }[] {
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+export function expandRecurringEvents(events: CalendarEvent[], year: number, month: number): { day: number; event: CalendarEvent }[] {
   const monthStart = new Date(year, month, 1)
   const monthEnd = new Date(year, month + 1, 0, 23, 59, 59)
   const results: { day: number; event: CalendarEvent }[] = []
@@ -108,6 +110,7 @@ export function EventCalendar({ events, onDateClick }: EventCalendarProps) {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d)
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="rounded-xl border border-border/60 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border/40">
@@ -160,15 +163,41 @@ export function EventCalendar({ events, onDateClick }: EventCalendarProps) {
                   </span>
                   {dayEvents.length > 0 && (
                     <div className="flex flex-wrap gap-0.5 mt-0.5">
-                      {dayEvents.slice(0, 3).map((ev, idx) => (
-                        <div
-                          key={`${ev.event_id}-${idx}`}
-                          className={cn("h-1.5 w-1.5 rounded-full", EVENT_TYPE_DOT[ev.event_type] || EVENT_TYPE_DOT.other)}
-                          title={ev.title}
-                        />
-                      ))}
+                      {dayEvents.slice(0, 3).map((ev, idx) => {
+                        const evTypeInfo = EVENT_TYPE_LABELS[ev.event_type] || EVENT_TYPE_LABELS.other
+                        const evDate = new Date(ev.event_date)
+                        return (
+                          <Tooltip key={`${ev.event_id}-${idx}`}>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={cn("h-1.5 w-1.5 rounded-full cursor-pointer", EVENT_TYPE_DOT[ev.event_type] || EVENT_TYPE_DOT.other)}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="space-y-1 max-w-[200px]">
+                              <p className="font-medium truncate">{ev.title}</p>
+                              <div className="flex items-center gap-1.5">
+                                <Badge variant="outline" className={cn("text-[9px] px-1 py-0", evTypeInfo.color)}>
+                                  {evTypeInfo.label}
+                                </Badge>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {evDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        )
+                      })}
                       {dayEvents.length > 3 && (
-                        <span className="text-[8px] text-muted-foreground">+{dayEvents.length - 3}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-[8px] text-muted-foreground cursor-pointer">+{dayEvents.length - 3}</span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="space-y-0.5">
+                            {dayEvents.slice(3).map((ev, idx) => (
+                              <p key={`${ev.event_id}-overflow-${idx}`} className="text-[10px] truncate">{ev.title}</p>
+                            ))}
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                   )}
@@ -179,5 +208,6 @@ export function EventCalendar({ events, onDateClick }: EventCalendarProps) {
         })}
       </div>
     </div>
+    </TooltipProvider>
   )
 }
