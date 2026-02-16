@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Medal, Trophy, Target, Crosshair, Hash, Loader2, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { Medal, Trophy, Target, Crosshair, Hash, Loader2, ChevronLeft, ChevronRight, Star, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlayerFlag } from "@/components/player-flag";
 
@@ -20,9 +20,12 @@ interface LeaderboardPlayer {
   kdr: number | null;
   rank: number;
   last_seen: string;
+  avg_ping: number | null;
+  min_ping: number | null;
+  max_ping: number | null;
 }
 
-type StatType = "score" | "kills" | "kdr" | "rounds";
+type StatType = "score" | "kills" | "kdr" | "rounds" | "ping";
 
 interface ServerLeaderboardProps {
   serverId: number;
@@ -53,6 +56,12 @@ const STAT_CONFIG = {
     icon: Hash,
     getValue: (p: LeaderboardPlayer) => p.rounds_played.toString(),
     getSubValue: (p: LeaderboardPlayer) => `${p.total_score.toLocaleString()} pts`,
+  },
+  ping: {
+    label: "Ping",
+    icon: Wifi,
+    getValue: (p: LeaderboardPlayer) => p.avg_ping != null ? `${Math.round(p.avg_ping)}ms` : "—",
+    getSubValue: (p: LeaderboardPlayer) => p.min_ping != null && p.max_ping != null ? `${p.min_ping}–${p.max_ping}ms range` : "",
   },
 };
 
@@ -132,6 +141,9 @@ export function ServerLeaderboard({ serverId, slug }: ServerLeaderboardProps) {
               <TabsTrigger value="rounds" className="text-xs h-7 px-3 gap-1">
                 <Hash className="h-3 w-3" /> Rounds
               </TabsTrigger>
+              <TabsTrigger value="ping" className="text-xs h-7 px-3 gap-1">
+                <Wifi className="h-3 w-3" /> Ping
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -202,7 +214,12 @@ export function ServerLeaderboard({ serverId, slug }: ServerLeaderboardProps) {
                   <div className="flex flex-col items-end shrink-0">
                     <div className={cn(
                       "flex items-center gap-1.5 font-bold tabular-nums",
-                      isTopThree ? "text-amber-500" : "text-foreground"
+                      stat === "ping" && player.avg_ping != null
+                        ? player.avg_ping < 50 ? "text-green-500"
+                          : player.avg_ping < 100 ? "text-yellow-500"
+                          : player.avg_ping < 150 ? "text-orange-500"
+                          : "text-red-500"
+                        : isTopThree ? "text-amber-500" : "text-foreground"
                     )}>
                       <StatIcon className="h-3.5 w-3.5 opacity-60" />
                       {config.getValue(player)}

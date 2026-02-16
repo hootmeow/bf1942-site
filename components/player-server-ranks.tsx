@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Server, Trophy, Target, Crosshair, Hash, Loader2, Star, ChevronRight, Medal } from "lucide-react";
+import { Server, Trophy, Target, Crosshair, Hash, Loader2, Star, ChevronRight, Medal, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ServerRank {
@@ -14,10 +14,12 @@ interface ServerRank {
   total_deaths: number;
   total_score: number;
   kdr: number | null;
+  avg_ping: number | null;
   score_rank: number;
   kills_rank: number;
   kdr_rank: number;
   rounds_rank: number;
+  ping_rank: number | null;
   total_players: number;
 }
 
@@ -162,15 +164,18 @@ export function PlayerServerRanks({ playerName }: PlayerServerRanksProps) {
             </div>
 
             {/* Rank Badges */}
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-5 gap-3">
               <RankBadge rank={server.score_rank} total={server.total_players} label="Score" />
               <RankBadge rank={server.kills_rank} total={server.total_players} label="Kills" />
               <RankBadge rank={server.kdr_rank} total={server.total_players} label="K/D" />
               <RankBadge rank={server.rounds_rank} total={server.total_players} label="Rounds" />
+              {server.ping_rank != null && (
+                <RankBadge rank={server.ping_rank} total={server.total_players} label="Ping" />
+              )}
             </div>
 
             {/* Stats Summary */}
-            <div className="mt-3 pt-3 border-t border-border/30 grid grid-cols-4 gap-2 text-center">
+            <div className="mt-3 pt-3 border-t border-border/30 grid grid-cols-5 gap-2 text-center">
               <div>
                 <div className="text-sm font-semibold text-foreground tabular-nums">{server.total_score.toLocaleString()}</div>
                 <div className="text-[10px] text-muted-foreground">Score</div>
@@ -186,6 +191,20 @@ export function PlayerServerRanks({ playerName }: PlayerServerRanksProps) {
               <div>
                 <div className="text-sm font-semibold text-foreground tabular-nums">{server.rounds_played}</div>
                 <div className="text-[10px] text-muted-foreground">Rounds</div>
+              </div>
+              <div>
+                <div className={cn(
+                  "text-sm font-semibold tabular-nums",
+                  server.avg_ping != null
+                    ? server.avg_ping < 50 ? "text-green-500"
+                      : server.avg_ping < 100 ? "text-yellow-500"
+                      : server.avg_ping < 150 ? "text-orange-500"
+                      : "text-red-500"
+                    : "text-muted-foreground"
+                )}>
+                  {server.avg_ping != null ? `${server.avg_ping}ms` : "—"}
+                </div>
+                <div className="text-[10px] text-muted-foreground">Avg Ping</div>
               </div>
             </div>
           </div>

@@ -12,6 +12,7 @@ import { ServerPeakHeatmap } from "@/components/server-peak-heatmap";
 import { MapBalanceTable, MapBalanceStat } from "@/components/map-balance-table";
 import { ServerRegularsList } from "@/components/server-regulars-list";
 import { ServerLeaderboard } from "@/components/server-leaderboard";
+import { ServerConnectionQuality } from "@/components/server-connection-quality";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -435,6 +436,8 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
           />
         )}
       </div>
+
+      {server_info?.server_id && <ServerConnectionQuality serverId={server_info.server_id} />}
 
       {/* Events tagged to this server */}
       {server_info?.server_id && <ServerEvents serverId={server_info.server_id} />}

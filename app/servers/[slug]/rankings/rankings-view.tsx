@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Medal, Trophy, Target, Crosshair, Hash, Loader2, Star, ChevronLeft, ChevronRight,
-  Search, Server, ArrowLeft, X
+  Search, Server, ArrowLeft, X, Wifi
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlayerFlag } from "@/components/player-flag";
@@ -25,9 +25,12 @@ interface RankedPlayer {
   kdr: number | null;
   rank: number;
   last_seen: string;
+  avg_ping: number | null;
+  min_ping: number | null;
+  max_ping: number | null;
 }
 
-type StatType = "score" | "kills" | "kdr" | "rounds";
+type StatType = "score" | "kills" | "kdr" | "rounds" | "ping";
 
 interface ServerRankingsViewProps {
   serverId: number;
@@ -59,6 +62,12 @@ const STAT_CONFIG = {
     icon: Hash,
     getValue: (p: RankedPlayer) => p.rounds_played.toString(),
     getSubValue: (p: RankedPlayer) => `${p.total_score.toLocaleString()} pts`,
+  },
+  ping: {
+    label: "Avg Ping",
+    icon: Wifi,
+    getValue: (p: RankedPlayer) => p.avg_ping != null ? `${Math.round(p.avg_ping)}ms` : "—",
+    getSubValue: (p: RankedPlayer) => p.min_ping != null && p.max_ping != null ? `${p.min_ping}–${p.max_ping}ms range` : "",
   },
 };
 
@@ -236,6 +245,9 @@ export function ServerRankingsView({ serverId, serverName, slug }: ServerRanking
                 <TabsTrigger value="rounds" className="text-xs gap-1.5 px-3">
                   <Hash className="h-3.5 w-3.5" /> Rounds
                 </TabsTrigger>
+                <TabsTrigger value="ping" className="text-xs gap-1.5 px-3">
+                  <Wifi className="h-3.5 w-3.5" /> Ping
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -263,7 +275,7 @@ export function ServerRankingsView({ serverId, serverName, slug }: ServerRanking
                 <div className="col-span-1 text-right">Deaths</div>
                 <div className="col-span-1 text-right">K/D</div>
                 <div className="col-span-1 text-right">Score</div>
-                <div className="col-span-1 text-right">Rounds</div>
+                <div className="col-span-1 text-right">{stat === "ping" ? "Avg Ping" : "Rounds"}</div>
               </div>
 
               {/* Player Rows */}
@@ -318,7 +330,12 @@ export function ServerRankingsView({ serverId, serverName, slug }: ServerRanking
                     <div className="col-span-6 md:col-span-2 md:text-right">
                       <div className={cn(
                         "font-bold tabular-nums text-lg md:text-base",
-                        isTopThree ? "text-amber-500" : "text-foreground"
+                        stat === "ping" && player.avg_ping != null
+                          ? player.avg_ping < 50 ? "text-green-500"
+                            : player.avg_ping < 100 ? "text-yellow-500"
+                            : player.avg_ping < 150 ? "text-orange-500"
+                            : "text-red-500"
+                          : isTopThree ? "text-amber-500" : "text-foreground"
                       )}>
                         {config.getValue(player)}
                       </div>
@@ -347,7 +364,9 @@ export function ServerRankingsView({ serverId, serverName, slug }: ServerRanking
                       {player.total_score.toLocaleString()}
                     </div>
                     <div className="hidden md:block col-span-1 text-right text-sm tabular-nums text-muted-foreground">
-                      {player.rounds_played}
+                      {stat === "ping"
+                        ? player.avg_ping != null ? `${Math.round(player.avg_ping)}ms` : "—"
+                        : player.rounds_played}
                     </div>
 
                     {/* Mobile secondary stats */}
