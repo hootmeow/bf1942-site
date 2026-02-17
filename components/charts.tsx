@@ -958,6 +958,135 @@ export function PlayerActivityLast7DaysChart({ data }: { data: { date: string; r
 }
 
 
+// --- PLAYER TIMESERIES CHART ---
+interface TimeseriesPoint {
+  period: string;
+  kdr: number | null;
+  kpm: number | null;
+  avg_ping: number | null;
+  rounds_played: number;
+  total_score: number;
+}
+
+export function PlayerTimeseriesChart({
+  data,
+  timespan,
+  onTimespanChange
+}: {
+  data: TimeseriesPoint[];
+  timespan: string;
+  onTimespanChange: (t: string) => void;
+}) {
+  if (!data || data.length === 0) {
+    return <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">No timeseries data available.</div>;
+  }
+
+  const formatDate = (val: string) => {
+    const d = new Date(val);
+    if (timespan === 'day') return d.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-1">
+        {['day', 'week', 'month'].map(t => (
+          <button
+            key={t}
+            onClick={() => onTimespanChange(t)}
+            className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+              timespan === t
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            {t === 'day' ? 'Day' : t === 'week' ? 'Week' : 'Month'}
+          </button>
+        ))}
+      </div>
+      <ResponsiveContainer width="100%" height={240}>
+        <ComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorKdr" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.3} />
+          <XAxis
+            dataKey="period"
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={formatDate}
+            fontSize={10}
+            tickMargin={8}
+          />
+          <YAxis
+            yAxisId="left"
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            fontSize={10}
+            width={32}
+            domain={[0, 'auto']}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            stroke="hsl(var(--muted-foreground))"
+            tickLine={false}
+            axisLine={false}
+            fontSize={10}
+            width={32}
+            domain={[0, 'auto']}
+          />
+          <ReTooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--card)/0.95)",
+              borderRadius: 10,
+              border: "1px solid hsl(var(--border))",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+              backdropFilter: "blur(8px)"
+            }}
+            labelFormatter={formatDate}
+            formatter={(value: number, name: string) => {
+              if (name === 'kdr') return [value?.toFixed(2) ?? '—', 'KDR'];
+              if (name === 'kpm') return [value?.toFixed(2) ?? '—', 'KPM'];
+              return [value, name];
+            }}
+          />
+          <Area
+            yAxisId="left"
+            type="monotone"
+            dataKey="kdr"
+            name="kdr"
+            stroke="#8b5cf6"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorKdr)"
+            dot={{ r: 2, fill: "#8b5cf6", strokeWidth: 0 }}
+            activeDot={{ r: 4, fill: "#8b5cf6", stroke: "#fff", strokeWidth: 2 }}
+            connectNulls
+          />
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="kpm"
+            name="kpm"
+            stroke="#f59e0b"
+            strokeWidth={2}
+            strokeDasharray="5 5"
+            dot={false}
+            activeDot={{ r: 4, fill: "#f59e0b", stroke: "#fff", strokeWidth: 2 }}
+            connectNulls
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 // --- ROUND TIMELINE CHART ---
 interface TicketDataPoint {
   timestamp: string;

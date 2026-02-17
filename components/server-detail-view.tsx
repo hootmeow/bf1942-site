@@ -29,6 +29,10 @@ import { ServerNetworkMonitor } from "@/components/server-network-monitor";
 import { ServerEvents } from "@/components/server-events";
 import { ServerRetention } from "@/components/server-retention";
 import { ServerHealth } from "@/components/server-health";
+import { ServerRecords } from "@/components/server-records";
+import { ServerFame } from "@/components/server-fame";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Info, Monitor, Shield, Package, Bookmark } from "lucide-react";
 
 // Types
 interface ServerInfo {
@@ -51,6 +55,11 @@ interface ServerInfo {
   roundtime?: string | number; // CH might return string or int
   history?: number[]; // ADDED
   is_blacklisted?: boolean;
+  dedicated?: string | number;
+  averagefps?: string | number;
+  unpure_mods?: string | number;
+  content_check?: string | number;
+  reservedslots?: string | number;
 }
 
 interface ServerDetailsData {
@@ -455,6 +464,10 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         <ServerRetention serverId={server_info.server_id} />
       )}
 
+      {/* Server Records & Fame */}
+      <ServerRecords slug={slug} />
+      <ServerFame slug={slug} />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {metrics && (
           <Card className="border-border/60 lg:col-span-1">
@@ -513,6 +526,49 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
           <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading historical metrics...
         </div>
       )}
+
+      {/* Advanced Server Info */}
+      <Accordion type="single" collapsible>
+        <AccordionItem value="advanced-info">
+          <Card className="border-border/60">
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                Advanced Server Info
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-5 pt-0">
+                <StatCard
+                  title="Dedicated"
+                  value={String(server_info.dedicated || '0') !== '0' ? 'Yes' : 'No'}
+                  icon={Monitor}
+                />
+                <StatCard
+                  title="Avg FPS"
+                  value={server_info.averagefps ?? 'N/A'}
+                  icon={Monitor}
+                />
+                <StatCard
+                  title="Unpure Mods"
+                  value={String(server_info.unpure_mods || '0') !== '0' ? 'Yes' : 'No'}
+                  icon={Package}
+                />
+                <StatCard
+                  title="Content Check"
+                  value={String(server_info.content_check || '0') !== '0' ? 'Yes' : 'No'}
+                  icon={Shield}
+                />
+                <StatCard
+                  title="Reserved Slots"
+                  value={server_info.reservedslots ?? '0'}
+                  icon={Bookmark}
+                />
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
+      </Accordion>
     </div >
   );
 }

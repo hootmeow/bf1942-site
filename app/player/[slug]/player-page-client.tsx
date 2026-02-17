@@ -19,7 +19,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck } from "lucide-react";
-import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart } from "@/components/charts";
+import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart, PlayerTimeseriesChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -44,6 +44,7 @@ import { ImageIcon as GalleryIcon, MapPin } from "lucide-react";
 interface PlayerInfo {
   player_id: number;
   last_known_name: string;
+  first_seen?: string;
   last_seen: string;
   is_verified?: boolean;
   iso_country_code?: string | null;
@@ -361,6 +362,30 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
     fetchMapPerformance();
   }, [playerName]);
 
+  // Timeseries data
+  const [timeseriesData, setTimeseriesData] = useState<any[]>([]);
+  const [timeseriesSpan, setTimeseriesSpan] = useState('week');
+
+  useEffect(() => {
+    if (!playerName) return;
+
+    async function fetchTimeseries() {
+      try {
+        const res = await fetch(`/api/v1/players/search/timeseries?name=${playerName}&timespan=${timeseriesSpan}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok) {
+            setTimeseriesData(data.timeseries_data || []);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch timeseries", e);
+      }
+    }
+
+    fetchTimeseries();
+  }, [playerName, timeseriesSpan]);
+
   const handleShare = () => {
     const url = window.location.href;
     const kdr = profile?.lifetime_stats?.overall_kdr?.toFixed(2) || "N/A";
@@ -513,6 +538,9 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             {/* Metadata Row */}
             <div className="mt-2 flex flex-col gap-1">
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                {player_info.first_seen && (
+                  <span>Playing since {new Date(player_info.first_seen).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} · </span>
+                )}
                 <span>Last seen: {new Date(player_info.last_seen).toLocaleString()}</span>
 
                 {/* Discord Display */}
@@ -794,6 +822,25 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           </CardContent>
         </Card>
       </div>
+
+      {/* Performance Over Time */}
+      {timeseriesData.length > 0 && (
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle as="h2" className="text-base flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-purple-500" />
+              Performance Over Time
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PlayerTimeseriesChart
+              data={timeseriesData}
+              timespan={timeseriesSpan}
+              onTimespanChange={setTimeseriesSpan}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Playstyle Section Header */}
       <div className="flex items-center gap-3">
