@@ -14,6 +14,8 @@ interface RecentRound {
     final_score: number;
     final_kills: number;
     final_deaths: number;
+    team?: number;
+    winner_team?: number;
 }
 
 export function RecentRoundsList({ rounds, playerName }: { rounds: RecentRound[], playerName: string }) {
@@ -61,8 +63,19 @@ export function RecentRoundsList({ rounds, playerName }: { rounds: RecentRound[]
                                     "hover:border-primary/30 hover:bg-card/50"
                                 )}
                             >
-                                {/* Map color indicator */}
-                                <div className="h-2 w-2 rounded-full bg-primary/60 shrink-0" />
+                                {/* Win/Loss indicator */}
+                                {round.winner_team != null && round.team != null && round.winner_team !== 0 ? (
+                                    <div className={cn(
+                                        "h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0",
+                                        round.team === round.winner_team
+                                            ? "bg-green-500/20 text-green-500"
+                                            : "bg-red-500/20 text-red-400"
+                                    )}>
+                                        {round.team === round.winner_team ? "W" : "L"}
+                                    </div>
+                                ) : (
+                                    <div className="h-2 w-2 rounded-full bg-primary/60 shrink-0" />
+                                )}
 
                                 {/* Round info */}
                                 <div className="flex-1 min-w-0 space-y-1">

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Real-time status of all bf1942.online services, databases, and infrastructure components.",
   openGraph: {
-    title: "System Status | BF1942 Command Center",
+    title: "System Status",
   },
 }
 

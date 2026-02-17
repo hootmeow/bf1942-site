@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: "How Ranking Works - BF1942 Stats",
+    title: "How Ranking Works",
     description: "Detailed breakdown of the BF1942 XP and Ranking system.",
 };
 

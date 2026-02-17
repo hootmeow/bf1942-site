@@ -121,17 +121,11 @@ export function PlayerSessionStats({ playerName }: PlayerSessionStatsProps) {
   const lastSessionDate = recentSessions.length > 0 ? recentSessions[0].end : null;
 
   return (
-    <Card className="border-border/60 h-full">
-      <CardHeader className="pb-3">
-        <CardTitle as="h3" className="flex items-center gap-2 text-lg">
-          <Timer className="h-5 w-5 text-primary" />
-          Session Stats
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card className="border-border/60">
+      <CardContent className="p-0">
         {/* Active Session Banner */}
         {stats.is_currently_playing && currentSession && (
-          <div className="relative overflow-hidden rounded-lg border border-green-500/30 bg-green-500/10 p-3">
+          <div className="relative overflow-hidden border-b border-green-500/30 bg-green-500/10 px-6 py-3">
             <div className="absolute inset-0 bg-green-500/5 animate-pulse" />
             <div className="relative flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500/20 shrink-0">
@@ -147,62 +141,54 @@ export function PlayerSessionStats({ playerName }: PlayerSessionStatsProps) {
                 <div className="text-lg font-bold text-green-500 tabular-nums">
                   {formatDuration(currentSession.duration_minutes)}
                 </div>
-                <div className="text-[10px] text-green-400/60 uppercase">session</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Total Sessions */}
-          <div className="rounded-lg border border-border/60 bg-card/40 p-3">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Calendar className="h-3.5 w-3.5" />
-              <span className="text-xs">Total Sessions</span>
+        {/* Horizontal Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border/40">
+          <div className="px-6 py-4 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
+              <Calendar className="h-3 w-3" />
+              <span className="text-[10px] uppercase tracking-wider font-medium">Sessions</span>
             </div>
-            <div className="text-xl font-bold text-foreground tabular-nums">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {stats.total_sessions.toLocaleString()}
             </div>
           </div>
-
-          {/* Avg Session Length */}
-          <div className="rounded-lg border border-border/60 bg-card/40 p-3">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Clock className="h-3.5 w-3.5" />
-              <span className="text-xs">Avg Session</span>
+          <div className="px-6 py-4 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
+              <Clock className="h-3 w-3" />
+              <span className="text-[10px] uppercase tracking-wider font-medium">Avg Length</span>
             </div>
-            <div className="text-xl font-bold text-foreground tabular-nums">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {formatDuration(stats.avg_session_minutes)}
             </div>
           </div>
-
-          {/* Longest Session */}
-          <div className="rounded-lg border border-border/60 bg-card/40 p-3">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span className="text-xs">Longest Session</span>
+          <div className="px-6 py-4 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
+              <TrendingUp className="h-3 w-3" />
+              <span className="text-[10px] uppercase tracking-wider font-medium">Longest</span>
             </div>
-            <div className="text-xl font-bold text-foreground tabular-nums">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {formatDuration(stats.longest_session_minutes)}
             </div>
           </div>
-
-          {/* Total Playtime */}
-          <div className="rounded-lg border border-border/60 bg-card/40 p-3">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Zap className="h-3.5 w-3.5" />
-              <span className="text-xs">Total Playtime</span>
+          <div className="px-6 py-4 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
+              <Zap className="h-3 w-3" />
+              <span className="text-[10px] uppercase tracking-wider font-medium">Playtime</span>
             </div>
-            <div className="text-xl font-bold text-foreground tabular-nums">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {formatDuration(stats.total_playtime_minutes)}
             </div>
           </div>
         </div>
 
-        {/* Last Session */}
+        {/* Last Session Footer */}
         {lastSessionDate && (
-          <div className="pt-2 border-t border-border/40">
+          <div className="px-6 py-2 border-t border-border/40 bg-muted/10">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Last Session</span>
               <span className="font-mono">

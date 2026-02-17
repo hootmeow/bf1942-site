@@ -29,7 +29,7 @@ import {
 } from "lucide-react"
 
 export const metadata: Metadata = {
-    title: "Ultimate Player's Guide | BF1942 Command Center",
+    title: "Ultimate Player's Guide",
     description: "A comprehensive collection of community tips, mechanics, and strategies for Battlefield 1942.",
 };
 

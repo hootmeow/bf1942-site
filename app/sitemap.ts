@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { modsList } from "@/lib/mods-list";
 import { articles } from "@/lib/articles";
+import { wikiMaps } from "@/lib/wiki-maps";
 
 type ChangeFrequency =
   | "always"
@@ -24,14 +25,14 @@ interface ServerResponse {
 }
 
 interface PlayerResponse {
-  player_keyhash_id: number;
+  player_id: number;
   name: string;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  // Static pages - excludes auth pages (/login, /signup, /profile) per robots.txt
+  // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     // High priority - main pages
     {
@@ -52,7 +53,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "hourly" as ChangeFrequency,
       priority: 0.8,
     },
-    // Leaderboards
     {
       url: `${BASE_URL}/rank-info`,
       lastModified: now,
@@ -60,47 +60,52 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${BASE_URL}/rank-info/weekly`,
-      lastModified: now,
-      changeFrequency: "daily" as ChangeFrequency,
-      priority: 0.7,
-    },
-    {
-      url: `${BASE_URL}/rank-info/monthly`,
-      lastModified: now,
-      changeFrequency: "daily" as ChangeFrequency,
-      priority: 0.7,
-    },
-    // Rounds & stats
-    {
-      url: `${BASE_URL}/stats/rounds`,
-      lastModified: now,
-      changeFrequency: "hourly" as ChangeFrequency,
-      priority: 0.7,
-    },
-    {
-      url: `${BASE_URL}/stats/compare`,
-      lastModified: now,
-      changeFrequency: "weekly" as ChangeFrequency,
-      priority: 0.5,
-    },
-    {
       url: `${BASE_URL}/search`,
       lastModified: now,
       changeFrequency: "weekly" as ChangeFrequency,
       priority: 0.6,
     },
-    // Community
     {
-      url: `${BASE_URL}/clans`,
+      url: `${BASE_URL}/game-health`,
+      lastModified: now,
+      changeFrequency: "daily" as ChangeFrequency,
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/challenges`,
       lastModified: now,
       changeFrequency: "daily" as ChangeFrequency,
       priority: 0.6,
     },
     {
+      url: `${BASE_URL}/map`,
+      lastModified: now,
+      changeFrequency: "hourly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    // Community
+    {
       url: `${BASE_URL}/community`,
       lastModified: now,
       changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/community/highlights`,
+      lastModified: now,
+      changeFrequency: "weekly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/orgs`,
+      lastModified: now,
+      changeFrequency: "daily" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/events`,
+      lastModified: now,
+      changeFrequency: "daily" as ChangeFrequency,
       priority: 0.6,
     },
     {
@@ -130,6 +135,67 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${BASE_URL}/guide/player-guide`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    // Wiki
+    {
+      url: `${BASE_URL}/wiki`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/wiki/maps`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/wiki/basic-training`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/wiki/kits`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/wiki/weapons`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/wiki/vehicles`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/wiki/vehicles/land`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/wiki/vehicles/air`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/wiki/vehicles/naval`,
+      lastModified: now,
+      changeFrequency: "monthly" as ChangeFrequency,
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/wiki/tactics`,
       lastModified: now,
       changeFrequency: "monthly" as ChangeFrequency,
       priority: 0.6,
@@ -199,6 +265,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
   );
 
+  // Wiki map pages from wikiMaps data
+  const wikiMapPages: MetadataRoute.Sitemap = wikiMaps.map((m) => ({
+    url: `${BASE_URL}/wiki/maps/${m.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly" as ChangeFrequency,
+    priority: 0.5,
+  }));
+
   // News articles
   const newsPages: MetadataRoute.Sitemap = articles.map((article) => ({
     url: `${BASE_URL}/news/${article.slug}`,
@@ -207,7 +281,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  // Dynamic: Active servers (uses the site's API proxy)
+  // Dynamic: Active servers
   let serverPages: MetadataRoute.Sitemap = [];
   try {
     const res = await fetch(`${BASE_URL}/api/v1/servers`, {
@@ -228,7 +302,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Failed to fetch servers for sitemap:", e);
   }
 
-  // Dynamic: Top players from leaderboard (uses the site's API proxy)
+  // Dynamic: Top players from leaderboard
   let playerPages: MetadataRoute.Sitemap = [];
   try {
     const res = await fetch(`${BASE_URL}/api/v1/leaderboard?limit=500`, {
@@ -237,12 +311,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (res.ok) {
       const data = await res.json();
       if (data.ok && Array.isArray(data.leaderboard)) {
-        playerPages = data.leaderboard.map((player: PlayerResponse) => ({
-          url: `${BASE_URL}/player/${player.player_keyhash_id}`,
-          lastModified: now,
-          changeFrequency: "daily" as ChangeFrequency,
-          priority: 0.6,
-        }));
+        playerPages = data.leaderboard
+          .filter((player: PlayerResponse) => player.name)
+          .map((player: PlayerResponse) => ({
+            url: `${BASE_URL}/player/${encodeURIComponent(player.name)}`,
+            lastModified: now,
+            changeFrequency: "daily" as ChangeFrequency,
+            priority: 0.6,
+          }));
       }
     }
   } catch (e) {
@@ -253,6 +329,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticPages,
     ...modPages,
     ...mapPages,
+    ...wikiMapPages,
     ...newsPages,
     ...serverPages,
     ...playerPages,

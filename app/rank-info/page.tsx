@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import RankInfoClient from "./rank-info-client";
 
 export const metadata: Metadata = {
-    title: "Leaderboards - BF1942 Stats",
+    title: "Leaderboards",
     description: "Top 100 players ranked by Career Score (XP). View All Time, Weekly, and Monthly rankings.",
 };
 

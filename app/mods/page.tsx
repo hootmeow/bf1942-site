@@ -29,7 +29,7 @@ import {
 import { modsList, otherModsList } from "@/lib/mods-list";
 
 export const metadata = {
-    title: "Mods & Expansions | BF1942 Online",
+    title: "Mods & Expansions",
     description: "Curated Battlefield 1942 mods vetted for stability, authenticity, and active communities.",
 };
 

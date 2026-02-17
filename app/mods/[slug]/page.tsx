@@ -8,7 +8,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   
   if (!params.slug) {
-    return { title: "Mod Not Found | BF1942 Online" };
+    return { title: "Mod Not Found" };
   }
 
   try {
@@ -20,7 +20,7 @@ export async function generateMetadata(
     const mod: ModData = modModule.default;
 
     return {
-      title: `${mod.name} Mod | BF1942 Online`,
+      title: `${mod.name} Mod`,
       description: mod.description,
       openGraph: {
         title: mod.name,
@@ -30,7 +30,7 @@ export async function generateMetadata(
   } catch (e) {
     console.error("Metadata error:", e); // Added for debugging
     return {
-      title: "Mod Not Found | BF1942 Online",
+      title: "Mod Not Found",
       description: "Details for this mod could not be found.",
     };
   }

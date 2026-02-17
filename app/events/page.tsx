@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Events",
   description: "Browse upcoming Battlefield 1942 community events — tournaments, themed nights, training sessions, and more.",
   openGraph: {
-    title: "Events | BF1942 Command Center",
+    title: "Events",
     description: "Browse upcoming Battlefield 1942 community events — tournaments, themed nights, training sessions, and more.",
   },
 }

@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getServerData(slug);
 
   if (!data || !data.ok) {
-    return { title: "Server Not Found | BF1942 Online" };
+    return { title: "Server Not Found" };
   }
 
   const { server_id, current_server_name, current_map, current_player_count, current_max_players } = data.server_info;
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Attempt to fetch rank
   const rank = await getGlobalRank(server_id);
   const rankStr = rank ? `(Rank #${rank})` : "";
-  const title = rank ? `${rankStr} ${current_server_name} | BF1942 Online` : `${current_server_name} | BF1942 Online`;
+  const title = rank ? `${rankStr} ${current_server_name}` : `${current_server_name}`;
 
   return {
     title: title,

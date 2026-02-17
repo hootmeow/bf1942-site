@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+
+export const metadata: Metadata = {
+  title: "Installation Guide — How to Install Battlefield 1942",
+  description: "Step-by-step guide to installing Battlefield 1942 on modern Windows PCs. Covers download, patching, widescreen fixes, and getting online.",
+};
 import {
   Accordion,
   AccordionContent,

@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-    title: "Terms of Service & Privacy Policy | BF1942 Online",
+    title: "Terms of Service & Privacy Policy",
     description: "Read the Terms of Service and Privacy Policy for BF1942 Online. Learn about data collection, your rights under GDPR and COPPA, and how we protect your information.",
 };
 

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Search for Battlefield 1942 players, view Hall of Fame records, and explore all-time stats and leaderboards.",
   openGraph: {
-    title: "Player Statistics | BF1942 Command Center",
+    title: "Player Statistics",
   },
 }
 

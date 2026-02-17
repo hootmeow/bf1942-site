@@ -2,6 +2,7 @@
 
 import { startTransition, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -38,6 +39,9 @@ import { PlayerServerRanks } from "@/components/player-server-ranks";
 import { PlayerMapPerformance, MapPerformanceStat } from "@/components/player-map-performance";
 import { ProfileGallery } from "@/components/profile-gallery";
 import { getThemeClasses } from "@/components/theme-picker";
+import { WarStoryCard } from "@/components/war-story-card";
+import { PlayerMatchHistory } from "@/components/player-match-history";
+import { BookOpen } from "lucide-react";
 import { ImageIcon as GalleryIcon, MapPin } from "lucide-react";
 
 // --- Interfaces ---
@@ -91,7 +95,9 @@ interface PersonalBests {
   best_round_score: number;
   best_round_kills: number;
   best_round_kpm: number;
+  best_score_round_id?: number;
   best_kill_round_id?: number;
+  best_kpm_round_id?: number;
 }
 
 interface PlaystyleHabits {
@@ -100,6 +106,7 @@ interface PlaystyleHabits {
   team_preference: { axis: number; allied: number };
   activity_last_7_days: { date: string; rounds: number }[];
   playtime_by_hour_utc: number[];
+  gamemode_breakdown?: { gamemode: string; count: number }[];
 }
 
 interface RecentRound {
@@ -110,6 +117,8 @@ interface RecentRound {
   final_score: number;
   final_kills: number;
   final_deaths: number;
+  team?: number;
+  winner_team?: number;
 }
 
 interface OnlineStatus {
@@ -117,6 +126,18 @@ interface OnlineStatus {
   current_server: string | null;
   last_seen_timestamp: string | null;
   minutes_ago?: number | null;
+}
+
+interface WarStoryData {
+  story_id: number;
+  title: string;
+  description?: string | null;
+  screenshot_url?: string | null;
+  round_id?: number | null;
+  is_featured: boolean;
+  created_at: string;
+  round_map?: string | null;
+  round_date?: string | null;
 }
 
 interface PlayerProfileApiResponse {
@@ -129,6 +150,7 @@ interface PlayerProfileApiResponse {
   personal_bests: PersonalBests | null;
   playstyle_habits: PlaystyleHabits | null;
   recent_rounds: RecentRound[] | null;
+  war_stories?: WarStoryData[] | null;
 }
 
 // --- New Advanced Stats Components ---
@@ -250,6 +272,11 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [advancedProfile, setAdvancedProfile] = useState<AdvancedProfileResponse | null>(null);
+  const [rankHistory, setRankHistory] = useState<RankHistoryItem[] | null>(null);
+  const [mapPerformance, setMapPerformance] = useState<MapPerformanceStat[] | null>(null);
+
+  // Single effect: fetch all player data in parallel
   useEffect(() => {
     if (!playerName) {
       setError("Invalid player name in URL.");
@@ -257,121 +284,59 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
       return;
     }
 
-    async function fetchPlayerProfile() {
-      try {
-        const response = await fetch(`/api/v1/players/search/profile?name=${playerName}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch player data: ${response.statusText}`);
-        }
-        const data: PlayerProfileApiResponse = await response.json();
-        if (data.ok) {
-          setProfile(data);
-        } else {
-          throw new Error("API returned an error");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
-      } finally {
-        setLoading(false);
+    async function fetchAll() {
+      const encodedName = encodeURIComponent(playerName!);
+      const [profileRes, advancedRes, rankRes, mapRes, tsRes] = await Promise.allSettled([
+        fetch(`/api/v1/players/search/profile?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/profile_advanced?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/history_rank?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/map_performance?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/timeseries?name=${encodedName}&timespan=week`).then(r => r.ok ? r.json() : null),
+      ]);
+
+      // Profile (required)
+      const profileData = profileRes.status === 'fulfilled' ? profileRes.value : null;
+      if (profileData?.ok) {
+        setProfile(profileData);
+      } else {
+        setError("Failed to load player profile.");
       }
+
+      // Advanced (optional)
+      const advData = advancedRes.status === 'fulfilled' ? advancedRes.value : null;
+      if (advData?.ok) setAdvancedProfile(advData);
+
+      // Rank history (optional)
+      const rankData = rankRes.status === 'fulfilled' ? rankRes.value : null;
+      if (rankData?.ok) setRankHistory(rankData.history);
+
+      // Map performance (optional)
+      const mapData = mapRes.status === 'fulfilled' ? mapRes.value : null;
+      if (mapData?.ok) setMapPerformance(mapData.map_performance);
+
+      // Timeseries (optional)
+      const tsData = tsRes.status === 'fulfilled' ? tsRes.value : null;
+      if (tsData?.ok) setTimeseriesData(tsData.timeseries_data || []);
+
+      setLoading(false);
     }
 
-    fetchPlayerProfile();
+    fetchAll();
   }, [playerName]);
 
-  const [advancedProfile, setAdvancedProfile] = useState<AdvancedProfileResponse | null>(null);
-  const [rankHistory, setRankHistory] = useState<RankHistoryItem[] | null>(null);
-
-  useEffect(() => {
-    if (!playerName) return;
-
-    async function fetchAdvancedProfile() {
-      try {
-        const res = await fetch(`/api/v1/players/search/profile_advanced?name=${playerName}`);
-        let advancedData = null;
-        if (res.ok) {
-          advancedData = await res.json();
-        }
-
-        let globalRankVal = undefined;
-        try {
-          const lbRes = await fetch('/api/v1/leaderboard');
-          if (lbRes.ok) {
-            const lbData = await lbRes.json();
-            if (lbData.ok && Array.isArray(lbData.leaderboard)) {
-              const foundStat = lbData.leaderboard.find((p: any) => p.name.toLowerCase() === playerName?.toLowerCase());
-              if (foundStat) {
-                globalRankVal = foundStat.rank;
-              }
-            }
-          }
-        } catch (lbErr) {
-          console.error("Failed to fetch leaderboard for rank", lbErr);
-        }
-
-        if (advancedData && advancedData.ok) {
-          if (globalRankVal && advancedData.skill_rating) {
-            advancedData.skill_rating.global_rank = globalRankVal;
-          }
-          setAdvancedProfile(advancedData);
-        }
-
-      } catch (e) {
-        console.error("Failed to fetch advanced profile", e);
-      }
-    }
-
-    async function fetchRankHistory() {
-      try {
-        const res = await fetch(`/api/v1/players/search/history_rank?name=${playerName}`);
-        if (res.ok) {
-          const data: RankHistoryResponse = await res.json();
-          if (data.ok) {
-            setRankHistory(data.history);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to fetch rank history", e);
-      }
-    }
-
-    fetchAdvancedProfile();
-    fetchRankHistory();
-  }, [playerName]);
-
-  // Map Performance data
-  const [mapPerformance, setMapPerformance] = useState<MapPerformanceStat[] | null>(null);
-
-  useEffect(() => {
-    if (!playerName) return;
-
-    async function fetchMapPerformance() {
-      try {
-        const res = await fetch(`/api/v1/players/search/map_performance?name=${playerName}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.ok) {
-            setMapPerformance(data.map_performance);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to fetch map performance", e);
-      }
-    }
-
-    fetchMapPerformance();
-  }, [playerName]);
-
-  // Timeseries data
+  // Timeseries data (initial 'week' fetch done in main effect above)
   const [timeseriesData, setTimeseriesData] = useState<any[]>([]);
   const [timeseriesSpan, setTimeseriesSpan] = useState('week');
+  const [tsInitialLoaded, setTsInitialLoaded] = useState(false);
 
   useEffect(() => {
     if (!playerName) return;
+    // Skip first render — 'week' data was already loaded in the batch fetch
+    if (!tsInitialLoaded) { setTsInitialLoaded(true); return; }
 
     async function fetchTimeseries() {
       try {
-        const res = await fetch(`/api/v1/players/search/timeseries?name=${playerName}&timespan=${timeseriesSpan}`);
+        const res = await fetch(`/api/v1/players/search/timeseries?name=${encodeURIComponent(playerName!)}&timespan=${timeseriesSpan}`);
         if (res.ok) {
           const data = await res.json();
           if (data.ok) {
@@ -659,43 +624,89 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
       )}
 
       {/* Lifetime Stats Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <BarChart className="h-5 w-5 text-primary" />
+      <Card className="border-border/60 overflow-hidden">
+        <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 via-transparent to-transparent">
+          <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-primary/20">
+              <BarChart className="h-4 w-4 text-primary" />
+            </div>
+            Lifetime Stats
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {/* Hero Stats Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border/40">
+            <div className="p-6 text-center">
+              <div className="text-4xl font-black tabular-nums text-primary">
+                {lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'}
+              </div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">K/D Ratio</div>
+            </div>
+            <div className="p-6 text-center">
+              <div className="text-4xl font-black tabular-nums text-amber-500">
+                {lifetime_stats?.win_rate?.toFixed(1) ?? '0'}<span className="text-2xl">%</span>
+              </div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Win Rate</div>
+            </div>
+            <div className="p-6 text-center">
+              <div className="text-4xl font-black tabular-nums text-foreground">
+                {formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)}
+              </div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Playtime</div>
+            </div>
+            <div className="p-6 text-center">
+              <div className="text-4xl font-black tabular-nums text-emerald-500">
+                {(lifetime_stats?.total_score ?? 0).toLocaleString()}
+              </div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Total Score</div>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">Lifetime Stats</h2>
-            <p className="text-sm text-muted-foreground">Career performance across all servers</p>
+
+          {/* Kill/Death Visual Bar */}
+          <div className="px-6 py-4 border-t border-border/40 bg-muted/10">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="text-green-500 font-semibold tabular-nums">{(lifetime_stats?.total_kills ?? 0).toLocaleString()} Kills</span>
+              <span className="text-muted-foreground">{lifetime_stats?.total_rounds_played?.toLocaleString() ?? 0} Rounds</span>
+              <span className="text-red-400 font-semibold tabular-nums">{(lifetime_stats?.total_deaths ?? 0).toLocaleString()} Deaths</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-red-500/30 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-1000"
+                style={{ width: `${Math.min(100, ((lifetime_stats?.total_kills ?? 0) / Math.max(1, (lifetime_stats?.total_kills ?? 0) + (lifetime_stats?.total_deaths ?? 0))) * 100)}%` }}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Core Stats - Highlighted */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatCard title="Playtime" value={formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)} icon={Clock} highlight />
-          <StatCard title="Total Score" value={lifetime_stats?.total_score ?? 0} icon={Star} highlight animate />
-          <StatCard title="K/D Ratio" value={lifetime_stats?.overall_kdr ?? 0} icon={Target} highlight animate decimals={2} />
-          <StatCard title="Win Rate" value={lifetime_stats?.win_rate ?? 0} icon={Trophy} highlight animate suffix="%" />
-        </div>
+          {/* Secondary Stats Grid */}
+          <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-y divide-border/30 border-t border-border/40">
+            {[
+              { label: "KPM", value: lifetime_stats?.overall_kpm?.toFixed(2) ?? '0' },
+              { label: "Score/Min", value: lifetime_stats?.score_per_minute?.toFixed(2) ?? '0' },
+              { label: "Kills/Round", value: lifetime_stats?.kills_per_round?.toFixed(1) ?? '0' },
+              { label: "Deaths/Round", value: lifetime_stats?.deaths_per_round?.toFixed(1) ?? '0' },
+              { label: "Avg Ping", value: `${Math.round(lifetime_stats?.average_ping ?? 0)}ms` },
+              { label: "Avg Score", value: Math.round(lifetime_stats?.average_score_per_round ?? 0).toLocaleString() },
+            ].map((stat) => (
+              <div key={stat.label} className="px-4 py-3 text-center">
+                <div className="text-lg font-bold tabular-nums text-foreground">{stat.value}</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</div>
+              </div>
+            ))}
+          </div>
 
-        {/* Secondary Stats */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          <StatCard title="Rounds Played" value={lifetime_stats?.total_rounds_played ?? 0} icon={Hash} animate />
-          <StatCard title="Total Kills" value={lifetime_stats?.total_kills ?? 0} icon={Target} animate />
-          <StatCard title="Total Deaths" value={lifetime_stats?.total_deaths ?? 0} icon={Ghost} animate />
-          <StatCard title="KPM" value={lifetime_stats?.overall_kpm ?? 0} icon={Zap} animate decimals={2} />
-          <StatCard title="Score/Min" value={lifetime_stats?.score_per_minute ?? 0} icon={TrendingUp} animate decimals={2} />
-        </div>
-
-        {/* Tertiary Stats */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          <StatCard title="Kills/Round" value={lifetime_stats?.kills_per_round ?? 0} icon={Skull} animate decimals={2} />
-          <StatCard title="Deaths/Round" value={lifetime_stats?.deaths_per_round ?? 0} icon={Ghost} animate decimals={2} />
-          <StatCard title="Avg Score/Round" value={lifetime_stats?.average_score_per_round ?? 0} icon={Star} animate />
-          <StatCard title="Avg Ping" value={lifetime_stats?.average_ping ?? 0} icon={Wifi} animate suffix="ms" />
-          <StatCard title="Servers Played" value={lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0} icon={Server} animate />
-        </div>
-      </div>
+          {/* Discovery Stats */}
+          <div className="grid grid-cols-2 divide-x divide-border/30 border-t border-border/40">
+            <div className="px-4 py-3 flex items-center justify-center gap-3">
+              <Server className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm"><strong className="tabular-nums">{lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0}</strong> <span className="text-muted-foreground">servers played</span></span>
+            </div>
+            <div className="px-4 py-3 flex items-center justify-center gap-3">
+              <Map className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm"><strong className="tabular-nums">{lifetime_stats?.unique_maps ?? lifetime_stats?.unique_maps_played ?? 0}</strong> <span className="text-muted-foreground">maps played</span></span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Personal Bests Section */}
       <Card className="border-border/60 overflow-hidden">
@@ -707,25 +718,38 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             Personal Bests
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4">
-          <div className="text-center p-4 rounded-lg bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20">
-            <div className="text-3xl font-bold text-amber-500 tabular-nums">{personal_bests?.best_round_score ?? 0}</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Best Score</div>
-          </div>
-          <div className="text-center p-4 rounded-lg bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20">
-            <div className="text-3xl font-bold text-red-500 tabular-nums">{personal_bests?.best_round_kills ?? 0}</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Best Kills</div>
-          </div>
-          <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20">
-            <div className="text-3xl font-bold text-purple-500 tabular-nums">{personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00'}</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Best KPM</div>
-          </div>
-          <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20">
-            <div className="text-2xl font-bold text-blue-500 tabular-nums">
-              {personal_bests?.best_kill_round_id ? `#${personal_bests.best_kill_round_id}` : 'N/A'}
-            </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Round ID</div>
-          </div>
+        <CardContent className="grid grid-cols-3 gap-3 p-4">
+          {[
+            { value: personal_bests?.best_round_score ?? 0, label: "Best Score", roundId: personal_bests?.best_score_round_id, color: "amber" },
+            { value: personal_bests?.best_round_kills ?? 0, label: "Best Kills", roundId: personal_bests?.best_kill_round_id, color: "red" },
+            { value: personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00', label: "Best KPM", roundId: personal_bests?.best_kpm_round_id, color: "purple" },
+          ].map((stat) => {
+            const inner = (
+              <>
+                <div className={`text-3xl font-bold tabular-nums ${stat.color === 'amber' ? 'text-amber-500' : stat.color === 'red' ? 'text-red-500' : 'text-purple-500'}`}>
+                  {stat.value}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</div>
+                {stat.roundId && (
+                  <div className={`text-[10px] mt-1.5 ${stat.color === 'amber' ? 'text-amber-500/60' : stat.color === 'red' ? 'text-red-500/60' : 'text-purple-500/60'}`}>
+                    Round #{stat.roundId}
+                  </div>
+                )}
+              </>
+            );
+            const cls = `text-center p-4 rounded-lg border ${
+              stat.color === 'amber' ? 'bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20' :
+              stat.color === 'red' ? 'bg-gradient-to-br from-red-500/10 to-transparent border-red-500/20' :
+              'bg-gradient-to-br from-purple-500/10 to-transparent border-purple-500/20'
+            }`;
+            return stat.roundId ? (
+              <Link key={stat.label} href={`/stats/rounds/${stat.roundId}`} className={`${cls} hover:brightness-125 transition-all`}>
+                {inner}
+              </Link>
+            ) : (
+              <div key={stat.label} className={cls}>{inner}</div>
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -770,6 +794,26 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             </div>
           </div>
           <ProfileGallery urls={player_info.gallery_urls} />
+        </>
+      )}
+
+      {/* War Stories */}
+      {profile.war_stories && profile.war_stories.length > 0 && (
+        <>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/10">
+              <BookOpen className="h-5 w-5 text-amber-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">War Stories</h2>
+              <p className="text-sm text-muted-foreground">Memorable moments from the battlefield</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {profile.war_stories.map((story) => (
+              <WarStoryCard key={story.story_id} story={story} isOwner={isOwner} />
+            ))}
+          </div>
         </>
       )}
 
@@ -853,8 +897,8 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </div>
       </div>
 
-      {/* Team Preference, Maps, Servers Row */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Team Preference, Gamemode, Maps, Servers Row */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* Team Preference */}
         <Card className="border-border/60">
           <CardHeader className="pb-2">
@@ -873,6 +917,39 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
               />
             ) : (
               <p className="text-sm text-muted-foreground">No team preference data available.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gamemode Breakdown */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle as="h3" className="text-base flex items-center gap-2">
+              <Server className="h-4 w-4 text-cyan-500" />
+              Game Modes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {playstyle_habits?.gamemode_breakdown && playstyle_habits.gamemode_breakdown.length > 0 ? (
+              <div className="space-y-2">
+                {playstyle_habits.gamemode_breakdown.map((gm) => {
+                  const total = playstyle_habits.gamemode_breakdown!.reduce((s, g) => s + g.count, 0);
+                  const pct = total > 0 ? Math.round((gm.count / total) * 100) : 0;
+                  return (
+                    <div key={gm.gamemode} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium capitalize">{gm.gamemode}</span>
+                        <span className="text-muted-foreground tabular-nums">{pct}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
+                        <div className="h-full rounded-full bg-cyan-500" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No gamemode data available.</p>
             )}
           </CardContent>
         </Card>
@@ -953,14 +1030,8 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </div>
       </div>
 
-      {/* Social & History Row */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {/* Session Stats */}
-        <div className="h-full">
-          <PlayerSessionStats playerName={player_info.last_known_name} />
-        </div>
-
-        {/* Battle Buddies */}
+      {/* Social: Battle Buddies, Recent Rounds, Rank History */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="h-full">
           {advancedProfile?.related_players ? (
             <BattleBuddiesList players={advancedProfile.related_players} />
@@ -970,8 +1041,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             </Card>
           )}
         </div>
-
-        {/* Recent Rounds - Compact List */}
         <div className="h-full">
           {recent_rounds && recent_rounds.length > 0 ? (
             <RecentRoundsList rounds={recent_rounds} playerName={player_info.last_known_name} />
@@ -981,8 +1050,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             </Card>
           )}
         </div>
-
-        {/* Rank History Summary */}
         <div className="h-full">
           {rankHistory ? (
             <RankHistoryList history={rankHistory} playerName={player_info.last_known_name} />
@@ -993,6 +1060,12 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           )}
         </div>
       </div>
+
+      {/* Session Stats - Full Width */}
+      <PlayerSessionStats playerName={player_info.last_known_name} />
+
+      {/* Full Match History */}
+      <PlayerMatchHistory playerId={player_info.player_id} />
     </div>
   );
 }

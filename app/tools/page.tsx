@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Tools & Utilities",
+  description: "BF1942 server administration tools — Linux server scripts, map alert bots, configuration generators, and more for Battlefield 1942 server admins.",
+};
 import { ArrowRight, Drill, Shield, Wrench, ExternalLink, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toolsList } from "@/lib/tools-list";

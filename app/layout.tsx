@@ -27,34 +27,34 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online"),
 
   title: {
-    default: "BF1942 Command Center | Live Stats & Server Browser",
-    template: "%s | BF1942 Command Center",
+    default: "BF1942 Online | Battlefield 1942 Stats, Servers & Community",
+    template: "%s | BF1942 Online",
   },
-  description: "A central hub for the Battlefield 1942 community. Live server browser, player statistics, mod database, and installation guides.",
+  description: "The Battlefield 1942 community hub — live server browser, player statistics, leaderboards, game wiki, mods, and installation guides at bf1942.online.",
+  keywords: ["Battlefield 1942", "BF1942", "bf1942.online", "BF1942 stats", "BF1942 servers", "Battlefield 1942 server browser", "BF1942 leaderboard", "BF1942 mods"],
 
-  // Add default Open Graph (social sharing) tags
   openGraph: {
-    title: "BF1942 Command Center | Live Stats & Server Browser",
-    description: "A central hub for the Battlefield 1942 community.",
+    title: "BF1942 Online | Battlefield 1942 Stats, Servers & Community",
+    description: "The Battlefield 1942 community hub — live server browser, player stats, leaderboards, game wiki, mods, and guides.",
     url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online",
-    siteName: "BF1942 Command Center",
+    siteName: "BF1942 Online",
     images: [
       {
-        url: "/images/og-image.png", // <-- You should create this image (1200x630)
+        url: "/images/og-image.png",
         width: 1200,
         height: 630,
+        alt: "BF1942 Online — Battlefield 1942 Stats & Community Hub",
       },
     ],
     locale: "en_US",
     type: "website",
   },
 
-  // Add default Twitter Card tags
   twitter: {
     card: "summary_large_image",
-    title: "BF1942 Command Center | Live Stats & Server Browser",
-    description: "A central hub for the Battlefield 1942 community.",
-    images: ["/images/og-image.png"], // <-- This should be the same image
+    title: "BF1942 Online | Battlefield 1942 Stats & Servers",
+    description: "The Battlefield 1942 community hub — live servers, player stats, leaderboards, wiki, and mods.",
+    images: ["/images/og-image.png"],
   },
 };
 // --- END MODIFIED METADATA ---
@@ -81,7 +81,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              "name": "BF1942 Command Center",
+              "name": "BF1942 Online",
               "url": process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online",
               "potentialAction": {
                 "@type": "SearchAction",

@@ -10,7 +10,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     const params = await props.params;
     const decodedName = decodeURIComponent(params.slug);
     return {
-        title: `Round History - ${decodedName} - BF1942 Stats`,
+        title: `Round History - ${decodedName} `,
         description: `View complete round history for ${decodedName}.`,
     };
 }

@@ -1,136 +1,234 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart, Download, Map, MessageCircle, Server, Wrench } from "lucide-react";
+import {
+  BarChart3, BookOpen, Download, Globe, Heart, History,
+  MessageCircle, Monitor, Server, Shield,
+  Trophy, Users, Wrench
+} from "lucide-react";
 
-// New Metadata from your HTML
 export const metadata: Metadata = {
-  title: "About | BF1942 Online",
+  title: "About",
   description: "Learn about BF1942 Online, a community-driven statistics hub for Battlefield 1942, providing live server tracking, player profiles, and detailed round history.",
 };
 
-// --- ADDED: Organization JSON-LD Schema ---
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "BF1942 Online",
+  "name": "BF1942 Online - bf1942.online",
   "url": "https://www.bf1942.online",
-  "logo": "https://www.bf1942.online/images/og-image.png", // Using the main OG image
+  "logo": "https://www.bf1942.online/images/og-image.png",
   "sameAs": [
-    "https://discord.gg/XWkkZnqJnm" // From the "Join Discord" button
+    "https://discord.gg/XWkkZnqJnm"
   ]
 };
-// --- END ADDED SECTION ---
+
+const features = [
+  {
+    icon: Server,
+    title: "Live Server Browser",
+    description: "Real-time tracking of every active BF1942 server with live scoreboards, player counts, and current maps.",
+    href: "/servers",
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+  },
+  {
+    icon: BarChart3,
+    title: "Player Profiles",
+    description: "Detailed stats for every player — KDR, playtime, personal bests, session history, and performance trends over time.",
+    href: "/stats",
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+  },
+  {
+    icon: Trophy,
+    title: "Leaderboards & Ranks",
+    description: "Global leaderboards across multiple categories with a military rank progression system.",
+    href: "/rank-info",
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+  },
+  {
+    icon: History,
+    title: "Round History",
+    description: "Browse every round played — full scoreboards, team breakdowns, timelines, and map performance data.",
+    href: "/stats/rounds",
+    color: "text-purple-500",
+    bg: "bg-purple-500/10",
+  },
+  {
+    icon: Monitor,
+    title: "Game Health Dashboard",
+    description: "Population trends, peak hours, player retention rates, and long-term health metrics for the entire community.",
+    href: "/game-health",
+    color: "text-cyan-500",
+    bg: "bg-cyan-500/10",
+  },
+  {
+    icon: Download,
+    title: "Mods & Downloads",
+    description: "A central hub for Desert Combat, Forgotten Hope, Galactic Conquest, and more — with install guides and secure downloads.",
+    href: "/mods",
+    color: "text-orange-500",
+    bg: "bg-orange-500/10",
+  },
+  {
+    icon: BookOpen,
+    title: "Game Wiki",
+    description: "Comprehensive guides covering maps, weapons, vehicles, kits, and battlefield tactics for new and veteran players.",
+    href: "/wiki",
+    color: "text-indigo-500",
+    bg: "bg-indigo-500/10",
+  },
+  {
+    icon: Users,
+    title: "Community Hub",
+    description: "Create and join organizations, coordinate events, and connect with other players in the BF1942 community.",
+    href: "/community",
+    color: "text-pink-500",
+    bg: "bg-pink-500/10",
+  },
+  {
+    icon: Wrench,
+    title: "Admin Tools",
+    description: "Linux server scripts, configuration generators, and server management utilities for BF1942 server admins.",
+    href: "/tools",
+    color: "text-slate-400",
+    bg: "bg-slate-400/10",
+  },
+];
+
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
-      {/* --- ADDED: Script tag for JSON-LD --- */}
+    <div className="mx-auto max-w-5xl">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
       />
-      {/* --- END ADDED SECTION --- */}
 
-      {/* Header Text */}
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">
-          About BF1942 Online
-        </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          BF1942 Online is a passion project built for the Battlefield 1942 community. Our goal is to
-          provide a modern, fast, and comprehensive hub for all things stats-related. From tracking live
-          servers and detailed player performance to digging through historical round data, this site is
-          designed to be the definitive resource for players new and old.
-        </p>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 via-card/80 to-transparent p-8 md:p-12 mb-10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-primary/20">
+              <Globe className="h-6 w-6 text-primary" />
+            </div>
+            <span className="text-sm font-medium uppercase tracking-wider text-primary">About</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
+            BF1942 Online
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
+            A passion project built for the Battlefield 1942 community. We provide a modern,
+            comprehensive hub for live server tracking, detailed player statistics, historical
+            round data, and everything else the community needs to keep this classic alive.
+          </p>
+        </div>
       </div>
 
-      {/* What We Offer Card */}
-      <Card className="border-border/60">
-        <CardHeader>
-          {/* --- UPDATED: Use as="h2" --- */}
-          <CardTitle as="h2" className="text-2xl font-semibold">What We Offer</CardTitle>
-          <CardDescription>
-            A complete toolkit for players, server admins, and community newcomers.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-full bg-primary/10 p-3 text-primary">
-              <Server className="h-5 w-5" />
-            </div>
-            <div>
-              {/* These are fine as h3, as they are sub-sections of "What We Offer" */}
-              <h3 className="text-lg font-semibold text-foreground">Live Statistics</h3>
-              <p className="text-muted-foreground">
-                Our site is powered by a real-time server browser, allowing you to see every active
-                server, its current map, and a live scoreboard. We track player performance over
-                time, building detailed player profiles, global leaderboards, and 24/7 server metrics.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-4">
-            <div className="rounded-full bg-primary/10 p-3 text-primary">
-              <Download className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Mods & Downloads</h3>
-              <p className="text-muted-foreground">
-                We serve as a central hub for the game's most popular mods, including Desert Combat,
-                Forgotten Hope, and Galactic Conquest. We provide detailed install guides, map lists,
-                and secure, high-speed download links from our dedicated file server.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-4">
-            <div className="rounded-full bg-primary/10 p-3 text-primary">
-              <Wrench className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Community Tools & Guides</h3>
-              <p className="text-muted-foreground">
-                Beyond stats, we offer a growing list of utilities. This includes a comprehensive
-                step-by-step Installation Guide to get the game running on a modern PC,
-                and powerful tools for admins like our Linux Server Scripts and Server Config Generator.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-
-      {/* Community Card */}
-      <Card className="border-border/60 bg-card/40 text-center">
-        <CardHeader>
-          {/* --- UPDATED: Use as="h2" --- */}
-          <CardTitle as="h2" className="text-2xl font-semibold">
-            Join the Community
-          </CardTitle>
-          <CardDescription>
-            Have questions, feedback, or just want to find a game? Join our official Discord server!
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            asChild
-            size="lg"
-            // Added custom classes for the green button style
-            className="bg-emerald-600 text-primary-foreground hover:bg-emerald-700"
-          >
-            <Link
-              href="https://discord.gg/XWkkZnqJnm"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Join Discord
+      {/* Features Grid */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold text-foreground mb-6">What We Offer</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((f) => (
+            <Link key={f.title} href={f.href}>
+              <Card className="border-border/60 h-full hover:border-primary/40 transition-colors group">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg ${f.bg} shrink-0`}>
+                      <f.icon className={`h-4 w-4 ${f.color}`} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{f.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{f.description}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
-          </Button>
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Credits + Community CTA side by side */}
+      <div className="grid gap-4 md:grid-cols-2 mb-10">
+        {/* Credits */}
+        <Card className="border-border/60">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Heart className="h-5 w-5 text-red-500" />
+              <h2 className="text-lg font-bold text-foreground">Built With Love</h2>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              BF1942 Online is a community-driven project maintained by dedicated fans of
+              Battlefield 1942. Over two decades after release, the community continues to
+              play, organize, and keep servers running — this site exists to support that effort.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              If you have ideas, find bugs, or want to contribute, reach out on Discord.
+              This project grows through community feedback.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Community CTA */}
+        <Card className="border-border/60 bg-gradient-to-br from-emerald-500/5 to-transparent flex flex-col">
+          <CardContent className="p-6 flex flex-col flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="h-5 w-5 text-emerald-500" />
+              <h2 className="text-lg font-bold text-foreground">Join the Fight</h2>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-6 flex-1">
+              Have questions, feedback, or just want to find a game? Our Discord server is the
+              home base for the BF1942 Online community — strategy discussions, event coordination,
+              and help getting the game running on modern hardware.
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="w-full bg-emerald-600 text-primary-foreground hover:bg-emerald-700"
+            >
+              <Link
+                href="https://discord.gg/XWkkZnqJnm"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Join Discord
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Links Footer */}
+      <div className="border-t border-border/40 pt-6 pb-4">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">Quick Links</h2>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "Servers", href: "/servers" },
+            { label: "Leaderboards", href: "/rank-info" },
+            { label: "Game Health", href: "/game-health" },
+            { label: "Installation Guide", href: "/guide" },
+            { label: "Mods", href: "/mods" },
+            { label: "Wiki", href: "/wiki" },
+            { label: "Organizations", href: "/orgs" },
+            { label: "Events", href: "/events" },
+            { label: "Tools", href: "/tools" },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="px-3 py-1.5 text-sm rounded-md border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

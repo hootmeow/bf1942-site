@@ -19,7 +19,7 @@ import {
 import { wikiMaps, getMapsByTheater, theaterColors } from "@/lib/wiki-maps";
 
 export const metadata = {
-    title: "Game Wiki | BF1942 Online",
+    title: "Game Wiki",
     description: "Complete Battlefield 1942 wiki with map guides, strategies, weapons, vehicles, and game mechanics.",
 };
 

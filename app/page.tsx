@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Live Battlefield 1942 server monitoring, player counts, and global activity. Track active servers and player statistics in real-time.",
   openGraph: {
-    title: "BF1942 Command Center — Live Server Dashboard",
+    title: "Live Server Dashboard",
   },
 }
 

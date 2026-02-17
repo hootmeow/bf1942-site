@@ -11,7 +11,7 @@ export async function generateMetadata(
   const params = await props.params;
 
   if (!params.slug) {
-    return { title: "Player Not Found | BF1942 Online" };
+    return { title: "Player Not Found" };
   }
 
   try {
@@ -19,7 +19,7 @@ export async function generateMetadata(
     const playerName = decodeURIComponent(params.slug);
 
     return {
-      title: `Player Profile for ${playerName} | BF1942 Online`,
+      title: `Player Profile for ${playerName}`,
       description: `View the full Battlefield 1942 stats, match history, and playstyle habits for ${playerName}.`,
       openGraph: {
         title: `Player Profile for ${playerName}`,
@@ -29,7 +29,7 @@ export async function generateMetadata(
   } catch (e) {
     console.error("Metadata error:", e);
     return {
-      title: "Player Not Found | BF1942 Online",
+      title: "Player Not Found",
       description: "Details for this player could not be found.",
     };
   }

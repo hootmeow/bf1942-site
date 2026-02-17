@@ -7,7 +7,7 @@ import { Github, AlertTriangle, Terminal, ShieldCheck, Server, Settings, Monitor
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const metadata: Metadata = {
-  title: "Linux BF1942 Server | BF1942 Command Center",
+  title: "Linux BF1942 Server",
   description: "Automated setup for running Battlefield 1942 Dedicated Servers on modern 64-bit Linux systems with multi-instance support, smart IP detection, and comprehensive management tools.",
 };
 

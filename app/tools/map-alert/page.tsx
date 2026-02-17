@@ -7,7 +7,7 @@ import { CheckCircle, Github } from "lucide-react"; // --- ADDED GITHUB ICON ---
 
 // Metadata from the site for SEO
 export const metadata: Metadata = {
-  title: "BF1942 Map Alert Bot | BF1942 Command Center",
+  title: "BF1942 Map Alert Bot",
   description: "Get notified on Discord when your favorite BF1942 maps are running. Never miss a round!",
 };
 

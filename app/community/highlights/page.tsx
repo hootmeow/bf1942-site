@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Community Highlights",
   description: "Watch the best Battlefield 1942 videos and discover top content creators from the BF1942 community.",
   openGraph: {
-    title: "Community Highlights | BF1942 Command Center",
+    title: "Community Highlights",
     description: "Watch the best Battlefield 1942 videos and discover top content creators from the BF1942 community.",
   },
 }

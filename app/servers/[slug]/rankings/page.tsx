@@ -27,13 +27,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getServerInfo(slug);
 
   if (!data || !data.ok) {
-    return { title: "Server Not Found | BF1942 Online" };
+    return { title: "Server Not Found" };
   }
 
   const serverName = data.server_info.current_server_name;
 
   return {
-    title: `Player Rankings - ${serverName} | BF1942 Online`,
+    title: `Player Rankings - ${serverName}`,
     description: `View all player rankings on ${serverName}. See who has the highest score, most kills, best K/D ratio, and most rounds played.`,
   };
 }

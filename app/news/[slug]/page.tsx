@@ -11,12 +11,12 @@ export async function generateMetadata(
 
   if (!article) {
     return {
-      title: "Article Not Found | BF1942 Online",
+      title: "Article Not Found",
     };
   }
 
   return {
-    title: `${article.title} | BF1942 Online`,
+    title: `${article.title}`,
     description: article.excerpt,
     openGraph: {
       title: article.title,

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Detailed guides for all Battlefield 1942 maps. Browse by theater of war, map type, and more.",
   openGraph: {
-    title: "Map Guides | BF1942 Command Center",
+    title: "Map Guides",
   },
 }
 

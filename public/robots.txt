@@ -1,13 +1,12 @@
 # robots.txt for bf1942.online
+# Note: This is overridden by app/robots.ts at runtime
 User-agent: *
 Allow: /
 
-# Disallow admin and auth pages
 Disallow: /admin/
 Disallow: /login
 Disallow: /signup
 Disallow: /profile
 Disallow: /api/
 
-# Sitemap location
 Sitemap: https://www.bf1942.online/sitemap.xml

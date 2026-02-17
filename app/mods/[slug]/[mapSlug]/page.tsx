@@ -8,7 +8,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   
   if (!params.slug || !params.mapSlug) {
-    return { title: "Map Not Found | BF1942 Online" };
+    return { title: "Map Not Found" };
   }
 
   try {
@@ -20,7 +20,7 @@ export async function generateMetadata(
     const map: ModMapData = mapModule.default;
 
     return {
-      title: `${map.name} - ${params.slug} | BF1942 Online`,
+      title: `${map.name} - ${params.slug}`,
       description: map.description,
       openGraph: {
         title: map.name,
@@ -31,7 +31,7 @@ export async function generateMetadata(
   } catch (e) {
     console.error("Metadata error:", e); // Added for debugging
     return {
-      title: "Map Not Found | BF1942 Online",
+      title: "Map Not Found",
       description: "Details for this map could not be found.",
     };
   }

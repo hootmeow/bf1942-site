@@ -5,8 +5,8 @@ import { articles } from "@/lib/articles";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "News & Updates | BF1942 Command Center",
-  description: "Latest news, sitreps, and operational updates from the BF1942 Command Center team.",
+  title: "News & Updates",
+  description: "Latest news, sitreps, and operational updates from the BF1942 Online team.",
 };
 
 // Category colors

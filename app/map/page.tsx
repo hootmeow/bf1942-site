@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Live world map of all active Battlefield 1942 servers. See where battles are happening in real-time.",
   openGraph: {
-    title: "Global Conflict Map | BF1942 Command Center",
+    title: "Global Conflict Map",
   },
 }
 

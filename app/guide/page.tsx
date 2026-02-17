@@ -1,5 +1,10 @@
-
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Guides & Tutorials",
+  description: "Battlefield 1942 guides — installation walkthrough, gameplay tips, and everything you need to get started or improve your game.",
+};
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { guidesList } from "@/lib/guides-list";

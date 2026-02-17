@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Communities & Clans | BF1942 Command Center",
+  title: "Communities & Clans",
   description: "Join the active Battlefield 1942 community. Find clans, Discord servers, and groups keeping the game alive.",
 };
 
