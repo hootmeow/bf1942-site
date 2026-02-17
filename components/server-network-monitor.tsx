@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Activity, ChevronDown, ChevronRight } from "lucide-react";
+import { Activity, ChevronDown, ChevronRight, Wifi } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -55,6 +55,16 @@ const LOCATION_LABELS: Record<string, string> = {
 const LOCATION_COLORS: string[] = [
   "hsl(var(--primary))",
   "hsl(var(--chart-2, 280 65% 60%))",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+];
+
+// Solid hex fallbacks for gradient stops (CSS vars don't work in SVG linearGradient)
+const GRADIENT_COLORS: string[] = [
+  "#8b5cf6",
+  "#ec4899",
   "#10b981",
   "#f59e0b",
   "#ef4444",
@@ -149,7 +159,7 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
           </div>
         </CardContent>
       ) : (
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {/* Stat tiles — one row per location */}
         {current.map((loc, i) => (
           <div key={loc.monitor_location_id}>
@@ -165,13 +175,13 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
             <div className="grid grid-cols-3 gap-2">
               <div className={cn("rounded-lg border p-2 text-center", latencyBgColor(loc.latency_ms))}>
                 <div className="text-[10px] font-medium text-muted-foreground">Latency</div>
-                <div className={cn("text-lg font-bold", latencyColor(loc.latency_ms))}>
+                <div className={cn("text-lg font-bold tabular-nums", latencyColor(loc.latency_ms))}>
                   {loc.latency_ms.toFixed(0)}ms
                 </div>
               </div>
               <div className="rounded-lg border border-border/60 bg-muted/30 p-2 text-center">
                 <div className="text-[10px] font-medium text-muted-foreground">Jitter</div>
-                <div className="text-lg font-bold text-foreground">
+                <div className="text-lg font-bold text-foreground tabular-nums">
                   {loc.jitter_ms.toFixed(1)}ms
                 </div>
               </div>
@@ -183,7 +193,7 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
               )}>
                 <div className="text-[10px] font-medium text-muted-foreground">Pkt Loss</div>
                 <div className={cn(
-                  "text-lg font-bold",
+                  "text-lg font-bold tabular-nums",
                   loc.packet_loss_percent > 0 ? "text-red-400" : "text-foreground"
                 )}>
                   {loc.packet_loss_percent.toFixed(1)}%
@@ -193,14 +203,23 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
           </div>
         ))}
 
-        {/* Combined latency chart — all locations overlaid */}
+        {/* Combined latency chart — area chart with gradients like 24h Activity */}
         {chartData.length > 1 && (
-          <div>
-            <div className="flex items-center gap-2 mb-1 text-sm text-muted-foreground">
-              <span>Latency over 6 hours</span>
+          <div className="pt-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Wifi className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Latency over 6 hours</span>
             </div>
-            <ResponsiveContainer width="100%" height={140}>
-              <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={180}>
+              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                <defs>
+                  {locations.map((loc, i) => (
+                    <linearGradient key={loc} id={`netGradient-${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={GRADIENT_COLORS[i % GRADIENT_COLORS.length]} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={GRADIENT_COLORS[i % GRADIENT_COLORS.length]} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.3} />
                 <XAxis
                   dataKey="time"
@@ -208,6 +227,7 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
                   tickLine={false}
                   axisLine={false}
                   fontSize={10}
+                  tickMargin={8}
                   interval="preserveStartEnd"
                 />
                 <YAxis
@@ -216,9 +236,11 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
                   axisLine={false}
                   fontSize={10}
                   width={35}
-                  unit="ms"
+                  tickMargin={8}
+                  tickFormatter={(value) => `${value}ms`}
                 />
                 <ReTooltip
+                  cursor={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1, strokeDasharray: '4 4' }}
                   contentStyle={{
                     backgroundColor: "hsl(var(--card)/0.95)",
                     borderRadius: 8,
@@ -227,29 +249,31 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
                     boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                   }}
                   labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600, marginBottom: 4 }}
+                  formatter={(value: number, name: string) => [`${value.toFixed(1)}ms`, name]}
                 />
                 {locations.length > 1 && (
                   <Legend
                     verticalAlign="top"
-                    height={24}
+                    height={28}
                     iconType="circle"
                     iconSize={8}
-                    wrapperStyle={{ fontSize: "10px" }}
+                    wrapperStyle={{ paddingBottom: "4px", fontSize: "11px" }}
                   />
                 )}
                 {locations.map((loc, i) => (
-                  <Line
+                  <Area
                     key={loc}
                     type="monotone"
                     dataKey={`${loc}_latency`}
                     stroke={LOCATION_COLORS[i % LOCATION_COLORS.length]}
+                    fill={`url(#netGradient-${i})`}
                     strokeWidth={2}
                     dot={false}
                     name={getLocationLabel(loc)}
                     connectNulls
                   />
                 ))}
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
@@ -289,11 +313,11 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
                           <td className="px-2 py-1 font-mono truncate max-w-[120px]" title={`${hop.host || "???"} (${hop.ip})`}>
                             {hop.host || hop.ip}
                           </td>
-                          <td className={cn("px-2 py-1 text-right", latencyColor(hop.avg_ms))}>
+                          <td className={cn("px-2 py-1 text-right tabular-nums", latencyColor(hop.avg_ms))}>
                             {hop.avg_ms.toFixed(1)}ms
                           </td>
                           <td className={cn(
-                            "px-2 py-1 text-right font-medium",
+                            "px-2 py-1 text-right font-medium tabular-nums",
                             hop.loss_percent > 5 ? "text-red-400" : "text-muted-foreground"
                           )}>
                             {hop.loss_percent.toFixed(1)}%

@@ -164,10 +164,7 @@ export function ServerConnectionQuality({ serverId }: ServerConnectionQualityPro
                       <span className="text-muted-foreground">{bucket.label}</span>
                       <span className="text-muted-foreground/60">{BUCKET_STYLES[i].range}</span>
                     </div>
-                    <div className="flex items-center gap-2 tabular-nums">
-                      <span className={BUCKET_STYLES[i].text}>{pct.toFixed(0)}%</span>
-                      <span className="text-muted-foreground/60 w-12 text-right">{bucket.count.toLocaleString()}</span>
-                    </div>
+                    <span className={cn("tabular-nums", BUCKET_STYLES[i].text)}>{pct.toFixed(0)}%</span>
                   </div>
                 );
               })}

@@ -12,7 +12,6 @@ import { ServerPeakHeatmap } from "@/components/server-peak-heatmap";
 import { MapBalanceTable, MapBalanceStat } from "@/components/map-balance-table";
 import { ServerRegularsList } from "@/components/server-regulars-list";
 import { ServerLeaderboard } from "@/components/server-leaderboard";
-import { ServerConnectionQuality } from "@/components/server-connection-quality";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -28,6 +27,8 @@ import { useServerGeo } from "@/hooks/use-server-geo";
 import { Sparkline } from "@/components/sparkline";
 import { ServerNetworkMonitor } from "@/components/server-network-monitor";
 import { ServerEvents } from "@/components/server-events";
+import { ServerRetention } from "@/components/server-retention";
+import { ServerHealth } from "@/components/server-health";
 
 // Types
 interface ServerInfo {
@@ -437,17 +438,21 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         )}
       </div>
 
-      {server_info?.server_id && <ServerConnectionQuality serverId={server_info.server_id} />}
-
       {/* Events tagged to this server */}
       {server_info?.server_id && <ServerEvents serverId={server_info.server_id} />}
 
-      {/* Server Player Stats */}
+      {/* Server Player Stats & Health */}
       {server_info?.server_id && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <ServerRegularsList serverId={server_info.server_id} />
           <ServerLeaderboard serverId={server_info.server_id} slug={slug} />
+          <ServerHealth serverId={server_info.server_id} />
         </div>
+      )}
+
+      {/* Retention */}
+      {server_info?.server_id && (
+        <ServerRetention serverId={server_info.server_id} />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -480,13 +485,13 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
                 </TableHeader>
                 <TableBody>
                   {recentRounds.map((round) => (
-                    <TableRow key={round.round_id}>
+                    <TableRow key={round.round_id} className="group">
                       <TableCell className="font-medium">{round.map_name}</TableCell>
-                      <TableCell>{new Date(round.start_time).toLocaleString()}</TableCell>
-                      <TableCell className="text-right">{Math.floor(round.duration_seconds / 60)}m {round.duration_seconds % 60}s</TableCell>
-                      <TableCell className="text-right">{round.player_count}</TableCell>
+                      <TableCell className="text-muted-foreground">{new Date(round.start_time).toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums">{Math.floor(round.duration_seconds / 60)}m {round.duration_seconds % 60}s</TableCell>
+                      <TableCell className="text-right tabular-nums">{round.player_count}</TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/stats/rounds/${round.round_id}`} className="text-primary hover:underline">
+                        <Link href={`/stats/rounds/${round.round_id}`} className="text-primary hover:underline underline-offset-2 text-sm font-medium">
                           View
                         </Link>
                       </TableCell>
@@ -501,21 +506,13 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         </Card>
       </div>
 
-      {
-        mapBalance.length > 0 && (
-          <div className="mt-6">
-            <MapBalanceTable stats={mapBalance} />
-          </div>
-        )
-      }
+      {mapBalance.length > 0 && <MapBalanceTable stats={mapBalance} />}
 
-      {
-        metricsLoading && (
-          <div className="flex items-center justify-center p-8 text-muted-foreground">
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading historical metrics...
-          </div>
-        )
-      }
+      {metricsLoading && (
+        <div className="flex items-center justify-center p-8 text-muted-foreground">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading historical metrics...
+        </div>
+      )}
     </div >
   );
 }

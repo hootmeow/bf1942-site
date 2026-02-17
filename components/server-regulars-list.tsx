@@ -162,31 +162,15 @@ export function ServerRegularsList({ serverId }: ServerRegularsListProps) {
                 </div>
 
                 {/* Stats */}
-                <div className="flex items-center gap-4 text-xs shrink-0">
+                <div className="flex items-center gap-2 text-xs shrink-0">
                   {/* Rounds */}
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <div className="flex items-center gap-1 text-muted-foreground">
                     <Hash className="h-3 w-3" />
                     <span className="font-mono">{player.rounds_played}</span>
-                    <span className="hidden sm:inline">rounds</span>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="w-16 hidden md:block">
-                    <div className="h-1.5 w-full rounded-full bg-muted/50 overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          isTopThree
-                            ? "bg-gradient-to-r from-primary to-primary/60"
-                            : "bg-primary/40"
-                        )}
-                        style={{ width: `${fillPercent}%` }}
-                      />
-                    </div>
                   </div>
 
                   {/* K/D */}
-                  <div className="flex items-center gap-1 text-muted-foreground w-14 justify-end">
+                  <div className="hidden sm:flex items-center gap-1 text-muted-foreground">
                     <Crosshair className="h-3 w-3" />
                     <span className={cn(
                       "font-mono",
@@ -196,12 +180,6 @@ export function ServerRegularsList({ serverId }: ServerRegularsListProps) {
                     )}>
                       {player.kdr?.toFixed(2) || "—"}
                     </span>
-                  </div>
-
-                  {/* Score */}
-                  <div className="text-muted-foreground font-mono w-16 text-right hidden lg:block">
-                    {player.total_score.toLocaleString()}
-                    <span className="text-[10px] ml-0.5">pts</span>
                   </div>
                 </div>
               </div>
