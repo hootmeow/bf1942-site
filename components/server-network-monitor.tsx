@@ -50,25 +50,28 @@ const LOCATION_LABELS: Record<string, string> = {
   Virginia: "Virginia",
   London: "London",
   Sydney: "Sydney",
+  "Amsterdam, NL": "Amsterdam",
+  "New York, USA": "New York",
+  "Virginia, USA": "Virginia",
 };
 
 const LOCATION_COLORS: string[] = [
-  "hsl(var(--primary))",
-  "hsl(var(--chart-2, 280 65% 60%))",
+  "#8b5cf6", // purple — Virginia
+  "#ec4899", // pink — Amsterdam
+  "#f59e0b", // amber — New York
   "#10b981",
-  "#f59e0b",
   "#ef4444",
-  "#8b5cf6",
+  "#3b82f6",
 ];
 
 // Solid hex fallbacks for gradient stops (CSS vars don't work in SVG linearGradient)
 const GRADIENT_COLORS: string[] = [
   "#8b5cf6",
   "#ec4899",
-  "#10b981",
   "#f59e0b",
+  "#10b981",
   "#ef4444",
-  "#8b5cf6",
+  "#3b82f6",
 ];
 
 function getLocationLabel(id: string) {
@@ -113,27 +116,34 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
     fetchNetwork();
   }, [serverIp]);
 
-  const locations = useMemo(() => current.map((c) => c.monitor_location_id), [current]);
+  const locations = useMemo(() => {
+    const set = new Set<string>();
+    current.forEach((c) => set.add(c.monitor_location_id));
+    history.forEach((h) => set.add(h.monitor_location_id));
+    return Array.from(set);
+  }, [current, history]);
 
   // Merge all locations into a single time-series for the chart
+  // Bucket timestamps to the nearest 2 minutes so all locations align into the same row
   const chartData = useMemo(() => {
     if (history.length === 0) return [];
 
-    // Group by timestamp, create one row per unique time with a column per location
-    const timeMap = new Map<string, Record<string, number | string>>();
+    const BUCKET_MS = 2 * 60 * 1000; // 2-minute buckets
+    const timeMap = new Map<number, Record<string, number | string>>();
 
     history.forEach((h) => {
-      const time = new Date(h.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      const key = h.timestamp; // use raw timestamp for ordering
-      if (!timeMap.has(key)) {
-        timeMap.set(key, { time, _ts: key });
+      const ts = new Date(h.timestamp).getTime();
+      const bucket = Math.round(ts / BUCKET_MS) * BUCKET_MS;
+      if (!timeMap.has(bucket)) {
+        const time = new Date(bucket).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        timeMap.set(bucket, { time, _ts: bucket });
       }
-      const row = timeMap.get(key)!;
+      const row = timeMap.get(bucket)!;
       row[`${h.monitor_location_id}_latency`] = h.latency_ms;
     });
 
     return Array.from(timeMap.values()).sort((a, b) =>
-      String(a._ts).localeCompare(String(b._ts))
+      (a._ts as number) - (b._ts as number)
     );
   }, [history]);
 
@@ -160,40 +170,35 @@ export function ServerNetworkMonitor({ serverIp }: { serverIp: string }) {
         </CardContent>
       ) : (
       <CardContent className="space-y-4">
-        {/* Stat tiles — one row per location */}
+        {/* Stat tiles — compact row per location */}
         {current.map((loc, i) => (
-          <div key={loc.monitor_location_id}>
-            <div className="flex items-center gap-2 mb-1.5">
+          <div key={loc.monitor_location_id} className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+            <div className="flex items-center gap-2 min-w-[90px]">
               <div
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: LOCATION_COLORS[i % LOCATION_COLORS.length] }}
               />
               <span className="text-xs font-medium text-muted-foreground">
                 {getLocationLabel(loc.monitor_location_id)}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className={cn("rounded-lg border p-2 text-center", latencyBgColor(loc.latency_ms))}>
-                <div className="text-[10px] font-medium text-muted-foreground">Latency</div>
-                <div className={cn("text-lg font-bold tabular-nums", latencyColor(loc.latency_ms))}>
+            <div className="flex items-center gap-4 ml-auto">
+              <div className="text-center">
+                <div className="text-[9px] font-medium text-muted-foreground uppercase">Latency</div>
+                <div className={cn("text-sm font-bold tabular-nums", latencyColor(loc.latency_ms))}>
                   {loc.latency_ms.toFixed(0)}ms
                 </div>
               </div>
-              <div className="rounded-lg border border-border/60 bg-muted/30 p-2 text-center">
-                <div className="text-[10px] font-medium text-muted-foreground">Jitter</div>
-                <div className="text-lg font-bold text-foreground tabular-nums">
+              <div className="text-center">
+                <div className="text-[9px] font-medium text-muted-foreground uppercase">Jitter</div>
+                <div className="text-sm font-bold text-foreground tabular-nums">
                   {loc.jitter_ms.toFixed(1)}ms
                 </div>
               </div>
-              <div className={cn(
-                "rounded-lg border p-2 text-center",
-                loc.packet_loss_percent > 0
-                  ? "bg-red-400/10 border-red-400/20"
-                  : "border-border/60 bg-muted/30"
-              )}>
-                <div className="text-[10px] font-medium text-muted-foreground">Pkt Loss</div>
+              <div className="text-center">
+                <div className="text-[9px] font-medium text-muted-foreground uppercase">Loss</div>
                 <div className={cn(
-                  "text-lg font-bold tabular-nums",
+                  "text-sm font-bold tabular-nums",
                   loc.packet_loss_percent > 0 ? "text-red-400" : "text-foreground"
                 )}>
                   {loc.packet_loss_percent.toFixed(1)}%
