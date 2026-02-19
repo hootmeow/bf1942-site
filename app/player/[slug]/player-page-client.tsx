@@ -41,7 +41,7 @@ import { ProfileGallery } from "@/components/profile-gallery";
 import { getThemeClasses } from "@/components/theme-picker";
 import { WarStoryCard } from "@/components/war-story-card";
 import { PlayerMatchHistory } from "@/components/player-match-history";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Flame } from "lucide-react";
 import { ImageIcon as GalleryIcon, MapPin } from "lucide-react";
 
 // --- Interfaces ---
@@ -275,6 +275,10 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
   const [advancedProfile, setAdvancedProfile] = useState<AdvancedProfileResponse | null>(null);
   const [rankHistory, setRankHistory] = useState<RankHistoryItem[] | null>(null);
   const [mapPerformance, setMapPerformance] = useState<MapPerformanceStat[] | null>(null);
+  const [streaks, setStreaks] = useState<{
+    win_streak: { current: number; best: number; best_ended: string | null };
+    kdr_streak: { current: number; best: number; best_ended: string | null };
+  } | null>(null);
 
   // Single effect: fetch all player data in parallel
   useEffect(() => {
@@ -286,12 +290,13 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
     async function fetchAll() {
       const encodedName = encodeURIComponent(playerName!);
-      const [profileRes, advancedRes, rankRes, mapRes, tsRes] = await Promise.allSettled([
+      const [profileRes, advancedRes, rankRes, mapRes, tsRes, streaksRes] = await Promise.allSettled([
         fetch(`/api/v1/players/search/profile?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/profile_advanced?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/history_rank?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/map_performance?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/timeseries?name=${encodedName}&timespan=week`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/streaks?name=${encodedName}`).then(r => r.ok ? r.json() : null),
       ]);
 
       // Profile (required)
@@ -317,6 +322,10 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
       // Timeseries (optional)
       const tsData = tsRes.status === 'fulfilled' ? tsRes.value : null;
       if (tsData?.ok) setTimeseriesData(tsData.timeseries_data || []);
+
+      // Streaks (optional)
+      const streaksData = streaksRes.status === 'fulfilled' ? streaksRes.value : null;
+      if (streaksData?.ok) setStreaks(streaksData);
 
       setLoading(false);
     }
@@ -1063,6 +1072,55 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
       {/* Session Stats - Full Width */}
       <PlayerSessionStats playerName={player_info.last_known_name} />
+
+      {/* Streaks */}
+      {streaks && (streaks.win_streak.best > 0 || streaks.kdr_streak.best > 0) && (
+        <TooltipProvider>
+          <Card className="border-border/60">
+            <CardContent className="flex items-center gap-6 px-5 py-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Flame className="h-4 w-4 text-orange-500" />
+                <span className="font-medium text-foreground">Streaks</span>
+              </div>
+              <div className="flex items-center gap-5 ml-auto">
+                <Tooltip>
+                  <TooltipTrigger className="text-center">
+                    <div className="text-lg font-bold tabular-nums text-green-500 leading-tight">{streaks.win_streak.current}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Win</div>
+                  </TooltipTrigger>
+                  <TooltipContent>Consecutive rounds won (non-coop)</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger className="text-center">
+                    <div className="text-lg font-bold tabular-nums text-green-500/60 leading-tight">{streaks.win_streak.best}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Best Win</div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    All-time best win streak{streaks.win_streak.best_ended ? ` (${streaks.win_streak.best_ended})` : ""}
+                  </TooltipContent>
+                </Tooltip>
+                <div className="w-px h-6 bg-border/60" />
+                <Tooltip>
+                  <TooltipTrigger className="text-center">
+                    <div className="text-lg font-bold tabular-nums text-blue-500 leading-tight">{streaks.kdr_streak.current}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">KDR+</div>
+                  </TooltipTrigger>
+                  <TooltipContent>Consecutive rounds with more kills than deaths</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger className="text-center">
+                    <div className="text-lg font-bold tabular-nums text-blue-500/60 leading-tight">{streaks.kdr_streak.best}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Best KDR+</div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    All-time best positive KDR streak{streaks.kdr_streak.best_ended ? ` (${streaks.kdr_streak.best_ended})` : ""}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </CardContent>
+          </Card>
+        </TooltipProvider>
+      )}
 
       {/* Full Match History */}
       <PlayerMatchHistory playerId={player_info.player_id} />

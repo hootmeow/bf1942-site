@@ -14,6 +14,7 @@ const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string
   Update: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/30" },
   News: { bg: "bg-green-500/10", text: "text-green-400", border: "border-green-500/30" },
   Announcement: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/30" },
+  "Weekly Sitrep": { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/30" },
   default: { bg: "bg-primary/10", text: "text-primary", border: "border-primary/30" },
 };
 
@@ -21,7 +22,70 @@ function getCategoryStyle(category: string) {
   return CATEGORY_STYLES[category] || CATEGORY_STYLES.default;
 }
 
-export default function NewsPage() {
+interface DigestSummary {
+  week_number: number;
+  period_start: string;
+  period_end: string;
+  digest_data: {
+    summary: { total_rounds: number; total_kills: number; unique_players: number };
+  };
+  created_at: string;
+}
+
+async function fetchDigests(): Promise<DigestSummary[]> {
+  try {
+    const baseUrl = process.env.API_URL?.replace(/\/api\/v1\/$/, "") || "";
+    const res = await fetch(`${baseUrl}/api/v1/news/digests`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.ok ? data.digests : [];
+  } catch {
+    return [];
+  }
+}
+
+interface NewsItem {
+  slug: string;
+  title: string;
+  category: string;
+  date: string;
+  excerpt: string;
+  href: string;
+}
+
+export default async function NewsPage() {
+  const digests = await fetchDigests();
+
+  // Convert static articles to NewsItem
+  const staticItems: NewsItem[] = articles.map((a) => ({
+    slug: a.slug,
+    title: a.title,
+    category: a.category,
+    date: a.date,
+    excerpt: a.excerpt,
+    href: `/news/${a.slug}`,
+  }));
+
+  // Convert digests to NewsItem
+  const digestItems: NewsItem[] = digests.map((d) => {
+    const s = d.digest_data.summary;
+    return {
+      slug: `weekly-sitrep-${d.week_number}`,
+      title: `Weekly Sitrep #${d.week_number}`,
+      category: "Weekly Sitrep",
+      date: new Date(d.period_end).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+      excerpt: `${s.total_rounds} rounds played, ${s.total_kills.toLocaleString()} kills, ${s.unique_players} active soldiers this week.`,
+      href: `/news/weekly-sitrep/${d.week_number}`,
+    };
+  });
+
+  // Merge and sort by date descending
+  const allItems = [...staticItems, ...digestItems].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
   return (
     <div className="space-y-12 pb-12">
 
@@ -46,13 +110,13 @@ export default function NewsPage() {
 
       {/* --- ARTICLES GRID --- */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {articles.map((article, index) => {
-          const categoryStyle = getCategoryStyle(article.category);
+        {allItems.map((item, index) => {
+          const categoryStyle = getCategoryStyle(item.category);
           const isLatest = index === 0;
 
           return (
             <div
-              key={article.slug}
+              key={item.slug}
               className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all duration-300 hover:border-border hover:shadow-lg hover:-translate-y-1 ${
                 isLatest ? "md:col-span-2 lg:col-span-1" : ""
               }`}
@@ -64,28 +128,28 @@ export default function NewsPage() {
                   className={`${categoryStyle.bg} ${categoryStyle.text} ${categoryStyle.border}`}
                 >
                   <Tag className="h-3 w-3 mr-1" />
-                  {article.category}
+                  {item.category}
                 </Badge>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  {article.date}
+                  {item.date}
                 </div>
               </div>
 
               {/* Content */}
               <div className="flex-1 px-6 py-4">
                 <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-                  {article.title}
+                  {item.title}
                 </h3>
                 <p className="text-sm leading-relaxed text-muted-foreground/90">
-                  {article.excerpt}
+                  {item.excerpt}
                 </p>
               </div>
 
               {/* Footer / Action */}
               <div className="border-t border-border/40 bg-muted/20 px-6 py-4">
                 <Link
-                  href={`/news/${article.slug}`}
+                  href={item.href}
                   className="flex items-center gap-2 text-sm font-medium text-primary transition-all group-hover:gap-3 group-hover:text-primary/80"
                 >
                   Read Full Report <ArrowRight className="h-4 w-4" />
