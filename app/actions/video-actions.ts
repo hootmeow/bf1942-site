@@ -36,6 +36,24 @@ export async function getAdminVideos(includeHidden = true) {
     }))
 }
 
+export async function getFeaturedVideos() {
+    await checkAdmin()
+    const res = await pool.query(
+        `SELECT video_id, url, title, thumbnail_url, creator_name, creator_id,
+                upload_date, external_views, duration_seconds,
+                like_count, comment_count, is_short,
+                is_hidden, is_featured, is_blocked, detected_map, detected_tags, featured_at
+         FROM community_videos
+         WHERE is_featured = TRUE AND (is_blocked IS NOT TRUE)
+         ORDER BY featured_at DESC NULLS LAST`
+    )
+    return res.rows.map((r: Record<string, unknown>) => ({
+        ...r,
+        upload_date: r.upload_date ? (r.upload_date as Date).toISOString() : null,
+        featured_at: r.featured_at ? (r.featured_at as Date).toISOString() : null,
+    }))
+}
+
 export async function getBlockedVideos() {
     await checkAdmin()
     const res = await pool.query(

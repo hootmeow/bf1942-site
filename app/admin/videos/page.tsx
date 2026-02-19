@@ -10,7 +10,7 @@ import {
   Smartphone, Ban, ShieldOff, UserX, UserCheck, Shield
 } from "lucide-react"
 import {
-  getAdminVideos, getBlockedVideos, getBlockedChannels,
+  getAdminVideos, getFeaturedVideos, getBlockedVideos, getBlockedChannels,
   moderateVideo, blockVideo, unblockVideo,
   blockChannel, unblockChannel
 } from "@/app/actions/video-actions"
@@ -34,6 +34,7 @@ interface VideoRow {
   blocked_at?: string | null
   detected_map?: string | null
   detected_tags?: string[] | null
+  featured_at?: string | null
 }
 
 interface BlockedChannel {
@@ -43,7 +44,7 @@ interface BlockedChannel {
   video_count: number
 }
 
-type Tab = "videos" | "blocked" | "channels"
+type Tab = "videos" | "featured" | "blocked" | "channels"
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -54,6 +55,7 @@ function formatCount(n: number): string {
 export default function AdminVideosPage() {
   const [tab, setTab] = useState<Tab>("videos")
   const [videos, setVideos] = useState<VideoRow[]>([])
+  const [featuredVideos, setFeaturedVideos] = useState<VideoRow[]>([])
   const [blockedVideos, setBlockedVideos] = useState<VideoRow[]>([])
   const [blockedChannels, setBlockedChannels] = useState<BlockedChannel[]>([])
   const [loading, setLoading] = useState(true)
@@ -67,6 +69,9 @@ export default function AdminVideosPage() {
       if (tab === "videos") {
         const data = await getAdminVideos(showHidden)
         setVideos(data as VideoRow[])
+      } else if (tab === "featured") {
+        const data = await getFeaturedVideos()
+        setFeaturedVideos(data as VideoRow[])
       } else if (tab === "blocked") {
         const data = await getBlockedVideos()
         setBlockedVideos(data as VideoRow[])
@@ -95,6 +100,9 @@ export default function AdminVideosPage() {
         if (action === "unfeature") return { ...v, is_featured: false }
         return v
       }))
+      if (action === "unfeature") {
+        setFeaturedVideos(prev => prev.filter(v => v.video_id !== videoId))
+      }
       toast({ title: `Video ${action}d`, variant: "success" })
     } catch {
       toast({ title: "Error", description: "Action failed", variant: "destructive" })
@@ -169,6 +177,10 @@ export default function AdminVideosPage() {
         <Button variant={tab === "videos" ? "default" : "outline"} size="sm" onClick={() => setTab("videos")}>
           <Youtube className="h-3.5 w-3.5 mr-1.5" />
           Videos
+        </Button>
+        <Button variant={tab === "featured" ? "default" : "outline"} size="sm" onClick={() => setTab("featured")}>
+          <Star className="h-3.5 w-3.5 mr-1.5" />
+          Featured
         </Button>
         <Button variant={tab === "blocked" ? "default" : "outline"} size="sm" onClick={() => setTab("blocked")}>
           <Ban className="h-3.5 w-3.5 mr-1.5" />
@@ -284,6 +296,74 @@ export default function AdminVideosPage() {
                             disabled={acting === v.video_id}
                             onClick={() => handleBlock(v.video_id)}>
                             <Ban className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      ) : tab === "featured" ? (
+        <Card className="border-border/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {featuredVideos.length} featured videos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {featuredVideos.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">No featured videos</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Thumb</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Creator</TableHead>
+                    <TableHead>Views</TableHead>
+                    <TableHead>Featured</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {featuredVideos.map((v) => (
+                    <TableRow key={v.video_id}>
+                      <TableCell>
+                        <img src={v.thumbnail_url} alt="" className="w-16 h-9 object-cover rounded" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs">
+                          <a href={v.url} target="_blank" rel="noopener noreferrer"
+                            className="text-sm font-medium hover:underline line-clamp-1 flex items-center gap-1">
+                            {v.title}
+                            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          </a>
+                          <div className="flex gap-1 mt-0.5">
+                            {v.is_short && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 bg-red-500/10 text-red-500 border-red-500/20">
+                                <Smartphone className="h-2.5 w-2.5 mr-0.5" />Short
+                              </Badge>
+                            )}
+                            {v.detected_map && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0">{v.detected_map}</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">{v.creator_name}</TableCell>
+                      <TableCell className="text-xs font-mono">{formatCount(v.external_views)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {v.featured_at ? new Date(v.featured_at).toLocaleDateString() : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end">
+                          <Button variant="outline" size="sm" className="h-7 gap-1 text-xs"
+                            disabled={acting === v.video_id}
+                            onClick={() => handleModerate(v.video_id, "unfeature")}>
+                            <StarOff className="h-3 w-3 text-amber-500" /> Unfeature
                           </Button>
                         </div>
                       </TableCell>
