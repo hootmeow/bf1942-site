@@ -31,7 +31,10 @@ import {
   TrendingDown,
   Trophy,
   Target,
-  Hash,
+  Server,
+  Clock,
+  Zap,
+  Star,
 } from "lucide-react";
 
 interface DigestData {
@@ -50,7 +53,13 @@ interface DigestData {
     score: number;
     kdr: number;
   }[];
-  top_maps: { map_name: string; round_count: number }[];
+  top_maps: { map_name: string; round_count: number; unique_players: number }[];
+  top_servers: {
+    server_name: string;
+    round_count: number;
+    unique_players: number;
+    total_hours: number;
+  }[];
   map_trends: {
     map_name: string;
     this_cnt: number;
@@ -66,6 +75,32 @@ interface DigestData {
     end_time: string;
     gamemode: string;
   } | null;
+  notables: {
+    top_kill_round?: {
+      player: string;
+      kills: number;
+      map: string;
+      round_id: number;
+    };
+    best_kdr_round?: {
+      player: string;
+      kills: number;
+      deaths: number;
+      kdr: number;
+      map: string;
+      round_id: number;
+    };
+    longest_round?: {
+      round_id: number;
+      map: string;
+      duration_minutes: number;
+      player_count: number;
+    };
+    most_active_player?: {
+      player: string;
+      rounds_played: number;
+    };
+  };
 }
 
 interface Digest {
@@ -82,7 +117,7 @@ function ChangeBadge({ value }: { value: number | null }) {
   const isPositive = value >= 0;
   return (
     <span
-      className={`ml-2 inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium ${
+      className={`ml-1 inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium ${
         isPositive
           ? "bg-green-500/10 text-green-400"
           : "bg-red-500/10 text-red-400"
@@ -93,6 +128,12 @@ function ChangeBadge({ value }: { value: number | null }) {
       {value}%
     </span>
   );
+}
+
+function formatDateRange(start: string, end: string) {
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return `${fmt(start)} – ${fmt(end)}`;
 }
 
 export default function DigestClient() {
@@ -146,6 +187,7 @@ export default function DigestClient() {
   }
 
   const d = digest.digest_data;
+  const notables = d.notables || {};
 
   // Split map trends into rising and falling
   const rising = d.map_trends
@@ -163,36 +205,38 @@ export default function DigestClient() {
         <Link href="/news">&larr; Back to all news</Link>
       </Button>
 
-      <Card className="border-border/60">
-        <CardHeader>
-          <div className="flex items-center gap-3 mb-2">
+      {/* Header */}
+      <Card className="border-border/60 overflow-hidden">
+        <CardHeader className="bg-gradient-to-br from-purple-500/10 via-transparent to-transparent">
+          <div className="flex items-center gap-3 mb-3">
             <Badge
               variant="outline"
               className="bg-purple-500/10 text-purple-400 border-purple-500/30"
             >
               Weekly Sitrep
             </Badge>
-            <span className="text-sm text-muted-foreground">
-              {digest.period_start} &mdash; {digest.period_end}
-            </span>
           </div>
           <CardTitle className="text-3xl font-bold text-foreground">
-            Weekly Sitrep #{digest.week_number}
+            {formatDateRange(digest.period_start, digest.period_end)}
           </CardTitle>
-          <CardDescription>
-            Automated intelligence report covering all battlefield activity for
-            the week.
+          <CardDescription className="text-base mt-2 leading-relaxed">
+            {d.summary.unique_players} soldiers clashed across {d.summary.total_rounds} rounds this week,
+            tallying {d.summary.total_kills.toLocaleString()} confirmed kills.
+            {d.summary.players_change !== null && d.summary.players_change > 0
+              ? ` Player activity is up ${d.summary.players_change}% from last week.`
+              : d.summary.players_change !== null && d.summary.players_change < 0
+              ? ` Player activity dipped ${Math.abs(d.summary.players_change)}% from last week.`
+              : ""}
+            {" "}Here&apos;s the full debrief.
           </CardDescription>
         </CardHeader>
       </Card>
 
       {/* Battlefield Summary */}
       <Card className="border-border/60 overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-purple-500/10 via-transparent to-transparent border-b border-border/40">
-          <CardTitle as="h2" className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-purple-500/20">
-              <Swords className="h-4 w-4 text-purple-500" />
-            </div>
+        <CardHeader className="bg-gradient-to-r from-purple-500/10 via-transparent to-transparent border-b border-border/40 py-3">
+          <CardTitle as="h2" className="flex items-center gap-2 text-base">
+            <Swords className="h-4 w-4 text-purple-500" />
             Battlefield Summary
           </CardTitle>
         </CardHeader>
@@ -202,7 +246,7 @@ export default function DigestClient() {
               {d.summary.total_rounds}
             </div>
             <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-              Rounds Played
+              Rounds
             </div>
             <ChangeBadge value={d.summary.rounds_change} />
           </div>
@@ -211,7 +255,7 @@ export default function DigestClient() {
               {d.summary.total_kills.toLocaleString()}
             </div>
             <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-              Total Kills
+              Kills
             </div>
             <ChangeBadge value={d.summary.kills_change} />
           </div>
@@ -220,21 +264,106 @@ export default function DigestClient() {
               {d.summary.unique_players}
             </div>
             <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-              Active Soldiers
+              Soldiers
             </div>
             <ChangeBadge value={d.summary.players_change} />
           </div>
         </CardContent>
       </Card>
 
+      {/* Notable Records */}
+      {Object.keys(notables).length > 0 && (
+        <Card className="border-border/60 overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-yellow-500/10 via-transparent to-transparent border-b border-border/40 py-3">
+            <CardTitle as="h2" className="flex items-center gap-2 text-base">
+              <Zap className="h-4 w-4 text-yellow-500" />
+              This Week&apos;s Records
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 grid gap-3 sm:grid-cols-2">
+            {notables.top_kill_round && (
+              <div className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-muted/20">
+                <div className="p-1.5 rounded-md bg-red-500/10 mt-0.5">
+                  <Target className="h-3.5 w-3.5 text-red-500" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Most Kills in a Round</div>
+                  <div className="font-semibold mt-0.5">
+                    <Link href={`/player/${encodeURIComponent(notables.top_kill_round.player)}`} className="text-primary hover:underline">
+                      {notables.top_kill_round.player}
+                    </Link>
+                    {" "}&mdash; {notables.top_kill_round.kills} kills
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    on {notables.top_kill_round.map}{" "}
+                    <Link href={`/stats/rounds/${notables.top_kill_round.round_id}`} className="text-primary/70 hover:underline">(view round)</Link>
+                  </div>
+                </div>
+              </div>
+            )}
+            {notables.best_kdr_round && (
+              <div className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-muted/20">
+                <div className="p-1.5 rounded-md bg-purple-500/10 mt-0.5">
+                  <Star className="h-3.5 w-3.5 text-purple-500" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Best Single-Round KDR</div>
+                  <div className="font-semibold mt-0.5">
+                    <Link href={`/player/${encodeURIComponent(notables.best_kdr_round.player)}`} className="text-primary hover:underline">
+                      {notables.best_kdr_round.player}
+                    </Link>
+                    {" "}&mdash; {notables.best_kdr_round.kdr} KDR ({notables.best_kdr_round.kills}/{notables.best_kdr_round.deaths})
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    on {notables.best_kdr_round.map}{" "}
+                    <Link href={`/stats/rounds/${notables.best_kdr_round.round_id}`} className="text-primary/70 hover:underline">(view round)</Link>
+                  </div>
+                </div>
+              </div>
+            )}
+            {notables.longest_round && (
+              <div className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-muted/20">
+                <div className="p-1.5 rounded-md bg-blue-500/10 mt-0.5">
+                  <Clock className="h-3.5 w-3.5 text-blue-500" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Longest Round</div>
+                  <div className="font-semibold mt-0.5">{notables.longest_round.duration_minutes} minutes</div>
+                  <div className="text-xs text-muted-foreground">
+                    {notables.longest_round.map} &middot; {notables.longest_round.player_count} players{" "}
+                    <Link href={`/stats/rounds/${notables.longest_round.round_id}`} className="text-primary/70 hover:underline">(view round)</Link>
+                  </div>
+                </div>
+              </div>
+            )}
+            {notables.most_active_player && (
+              <div className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-muted/20">
+                <div className="p-1.5 rounded-md bg-green-500/10 mt-0.5">
+                  <Users className="h-3.5 w-3.5 text-green-500" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Most Active Soldier</div>
+                  <div className="font-semibold mt-0.5">
+                    <Link href={`/player/${encodeURIComponent(notables.most_active_player.player)}`} className="text-primary hover:underline">
+                      {notables.most_active_player.player}
+                    </Link>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {notables.most_active_player.rounds_played} rounds played
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Top Soldiers */}
       {d.top_players.length > 0 && (
         <Card className="border-border/60 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-b border-border/40">
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-amber-500/20">
-                <Trophy className="h-4 w-4 text-amber-500" />
-              </div>
+          <CardHeader className="bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-b border-border/40 py-3">
+            <CardTitle as="h2" className="flex items-center gap-2 text-base">
+              <Trophy className="h-4 w-4 text-amber-500" />
               Top Soldiers
             </CardTitle>
           </CardHeader>
@@ -280,41 +409,69 @@ export default function DigestClient() {
         </Card>
       )}
 
-      {/* Popular Maps */}
-      {d.top_maps.length > 0 && (
-        <Card className="border-border/60 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent border-b border-border/40">
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-cyan-500/20">
+      {/* Popular Maps & Top Servers side by side */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Popular Maps */}
+        {d.top_maps.length > 0 && (
+          <Card className="border-border/60 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent border-b border-border/40 py-3">
+              <CardTitle as="h2" className="flex items-center gap-2 text-base">
                 <Map className="h-4 w-4 text-cyan-500" />
-              </div>
-              Popular Maps
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3">
-            {d.top_maps.map((m, i) => (
-              <div key={m.map_name} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-muted-foreground w-6">
-                    {i + 1}.
-                  </span>
-                  <span className="font-medium">{m.map_name}</span>
+                Popular Maps
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-2.5">
+              {d.top_maps.map((m, i) => (
+                <div key={m.map_name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-sm font-medium text-muted-foreground w-5 text-right">
+                      {i + 1}.
+                    </span>
+                    <span className="font-medium text-sm">{m.map_name}</span>
+                  </div>
+                  <div className="text-xs tabular-nums text-muted-foreground">
+                    {m.round_count} rounds &middot; {m.unique_players} players
+                  </div>
                 </div>
-                <span className="text-sm tabular-nums text-muted-foreground">
-                  {m.round_count} rounds
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Top Servers */}
+        {d.top_servers && d.top_servers.length > 0 && (
+          <Card className="border-border/60 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-emerald-500/10 via-transparent to-transparent border-b border-border/40 py-3">
+              <CardTitle as="h2" className="flex items-center gap-2 text-base">
+                <Server className="h-4 w-4 text-emerald-500" />
+                Top Servers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-2.5">
+              {d.top_servers.map((s, i) => (
+                <div key={s.server_name} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-sm font-medium text-muted-foreground w-5 text-right shrink-0">
+                      {i + 1}.
+                    </span>
+                    <span className="font-medium text-sm truncate">{s.server_name}</span>
+                  </div>
+                  <div className="text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                    {s.unique_players} players &middot; {s.total_hours}h
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Rising & Falling */}
       {(rising.length > 0 || falling.length > 0) && (
         <div className="grid gap-6 md:grid-cols-2">
           {rising.length > 0 && (
             <Card className="border-border/60">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 py-3">
                 <CardTitle as="h2" className="text-base flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-green-500" />
                   Rising Maps
@@ -334,7 +491,7 @@ export default function DigestClient() {
           )}
           {falling.length > 0 && (
             <Card className="border-border/60">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 py-3">
                 <CardTitle as="h2" className="text-base flex items-center gap-2">
                   <TrendingDown className="h-4 w-4 text-red-500" />
                   Falling Maps
@@ -358,11 +515,9 @@ export default function DigestClient() {
       {/* Biggest Battle */}
       {d.biggest_round && (
         <Card className="border-border/60 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-orange-500/10 via-transparent to-transparent border-b border-border/40">
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-orange-500/20">
-                <Target className="h-4 w-4 text-orange-500" />
-              </div>
+          <CardHeader className="bg-gradient-to-r from-orange-500/10 via-transparent to-transparent border-b border-border/40 py-3">
+            <CardTitle as="h2" className="flex items-center gap-2 text-base">
+              <Target className="h-4 w-4 text-orange-500" />
               Biggest Battle
             </CardTitle>
           </CardHeader>

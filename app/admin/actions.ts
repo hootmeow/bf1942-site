@@ -238,3 +238,22 @@ export async function toggleVerification(playerId: string, isVerified: boolean) 
         client.release()
     }
 }
+
+export async function deleteDigest(weekNumber: number) {
+    await ensureAdmin()
+    const client = await pool.connect()
+    try {
+        const result = await client.query(
+            'DELETE FROM weekly_digests WHERE week_number = $1',
+            [weekNumber]
+        )
+        revalidatePath('/admin/digests')
+        revalidatePath('/news')
+        return { ok: true, deleted: (result.rowCount ?? 0) > 0 }
+    } catch (e) {
+        console.error("Failed to delete digest", e)
+        return { ok: false, error: "Failed to delete digest" }
+    } finally {
+        client.release()
+    }
+}

@@ -71,12 +71,15 @@ export default async function NewsPage() {
   // Convert digests to NewsItem
   const digestItems: NewsItem[] = digests.map((d) => {
     const s = d.digest_data.summary;
+    const fmtDate = (iso: string) =>
+      new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const rangeLabel = `${fmtDate(d.period_start)} – ${fmtDate(d.period_end)}`;
     return {
       slug: `weekly-sitrep-${d.week_number}`,
-      title: `Weekly Sitrep #${d.week_number}`,
+      title: `Weekly Sitrep: ${rangeLabel}`,
       category: "Weekly Sitrep",
       date: new Date(d.period_end).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-      excerpt: `${s.total_rounds} rounds played, ${s.total_kills.toLocaleString()} kills, ${s.unique_players} active soldiers this week.`,
+      excerpt: `${s.unique_players} soldiers fought across ${s.total_rounds} rounds, racking up ${s.total_kills.toLocaleString()} kills. See who dominated and which maps defined the week.`,
       href: `/news/weekly-sitrep/${d.week_number}`,
     };
   });
