@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Swords, Info, TrendingUp, Target, Award } from "lucide-react";
+import { Swords, Info, TrendingUp, Target, Award, Crosshair, Zap, Trophy, Map as MapIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -11,43 +11,43 @@ export interface SkillRating {
     label: string;
     global_rank?: number;
     breakdown: {
-        skill_score?: number;
-        obj_score?: number;
-        exp_score?: number;
-        kdr_score?: number;
-        spm_score?: number;
-        win_score?: number;
+        obj_r?: number;
+        kdr_norm?: number;
+        kpm_norm?: number;
+        wr_norm?: number;
+        mp_norm?: number;
+        spr_norm?: number;
     };
 }
 
 const RANK_THRESHOLDS = [
     { label: "Private (E-1)", minScore: 0, icon: "e1.png", tier: "enlisted" },
-    { label: "Private 1st Class (E-2)", minScore: 7500, icon: "e2.png", tier: "enlisted" },
-    { label: "PFC (E-3)", minScore: 10000, icon: "e3.png", tier: "enlisted" },
-    { label: "Corporal (E-4)", minScore: 15000, icon: "e4.png", tier: "enlisted" },
-    { label: "Sergeant (E-5)", minScore: 20000, icon: "e5.png", tier: "enlisted" },
-    { label: "Staff Sgt (E-6)", minScore: 30000, icon: "e6.png", tier: "enlisted" },
-    { label: "SFC (E-7)", minScore: 40000, icon: "e7.png", tier: "enlisted" },
-    { label: "Master Sgt (E-8)", minScore: 50000, icon: "e8_msg.png", tier: "enlisted" },
-    { label: "1st Sgt (E-8)", minScore: 60000, icon: "e8_1sg.png", tier: "enlisted" },
-    { label: "Sgt Major (E-9)", minScore: 70000, icon: "e9_sgm.png", tier: "enlisted" },
-    { label: "CSM (E-9)", minScore: 80000, icon: "e9_csm.png", tier: "enlisted" },
-    { label: "SMA (E-9)", minScore: 90000, icon: "e9_sma.png", tier: "enlisted" },
-    { label: "Warrant Officer 1 (WO1)", minScore: 100000, icon: "w1.png", tier: "warrant" },
-    { label: "Chief Warrant Officer 2 (CW2)", minScore: 110000, icon: "w2.png", tier: "warrant" },
-    { label: "Chief Warrant Officer 3 (CW3)", minScore: 120000, icon: "w3.png", tier: "warrant" },
-    { label: "Chief Warrant Officer 4 (CW4)", minScore: 130000, icon: "w4.png", tier: "warrant" },
-    { label: "Chief Warrant Officer 5 (CW5)", minScore: 140000, icon: "w5.png", tier: "warrant" },
-    { label: "2nd Lt (O-1)", minScore: 150000, icon: "o1.png", tier: "officer" },
-    { label: "1st Lt (O-2)", minScore: 160000, icon: "o2.png", tier: "officer" },
-    { label: "Captain (O-3)", minScore: 170000, icon: "o3.png", tier: "officer" },
-    { label: "Major (O-4)", minScore: 180000, icon: "o4.png", tier: "officer" },
-    { label: "Lt Colonel (O-5)", minScore: 190000, icon: "o5.png", tier: "officer" },
-    { label: "Colonel (O-6)", minScore: 200000, icon: "o6.png", tier: "officer" },
-    { label: "Brigadier Gen (O-7)", minScore: 215000, icon: "o7.png", tier: "general" },
-    { label: "Major Gen (O-8)", minScore: 230000, icon: "o8.png", tier: "general" },
-    { label: "Lt Gen (O-9)", minScore: 240000, icon: "o9.png", tier: "general" },
-    { label: "General (O-10)", minScore: 250000, icon: "o10.png", tier: "general" }
+    { label: "PFC (E-2)", minScore: 100, icon: "e2.png", tier: "enlisted" },
+    { label: "PFC (E-3)", minScore: 200, icon: "e3.png", tier: "enlisted" },
+    { label: "Corporal (E-4)", minScore: 300, icon: "e4.png", tier: "enlisted" },
+    { label: "Sergeant (E-5)", minScore: 400, icon: "e5.png", tier: "enlisted" },
+    { label: "Staff Sgt (E-6)", minScore: 500, icon: "e6.png", tier: "enlisted" },
+    { label: "SFC (E-7)", minScore: 600, icon: "e7.png", tier: "enlisted" },
+    { label: "Master Sgt (E-8)", minScore: 700, icon: "e8_msg.png", tier: "enlisted" },
+    { label: "1st Sgt (E-8)", minScore: 800, icon: "e8_1sg.png", tier: "enlisted" },
+    { label: "Sgt Major (E-9)", minScore: 900, icon: "e9_sgm.png", tier: "enlisted" },
+    { label: "CSM (E-9)", minScore: 1000, icon: "e9_csm.png", tier: "enlisted" },
+    { label: "SMA (E-9)", minScore: 1050, icon: "e9_sma.png", tier: "enlisted" },
+    { label: "Warrant Officer 1 (WO1)", minScore: 1100, icon: "w1.png", tier: "warrant" },
+    { label: "CWO 2 (CW2)", minScore: 1150, icon: "w2.png", tier: "warrant" },
+    { label: "CWO 3 (CW3)", minScore: 1200, icon: "w3.png", tier: "warrant" },
+    { label: "CWO 4 (CW4)", minScore: 1250, icon: "w4.png", tier: "warrant" },
+    { label: "CWO 5 (CW5)", minScore: 1300, icon: "w5.png", tier: "warrant" },
+    { label: "2nd Lt (O-1)", minScore: 1400, icon: "o1.png", tier: "officer" },
+    { label: "1st Lt (O-2)", minScore: 1500, icon: "o2.png", tier: "officer" },
+    { label: "Captain (O-3)", minScore: 1600, icon: "o3.png", tier: "officer" },
+    { label: "Major (O-4)", minScore: 1700, icon: "o4.png", tier: "officer" },
+    { label: "Lt Colonel (O-5)", minScore: 1750, icon: "o5.png", tier: "officer" },
+    { label: "Colonel (O-6)", minScore: 1800, icon: "o6.png", tier: "officer" },
+    { label: "Brigadier Gen (O-7)", minScore: 1850, icon: "o7.png", tier: "general" },
+    { label: "Major Gen (O-8)", minScore: 1900, icon: "o8.png", tier: "general" },
+    { label: "Lt Gen (O-9)", minScore: 1950, icon: "o9.png", tier: "general" },
+    { label: "General (O-10)", minScore: 1975, icon: "o10.png", tier: "general" }
 ];
 
 const TIER_COLORS = {
@@ -112,11 +112,17 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
     const tierColors = TIER_COLORS[prevRank.tier as keyof typeof TIER_COLORS] || TIER_COLORS.enlisted;
     const rankCode = prevRank.label.split('(')[1]?.replace(')', '') || 'E-1';
 
-    // Calculate breakdown percentages
-    const skillScore = rating.breakdown?.skill_score ?? 0;
-    const objScore = rating.breakdown?.obj_score ?? 0;
-    const expScore = rating.breakdown?.exp_score ?? 0;
-    const breakdownTotal = skillScore + objScore + expScore;
+    // RP breakdown components (normalized 0-1 from backend)
+    const breakdown = rating.breakdown || {};
+
+    const components = [
+        { label: "Objective/R", weight: 30, value: breakdown.obj_r ?? 0, icon: Target, color: "orange" as const },
+        { label: "KDR", weight: 25, value: breakdown.kdr_norm ?? 0, icon: Crosshair, color: "red" as const },
+        { label: "Kills/Min", weight: 20, value: breakdown.kpm_norm ?? 0, icon: Zap, color: "yellow" as const },
+        { label: "Win Rate", weight: 10, value: breakdown.wr_norm ?? 0, icon: Trophy, color: "green" as const },
+        { label: "Map Variety", weight: 10, value: breakdown.mp_norm ?? 0, icon: MapIcon, color: "blue" as const },
+        { label: "Score/Round", weight: 5, value: breakdown.spr_norm ?? 0, icon: TrendingUp, color: "purple" as const },
+    ];
 
     return (
         <Card className="border-border/60 relative overflow-hidden">
@@ -142,13 +148,17 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-[320px]">
-                                <p className="font-semibold mb-2">Rank Score (XP)</p>
-                                <p className="text-xs text-muted-foreground mb-2">Your rank never drops. Earn Career XP for every action:</p>
+                                <p className="font-semibold mb-2">Rating Points (RP)</p>
+                                <p className="text-xs text-muted-foreground mb-2">RP measures skill on a 0–2,000 scale. Coop rounds are excluded. Components:</p>
                                 <ul className="text-xs list-disc pl-4 space-y-1">
-                                    <li><b>Combat:</b> 10 XP per Kill</li>
-                                    <li><b>Objective:</b> 20 XP per Flag Capture, Defense, or Assist</li>
-                                    <li><b>Service:</b> 100 XP for every Round Completed</li>
+                                    <li><b>Objective/Round (30%):</b> Flag caps, defenses per round</li>
+                                    <li><b>KDR (25%):</b> Kill/Death ratio</li>
+                                    <li><b>Kills/Min (20%):</b> Combat tempo</li>
+                                    <li><b>Win Rate (10%):</b> Rounds won</li>
+                                    <li><b>Map Variety (10%):</b> Unique maps played</li>
+                                    <li><b>Score/Round (5%):</b> Average score</li>
                                 </ul>
+                                <p className="text-xs text-muted-foreground mt-2">Requires 3+ ranked rounds, active in last 60 days. Coop rounds are excluded.</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -171,6 +181,7 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                             <div>
                                 <div className="text-4xl font-extrabold tracking-tight tabular-nums">
                                     {rating.score.toLocaleString()}
+                                    <span className="text-lg font-normal text-muted-foreground ml-1">RP</span>
                                 </div>
                                 <div className={cn("text-sm font-semibold uppercase tracking-wider", tierColors.text)}>
                                     {rating.label}
@@ -181,7 +192,7 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                                     <div className="text-xs text-muted-foreground">Next Rank</div>
                                     <div className="text-sm font-medium text-foreground">{nextRank.label.split('(')[0].trim()}</div>
                                     <div className="text-xs text-muted-foreground font-mono">
-                                        {(nextRank.minScore - currentScore).toLocaleString()} XP to go
+                                        {(nextRank.minScore - currentScore).toLocaleString()} RP to go
                                     </div>
                                 </div>
                             )}
@@ -203,55 +214,49 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                     </div>
                 </div>
 
-                {/* Score breakdown */}
+                {/* Score breakdown — 3x2 grid */}
                 <div className="grid grid-cols-3 gap-3">
-                    <ScoreBreakdownCard
-                        label="Combat XP"
-                        value={skillScore}
-                        icon={Target}
-                        color="red"
-                        percent={breakdownTotal > 0 ? (skillScore / breakdownTotal) * 100 : 0}
-                    />
-                    <ScoreBreakdownCard
-                        label="Objective XP"
-                        value={objScore}
-                        icon={Award}
-                        color="blue"
-                        percent={breakdownTotal > 0 ? (objScore / breakdownTotal) * 100 : 0}
-                    />
-                    <ScoreBreakdownCard
-                        label="Service XP"
-                        value={expScore}
-                        icon={TrendingUp}
-                        color="green"
-                        percent={breakdownTotal > 0 ? (expScore / breakdownTotal) * 100 : 0}
-                    />
+                    {components.map((comp) => (
+                        <RPBreakdownCard
+                            key={comp.label}
+                            label={comp.label}
+                            value={comp.value}
+                            weight={comp.weight}
+                            icon={comp.icon}
+                            color={comp.color}
+                        />
+                    ))}
                 </div>
             </CardContent>
         </Card>
     );
 }
 
-function ScoreBreakdownCard({
+function RPBreakdownCard({
     label,
     value,
+    weight,
     icon: Icon,
     color,
-    percent
 }: {
     label: string;
     value: number;
+    weight: number;
     icon: React.ElementType;
-    color: "red" | "blue" | "green";
-    percent: number;
+    color: "orange" | "red" | "yellow" | "green" | "blue" | "purple";
 }) {
     const colorStyles = {
+        orange: { bg: "bg-orange-500/10", text: "text-orange-500", bar: "bg-gradient-to-r from-orange-500 to-orange-400" },
         red: { bg: "bg-red-500/10", text: "text-red-500", bar: "bg-gradient-to-r from-red-500 to-red-400" },
-        blue: { bg: "bg-blue-500/10", text: "text-blue-500", bar: "bg-gradient-to-r from-blue-500 to-blue-400" },
+        yellow: { bg: "bg-yellow-500/10", text: "text-yellow-500", bar: "bg-gradient-to-r from-yellow-500 to-yellow-400" },
         green: { bg: "bg-green-500/10", text: "text-green-500", bar: "bg-gradient-to-r from-green-500 to-green-400" },
+        blue: { bg: "bg-blue-500/10", text: "text-blue-500", bar: "bg-gradient-to-r from-blue-500 to-blue-400" },
+        purple: { bg: "bg-purple-500/10", text: "text-purple-500", bar: "bg-gradient-to-r from-purple-500 to-purple-400" },
     };
 
     const styles = colorStyles[color];
+    const percent = Math.round(value * 100);
+    const rpContribution = Math.round(value * weight * 20); // weight% of 2000
 
     return (
         <div className="rounded-lg border border-border/40 bg-card/30 p-3">
@@ -262,7 +267,7 @@ function ScoreBreakdownCard({
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
             </div>
             <div className={cn("text-lg font-bold tabular-nums", styles.text)}>
-                +{value.toLocaleString()}
+                {percent}%
             </div>
             <div className="mt-2 h-1 w-full rounded-full bg-muted/30 overflow-hidden">
                 <div
@@ -270,7 +275,9 @@ function ScoreBreakdownCard({
                     style={{ width: `${Math.min(100, percent)}%` }}
                 />
             </div>
-            <div className="text-[10px] text-muted-foreground mt-1 tabular-nums">{percent.toFixed(0)}% of total</div>
+            <div className="text-[10px] text-muted-foreground mt-1 tabular-nums">
+                {weight}% weight &middot; +{rpContribution} RP
+            </div>
         </div>
     );
 }

@@ -36,9 +36,9 @@ const ENDPOINTS: Record<Period, string> = {
 };
 
 const PERIOD_INFO: Record<Period, { label: string; description: string; icon: React.ElementType }> = {
-    all: { label: "All Time", description: "Career XP accumulated since tracking began", icon: Crown },
-    weekly: { label: "Weekly", description: "XP earned in the last 7 days", icon: Clock },
-    monthly: { label: "Monthly", description: "XP earned in the last 30 days", icon: CalendarDays },
+    all: { label: "All Time", description: "Career RP — skill rating across all ranked rounds", icon: Crown },
+    weekly: { label: "Weekly", description: "RP based on rounds from the last 7 days", icon: Clock },
+    monthly: { label: "Monthly", description: "RP based on rounds from the last 30 days", icon: CalendarDays },
 };
 
 function TopThreeCard({ player, position }: { player: LeaderboardItem; position: 1 | 2 | 3 }) {
@@ -68,7 +68,7 @@ function TopThreeCard({ player, position }: { player: LeaderboardItem; position:
                     </Badge>
                     <div className={`text-2xl font-bold ${style.text} mb-2`}>
                         <AnimatedCounter value={player.total_score} duration={1200} />
-                        <span className="text-xs font-normal text-muted-foreground ml-1">XP</span>
+                        <span className="text-xs font-normal text-muted-foreground ml-1">RP</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
                         <div className="flex flex-col items-center">
@@ -104,7 +104,7 @@ function EnhancedLeaderboardTable({ players }: { players: LeaderboardItem[] }) {
                         <TableHead className="w-[70px] text-center font-semibold">Rank</TableHead>
                         <TableHead className="font-semibold">Player</TableHead>
                         <TableHead className="font-semibold hidden sm:table-cell">Title</TableHead>
-                        <TableHead className="text-right font-semibold">Score</TableHead>
+                        <TableHead className="text-right font-semibold">RP</TableHead>
                         <TableHead className="text-right font-semibold hidden md:table-cell">Kills</TableHead>
                         <TableHead className="text-right font-semibold hidden md:table-cell">K/D</TableHead>
                         <TableHead className="text-right font-semibold hidden lg:table-cell">Rounds</TableHead>
@@ -259,7 +259,7 @@ export default function RankInfoClient() {
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight">Leaderboards</h1>
                             <p className="text-muted-foreground">
-                                Top 100 players ranked by Career Score (XP)
+                                Top 100 players ranked by Rating Points (RP)
                             </p>
                         </div>
                     </div>
@@ -272,9 +272,9 @@ export default function RankInfoClient() {
                             <Info className="h-4 w-4" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-sm mb-1">How XP Works</h3>
+                            <h3 className="font-semibold text-sm mb-1">How RP Works</h3>
                             <p className="text-xs text-muted-foreground mb-2">
-                                Earn XP for Kills (+10), Objectives (+20), and completing Rounds (+100).
+                                RP (0–2,000) measures skill across 6 components: Objectives, KDR, Kills/Min, Win Rate, Map Variety, and Score/Round. Coop rounds are excluded.
                             </p>
                             <Button variant="link" size="sm" className="h-auto p-0 text-xs gap-1" asChild>
                                 <Link href="/rank-system">

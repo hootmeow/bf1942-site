@@ -27,6 +27,7 @@ interface RankHistoryItem {
     timestamp: string;
     map_name: string;
     server_name: string;
+    is_ranked: boolean;
     round_stats: {
         kills: number;
         deaths: number;
@@ -120,8 +121,8 @@ export default function HistoryRankClient() {
 
             <Card className="border-border/60">
                 <CardHeader>
-                    <CardTitle>History Log</CardTitle>
-                    <CardDescription>Detailed record of rank changes and round performance.</CardDescription>
+                    <CardTitle>RP History</CardTitle>
+                    <CardDescription>Rating Points progression across recent rounds. Coop rounds are grayed out.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {history && history.length > 0 ? (
@@ -132,13 +133,13 @@ export default function HistoryRankClient() {
                                     <TableHead>Server / Map</TableHead>
                                     <TableHead className="text-center">Rank (After)</TableHead>
                                     <TableHead className="text-center">Round Stats</TableHead>
-                                    <TableHead className="text-right">Points Earned</TableHead>
-                                    <TableHead className="text-right">Total Score</TableHead>
+                                    <TableHead className="text-right">RP Change</TableHead>
+                                    <TableHead className="text-right">Total RP</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {history.map((item, index) => (
-                                    <TableRow key={index}>
+                                    <TableRow key={index} className={!item.is_ranked ? "opacity-50" : ""}>
                                         <TableCell className="whitespace-nowrap font-medium">
                                             {new Date(item.timestamp).toLocaleDateString()}
                                             <span className="block text-xs text-muted-foreground">
@@ -146,7 +147,14 @@ export default function HistoryRankClient() {
                                             </span>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="font-medium">{item.map_name}</div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="font-medium">{item.map_name}</div>
+                                                {!item.is_ranked && (
+                                                    <Badge variant="outline" className="text-[9px] text-muted-foreground border-muted-foreground/30">
+                                                        Unranked
+                                                    </Badge>
+                                                )}
+                                            </div>
                                             <div className="text-xs text-muted-foreground">{item.server_name}</div>
                                         </TableCell>
                                         <TableCell className="text-center">
@@ -169,7 +177,7 @@ export default function HistoryRankClient() {
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-muted-foreground">
-                                            {item.total_score_after.toLocaleString()}
+                                            {item.total_score_after.toLocaleString()} <span className="text-[10px]">RP</span>
                                         </TableCell>
                                     </TableRow>
                                 ))}

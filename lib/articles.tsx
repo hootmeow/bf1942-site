@@ -43,9 +43,9 @@ export const articles: Article[] = [
         <div>
           <h3 className="mb-2 text-xl font-semibold text-foreground">🏆 New Leaderboard System</h3>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Ranked Stats:</strong> Compete for the top spot! View the Top 100 players by Career XP.</li>
+            <li><strong>Ranked Stats:</strong> Compete for the top spot! View the Top 100 players by Rating Points (RP).</li>
             <li><strong>Multiple Timeframes:</strong> Check who is dominating All Time, Weekly (Last 7 Days), and Monthly (Last 30 Days).</li>
-            <li><strong>Rank System Explained:</strong> A new dedicated page breaking down exactly how XP is calculated (Combats vs. Objective vs. Service).</li>
+            <li><strong>Rank System Explained:</strong> A new dedicated page breaking down exactly how RP is calculated across 6 skill components.</li>
           </ul>
         </div>
 

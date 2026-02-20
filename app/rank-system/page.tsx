@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Swords, Flag, Clock, Medal, Trophy, AlertTriangle, Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
     title: "How Ranking Works",
-    description: "Detailed breakdown of the BF1942 XP and Ranking system.",
+    description: "Detailed breakdown of the BF1942 RP Rating System.",
 };
 
 export default function RankSystemPage() {
@@ -14,7 +14,7 @@ export default function RankSystemPage() {
             <div className="text-center space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Ranking System</h1>
                 <p className="text-muted-foreground text-lg">
-                    Understanding how your career rank is calculated.
+                    Understanding how your Rating Points (RP) are calculated.
                 </p>
             </div>
 
@@ -24,88 +24,115 @@ export default function RankSystemPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Medal className="h-6 w-6 text-primary" />
-                            How Ranking Works
+                            How RP Works
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-3">
                         <p className="leading-relaxed">
-                            Unlike K/D ratio, your <b>Rank Score</b> represents your total career contribution.
-                            It is cumulative and will <b>only ever go up</b>. This system is designed to reward dedication and teamplay over time.
+                            Your <b>Rating Points (RP)</b> measure skill on a <b>0–2,000</b> scale. Unlike a cumulative grind score,
+                            RP is rate-based — it rewards how well you play, not just how much you play. Each component is normalized
+                            against the 95th percentile of the eligible player population, so your score reflects your standing relative to other active players.
+                        </p>
+                        <p className="leading-relaxed text-muted-foreground">
+                            Co-op (bot) rounds are automatically excluded from RP calculations.
                         </p>
                     </CardContent>
                 </Card>
 
-                {/* Earning XP Section */}
+                {/* RP Components */}
                 <div className="grid gap-6 md:grid-cols-3">
-                    {/* Combat XP */}
+                    <Card className="border-border/60">
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Flag className="h-5 w-5 text-orange-500" />
+                                Objective / Round
+                            </CardTitle>
+                            <CardDescription>30% weight</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                            <p>Objective score per round — flag captures, defenses, and team assists. Calculated as (Score - Kills) / Rounds.</p>
+                        </CardContent>
+                    </Card>
+
                     <Card className="border-border/60">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
                                 <Swords className="h-5 w-5 text-red-500" />
-                                Combat XP
+                                Kill/Death Ratio
                             </CardTitle>
-                            <CardDescription>
-                                10 XP
-                            </CardDescription>
+                            <CardDescription>25% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Awarded for every neutralizer eliminated.</p>
-                            <div className="p-2 bg-muted rounded font-mono text-xs">
-                                Calculation: Total Kills × 10
-                            </div>
+                            <p>Your overall KDR across all ranked rounds. Higher KDR means more efficient combat.</p>
                         </CardContent>
                     </Card>
 
-                    {/* Objective XP */}
                     <Card className="border-border/60">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <Flag className="h-5 w-5 text-blue-500" />
-                                Objective XP
+                                <Clock className="h-5 w-5 text-yellow-500" />
+                                Kills / Minute
                             </CardTitle>
-                            <CardDescription>
-                                20 XP
-                            </CardDescription>
+                            <CardDescription>20% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Awarded for playing the objective (Capturing flags, Defending bases, Team Assists).</p>
-                            <div className="p-2 bg-muted rounded font-mono text-xs">
-                                Calculation: (Score - Kills) × 20
-                            </div>
+                            <p>Combat tempo — how quickly you eliminate enemies relative to round duration.</p>
                         </CardContent>
                     </Card>
 
-                    {/* Service XP */}
                     <Card className="border-border/60">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <Clock className="h-5 w-5 text-green-500" />
-                                Service XP
+                                <Trophy className="h-5 w-5 text-green-500" />
+                                Win Rate
                             </CardTitle>
-                            <CardDescription>
-                                100 XP
-                            </CardDescription>
+                            <CardDescription>10% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Awarded for dedication. Simply finishing a round grants a large bonus.</p>
-                            <div className="p-2 bg-muted rounded font-mono text-xs">
-                                Calculation: Rounds Played × 100
-                            </div>
+                            <p>Percentage of rounds where your team won. Rewards teamplay and choosing the right moments.</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-border/60">
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Medal className="h-5 w-5 text-blue-500" />
+                                Map Variety
+                            </CardTitle>
+                            <CardDescription>10% weight</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                            <p>Number of distinct maps played. Encourages versatility across different battlefields.</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-border/60">
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Info className="h-5 w-5 text-purple-500" />
+                                Score / Round
+                            </CardTitle>
+                            <CardDescription>5% weight</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                            <p>Average total score per round. A general measure of overall impact each game.</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Philosophy */}
-                {/* Philosophy */}
+                {/* Eligibility */}
                 <Card className="border-border/60">
                     <CardHeader>
-                        <CardTitle>Why this system?</CardTitle>
+                        <CardTitle>Eligibility</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-2">
                         <p className="leading-relaxed text-muted-foreground">
-                            This ensures that dedicated support players (who capture flags) and veteran soldiers (who play every night)
-                            can achieve the highest rank of General, even without a perfect K/D ratio. It prioritizes time in service and objective play alongside raw combat skill.
+                            To appear on the leaderboard and receive an RP score, you must meet these criteria:
                         </p>
+                        <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
+                            <li><b>3+ ranked rounds</b> played (with at least 1 kill or 1 death each)</li>
+                            <li><b>Active in the last 60 days</b></li>
+                        </ul>
                     </CardContent>
                 </Card>
 
@@ -120,10 +147,10 @@ export default function RankSystemPage() {
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm text-yellow-600/90">
                             <p>
-                                <strong>Co-op (Bot) Rounds:</strong> These rounds are <u>not tracked or stored</u> and do not contribute to your player stats.
+                                <strong>Co-op (Bot) Rounds:</strong> Rounds played on Coop gametype servers are automatically marked as <u>unranked</u> and excluded from RP calculations.
                             </p>
                             <p>
-                                <strong>Ranked Game Modes:</strong> Currently, rounds played on <strong>Conquest, Team Deathmatch, and Capture the Flag (CTF)</strong> mode servers contribute towards your career ranking and stats.
+                                <strong>Ranked Game Modes:</strong> Conquest, Team Deathmatch, and Capture the Flag (CTF) rounds all contribute to your ranking.
                             </p>
                             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-md text-red-600">
                                 <strong className="block mb-1 flex items-center gap-2">

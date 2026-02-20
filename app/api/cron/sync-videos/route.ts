@@ -8,9 +8,19 @@ const CRON_SECRET = process.env.CRON_SECRET || ""
 export const maxDuration = 120 // allow up to 2 minutes for large syncs
 
 export async function GET(request: Request) {
+    if (!CRON_SECRET) {
+        console.error("CRON_SECRET is not configured")
+        return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+    }
+
     const { searchParams } = new URL(request.url)
-    const token = searchParams.get("token")
-    if (CRON_SECRET && token !== CRON_SECRET) {
+    const tokenFromQuery = searchParams.get("token")
+    const tokenFromHeader = request.headers.get("x-cron-secret")
+    const bearer = request.headers.get("authorization")
+    const tokenFromBearer = bearer?.startsWith("Bearer ") ? bearer.slice(7) : null
+    const token = tokenFromQuery || tokenFromHeader || tokenFromBearer
+
+    if (token !== CRON_SECRET) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

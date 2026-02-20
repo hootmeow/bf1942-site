@@ -5,7 +5,7 @@ import RankInfoClient from "./rank-info-client";
 
 export const metadata: Metadata = {
     title: "Leaderboards",
-    description: "Top 100 players ranked by Career Score (XP). View All Time, Weekly, and Monthly rankings.",
+    description: "Top 100 players ranked by Rating Points (RP). View All Time, Weekly, and Monthly rankings.",
 };
 
 export default function RankInfoPage() {

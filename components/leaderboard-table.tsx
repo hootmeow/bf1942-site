@@ -33,7 +33,7 @@ export function LeaderboardTable({ players }: { players: LeaderboardItem[] }) {
                         <TableHead className="w-[80px] text-center">Rank</TableHead>
                         <TableHead>Player</TableHead>
                         <TableHead>Rank Title</TableHead>
-                        <TableHead className="text-right">Score (XP)</TableHead>
+                        <TableHead className="text-right">RP</TableHead>
                         <TableHead className="text-right">Kills</TableHead>
                         <TableHead className="text-right">K/D</TableHead>
                         <TableHead className="text-right">Rounds</TableHead>
