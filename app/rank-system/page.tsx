@@ -132,6 +132,7 @@ export default function RankSystemPage() {
                         <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
                             <li><b>3+ ranked rounds</b> played (with at least 1 kill or 1 death each)</li>
                             <li><b>Active in the last 60 days</b></li>
+                            <li><b>Experience multiplier:</b> RP scales linearly up to 30 rounds — players with fewer rounds receive proportionally less RP to prevent small-sample-size inflation</li>
                         </ul>
                     </CardContent>
                 </Card>

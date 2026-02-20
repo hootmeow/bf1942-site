@@ -74,7 +74,7 @@ export function EventCard({ event }: EventCardProps) {
 
           <h3 className="font-semibold text-sm truncate">{event.title}</h3>
           {event.description && (
-            <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{event.description}</p>
+            <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2 border-l-2 border-primary/20 pl-2">{event.description}</p>
           )}
 
           <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">

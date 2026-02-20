@@ -158,7 +158,7 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                                     <li><b>Map Variety (10%):</b> Unique maps played</li>
                                     <li><b>Score/Round (5%):</b> Average score</li>
                                 </ul>
-                                <p className="text-xs text-muted-foreground mt-2">Requires 3+ ranked rounds, active in last 60 days. Coop rounds are excluded.</p>
+                                <p className="text-xs text-muted-foreground mt-2">Requires 3+ ranked rounds, active in last 60 days. Coop rounds excluded. Full credit at 30+ rounds.</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>

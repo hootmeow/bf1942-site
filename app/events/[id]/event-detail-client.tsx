@@ -42,6 +42,7 @@ interface EventDetail {
   recurrence_end?: string | null
   server_id?: number | null
   server_name?: string | null
+  server_name_manual?: string | null
   timezone?: string | null
 }
 
@@ -143,6 +144,7 @@ export default function EventDetailPage() {
         recurrence_frequency: (formData.get("recurrenceFrequency") as string) || null,
         recurrence_end: (formData.get("recurrenceEnd") as string) || null,
         server_id: formData.get("serverId") ? Number(formData.get("serverId")) : null,
+        server_name_manual: (formData.get("serverNameManual") as string)?.trim() || null,
         timezone: (formData.get("timezone") as string) || null,
       })
     } else {
@@ -185,8 +187,8 @@ export default function EventDetailPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Banner */}
       {event.banner_url && !editing && (
-        <div className="h-48 sm:h-64 rounded-xl overflow-hidden border border-border/60">
-          <img src={event.banner_url} alt="" className="h-full w-full object-cover" />
+        <div className="rounded-xl overflow-hidden border border-border/60 bg-muted/30">
+          <img src={event.banner_url} alt="" className="w-full max-h-80 object-contain" />
         </div>
       )}
 
@@ -213,6 +215,7 @@ export default function EventDetailPage() {
                 initialRecurrenceFrequency={event.recurrence_frequency || ""}
                 initialRecurrenceEnd={event.recurrence_end ? toLocalDatetimeValue(event.recurrence_end).slice(0, 10) : ""}
                 initialServerId={event.server_id ? String(event.server_id) : ""}
+                initialServerNameManual={event.server_name_manual || ""}
                 initialTimezone={event.timezone || ""}
                 loading={editLoading}
                 submitLabel="Save Changes"
@@ -224,8 +227,8 @@ export default function EventDetailPage() {
         <>
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
                 <Badge variant="outline" className={typeInfo.color}>{typeInfo.label}</Badge>
                 {isPast && <Badge variant="secondary">Past Event</Badge>}
                 {event.recurrence_frequency && (
@@ -234,9 +237,19 @@ export default function EventDetailPage() {
                   </Badge>
                 )}
               </div>
-              <h1 className="text-2xl font-bold tracking-tight">{event.title}</h1>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">{event.title}</h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  A {typeInfo.label} on{" "}
+                  {event.timezone
+                    ? date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: event.timezone })
+                    : date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                </p>
+              </div>
               {event.description && (
-                <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+                <blockquote className="border-l-2 border-primary/30 pl-4 text-sm text-muted-foreground whitespace-pre-wrap">
+                  {event.description}
+                </blockquote>
               )}
             </div>
             {canEdit && (
@@ -317,14 +330,18 @@ export default function EventDetailPage() {
               {event.org_name || event.organizer_name || "Unknown"}
             </span>
           </div>
-          {event.server_name && (
+          {(event.server_name || event.server_name_manual) && (
             <div className="flex items-center gap-2 text-sm">
               <Server className="h-4 w-4 text-muted-foreground" />
               <span>
                 Server:{" "}
-                <Link href={`/servers/${event.server_id}`} className="text-primary hover:underline">
-                  {event.server_name}
-                </Link>
+                {event.server_name ? (
+                  <Link href={`/servers/${event.server_id}`} className="text-primary hover:underline">
+                    {event.server_name}
+                  </Link>
+                ) : (
+                  event.server_name_manual
+                )}
               </span>
             </div>
           )}

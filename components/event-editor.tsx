@@ -17,6 +17,7 @@ interface EventEditorProps {
   initialRecurrenceFrequency?: string
   initialRecurrenceEnd?: string
   initialServerId?: string
+  initialServerNameManual?: string
   initialTimezone?: string
   loading?: boolean
   submitLabel?: string
@@ -65,16 +66,20 @@ export function EventEditor({
   initialRecurrenceFrequency = "",
   initialRecurrenceEnd = "",
   initialServerId = "",
+  initialServerNameManual = "",
   initialTimezone = "",
   loading,
   submitLabel = "Create Event",
 }: EventEditorProps) {
   const [servers, setServers] = useState<ServerOption[]>([])
+  const [serverMode, setServerMode] = useState<"none" | "select" | "manual">(
+    initialServerNameManual ? "manual" : initialServerId ? "select" : "none"
+  )
 
   useEffect(() => {
     async function fetchServers() {
       try {
-        const res = await fetch("/api/v1/servers/search/metrics")
+        const res = await fetch("/api/v1/servers?has_rounds=true")
         if (res.ok) {
           const data = await res.json()
           if (data.ok && data.servers) {
@@ -152,19 +157,44 @@ export function EventEditor({
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="ev-server">Server (optional)</Label>
-        <select
-          id="ev-server"
-          name="serverId"
-          defaultValue={initialServerId}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          <option value="">No server</option>
-          {servers.map((s) => (
-            <option key={s.server_id} value={s.server_id}>{s.name}</option>
-          ))}
-        </select>
-        <p className="text-[0.8rem] text-muted-foreground">Tag a server so the event shows on its page.</p>
+        <Label>Server (optional)</Label>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setServerMode("none")}
+            className={`px-3 py-1.5 text-xs rounded-md border ${serverMode === "none" ? "bg-primary text-primary-foreground border-primary" : "border-input bg-background"}`}>
+            None
+          </button>
+          <button type="button" onClick={() => setServerMode("select")}
+            className={`px-3 py-1.5 text-xs rounded-md border ${serverMode === "select" ? "bg-primary text-primary-foreground border-primary" : "border-input bg-background"}`}>
+            Select from list
+          </button>
+          <button type="button" onClick={() => setServerMode("manual")}
+            className={`px-3 py-1.5 text-xs rounded-md border ${serverMode === "manual" ? "bg-primary text-primary-foreground border-primary" : "border-input bg-background"}`}>
+            Enter manually
+          </button>
+        </div>
+        {serverMode === "select" && (
+          <select
+            id="ev-server"
+            name="serverId"
+            defaultValue={initialServerId}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            <option value="">Choose a server...</option>
+            {servers.map((s) => (
+              <option key={s.server_id} value={s.server_id}>{s.name}</option>
+            ))}
+          </select>
+        )}
+        {serverMode === "manual" && (
+          <Input name="serverNameManual" defaultValue={initialServerNameManual} placeholder="e.g. My Custom Server" maxLength={200} />
+        )}
+        {serverMode === "none" && (
+          <>
+            <input type="hidden" name="serverId" value="" />
+            <input type="hidden" name="serverNameManual" value="" />
+          </>
+        )}
+        <p className="text-[0.8rem] text-muted-foreground">Tag a tracked server or enter a server name manually.</p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="ev-desc">Description</Label>
