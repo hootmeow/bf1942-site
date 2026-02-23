@@ -21,6 +21,9 @@ export async function createEvent(formData: FormData) {
     const serverId = formData.get("serverId") ? Number(formData.get("serverId")) : null
     const serverNameManual = (formData.get("serverNameManual") as string)?.trim() || null
     const timezone = (formData.get("timezone") as string)?.trim() || null
+    const tagsStr = (formData.get("tags") as string)?.trim()
+    const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()).filter(Boolean) : null
+    const discordLink = (formData.get("discordLink") as string)?.trim() || null
 
     if (!title || title.length > 200) return { error: "Title required, max 200 chars" }
     if (!eventDate) return { error: "Event date required" }
@@ -31,9 +34,9 @@ export async function createEvent(formData: FormData) {
     const client = await pool.connect()
     try {
         const res = await client.query(
-            `INSERT INTO events (title, description, event_type, event_date, end_date, organizer_user_id, organizer_org_id, banner_url, recurrence_frequency, recurrence_end, server_id, server_name_manual, timezone)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING event_id`,
-            [title, description || null, eventType, eventDate, endDate, session.user.id, organizerOrgId, bannerUrl || null, recurrenceFrequency, recurrenceEnd, serverId, serverNameManual, timezone]
+            `INSERT INTO events (title, description, event_type, event_date, end_date, organizer_user_id, organizer_org_id, banner_url, recurrence_frequency, recurrence_end, server_id, server_name_manual, timezone, tags, discord_link)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING event_id`,
+            [title, description || null, eventType, eventDate, endDate, session.user.id, organizerOrgId, bannerUrl || null, recurrenceFrequency, recurrenceEnd, serverId, serverNameManual, timezone, tags, discordLink]
         )
         revalidatePath("/events")
         return { ok: true, eventId: res.rows[0].event_id }
@@ -70,6 +73,9 @@ export async function updateEvent(eventId: number, formData: FormData) {
         const serverId = formData.get("serverId") ? Number(formData.get("serverId")) : null
         const serverNameManual = (formData.get("serverNameManual") as string)?.trim() || null
         const timezone = (formData.get("timezone") as string)?.trim() || null
+        const tagsStr = (formData.get("tags") as string)?.trim()
+        const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()).filter(Boolean) : null
+        const discordLink = (formData.get("discordLink") as string)?.trim() || null
 
         if (!title) return { error: "Title required" }
         if (recurrenceFrequency && !["weekly", "biweekly", "monthly"].includes(recurrenceFrequency)) {
@@ -79,9 +85,9 @@ export async function updateEvent(eventId: number, formData: FormData) {
         await client.query(
             `UPDATE events SET title = $1, description = $2, event_type = $3, event_date = $4,
                     end_date = $5, banner_url = $6, recurrence_frequency = $7, recurrence_end = $8,
-                    server_id = $9, server_name_manual = $10, timezone = $11, updated_at = NOW()
-             WHERE event_id = $12`,
-            [title, description || null, eventType, eventDate, endDate, bannerUrl || null, recurrenceFrequency, recurrenceEnd, serverId, serverNameManual, timezone, eventId]
+                    server_id = $9, server_name_manual = $10, timezone = $11, tags = $12, discord_link = $13, updated_at = NOW()
+             WHERE event_id = $14`,
+            [title, description || null, eventType, eventDate, endDate, bannerUrl || null, recurrenceFrequency, recurrenceEnd, serverId, serverNameManual, timezone, tags, discordLink, eventId]
         )
         revalidatePath(`/events/${eventId}`)
         return { ok: true }

@@ -19,14 +19,19 @@ interface EventEditorProps {
   initialServerId?: string
   initialServerNameManual?: string
   initialTimezone?: string
+  initialTags?: string[]
+  initialDiscordLink?: string
   loading?: boolean
   submitLabel?: string
 }
 
-const EVENT_TYPES = [
+const COMMON_EVENT_TYPES = [
   { value: "tournament", label: "Tournament" },
   { value: "themed_night", label: "Themed Night" },
   { value: "casual", label: "Casual" },
+  { value: "training", label: "Training" },
+  { value: "scrim", label: "Scrim" },
+  { value: "clan_battle", label: "Clan Battle" },
   { value: "other", label: "Other" },
 ]
 
@@ -68,6 +73,8 @@ export function EventEditor({
   initialServerId = "",
   initialServerNameManual = "",
   initialTimezone = "",
+  initialTags = [],
+  initialDiscordLink = "",
   loading,
   submitLabel = "Create Event",
 }: EventEditorProps) {
@@ -75,6 +82,10 @@ export function EventEditor({
   const [serverMode, setServerMode] = useState<"none" | "select" | "manual">(
     initialServerNameManual ? "manual" : initialServerId ? "select" : "none"
   )
+  const [customType, setCustomType] = useState(
+    !COMMON_EVENT_TYPES.find(t => t.value === initialEventType) && initialEventType !== ""
+  )
+  const [eventTypeValue, setEventTypeValue] = useState(initialEventType)
 
   useEffect(() => {
     async function fetchServers() {
@@ -102,16 +113,39 @@ export function EventEditor({
       </div>
       <div className="space-y-2">
         <Label htmlFor="ev-type">Event Type</Label>
-        <select
-          id="ev-type"
-          name="eventType"
-          defaultValue={initialEventType}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          {EVENT_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setCustomType(false)}
+            className={`px-3 py-1.5 text-xs rounded-md border ${!customType ? "bg-primary text-primary-foreground border-primary" : "border-input bg-background"}`}>
+            Common Types
+          </button>
+          <button type="button" onClick={() => setCustomType(true)}
+            className={`px-3 py-1.5 text-xs rounded-md border ${customType ? "bg-primary text-primary-foreground border-primary" : "border-input bg-background"}`}>
+            Custom Type
+          </button>
+        </div>
+        {!customType ? (
+          <select
+            id="ev-type"
+            name="eventType"
+            value={eventTypeValue}
+            onChange={(e) => setEventTypeValue(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            {COMMON_EVENT_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+        ) : (
+          <Input
+            id="ev-type-custom"
+            name="eventType"
+            value={eventTypeValue}
+            onChange={(e) => setEventTypeValue(e.target.value)}
+            placeholder="e.g. Community Night, Map Testing, etc."
+            maxLength={30}
+          />
+        )}
+        <p className="text-[0.8rem] text-muted-foreground">Choose from common types or create your own.</p>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -201,7 +235,28 @@ export function EventEditor({
         <Textarea id="ev-desc" name="description" defaultValue={initialDescription} placeholder="What's this event about?" className="resize-none h-24" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="ev-banner">Banner Image URL</Label>
+        <Label htmlFor="ev-tags">Tags (optional)</Label>
+        <Input
+          id="ev-tags"
+          name="tags"
+          defaultValue={initialTags.join(", ")}
+          placeholder="e.g. competitive, beginner-friendly, no-rules"
+        />
+        <p className="text-[0.8rem] text-muted-foreground">Separate tags with commas. Tags help players find events.</p>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="ev-discord">Discord Link (optional)</Label>
+        <Input
+          id="ev-discord"
+          name="discordLink"
+          defaultValue={initialDiscordLink}
+          placeholder="https://discord.gg/..."
+          type="url"
+        />
+        <p className="text-[0.8rem] text-muted-foreground">Link to a Discord post, channel, or server for this event.</p>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="ev-banner">Banner Image URL (optional)</Label>
         <Input id="ev-banner" name="bannerUrl" defaultValue={initialBannerUrl} placeholder="https://..." type="url" />
       </div>
       <Button type="submit" disabled={loading}>

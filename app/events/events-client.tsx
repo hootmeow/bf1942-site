@@ -10,11 +10,14 @@ import { useSession } from "next-auth/react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const EVENT_TYPES = [
-  { value: "", label: "All Types" },
-  { value: "tournament", label: "Tournament" },
-  { value: "themed_night", label: "Themed Night" },
-  { value: "casual", label: "Casual" },
-  { value: "other", label: "Other" },
+  { value: "", label: "All Types", icon: "📅" },
+  { value: "tournament", label: "Tournament", icon: "🏆" },
+  { value: "themed_night", label: "Themed Night", icon: "🎭" },
+  { value: "casual", label: "Casual", icon: "🎮" },
+  { value: "training", label: "Training", icon: "📚" },
+  { value: "scrim", label: "Scrim", icon: "⚔️" },
+  { value: "clan_battle", label: "Clan Battle", icon: "🛡️" },
+  { value: "other", label: "Other", icon: "✨" },
 ]
 
 export default function EventsPage() {
@@ -109,7 +112,9 @@ export default function EventsPage() {
             variant={typeFilter === t.value ? "default" : "outline"}
             size="sm"
             onClick={() => { setTypeFilter(t.value); setPage(1) }}
+            className="gap-1.5"
           >
+            <span className="text-sm">{t.icon}</span>
             {t.label}
           </Button>
         ))}
@@ -117,34 +122,44 @@ export default function EventsPage() {
 
       {/* Event list */}
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[180px] rounded-xl" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-[200px] rounded-xl" />
           ))}
         </div>
       ) : filteredEvents.length === 0 ? (
-        <div className="border border-dashed border-border/60 rounded-xl bg-card/30 py-12 text-center">
-          <Calendar className="mx-auto h-10 w-10 opacity-40" />
-          <p className="mt-3 font-medium text-muted-foreground">No events found</p>
-          <p className="text-sm mt-1 text-muted-foreground">
-            {selectedDate ? "Try clearing the date filter or selecting a different date." : "Check back soon for upcoming events."}
+        <div className="border border-dashed border-border/60 rounded-xl bg-card/30 py-16 text-center">
+          <div className="p-3 rounded-full bg-muted/50 w-fit mx-auto mb-4">
+            <Calendar className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-lg font-medium text-muted-foreground">No events found</p>
+          <p className="text-sm mt-1 text-muted-foreground max-w-md mx-auto">
+            {selectedDate ? "Try clearing the date filter or selecting a different date." : "Check back soon for upcoming events or create your own!"}
           </p>
+          {session?.user && !selectedDate && (
+            <Link href="/events/create">
+              <Button className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Create Event
+              </Button>
+            </Link>
+          )}
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredEvents.map((event) => (
               <EventCard key={event.event_id} event={event} />
             ))}
           </div>
 
           {total > 50 && (
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2 pt-2">
               <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 Previous
               </Button>
               <span className="flex items-center text-sm text-muted-foreground px-3">
-                Page {page}
+                Page {page} of {Math.ceil(total / 50)}
               </span>
               <Button variant="outline" size="sm" disabled={events.length < 50} onClick={() => setPage(page + 1)}>
                 Next

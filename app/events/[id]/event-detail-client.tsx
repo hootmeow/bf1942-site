@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RsvpButton } from "@/components/rsvp-button"
 import { EventEditor } from "@/components/event-editor"
-import { Loader2, AlertTriangle, Calendar, Clock, User, Users, Trash2, Pencil, X, Server, Globe, CalendarClock } from "lucide-react"
+import { Loader2, AlertTriangle, Calendar, Clock, User, Users, Trash2, Pencil, X, Server, Globe, CalendarClock, Hash, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { deleteEvent, updateEvent } from "@/app/actions/event-actions"
@@ -21,7 +21,22 @@ const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   tournament: { label: "Tournament", color: "bg-red-500/10 text-red-500 border-red-500/20" },
   themed_night: { label: "Themed Night", color: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
   casual: { label: "Casual", color: "bg-green-500/10 text-green-500 border-green-500/20" },
+  training: { label: "Training", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
+  scrim: { label: "Scrim", color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
+  clan_battle: { label: "Clan Battle", color: "bg-red-600/10 text-red-600 border-red-600/20" },
   other: { label: "Event", color: "bg-secondary text-muted-foreground" },
+}
+
+function getEventTypeInfo(eventType: string): { label: string; color: string } {
+  if (EVENT_TYPE_LABELS[eventType]) {
+    return EVENT_TYPE_LABELS[eventType]
+  }
+  // Custom event type: capitalize and use default color
+  const label = eventType
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+  return { label, color: "bg-blue-500/10 text-blue-500 border-blue-500/20" }
 }
 
 interface EventDetail {
@@ -44,6 +59,8 @@ interface EventDetail {
   server_name?: string | null
   server_name_manual?: string | null
   timezone?: string | null
+  tags?: string[] | null
+  discord_link?: string | null
 }
 
 interface Rsvp {
@@ -133,6 +150,8 @@ export default function EventDetailPage() {
     if (res.ok) {
       toast({ title: "Event Updated", variant: "success" })
       setEditing(false)
+      const tagsStr = (formData.get("tags") as string)?.trim()
+      const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()).filter(Boolean) : null
       setEvent({
         ...event!,
         title: (formData.get("title") as string)?.trim() || event!.title,
@@ -146,6 +165,8 @@ export default function EventDetailPage() {
         server_id: formData.get("serverId") ? Number(formData.get("serverId")) : null,
         server_name_manual: (formData.get("serverNameManual") as string)?.trim() || null,
         timezone: (formData.get("timezone") as string) || null,
+        tags,
+        discord_link: (formData.get("discordLink") as string)?.trim() || null,
       })
     } else {
       toast({ title: "Error", description: res.error, variant: "destructive" })
@@ -172,7 +193,7 @@ export default function EventDetailPage() {
     )
   }
 
-  const typeInfo = EVENT_TYPE_LABELS[event.event_type] || EVENT_TYPE_LABELS.other
+  const typeInfo = getEventTypeInfo(event.event_type)
   const date = new Date(event.event_date)
   const nextDate = getNextOccurrence(event)
   const isPast = nextDate < new Date()
@@ -217,6 +238,8 @@ export default function EventDetailPage() {
                 initialServerId={event.server_id ? String(event.server_id) : ""}
                 initialServerNameManual={event.server_name_manual || ""}
                 initialTimezone={event.timezone || ""}
+                initialTags={event.tags || []}
+                initialDiscordLink={event.discord_link || ""}
                 loading={editLoading}
                 submitLabel="Save Changes"
               />
@@ -246,10 +269,31 @@ export default function EventDetailPage() {
                     : date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
                 </p>
               </div>
+              {event.tags && event.tags.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {event.tags.map((tag, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-1 text-xs bg-muted/50 text-muted-foreground px-2 py-1 rounded-md border border-border/40">
+                      <Hash className="h-3 w-3" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
               {event.description && (
                 <blockquote className="border-l-2 border-primary/30 pl-4 text-sm text-muted-foreground whitespace-pre-wrap">
                   {event.description}
                 </blockquote>
+              )}
+              {event.discord_link && (
+                <a
+                  href={event.discord_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Join on Discord
+                </a>
               )}
             </div>
             {canEdit && (
