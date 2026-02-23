@@ -102,14 +102,22 @@ function StatCard({ title, value, icon, copyable, children }: StatCardProps) {
   return (
     <div
       className={cn(
-        "rounded-lg border border-border/60 bg-card/40 p-4 transition-all relative overflow-hidden",
-        copyable && "cursor-pointer hover:bg-card/60 hover:border-primary/50 active:scale-[0.98]"
+        "rounded-lg border border-border/60 bg-card/40 p-4 transition-all duration-200 relative overflow-hidden group/stat",
+        "hover:border-border/80 hover:bg-card/60 hover:shadow-sm",
+        copyable && "cursor-pointer hover:border-primary/40 active:scale-[0.98]"
       )}
       onClick={handleCopy}
       title={copyable ? "Click to copy" : undefined}
     >
+      {/* Subtle top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
       <div className="flex items-center gap-3 relative z-10">
-        <div className={cn("rounded-full bg-primary/10 p-2 text-primary", copied && "bg-green-500/10 text-green-500")}>
+        <div className={cn(
+          "rounded-full p-2 transition-all duration-200",
+          copied
+            ? "bg-green-500/10 text-green-500"
+            : "bg-primary/10 text-primary group-hover/stat:bg-primary/15 group-hover/stat:shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)]"
+        )}>
           {copied ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
         </div>
         <div>
@@ -423,27 +431,41 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
       </Card >
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className={cn("border-border/60", winner === 1 && "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]")}>
-          <CardHeader className={cn("bg-red-950/20 border-b border-red-900/20", winner === 1 && "bg-red-900/30")}>
-            <div className="flex items-center justify-between">
+        <Card className={cn(
+          "border-border/60 overflow-hidden transition-shadow duration-300",
+          winner === 1
+            ? "border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]"
+            : "hover:shadow-[0_0_12px_rgba(239,68,68,0.08)]"
+        )}>
+          <CardHeader className={cn("border-b border-red-900/20 relative overflow-hidden", winner === 1 ? "bg-red-900/30" : "bg-red-950/20")}>
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-transparent" />
+            <div className="flex items-center justify-between relative z-10">
               <CardTitle as="h2" className="text-red-500 flex items-center gap-2">
+                {winner === 1 && <span className="text-xs bg-red-500/20 px-2 py-0.5 rounded-full font-bold tracking-wider">WINNING</span>}
                 Axis
               </CardTitle>
-              <div className="text-2xl font-bold text-red-500">{server_info.tickets1 ?? 'N/A'} Tickets</div>
+              <div className="text-2xl font-bold text-red-500 tabular-nums">{server_info.tickets1 ?? 'N/A'} <span className="text-sm font-medium text-red-400/70">Tickets</span></div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6"><ScoreboardTable players={team1} topThreeNames={topThreeNames} /></CardContent>
+          <CardContent className="pt-4"><ScoreboardTable players={team1} topThreeNames={topThreeNames} /></CardContent>
         </Card>
-        <Card className={cn("border-border/60", winner === 2 && "border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]")}>
-          <CardHeader className={cn("bg-blue-950/20 border-b border-blue-900/20", winner === 2 && "bg-blue-900/30")}>
-            <div className="flex items-center justify-between">
+        <Card className={cn(
+          "border-border/60 overflow-hidden transition-shadow duration-300",
+          winner === 2
+            ? "border-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.15)]"
+            : "hover:shadow-[0_0_12px_rgba(59,130,246,0.08)]"
+        )}>
+          <CardHeader className={cn("border-b border-blue-900/20 relative overflow-hidden", winner === 2 ? "bg-blue-900/30" : "bg-blue-950/20")}>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-transparent" />
+            <div className="flex items-center justify-between relative z-10">
               <CardTitle as="h2" className="text-blue-500 flex items-center gap-2">
+                {winner === 2 && <span className="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full font-bold tracking-wider">WINNING</span>}
                 Allies
               </CardTitle>
-              <div className="text-2xl font-bold text-blue-500">{server_info.tickets2 ?? 'N/A'} Tickets</div>
+              <div className="text-2xl font-bold text-blue-500 tabular-nums">{server_info.tickets2 ?? 'N/A'} <span className="text-sm font-medium text-blue-400/70">Tickets</span></div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6"><ScoreboardTable players={team2} topThreeNames={topThreeNames} /></CardContent>
+          <CardContent className="pt-4"><ScoreboardTable players={team2} topThreeNames={topThreeNames} /></CardContent>
         </Card>
       </div>
 

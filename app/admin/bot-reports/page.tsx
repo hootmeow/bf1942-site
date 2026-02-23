@@ -174,9 +174,8 @@ export default function AdminBotReportsPage() {
                                                                 className="text-green-500 hover:text-green-400"
                                                                 disabled={reviewingId === report.report_id}
                                                                 onClick={() => handleReview(report.report_id, "approved")}
-                                                                title="Approve (mark round unranked)"
                                                             >
-                                                                <Check className="h-4 w-4" />
+                                                                <Check className="h-4 w-4 mr-1" /> Approve
                                                             </Button>
                                                             <Button
                                                                 variant="outline"
@@ -184,15 +183,14 @@ export default function AdminBotReportsPage() {
                                                                 className="text-muted-foreground"
                                                                 disabled={reviewingId === report.report_id}
                                                                 onClick={() => handleReview(report.report_id, "dismissed")}
-                                                                title="Dismiss"
                                                             >
-                                                                <X className="h-4 w-4" />
+                                                                <X className="h-4 w-4 mr-1" /> Dismiss
                                                             </Button>
                                                         </>
                                                     )}
                                                     <Button variant="outline" size="sm" asChild>
                                                         <Link href={`/stats/rounds/${report.round_id}`}>
-                                                            <Eye className="h-4 w-4" />
+                                                            <Eye className="h-4 w-4 mr-1" /> View
                                                         </Link>
                                                     </Button>
                                                 </div>

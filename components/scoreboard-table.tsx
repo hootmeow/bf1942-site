@@ -57,21 +57,21 @@ function getKDRatio(kills: number, deaths: number): { ratio: string; color: stri
 function RankBadge({ rank }: { rank: number }) {
     if (rank === 1) {
         return (
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-500">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-500/20 text-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.3)] ring-1 ring-yellow-500/30">
                 <Crown className="w-3.5 h-3.5" />
             </div>
         );
     }
     if (rank === 2) {
         return (
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-300/20 text-slate-300">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-300/15 text-slate-300 shadow-[0_0_8px_rgba(203,213,225,0.2)] ring-1 ring-slate-400/20">
                 <Medal className="w-3.5 h-3.5" />
             </div>
         );
     }
     if (rank === 3) {
         return (
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-600/20 text-amber-600">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-amber-600/15 text-amber-500 shadow-[0_0_8px_rgba(217,119,6,0.2)] ring-1 ring-amber-600/20">
                 <Award className="w-3.5 h-3.5" />
             </div>
         );
@@ -113,10 +113,12 @@ export function ScoreboardTable({ players, topThreeNames = [] }: ScoreboardTable
         );
     }
 
+    const maxScore = Math.max(...players.map(p => p.final_score ?? p.score ?? 0), 1);
+
     return (
         <Table>
             <TableHeader>
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="hover:bg-transparent border-b border-border/40">
                     <TableHead className="w-10">#</TableHead>
                     <TableHead>Player</TableHead>
                     <TableHead className="text-right">Score</TableHead>
@@ -135,31 +137,33 @@ export function ScoreboardTable({ players, topThreeNames = [] }: ScoreboardTable
                     const ping = player.avg_ping ?? player.ping ?? 0;
                     const kd = getKDRatio(kills, deaths);
                     const pingColor = getPingColor(ping);
+                    const scorePercent = (score / maxScore) * 100;
 
                     // Check if this player is in the overall top 3
                     const overallRank = topThreeNames.indexOf(name) + 1; // 1, 2, 3 or 0 if not found
                     const teamRank = index + 1;
+                    const team = player.team;
 
                     return (
                         <TableRow
                             key={`${name}-${index}`}
                             className={cn(
-                                "transition-colors",
-                                overallRank === 1 && "bg-yellow-500/5",
-                                overallRank === 2 && "bg-slate-300/5",
-                                overallRank === 3 && "bg-amber-600/5"
+                                "transition-all duration-200 hover:bg-muted/20 relative group",
+                                overallRank === 1 && "bg-yellow-500/[0.06] hover:bg-yellow-500/[0.1]",
+                                overallRank === 2 && "bg-slate-300/[0.04] hover:bg-slate-300/[0.08]",
+                                overallRank === 3 && "bg-amber-600/[0.04] hover:bg-amber-600/[0.08]"
                             )}
                         >
-                            <TableCell className="py-2">
+                            <TableCell className="py-2.5">
                                 {overallRank > 0 ? (
                                     <RankBadge rank={overallRank} />
                                 ) : (
-                                    <div className="flex items-center justify-center w-6 h-6 text-xs text-muted-foreground font-mono">
+                                    <div className="flex items-center justify-center w-6 h-6 text-xs text-muted-foreground/60 font-mono">
                                         {teamRank}
                                     </div>
                                 )}
                             </TableCell>
-                            <TableCell className="font-medium text-foreground py-2">
+                            <TableCell className="font-medium text-foreground py-2.5">
                                 {name && name !== "Unknown" ? (
                                     <Link
                                         href={`/player/${encodeURIComponent(name)}`}
@@ -171,16 +175,30 @@ export function ScoreboardTable({ players, topThreeNames = [] }: ScoreboardTable
                                     <span className="text-muted-foreground">{name}</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-right font-semibold py-2">{score}</TableCell>
-                            <TableCell className="text-right text-green-400 py-2">{kills}</TableCell>
-                            <TableCell className="text-right text-red-400 py-2">{deaths}</TableCell>
-                            <TableCell className={cn("text-right font-mono text-sm py-2", kd.color)}>
+                            <TableCell className="text-right py-2.5 relative">
+                                {/* Score bar background */}
+                                <div
+                                    className="absolute inset-y-1 right-0 rounded-l opacity-[0.07] transition-all duration-500"
+                                    style={{
+                                        width: `${scorePercent}%`,
+                                        background: team === 1
+                                            ? "linear-gradient(90deg, transparent, #ef4444)"
+                                            : "linear-gradient(90deg, transparent, #3b82f6)",
+                                    }}
+                                />
+                                <span className="relative font-bold tabular-nums">{score}</span>
+                            </TableCell>
+                            <TableCell className="text-right text-green-400 font-semibold tabular-nums py-2.5">{kills}</TableCell>
+                            <TableCell className="text-right text-red-400 font-semibold tabular-nums py-2.5">{deaths}</TableCell>
+                            <TableCell className={cn("text-right font-mono text-sm tabular-nums py-2.5", kd.color)}>
                                 {kd.ratio}
                             </TableCell>
-                            <TableCell className="text-right py-2">
+                            <TableCell className="text-right py-2.5">
                                 <div className="flex items-center justify-end gap-2">
-                                    <div className={cn("w-1.5 h-1.5 rounded-full", pingColor.bg)} />
-                                    <span className={cn("font-mono text-sm", pingColor.text)}>{ping}</span>
+                                    <div className={cn("w-1.5 h-1.5 rounded-full", pingColor.bg)} style={{
+                                        boxShadow: `0 0 4px currentColor`,
+                                    }} />
+                                    <span className={cn("font-mono text-sm tabular-nums", pingColor.text)}>{ping}</span>
                                 </div>
                             </TableCell>
                         </TableRow>
@@ -188,13 +206,13 @@ export function ScoreboardTable({ players, topThreeNames = [] }: ScoreboardTable
                 })}
             </TableBody>
             <TableFooter>
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableRow className="bg-muted/20 hover:bg-muted/20 border-t border-border/40">
                     <TableCell></TableCell>
                     <TableCell className="font-semibold text-foreground">Team Total</TableCell>
-                    <TableCell className="text-right font-bold text-foreground">{totals.score}</TableCell>
-                    <TableCell className="text-right font-semibold text-green-400">{totals.kills}</TableCell>
-                    <TableCell className="text-right font-semibold text-red-400">{totals.deaths}</TableCell>
-                    <TableCell className={cn("text-right font-mono font-semibold", teamKD.color)}>
+                    <TableCell className="text-right font-bold text-foreground tabular-nums">{totals.score}</TableCell>
+                    <TableCell className="text-right font-semibold text-green-400 tabular-nums">{totals.kills}</TableCell>
+                    <TableCell className="text-right font-semibold text-red-400 tabular-nums">{totals.deaths}</TableCell>
+                    <TableCell className={cn("text-right font-mono font-semibold tabular-nums", teamKD.color)}>
                         {teamKD.ratio}
                     </TableCell>
                     <TableCell></TableCell>
