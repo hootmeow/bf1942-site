@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { ResponsiveContainer, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, AreaChart, Area, Legend, ComposedChart, Label, BarChart, Bar } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChart, Pie, Cell, LineChart, Line } from "recharts";
@@ -230,7 +230,7 @@ function ActivityAreaChart({
  * Defaulted to "7d"
  * Tabs moved to bottom and made smaller
  */
-export function PlayerActivityChart({ data24h, data7d }: { data24h: any[]; data7d: any[] }) {
+export const PlayerActivityChart = React.memo(function PlayerActivityChart({ data24h, data7d }: { data24h: any[]; data7d: any[] }) {
   return (
     <Tabs defaultValue="7d" className="flex flex-col">
       <div className="order-1">
@@ -263,7 +263,7 @@ export function PlayerActivityChart({ data24h, data7d }: { data24h: any[]; data7
       </div>
     </Tabs>
   );
-}
+});
 
 // --- Other charts (unchanged) ---
 
@@ -337,7 +337,7 @@ const processMetricsData = (playerData: any[], pingData: any[]) => {
   }));
 };
 
-export function ServerActivityChart({ playerData, pingData }: { playerData: any[], pingData: any[] }) {
+export const ServerActivityChart = React.memo(function ServerActivityChart({ playerData, pingData }: { playerData: any[], pingData: any[] }) {
   const chartData = processMetricsData(playerData, pingData);
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -427,9 +427,9 @@ export function ServerActivityChart({ playerData, pingData }: { playerData: any[
       </ComposedChart>
     </ResponsiveContainer>
   );
-}
+});
 
-export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
+export const ServerMapsPieChart = React.memo(function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const gradientColors = [
@@ -586,10 +586,10 @@ export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
       <CustomLegend />
     </div>
   );
-}
+});
 
 // --- Player-Specific Chart ---
-export function PlayerPlaytimeChart({ data }: { data: number[] }) {
+export const PlayerPlaytimeChart = React.memo(function PlayerPlaytimeChart({ data }: { data: number[] }) {
   const chartData = data.map((value, index) => ({
     hour: `${index.toString().padStart(2, '0')}:00`,
     activity: value,
@@ -669,11 +669,11 @@ export function PlayerPlaytimeChart({ data }: { data: number[] }) {
       </div>
     </div>
   );
-}
+});
 
 // --- New Player Profile Charts ---
 
-export function PlayerTopMapsChart({ data }: { data: { map_name: string; map_play_count: number }[] }) {
+export const PlayerTopMapsChart = React.memo(function PlayerTopMapsChart({ data }: { data: { map_name: string; map_play_count: number }[] }) {
   const maxValue = Math.max(...data.map(d => d.map_play_count), 1);
   const total = data.reduce((sum, d) => sum + d.map_play_count, 0);
 
@@ -726,9 +726,9 @@ export function PlayerTopMapsChart({ data }: { data: { map_name: string; map_pla
       })}
     </div>
   );
-}
+});
 
-export function PlayerTopServersChart({ data }: { data: { current_server_name: string; server_play_count: number }[] }) {
+export const PlayerTopServersChart = React.memo(function PlayerTopServersChart({ data }: { data: { current_server_name: string; server_play_count: number }[] }) {
   const maxValue = Math.max(...data.map(d => d.server_play_count), 1);
   const total = data.reduce((sum, d) => sum + d.server_play_count, 0);
 
@@ -781,9 +781,9 @@ export function PlayerTopServersChart({ data }: { data: { current_server_name: s
       })}
     </div>
   );
-}
+});
 
-export function PlayerTeamPreferenceChart({ data }: { data: { name: string; value: number }[] }) {
+export const PlayerTeamPreferenceChart = React.memo(function PlayerTeamPreferenceChart({ data }: { data: { name: string; value: number }[] }) {
   // Gradient color pairs for Axis (red) and Allied (blue)
   const teamGradients = [
     ["#dc2626", "#ef4444", "#fca5a5"], // Red gradient for Axis
@@ -899,9 +899,9 @@ export function PlayerTeamPreferenceChart({ data }: { data: { name: string; valu
       </div>
     </div>
   );
-}
+});
 
-export function PlayerActivityLast7DaysChart({ data }: { data: { date: string; rounds: number }[] }) {
+export const PlayerActivityLast7DaysChart = React.memo(function PlayerActivityLast7DaysChart({ data }: { data: { date: string; rounds: number }[] }) {
   const totalRounds = data.reduce((sum, d) => sum + d.rounds, 0);
   const avgRounds = data.length > 0 ? Math.round(totalRounds / data.length) : 0;
   const maxRounds = Math.max(...data.map(d => d.rounds));
@@ -987,7 +987,7 @@ export function PlayerActivityLast7DaysChart({ data }: { data: { date: string; r
       </div>
     </div>
   );
-}
+});
 
 
 // --- PLAYER TIMESERIES CHART ---
@@ -1000,7 +1000,7 @@ interface TimeseriesPoint {
   total_score: number;
 }
 
-export function PlayerTimeseriesChart({
+export const PlayerTimeseriesChart = React.memo(function PlayerTimeseriesChart({
   data,
   timespan,
   onTimespanChange
@@ -1117,7 +1117,7 @@ export function PlayerTimeseriesChart({
       </ResponsiveContainer>
     </div>
   );
-}
+});
 
 // --- ROUND TIMELINE CHART ---
 interface TicketDataPoint {

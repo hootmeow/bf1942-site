@@ -56,6 +56,10 @@ export const metadata: Metadata = {
     description: "The Battlefield 1942 community hub — live servers, player stats, leaderboards, wiki, and mods.",
     images: ["/images/og-image.png"],
   },
+
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 // --- END MODIFIED METADATA ---
 

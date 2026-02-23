@@ -10,8 +10,18 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronLeft, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 import { RoundTimelineChart } from "@/components/charts";
-import { useBattleReplayState, BattleReplayCard, BattleReplayScoreboards } from "@/components/battle-replay";
+import { useBattleReplayState } from "@/components/battle-replay";
+
+const BattleReplayCard = dynamic(
+  () => import("@/components/battle-replay").then(m => ({ default: m.BattleReplayCard })),
+  { ssr: false }
+);
+const BattleReplayScoreboards = dynamic(
+  () => import("@/components/battle-replay").then(m => ({ default: m.BattleReplayScoreboards })),
+  { ssr: false }
+);
 
 interface RoundData {
     round_id: number;

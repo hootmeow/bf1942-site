@@ -169,66 +169,54 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
   }, [slug]);
 
   const [rankData, setRankData] = useState<{ rank: number; activity_hours_7d: number } | null>(null);
+  const [mapBalance, setMapBalance] = useState<MapBalanceStat[]>([]);
 
+  // Fetch rank, rounds, and map balance in parallel
   useEffect(() => {
-    async function fetchRank() {
-      if (!server_info?.server_id) return;
-      try {
-        const res = await fetch("/api/v1/servers/rankings?limit=100");
-        if (res.ok) {
-          const data = await res.json();
+    if (!server_info?.server_id) return;
+    async function fetchServerData() {
+      const [rankRes, roundsRes, balanceRes] = await Promise.allSettled([
+        fetch("/api/v1/servers/rankings?limit=100"),
+        fetch(`/api/v1/servers/search/rounds?search=${server_info.server_id}&page_size=8`),
+        fetch(`/api/v1/servers/search/balance?search=${server_info.server_id}`),
+      ]);
+
+      // Process rank
+      if (rankRes.status === "fulfilled" && rankRes.value.ok) {
+        try {
+          const data = await rankRes.value.json();
           if (data.ok && data.rankings) {
             const found = data.rankings.find((r: any) => r.server_id === server_info.server_id);
             if (found) {
               setRankData({ rank: found.rank, activity_hours_7d: found.activity_hours_7d });
             }
           }
-        }
-      } catch (e) {
-        console.error("Failed to fetch rank", e);
+        } catch (e) { console.error("Failed to parse rank", e); }
       }
-    }
-    fetchRank();
-  }, [server_info?.server_id]);
 
-  useEffect(() => {
-    async function fetchRounds() {
-      if (!server_info?.server_id) return;
-      try {
-        const res = await fetch(`/api/v1/servers/search/rounds?search=${server_info.server_id}&page_size=8`);
-        if (res.ok) {
-          const data = await res.json();
+      // Process rounds
+      if (roundsRes.status === "fulfilled" && roundsRes.value.ok) {
+        try {
+          const data = await roundsRes.value.json();
           if (data.ok) {
             setRecentRounds(data.rounds || []);
             setRoundsTotalCount(data.pagination?.total_rounds || 0);
           }
-        }
-      } catch (e) {
-        console.error("Failed to fetch rounds", e);
-      } finally {
-        setRecentRoundsLoading(false);
+        } catch (e) { console.error("Failed to parse rounds", e); }
       }
-    }
-    fetchRounds();
-  }, [server_info?.server_id]);
+      setRecentRoundsLoading(false);
 
-  const [mapBalance, setMapBalance] = useState<MapBalanceStat[]>([]);
-  useEffect(() => {
-    async function fetchMapBalance() {
-      if (!server_info?.server_id) return;
-      try {
-        const res = await fetch(`/api/v1/servers/search/balance?search=${server_info.server_id}`);
-        if (res.ok) {
-          const data = await res.json();
+      // Process map balance
+      if (balanceRes.status === "fulfilled" && balanceRes.value.ok) {
+        try {
+          const data = await balanceRes.value.json();
           if (data.ok && data.map_balance_stats) {
             setMapBalance(data.map_balance_stats);
           }
-        }
-      } catch (e) {
-        console.error("Failed to fetch map balance", e);
+        } catch (e) { console.error("Failed to parse map balance", e); }
       }
     }
-    fetchMapBalance();
+    fetchServerData();
   }, [server_info?.server_id]);
 
 
