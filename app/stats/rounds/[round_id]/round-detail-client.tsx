@@ -243,17 +243,19 @@ export default function RoundDetailClient() {
                                 </div>
                             )}
 
-                            {round.is_ranked === false ? (
-                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/40">
-                                    <ShieldOff className="h-3 w-3" />
-                                    UNRANKED
-                                </div>
-                            ) : (
-                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/40">
-                                    <Activity className="h-3 w-3" />
-                                    RANKED
-                                </div>
-                            )}
+                            <Link href="/rank-system#ranked-unranked">
+                                {round.is_ranked === false ? (
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/40 hover:bg-orange-500/30 transition-colors cursor-pointer">
+                                        <ShieldOff className="h-3 w-3" />
+                                        UNRANKED
+                                    </div>
+                                ) : (
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/40 hover:bg-green-500/30 transition-colors cursor-pointer">
+                                        <Activity className="h-3 w-3" />
+                                        RANKED
+                                    </div>
+                                )}
+                            </Link>
                         </div>
 
                         {/* Quick stats row */}

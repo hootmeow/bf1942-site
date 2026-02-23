@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ResponsiveContainer, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, AreaChart, Area, Legend, ComposedChart, Label, BarChart, Bar } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChart, Pie, Cell, LineChart, Line } from "recharts";
@@ -429,52 +430,63 @@ export function ServerActivityChart({ playerData, pingData }: { playerData: any[
 }
 
 export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
-  // Vibrant gradient color pairs [start, end]
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
   const gradientColors = [
-    ["#8b5cf6", "#a78bfa"], // Purple
-    ["#06b6d4", "#22d3ee"], // Cyan
-    ["#f59e0b", "#fbbf24"], // Amber
-    ["#ec4899", "#f472b6"], // Pink
-    ["#10b981", "#34d399"], // Emerald
-    ["#6366f1", "#818cf8"], // Indigo
-    ["#ef4444", "#f87171"], // Red
+    ["#8b5cf6", "#c084fc"], // Purple
+    ["#06b6d4", "#67e8f9"], // Cyan
+    ["#f59e0b", "#fcd34d"], // Amber
+    ["#ec4899", "#f9a8d4"], // Pink
+    ["#10b981", "#6ee7b7"], // Emerald
+    ["#6366f1", "#a5b4fc"], // Indigo
+    ["#ef4444", "#fca5a5"], // Red
+    ["#14b8a6", "#5eead4"], // Teal
   ];
 
-  // Calculate total for percentages
-  const total = mapData.reduce((sum, item) => sum + item.rounds_played, 0);
+  const total = mapData.reduce((sum: number, item: any) => sum + item.rounds_played, 0);
 
-  // Custom legend with percentages and progress bars
+  const activeEntry = activeIndex !== null ? mapData[activeIndex] : null;
+  const activePercent = activeEntry ? ((activeEntry.rounds_played / total) * 100).toFixed(0) : null;
+
   const CustomLegend = () => (
-    <div className="space-y-2.5 mt-3">
-      {mapData.map((entry, index) => {
+    <div className="space-y-2 mt-2">
+      {mapData.map((entry: any, index: number) => {
         const percent = total > 0 ? ((entry.rounds_played / total) * 100) : 0;
         const colors = gradientColors[index % gradientColors.length];
+        const isActive = activeIndex === index;
         return (
-          <div key={entry.map_name} className="group">
+          <div
+            key={entry.map_name}
+            className="group cursor-pointer"
+            onMouseEnter={() => setActiveIndex(index)}
+            onMouseLeave={() => setActiveIndex(null)}
+          >
             <div className="flex items-center gap-3 text-sm mb-1">
               <div
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-offset-1 ring-offset-background"
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-200"
                 style={{
                   background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
-                  "--tw-ring-color": colors[0] + "40"
-                } as React.CSSProperties}
+                  boxShadow: isActive ? `0 0 8px ${colors[0]}80` : "none",
+                  transform: isActive ? "scale(1.3)" : "scale(1)",
+                }}
               />
-              <span className="flex-1 truncate text-foreground font-medium" title={entry.map_name}>
+              <span className={`flex-1 truncate font-medium transition-colors duration-200 ${isActive ? "text-foreground" : "text-muted-foreground"}`} title={entry.map_name}>
                 {entry.map_name}
               </span>
               <span className="text-muted-foreground font-mono text-xs tabular-nums">
                 {entry.rounds_played}
               </span>
-              <span className="font-bold w-12 text-right tabular-nums" style={{ color: colors[0] }}>
+              <span className="font-bold w-12 text-right tabular-nums transition-colors duration-200" style={{ color: isActive ? colors[1] : colors[0] }}>
                 {percent.toFixed(0)}%
               </span>
             </div>
-            <div className="h-1 w-full rounded-full bg-muted/30 overflow-hidden ml-5">
+            <div className="h-1.5 w-full rounded-full bg-muted/20 overflow-hidden ml-5">
               <div
-                className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${percent}%`,
-                  background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`
+                  background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]})`,
+                  boxShadow: isActive ? `0 0 10px ${colors[0]}60` : "none",
                 }}
               />
             </div>
@@ -485,22 +497,28 @@ export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
   );
 
   return (
-    <div className="space-y-2">
-      <ResponsiveContainer width="100%" height={200}>
+    <div className="space-y-1">
+      <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <defs>
-            {mapData.map((_, index) => {
+            {mapData.map((_: any, index: number) => {
               const colors = gradientColors[index % gradientColors.length];
               return (
                 <linearGradient key={`gradient-${index}`} id={`mapGradient-${index}`} x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor={colors[0]} />
-                  <stop offset="100%" stopColor={colors[1]} />
+                  <stop offset="0%" stopColor={colors[0]} stopOpacity={0.9} />
+                  <stop offset="100%" stopColor={colors[1]} stopOpacity={1} />
                 </linearGradient>
               );
             })}
-            {/* Glow filter */}
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+            <filter id="pieGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="pieGlowActive" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" result="coloredBlur" />
               <feMerge>
                 <feMergeNode in="coloredBlur" />
                 <feMergeNode in="SourceGraphic" />
@@ -513,33 +531,47 @@ export function ServerMapsPieChart({ mapData }: { mapData: any[] }) {
             nameKey="map_name"
             cx="50%"
             cy="50%"
-            innerRadius={50}
-            outerRadius={80}
-            paddingAngle={2}
+            innerRadius={55}
+            outerRadius={activeIndex !== null ? 90 : 85}
+            paddingAngle={3}
             strokeWidth={0}
             animationBegin={0}
-            animationDuration={800}
+            animationDuration={1000}
             animationEasing="ease-out"
+            onMouseEnter={(_, index) => setActiveIndex(index)}
+            onMouseLeave={() => setActiveIndex(null)}
           >
-            {mapData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={`url(#mapGradient-${index})`}
-                style={{
-                  filter: "url(#glow)",
-                  cursor: "pointer",
-                  transition: "transform 0.2s ease"
-                }}
-              />
-            ))}
+            {mapData.map((_: any, index: number) => {
+              const isActive = activeIndex === index;
+              return (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={`url(#mapGradient-${index})`}
+                  style={{
+                    filter: isActive ? "url(#pieGlowActive)" : "url(#pieGlow)",
+                    cursor: "pointer",
+                    opacity: activeIndex !== null && !isActive ? 0.5 : 1,
+                    transition: "opacity 0.25s ease, filter 0.25s ease",
+                  }}
+                />
+              );
+            })}
           </Pie>
+          {/* Center label */}
+          <text x="50%" y="46%" textAnchor="middle" dominantBaseline="central" className="fill-foreground text-2xl font-bold" style={{ fontSize: activeEntry ? 20 : 22, transition: "all 0.2s" }}>
+            {activeEntry ? `${activePercent}%` : total}
+          </text>
+          <text x="50%" y="58%" textAnchor="middle" dominantBaseline="central" className="fill-muted-foreground" style={{ fontSize: 11 }}>
+            {activeEntry ? activeEntry.map_name : "rounds"}
+          </text>
           <ReTooltip
             contentStyle={{
               backgroundColor: "hsl(var(--card)/0.95)",
-              borderRadius: 10,
+              borderRadius: 12,
               border: "1px solid hsl(var(--border))",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-              backdropFilter: "blur(8px)"
+              boxShadow: "0 12px 32px rgba(0,0,0,0.3)",
+              backdropFilter: "blur(12px)",
+              padding: "10px 14px",
             }}
             formatter={(value: number, name: string) => {
               const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;

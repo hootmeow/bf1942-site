@@ -141,7 +141,7 @@ export default function RankSystemPage() {
                 </Card>
 
                 {/* Important Notes & Warnings */}
-                <div className="space-y-4">
+                <div id="ranked-unranked" className="space-y-4 scroll-mt-20">
                     <Card className="border-yellow-500/50 bg-yellow-500/5">
                         <CardHeader>
                             <CardTitle className="text-yellow-600 flex items-center gap-2">

@@ -32,7 +32,8 @@ import { ServerHealth } from "@/components/server-health";
 import { ServerRecords } from "@/components/server-records";
 import { ServerFame } from "@/components/server-fame";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { Info, Monitor, Shield, Package, Bookmark } from "lucide-react";
+import { Info, Monitor, Shield, Package, Bookmark, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Types
 interface ServerInfo {
@@ -135,6 +136,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [recentRounds, setRecentRounds] = useState<any[]>([]);
   const [recentRoundsLoading, setRecentRoundsLoading] = useState(true);
+  const [roundsTotalCount, setRoundsTotalCount] = useState(0);
 
   const { server_info, scoreboard } = initialData || { server_info: {} as any, scoreboard: [] };
   const communityLinks = server_info?.server_id ? SERVER_LINKS[server_info.server_id] : null;
@@ -182,23 +184,24 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
   }, [server_info?.server_id]);
 
   useEffect(() => {
-    async function fetchRecentRounds() {
+    async function fetchRounds() {
       if (!server_info?.server_id) return;
       try {
-        const res = await fetch(`/api/v1/servers/search/rounds?search=${server_info.server_id}&page_size=5`);
+        const res = await fetch(`/api/v1/servers/search/rounds?search=${server_info.server_id}&page_size=8`);
         if (res.ok) {
           const data = await res.json();
           if (data.ok) {
             setRecentRounds(data.rounds || []);
+            setRoundsTotalCount(data.pagination?.total_rounds || 0);
           }
         }
       } catch (e) {
-        console.error("Failed to fetch recent rounds", e);
+        console.error("Failed to fetch rounds", e);
       } finally {
         setRecentRoundsLoading(false);
       }
     }
-    fetchRecentRounds();
+    fetchRounds();
   }, [server_info?.server_id]);
 
   const [mapBalance, setMapBalance] = useState<MapBalanceStat[]>([]);
@@ -316,15 +319,17 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
           {/* Ranked / Unranked Badge based on current gametype */}
           <>
             <span>•</span>
-            {server_info.is_blacklisted || server_info.current_gametype?.toLowerCase() === 'coop' ? (
-              <span className="flex items-center gap-1.5 text-orange-400 font-mono font-bold bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
-                <span className="text-xs">UNRANKED{server_info.current_gametype?.toLowerCase() === 'coop' ? ' — COOP' : ''}</span>
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 text-green-400 font-mono font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
-                <span className="text-xs">RANKED</span>
-              </span>
-            )}
+            <Link href="/rank-system#ranked-unranked">
+              {server_info.is_blacklisted || server_info.current_gametype?.toLowerCase() === 'coop' ? (
+                <span className="flex items-center gap-1.5 text-orange-400 font-mono font-bold bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20 hover:bg-orange-500/20 transition-colors cursor-pointer">
+                  <span className="text-xs">UNRANKED{server_info.current_gametype?.toLowerCase() === 'coop' ? ' — COOP' : ''}</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-green-400 font-mono font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20 hover:bg-green-500/20 transition-colors cursor-pointer">
+                  <span className="text-xs">RANKED</span>
+                </span>
+              )}
+            </Link>
           </>
 
           {/* Global Rank Badge - Hide if blacklisted */}
@@ -473,15 +478,6 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         </div>
       )}
 
-      {/* Retention */}
-      {server_info?.server_id && (
-        <ServerRetention serverId={server_info.server_id} />
-      )}
-
-      {/* Server Records & Fame */}
-      <ServerRecords slug={slug} />
-      <ServerFame slug={slug} />
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {metrics && (
           <Card className="border-border/60 lg:col-span-1">
@@ -493,7 +489,14 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
         )}
 
         <Card className={cn("border-border/60", metrics ? "lg:col-span-2" : "lg:col-span-3")}>
-          <CardHeader><CardTitle as="h2">Recent Rounds</CardTitle></CardHeader>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle as="h2">Round History</CardTitle>
+              {roundsTotalCount > 0 && (
+                <span className="text-sm text-muted-foreground">{roundsTotalCount} rounds</span>
+              )}
+            </div>
+          </CardHeader>
           <CardContent>
             {recentRoundsLoading ? (
               <div className="flex items-center justify-center p-8 text-muted-foreground">
@@ -535,7 +538,16 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
                 </TableBody>
               </Table>
             ) : (
-              <div className="p-4 text-center text-muted-foreground">No recent rounds found.</div>
+              <div className="p-4 text-center text-muted-foreground">No rounds found.</div>
+            )}
+            {roundsTotalCount > 8 && (
+              <div className="flex justify-center mt-4">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/servers/${slug}/rounds`}>
+                    View All {roundsTotalCount.toLocaleString()} Rounds <ChevronRight className="h-4 w-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -548,6 +560,15 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
           <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading historical metrics...
         </div>
       )}
+
+      {/* Records, Retention & Fame */}
+      <ServerRecords slug={slug} />
+
+      {server_info?.server_id && (
+        <ServerRetention serverId={server_info.server_id} />
+      )}
+
+      <ServerFame slug={slug} />
 
       {/* Advanced Server Info */}
       <Accordion type="single" collapsible>
