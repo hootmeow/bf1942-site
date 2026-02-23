@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, Loader2, Clock, Users, Activity, Swords, Zap } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, Users, Activity, Swords, Zap, ShieldOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScoreboardPlayer } from "@/components/scoreboard-table";
@@ -25,6 +25,7 @@ interface RoundData {
     ip: string;
     port: number;
     gamemode: string;
+    is_ranked?: boolean;
 }
 
 interface RoundDetailsResponse {
@@ -239,6 +240,18 @@ export default function RoundDetailClient() {
                                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
                                     <Zap className="h-3 w-3" />
                                     {closenessBadge}
+                                </div>
+                            )}
+
+                            {round.is_ranked === false ? (
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/40">
+                                    <ShieldOff className="h-3 w-3" />
+                                    UNRANKED
+                                </div>
+                            ) : (
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/40">
+                                    <Activity className="h-3 w-3" />
+                                    RANKED
                                 </div>
                             )}
                         </div>

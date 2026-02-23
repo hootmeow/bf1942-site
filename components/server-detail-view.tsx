@@ -313,7 +313,21 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
             </>
           )}
 
-          {/* New Rank Badge - Hide if blacklisted */}
+          {/* Ranked / Unranked Badge based on current gametype */}
+          <>
+            <span>•</span>
+            {server_info.is_blacklisted || server_info.current_gametype?.toLowerCase() === 'coop' ? (
+              <span className="flex items-center gap-1.5 text-orange-400 font-mono font-bold bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
+                <span className="text-xs">UNRANKED{server_info.current_gametype?.toLowerCase() === 'coop' ? ' — COOP' : ''}</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-green-400 font-mono font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
+                <span className="text-xs">RANKED</span>
+              </span>
+            )}
+          </>
+
+          {/* Global Rank Badge - Hide if blacklisted */}
           {rankData && !server_info.is_blacklisted && (
             <>
               <span>•</span>
@@ -493,6 +507,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
                     <TableHead>Date</TableHead>
                     <TableHead className="text-right">Duration</TableHead>
                     <TableHead className="text-right">Players</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -503,6 +518,13 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
                       <TableCell className="text-muted-foreground">{new Date(round.start_time).toLocaleString()}</TableCell>
                       <TableCell className="text-right tabular-nums">{Math.floor(round.duration_seconds / 60)}m {round.duration_seconds % 60}s</TableCell>
                       <TableCell className="text-right tabular-nums">{round.player_count}</TableCell>
+                      <TableCell>
+                        {round.is_ranked === false ? (
+                          <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20">UNRANKED</span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">RANKED</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Link href={`/stats/rounds/${round.round_id}`} className="text-primary hover:underline underline-offset-2 text-sm font-medium">
                           View

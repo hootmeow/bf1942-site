@@ -34,7 +34,10 @@ export default function RankSystemPage() {
                             against the 95th percentile of the eligible player population, so your score reflects your standing relative to other active players.
                         </p>
                         <p className="leading-relaxed text-muted-foreground">
-                            Co-op (bot) rounds are automatically excluded from RP calculations.
+                            Only <b>ranked rounds</b> contribute to your RP. Rounds are automatically marked as <b>unranked</b> and excluded
+                            from RP calculations if they are Co-op (bot) rounds, have fewer than 4 players, last under 2 minutes,
+                            or are flagged for suspected stat manipulation. You can see whether a round is ranked or unranked on the
+                            round detail page and in server round history.
                         </p>
                     </CardContent>
                 </Card>
@@ -148,10 +151,22 @@ export default function RankSystemPage() {
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm text-yellow-600/90">
                             <p>
-                                <strong>Co-op (Bot) Rounds:</strong> Rounds played on Coop gametype servers are automatically marked as <u>unranked</u> and excluded from RP calculations.
+                                <strong>Ranked vs Unranked Rounds:</strong> Each round is individually classified as <span className="text-green-500 font-bold">RANKED</span> or <span className="text-orange-400 font-bold">UNRANKED</span>.
+                                Only ranked rounds contribute to your RP, leaderboard position, and achievements. You can see the status on each round&apos;s detail page and in the server rounds table.
                             </p>
                             <p>
-                                <strong>Ranked Game Modes:</strong> Conquest, Team Deathmatch, and Capture the Flag (CTF) rounds all contribute to your ranking.
+                                <strong>What makes a round unranked?</strong> Rounds are automatically marked unranked if any of the following apply:
+                            </p>
+                            <ul className="list-disc pl-6 space-y-1">
+                                <li><strong>Co-op (Bot) rounds</strong> — Coop gametype is always unranked</li>
+                                <li><strong>Too few players</strong> — fewer than 4 tracked human players</li>
+                                <li><strong>Too short</strong> — round lasted less than 2 minutes</li>
+                                <li><strong>No combat</strong> — zero kills and zero deaths (map transitions)</li>
+                                <li><strong>Suspected bot farming</strong> — flagged by automated detection for abnormal stats (admin reviewed)</li>
+                                <li><strong>Blacklisted server</strong> — rounds from blacklisted servers are not ingested at all</li>
+                            </ul>
+                            <p>
+                                <strong>Ranked Game Modes:</strong> Conquest, Team Deathmatch, and Capture the Flag (CTF) rounds all contribute to your ranking when they pass the above filters.
                             </p>
                             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-md text-red-600">
                                 <strong className="block mb-1 flex items-center gap-2">

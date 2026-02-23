@@ -58,6 +58,7 @@ export async function getAdminRounds(page: number = 1, pageSize: number = 50, se
                 r.duration_seconds, 
                 r.winner_team, 
                 r.gamemode,
+                r.is_ranked,
                 COALESCE(s.current_server_name, 'Unknown Server') as server_name
             FROM rounds r
             LEFT JOIN servers s ON r.server_id = s.server_id

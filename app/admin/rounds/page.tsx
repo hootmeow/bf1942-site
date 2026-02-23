@@ -56,6 +56,7 @@ export default async function AdminRoundsPage({
                             <TableHead>Map</TableHead>
                             <TableHead>Server</TableHead>
                             <TableHead>Duration</TableHead>
+                            <TableHead>Ranked</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -74,6 +75,13 @@ export default async function AdminRoundsPage({
                                     </div>
                                 </TableCell>
                                 <TableCell>{Math.floor(round.duration_seconds / 60)}m {round.duration_seconds % 60}s</TableCell>
+                                <TableCell>
+                                    {round.is_ranked === false ? (
+                                        <span className="text-xs font-semibold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">UNRANKED</span>
+                                    ) : (
+                                        <span className="text-xs font-semibold text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded">RANKED</span>
+                                    )}
+                                </TableCell>
                                 <TableCell className="text-right flex justify-end gap-2">
                                     <Button variant="outline" size="sm" asChild>
                                         <Link href={`/admin/rounds/${round.round_id}`}>
