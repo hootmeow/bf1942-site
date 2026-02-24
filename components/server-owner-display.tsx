@@ -32,7 +32,7 @@ export function ServerOwnerDisplay({ serverId, serverName, serverSlug }: ServerO
     useEffect(() => {
         async function fetchOwner() {
             try {
-                const res = await fetch(`/api/v1/servers/${serverId}/owner`);
+                const res = await fetch(`/api/v1/servers/${serverId}/owner`, { cache: 'no-store' });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.ok && data.owner) {

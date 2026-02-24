@@ -18,21 +18,30 @@ export async function GET(
 
         // Query for approved claim
         const result = await pool.query(
-            `SELECT sc.user_id as owner_id, sc.discord_username, sc.created_at as claimed_at
+            `SELECT sc.user_id as owner_id, sc.discord_username, sc.created_at as claimed_at, sc.status
              FROM server_claims sc
              WHERE sc.server_id = $1 AND sc.status = 'APPROVED'
              LIMIT 1`,
             [serverId]
         );
 
+        // Debug: also check all claims for this server
+        const allClaims = await pool.query(
+            `SELECT claim_id, server_id, status, discord_username FROM server_claims WHERE server_id = $1`,
+            [serverId]
+        );
+        console.log(`[Owner API] server_id=${serverId}, approved=${result.rows.length}, all_claims=${JSON.stringify(allClaims.rows)}`);
+
+        const headers = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
+
         if (result.rows.length === 0) {
-            return NextResponse.json({ ok: true, owner: null });
+            return NextResponse.json({ ok: true, owner: null }, { headers });
         }
 
         return NextResponse.json({
             ok: true,
             owner: result.rows[0]
-        });
+        }, { headers });
 
     } catch (e: any) {
         console.error("Server owner fetch error:", e);

@@ -105,13 +105,13 @@ export default async function ClaimedServersPage() {
                                     </div>
                                     <div className="flex items-center gap-2 ml-4">
                                         <Button asChild size="sm" variant="outline">
-                                            <Link href={`/servers/${server.server_ip}`}>
+                                            <Link href={`/servers/${server.server_id}`}>
                                                 <ExternalLink className="h-3 w-3 mr-1" />
                                                 View
                                             </Link>
                                         </Button>
                                         <Button asChild size="sm" variant="outline">
-                                            <Link href={`/servers/${server.server_ip}/admin`}>
+                                            <Link href={`/servers/${server.server_id}/admin`}>
                                                 <Settings className="h-3 w-3 mr-1" />
                                                 Dashboard
                                             </Link>
