@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ServerDetailView } from "@/components/server-detail-view";
+import { pool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -81,9 +82,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+async function getServerOwner(serverId: number) {
+  try {
+    const result = await pool.query(
+      `SELECT user_id as owner_id, discord_username, created_at as claimed_at
+       FROM server_claims
+       WHERE server_id = $1 AND status = 'APPROVED'
+       LIMIT 1`,
+      [serverId]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  } catch (e) {
+    console.error("[ServerOwner] DB error:", e);
+    return null;
+  }
+}
+
 export default async function ServerPage({ params }: Props) {
-  const { slug } = await params; // <--- This was the missing await
+  const { slug } = await params;
   const data = await getServerData(slug);
 
-  return <ServerDetailView initialData={data} slug={slug} />;
+  // Fetch owner server-side (avoids rewrite proxy conflict)
+  const owner = data?.ok && data.server_info?.server_id
+    ? await getServerOwner(data.server_info.server_id)
+    : null;
+
+  return <ServerDetailView initialData={data} slug={slug} serverOwner={owner} />;
 }

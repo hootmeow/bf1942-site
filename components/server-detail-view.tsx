@@ -140,7 +140,7 @@ function LockIcon({ status, className }: { status?: string | number, className?:
   return <Unlock className={className} />;
 }
 
-export function ServerDetailView({ initialData, slug }: { initialData: ServerDetailsData | null, slug: string }) {
+export function ServerDetailView({ initialData, slug, serverOwner }: { initialData: ServerDetailsData | null, slug: string, serverOwner?: any }) {
   const [metrics, setMetrics] = useState<any>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [recentRounds, setRecentRounds] = useState<any[]>([]);
@@ -348,6 +348,7 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
             serverId={server_info.server_id}
             serverName={server_info.current_server_name || "Unknown Server"}
             serverSlug={slug}
+            initialOwner={serverOwner}
           />
         </div>
       </div>

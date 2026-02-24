@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Shield, Loader2, Crown, Settings } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { submitServerClaimRequest } from "@/app/actions/claim-actions";
@@ -12,41 +12,20 @@ interface ServerOwnerDisplayProps {
     serverId: number;
     serverName: string;
     serverSlug?: string;
+    initialOwner?: {
+        owner_id: string;
+        discord_username: string;
+        claimed_at: string;
+    } | null;
 }
 
-interface OwnerInfo {
-    owner_id: string;
-    discord_username: string;
-    claimed_at: Date;
-}
-
-export function ServerOwnerDisplay({ serverId, serverName, serverSlug }: ServerOwnerDisplayProps) {
+export function ServerOwnerDisplay({ serverId, serverName, serverSlug, initialOwner }: ServerOwnerDisplayProps) {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const [owner, setOwner] = useState<OwnerInfo | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [owner] = useState(initialOwner ?? null);
     const [claiming, setClaiming] = useState(false);
 
     const isOwner = session?.user?.id && owner?.owner_id === session.user.id;
-
-    useEffect(() => {
-        async function fetchOwner() {
-            try {
-                const res = await fetch(`/api/v1/servers/${serverId}/owner`, { cache: 'no-store' });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.ok && data.owner) {
-                        setOwner(data.owner);
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to fetch server owner:", e);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchOwner();
-    }, [serverId]);
 
     const handleClaim = async () => {
         if (status !== "authenticated") {
@@ -68,15 +47,6 @@ export function ServerOwnerDisplay({ serverId, serverName, serverSlug }: ServerO
             setClaiming(false);
         }
     };
-
-    if (loading) {
-        return (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Loading owner info...</span>
-            </div>
-        );
-    }
 
     return (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
