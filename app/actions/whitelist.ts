@@ -54,12 +54,12 @@ export async function getWhitelistedServers(): Promise<WhitelistedServer[]> {
                 ws.is_ignored,
                 ws.admin_notes,
                 ws.owner_contact,
-                s.live_snapshot_timestamp as last_seen,
+                s.last_seen,
                 s.current_player_count,
                 s.current_max_players,
                 s.current_map,
                 CASE
-                    WHEN s.live_snapshot_timestamp > NOW() - INTERVAL '10 minutes' THEN true
+                    WHEN s.last_seen > NOW() - INTERVAL '10 minutes' THEN true
                     ELSE false
                 END as is_online,
                 (SELECT COUNT(*) FROM rounds r WHERE r.server_id = s.server_id) as total_rounds
