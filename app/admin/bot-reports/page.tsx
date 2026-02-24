@@ -99,8 +99,8 @@ export default function AdminBotReportsPage() {
             ) : reports.length === 0 ? (
                 <div className="text-center text-muted-foreground p-12">No reports found.</div>
             ) : (
-                <div className="rounded-md border border-border/60 overflow-hidden">
-                    <Table>
+                <div className="rounded-md border border-border/60 overflow-x-auto">
+                    <Table className="min-w-[1200px]">
                         <TableHeader className="bg-muted/50">
                             <TableRow>
                                 <TableHead className="w-[80px]">Round</TableHead>

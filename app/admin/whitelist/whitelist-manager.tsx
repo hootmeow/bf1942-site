@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save } from "lucide-react"
+import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Textarea } from "@/components/ui/textarea"
@@ -17,6 +17,20 @@ import { Label } from "@/components/ui/label"
 
 interface WhitelistManagerProps {
     initialServers: WhitelistedServer[]
+}
+
+function formatTimeAgo(date: Date): string {
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return "Just now"
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString()
 }
 
 export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
@@ -150,11 +164,53 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
                                 <div className="divide-y">
                                     {activeServers.map((server) => (
                                         <div key={server.ip} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                                            <div className="space-y-1">
-                                                <div className="font-medium flex items-center gap-2">
+                                            <div className="space-y-2 flex-1">
+                                                <div className="font-medium flex items-center gap-2 flex-wrap">
                                                     {server.server_name || "Unknown Server"}
                                                     <Badge variant="outline" className="text-xs font-normal font-mono">{server.ip}</Badge>
+                                                    {server.is_online ? (
+                                                        <Badge variant="default" className="text-[10px] bg-green-500 hover:bg-green-600 flex items-center gap-1">
+                                                            <Circle className="h-2 w-2 fill-current" />
+                                                            Online
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="secondary" className="text-[10px] flex items-center gap-1">
+                                                            <Circle className="h-2 w-2 fill-current" />
+                                                            Offline
+                                                        </Badge>
+                                                    )}
                                                     {server.admin_notes && <Badge variant="secondary" className="text-[10px]">Has Notes</Badge>}
+                                                </div>
+                                                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                                    {server.last_seen ? (
+                                                        <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
+                                                            <Clock className="h-3 w-3" />
+                                                            Last seen: {formatTimeAgo(new Date(server.last_seen))}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1">
+                                                            <Clock className="h-3 w-3" />
+                                                            Never seen
+                                                        </span>
+                                                    )}
+                                                    {server.is_online && server.current_player_count !== null && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Users className="h-3 w-3" />
+                                                            {server.current_player_count}/{server.current_max_players} players
+                                                        </span>
+                                                    )}
+                                                    {server.is_online && server.current_map && (
+                                                        <span className="flex items-center gap-1">
+                                                            <MapIcon className="h-3 w-3" />
+                                                            {server.current_map}
+                                                        </span>
+                                                    )}
+                                                    {server.total_rounds !== null && server.total_rounds > 0 && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Database className="h-3 w-3" />
+                                                            {server.total_rounds.toLocaleString()} rounds
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
                                                     Added by {server.added_by || "System"} on {new Date(server.added_at).toLocaleDateString()}
@@ -211,10 +267,40 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
                                 <div className="divide-y divide-yellow-200 dark:divide-yellow-900/50">
                                     {inactiveServers.map((server) => (
                                         <div key={server.ip} className="flex items-center justify-between p-4">
-                                            <div className="space-y-1">
-                                                <div className="font-medium flex items-center gap-2">
+                                            <div className="space-y-2 flex-1">
+                                                <div className="font-medium flex items-center gap-2 flex-wrap">
                                                     {server.server_name || "Unknown Server"}
                                                     <Badge variant="outline" className="text-xs font-normal font-mono">{server.ip}</Badge>
+                                                    {server.is_online ? (
+                                                        <Badge variant="default" className="text-[10px] bg-green-500 hover:bg-green-600 flex items-center gap-1">
+                                                            <Circle className="h-2 w-2 fill-current" />
+                                                            Online
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="secondary" className="text-[10px] flex items-center gap-1">
+                                                            <Circle className="h-2 w-2 fill-current" />
+                                                            Offline
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                                    {server.last_seen ? (
+                                                        <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
+                                                            <Clock className="h-3 w-3" />
+                                                            Last seen: {formatTimeAgo(new Date(server.last_seen))}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1">
+                                                            <Clock className="h-3 w-3" />
+                                                            Never seen
+                                                        </span>
+                                                    )}
+                                                    {server.is_online && server.current_player_count !== null && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Users className="h-3 w-3" />
+                                                            {server.current_player_count}/{server.current_max_players} players
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
                                                     Added by {server.added_by || "System"}

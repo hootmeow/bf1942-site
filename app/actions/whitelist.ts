@@ -21,6 +21,13 @@ export type WhitelistedServer = {
     is_ignored: boolean
     admin_notes: string | null
     owner_contact: string | null
+    // Live server data
+    last_seen: Date | null
+    current_player_count: number | null
+    current_max_players: number | null
+    current_map: string | null
+    is_online: boolean
+    total_rounds: number | null
 }
 
 async function verifyAdmin() {
@@ -38,9 +45,27 @@ export async function getWhitelistedServers(): Promise<WhitelistedServer[]> {
     const client = await pool.connect()
     try {
         const res = await client.query(`
-            SELECT ip, server_name, added_by, added_at, is_active, is_ignored, admin_notes, owner_contact 
-            FROM whitelisted_servers 
-            ORDER BY added_at DESC
+            SELECT
+                ws.ip,
+                ws.server_name,
+                ws.added_by,
+                ws.added_at,
+                ws.is_active,
+                ws.is_ignored,
+                ws.admin_notes,
+                ws.owner_contact,
+                s.live_snapshot_timestamp as last_seen,
+                s.current_player_count,
+                s.current_max_players,
+                s.current_map,
+                CASE
+                    WHEN s.live_snapshot_timestamp > NOW() - INTERVAL '10 minutes' THEN true
+                    ELSE false
+                END as is_online,
+                (SELECT COUNT(*) FROM rounds r WHERE r.server_id = s.server_id) as total_rounds
+            FROM whitelisted_servers ws
+            LEFT JOIN servers s ON ws.ip = s.ip
+            ORDER BY ws.added_at DESC
         `)
         return res.rows
     } finally {
