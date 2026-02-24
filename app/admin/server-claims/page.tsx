@@ -17,7 +17,7 @@ interface ServerClaimRequest {
 async function getPendingServerClaims(): Promise<ServerClaimRequest[]> {
     const res = await pool.query(`
     SELECT sc.claim_id, sc.server_id, sc.discord_username, sc.created_at,
-           s.current_server_name as server_name, s.ip as server_ip
+           s.current_server_name as server_name, s.ip::text as server_ip
     FROM server_claims sc
     JOIN servers s ON sc.server_id = s.server_id
     WHERE sc.status = 'PENDING'

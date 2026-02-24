@@ -1,15 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback, Fragment } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Eye, Check, X, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
 import { getBotReports, reviewBotReport } from "@/app/actions/bot-report-actions"
@@ -99,117 +91,97 @@ export default function AdminBotReportsPage() {
             ) : reports.length === 0 ? (
                 <div className="text-center text-muted-foreground p-12">No reports found.</div>
             ) : (
-                <div className="rounded-md border border-border/60 overflow-x-auto">
-                    <Table className="min-w-[1200px]">
-                        <TableHeader className="bg-muted/50">
-                            <TableRow>
-                                <TableHead className="w-[80px]">Round</TableHead>
-                                <TableHead>Map</TableHead>
-                                <TableHead>Server</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Reason</TableHead>
-                                <TableHead>KSR</TableHead>
-                                <TableHead>Top Player</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {reports.map((report) => {
-                                const details = typeof report.detection_details === 'string'
-                                    ? JSON.parse(report.detection_details)
-                                    : report.detection_details
-                                const topPlayer = details?.top_player
-                                const isExpanded = expandedId === report.report_id
+                <div className="space-y-3">
+                    {reports.map((report) => {
+                        const details = typeof report.detection_details === 'string'
+                            ? JSON.parse(report.detection_details)
+                            : report.detection_details
+                        const topPlayer = details?.top_player
+                        const isExpanded = expandedId === report.report_id
 
-                                return (
-                                    <Fragment key={report.report_id}>
-                                        <TableRow>
-                                            <TableCell>
-                                                <Link href={`/stats/rounds/${report.round_id}`} className="text-primary hover:underline font-mono text-xs">
-                                                    {report.round_id}
-                                                </Link>
-                                            </TableCell>
-                                            <TableCell>{report.map_name}</TableCell>
-                                            <TableCell className="text-sm">{report.server_name}</TableCell>
-                                            <TableCell className="text-sm text-muted-foreground">
-                                                {new Date(report.start_time).toLocaleDateString()}
-                                            </TableCell>
-                                            <TableCell className="text-sm max-w-[200px] truncate" title={report.reason}>
-                                                {report.reason}
-                                            </TableCell>
-                                            <TableCell className="tabular-nums font-mono text-sm">
-                                                {details?.ksr ?? "—"}
-                                            </TableCell>
-                                            <TableCell className="text-sm">
-                                                {topPlayer ? (
-                                                    <span>{topPlayer.name} ({topPlayer.kills}K/{topPlayer.deaths}D)</span>
-                                                ) : "—"}
-                                            </TableCell>
-                                            <TableCell>
-                                                {report.status === "pending" && (
-                                                    <span className="text-xs font-semibold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">PENDING</span>
-                                                )}
-                                                {report.status === "approved" && (
-                                                    <span className="text-xs font-semibold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">APPROVED</span>
-                                                )}
-                                                {report.status === "dismissed" && (
-                                                    <span className="text-xs font-semibold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">DISMISSED</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => setExpandedId(isExpanded ? null : report.report_id)}
-                                                    >
-                                                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                                    </Button>
-                                                    {report.status !== "approved" && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="text-green-500 hover:text-green-400"
-                                                            disabled={reviewingId === report.report_id}
-                                                            onClick={() => handleReview(report.report_id, "approved")}
-                                                        >
-                                                            <Check className="h-4 w-4 mr-1" /> Mark Unranked
-                                                        </Button>
-                                                    )}
-                                                    {report.status !== "dismissed" && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="text-muted-foreground"
-                                                            disabled={reviewingId === report.report_id}
-                                                            onClick={() => handleReview(report.report_id, "dismissed")}
-                                                        >
-                                                            <X className="h-4 w-4 mr-1" /> Dismiss
-                                                        </Button>
-                                                    )}
-                                                    <Button variant="outline" size="sm" asChild>
-                                                        <Link href={`/stats/rounds/${report.round_id}`}>
-                                                            <Eye className="h-4 w-4 mr-1" /> View
-                                                        </Link>
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                        {isExpanded && (
-                                            <TableRow key={`${report.report_id}-details`}>
-                                                <TableCell colSpan={9} className="bg-muted/20 p-4">
-                                                    <pre className="text-xs text-muted-foreground overflow-auto max-h-48">
-                                                        {JSON.stringify(details, null, 2)}
-                                                    </pre>
-                                                </TableCell>
-                                            </TableRow>
+                        return (
+                            <div key={report.report_id} className="rounded-lg border border-border/60 bg-card/40 p-4 space-y-3">
+                                {/* Top row: Round info + Status */}
+                                <div className="flex items-start justify-between gap-4 flex-wrap">
+                                    <div className="space-y-1.5 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Link href={`/stats/rounds/${report.round_id}`} className="text-primary hover:underline font-mono text-sm font-semibold">
+                                                Round #{report.round_id}
+                                            </Link>
+                                            {report.status === "pending" && (
+                                                <span className="text-xs font-semibold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">PENDING</span>
+                                            )}
+                                            {report.status === "approved" && (
+                                                <span className="text-xs font-semibold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">UNRANKED</span>
+                                            )}
+                                            {report.status === "dismissed" && (
+                                                <span className="text-xs font-semibold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">DISMISSED</span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                            <span><strong>Map:</strong> {report.map_name}</span>
+                                            <span><strong>Server:</strong> {report.server_name}</span>
+                                            <span><strong>Date:</strong> {new Date(report.start_time).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                            <span><strong>Reason:</strong> {report.reason}</span>
+                                            <span><strong>KSR:</strong> <span className="font-mono">{details?.ksr ?? "—"}</span></span>
+                                            {topPlayer && (
+                                                <span><strong>Top Player:</strong> {topPlayer.name} ({topPlayer.kills}K/{topPlayer.deaths}D)</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Action buttons */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setExpandedId(isExpanded ? null : report.report_id)}
+                                        >
+                                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                        </Button>
+                                        {report.status !== "approved" && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-green-500 hover:text-green-400"
+                                                disabled={reviewingId === report.report_id}
+                                                onClick={() => handleReview(report.report_id, "approved")}
+                                            >
+                                                <Check className="h-4 w-4 mr-1" /> Unranked
+                                            </Button>
                                         )}
-                                    </Fragment>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
+                                        {report.status !== "dismissed" && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-muted-foreground"
+                                                disabled={reviewingId === report.report_id}
+                                                onClick={() => handleReview(report.report_id, "dismissed")}
+                                            >
+                                                <X className="h-4 w-4 mr-1" /> Dismiss
+                                            </Button>
+                                        )}
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link href={`/stats/rounds/${report.round_id}`}>
+                                                <Eye className="h-4 w-4 mr-1" /> View
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Expanded details */}
+                                {isExpanded && (
+                                    <div className="rounded-md bg-muted/20 p-3 border border-border/40">
+                                        <pre className="text-xs text-muted-foreground overflow-auto max-h-48">
+                                            {JSON.stringify(details, null, 2)}
+                                        </pre>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
                 </div>
             )}
 

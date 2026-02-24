@@ -29,7 +29,7 @@ async function getClaimedServers(): Promise<ClaimedServer[]> {
             sc.created_at as claimed_at,
             sc.reviewed_at,
             CASE
-                WHEN s.last_seen > NOW() - INTERVAL '10 minutes' THEN true
+                WHEN s.last_successful_poll > NOW() - INTERVAL '10 minutes' THEN true
                 ELSE false
             END as is_online,
             s.current_player_count,
