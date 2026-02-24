@@ -74,9 +74,14 @@ export async function approveServerClaim(claimId: string) {
         await client.query("BEGIN")
 
         // 1. Get the claim details
-        const claimRes = await client.query(`SELECT user_id, server_id FROM server_claims WHERE claim_id = $1`, [claimId])
+        const claimRes = await client.query(`
+            SELECT sc.user_id, sc.server_id, s.ip
+            FROM server_claims sc
+            JOIN servers s ON sc.server_id = s.server_id
+            WHERE sc.claim_id = $1
+        `, [claimId])
         if (claimRes.rows.length === 0) throw new Error("Server claim not found")
-        const { server_id } = claimRes.rows[0]
+        const { server_id, ip } = claimRes.rows[0]
 
         // 2. Update claim status and record reviewer
         await client.query(
@@ -99,6 +104,7 @@ export async function approveServerClaim(claimId: string) {
     }
 
     revalidatePath("/admin/server-claims")
+    revalidatePath("/servers", "page") // Revalidate all server pages
 }
 
 export async function denyServerClaim(claimId: string) {

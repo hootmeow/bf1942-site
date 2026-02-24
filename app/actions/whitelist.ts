@@ -64,7 +64,7 @@ export async function getWhitelistedServers(): Promise<WhitelistedServer[]> {
                 END as is_online,
                 (SELECT COUNT(*) FROM rounds r WHERE r.server_id = s.server_id) as total_rounds
             FROM whitelisted_servers ws
-            LEFT JOIN servers s ON ws.ip = s.ip
+            LEFT JOIN servers s ON ws.ip::inet = s.ip
             ORDER BY ws.added_at DESC
         `)
         return res.rows

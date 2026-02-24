@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { isUserAdmin } from "@/lib/admin-auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Shield, List, LayoutDashboard, UserCheck, Users, Calendar, Youtube, Newspaper, Bot, Server } from "lucide-react"
+import { Shield, List, LayoutDashboard, UserCheck, Users, Calendar, Youtube, Newspaper, Bot, Server, Crown } from "lucide-react"
 
 export default async function AdminLayout({
     children,
@@ -51,6 +51,10 @@ export default async function AdminLayout({
                     <Link href="/admin/server-claims" className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-secondary transition-colors">
                         <Server className="h-4 w-4" />
                         Server Claims
+                    </Link>
+                    <Link href="/admin/claimed-servers" className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-secondary transition-colors">
+                        <Crown className="h-4 w-4" />
+                        Claimed Servers
                     </Link>
                     <div className="h-px bg-border my-2" />
                     <Link href="/admin/orgs" className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-secondary transition-colors">
