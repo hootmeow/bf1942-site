@@ -21,6 +21,7 @@ import {
     Crosshair,
 } from "lucide-react";
 import { getMapBySlug, wikiMaps, theaterColors, mapTypeColors, type ControlPoint } from "@/lib/wiki-maps";
+import { MapLeaderboard } from "@/components/map-leaderboard";
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -375,6 +376,9 @@ export default async function MapDetailPage({ params }: PageProps) {
                             </CardContent>
                         </Card>
                     )}
+
+                    {/* Map Leaderboard */}
+                    <MapLeaderboard mapName={map.name} />
                 </div>
 
                 {/* Right Column - Strategies */}

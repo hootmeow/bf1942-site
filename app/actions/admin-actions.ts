@@ -65,3 +65,48 @@ export async function denyClaim(claimId: string) { // Changed to string (UUID)
     await pool.query(`UPDATE claim_requests SET status = 'REJECTED', updated_at = NOW() WHERE claim_id = $1`, [claimId])
     revalidatePath("/admin/claims")
 }
+
+export async function approveServerClaim(claimId: string) {
+    const user = await checkAdmin()
+
+    const client = await pool.connect()
+    try {
+        await client.query("BEGIN")
+
+        // 1. Get the claim details
+        const claimRes = await client.query(`SELECT user_id, server_id FROM server_claims WHERE claim_id = $1`, [claimId])
+        if (claimRes.rows.length === 0) throw new Error("Server claim not found")
+        const { server_id } = claimRes.rows[0]
+
+        // 2. Update claim status and record reviewer
+        await client.query(
+            `UPDATE server_claims SET status = 'APPROVED', reviewed_at = NOW(), reviewed_by_user_id = $1 WHERE claim_id = $2`,
+            [user.id, claimId]
+        )
+
+        // 3. Reject other pending claims for this server
+        await client.query(
+            `UPDATE server_claims SET status = 'DENIED', reviewed_at = NOW(), reviewed_by_user_id = $1 WHERE server_id = $2 AND claim_id != $3 AND status = 'PENDING'`,
+            [user.id, server_id, claimId]
+        )
+
+        await client.query("COMMIT")
+    } catch (e) {
+        await client.query("ROLLBACK")
+        throw e
+    } finally {
+        client.release()
+    }
+
+    revalidatePath("/admin/server-claims")
+}
+
+export async function denyServerClaim(claimId: string) {
+    const user = await checkAdmin()
+
+    await pool.query(
+        `UPDATE server_claims SET status = 'DENIED', reviewed_at = NOW(), reviewed_by_user_id = $1 WHERE claim_id = $2`,
+        [user.id, claimId]
+    )
+    revalidatePath("/admin/server-claims")
+}

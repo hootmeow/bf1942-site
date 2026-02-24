@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { PlayerSearchResult } from "./player-search-autocomplete";
-import { Loader2, TrendingUp, TrendingDown, Minus, Trophy, Skull, Crosshair, Target, Clock, Zap, BarChart, Server, Map, Hash, Activity } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown, Minus, Trophy, Skull, Crosshair, Target, Clock, Zap, BarChart, Server, Map, Hash, Activity, Swords } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface ComparisonViewProps {
     player1: PlayerSearchResult;
@@ -34,6 +35,18 @@ interface PlayerProfile {
     accuracy?: number; // Not in API yet?
 }
 
+interface HeadToHeadData {
+    total_matchups: number;
+    p1_wins: number;
+    p2_wins: number;
+    draws: number;
+    p1_avg_score: number;
+    p2_avg_score: number;
+    p1_total_kills: number;
+    p2_total_kills: number;
+    common_maps: string[];
+}
+
 interface ComparisonData {
     p1: PlayerProfile | null;
     p2: PlayerProfile | null;
@@ -42,6 +55,8 @@ interface ComparisonData {
 
 export function ComparisonView({ player1, player2 }: ComparisonViewProps) {
     const [data, setData] = useState<ComparisonData>({ p1: null, p2: null, loading: true });
+    const [h2h, setH2h] = useState<HeadToHeadData | null>(null);
+    const [h2hLoading, setH2hLoading] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -96,6 +111,33 @@ export function ComparisonView({ player1, player2 }: ComparisonViewProps) {
         fetchData();
         return () => { mounted = false; };
     }, [player1, player2]);
+
+    // Fetch head-to-head data once profiles are loaded
+    useEffect(() => {
+        if (!data.p1 || !data.p2 || data.loading) return;
+
+        let mounted = true;
+        async function fetchH2H() {
+            setH2hLoading(true);
+            try {
+                const res = await fetch(
+                    `/api/v1/players/head-to-head?player1_id=${data.p1!.player_id}&player2_id=${data.p2!.player_id}`
+                );
+                if (res.ok) {
+                    const result = await res.json();
+                    if (mounted && result.ok) {
+                        setH2h(result.data);
+                    }
+                }
+            } catch (e) {
+                console.error("Head-to-head fetch error:", e);
+            } finally {
+                if (mounted) setH2hLoading(false);
+            }
+        }
+        fetchH2H();
+        return () => { mounted = false; };
+    }, [data.p1, data.p2, data.loading]);
 
     if (data.loading) {
         return (
@@ -224,6 +266,122 @@ export function ComparisonView({ player1, player2 }: ComparisonViewProps) {
                 <CardContent className="px-6">
                     <StatRow label="Unique Servers" icon={Server} value1={data.p1.unique_servers} value2={data.p2.unique_servers} />
                     <StatRow label="Unique Maps" icon={Map} value1={data.p1.unique_maps} value2={data.p2.unique_maps} />
+                </CardContent>
+            </Card>
+
+            {/* Head-to-Head Matchup History */}
+            <Card className="border-amber-500/20 bg-gradient-to-br from-card/40 to-amber-950/5">
+                <CardHeader>
+                    <CardTitle className="flex items-center justify-center gap-2 text-center">
+                        <Swords className="h-5 w-5 text-amber-500" />
+                        Head-to-Head History
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground text-center">
+                        Stats from rounds where both players fought together
+                    </p>
+                </CardHeader>
+                <CardContent className="px-6">
+                    {h2hLoading ? (
+                        <div className="flex items-center justify-center py-8 text-muted-foreground">
+                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                            <span>Analyzing battlefield encounters...</span>
+                        </div>
+                    ) : h2h && h2h.total_matchups > 0 ? (
+                        <div className="space-y-6">
+                            {/* Matchup Summary */}
+                            <div className="text-center py-4 border-b border-border/50">
+                                <div className="text-4xl font-bold text-foreground mb-2">
+                                    {h2h.total_matchups}
+                                </div>
+                                <div className="text-sm text-muted-foreground uppercase tracking-wide">
+                                    Total Matchups
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                    (Last 50 ranked rounds)
+                                </div>
+                            </div>
+
+                            {/* Win Record */}
+                            <div className="grid grid-cols-3 gap-4 items-center py-4 border-b border-border/50">
+                                <div className="text-center">
+                                    <div className="text-3xl font-bold text-green-500 mb-1">
+                                        {h2h.p1_wins}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                                        {data.p1.name} Wins
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                        ({h2h.total_matchups > 0 ? ((h2h.p1_wins / h2h.total_matchups) * 100).toFixed(1) : 0}%)
+                                    </div>
+                                </div>
+
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-muted-foreground mb-1">
+                                        {h2h.draws}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                                        Draws
+                                    </div>
+                                </div>
+
+                                <div className="text-center">
+                                    <div className="text-3xl font-bold text-blue-500 mb-1">
+                                        {h2h.p2_wins}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                                        {data.p2.name} Wins
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                        ({h2h.total_matchups > 0 ? ((h2h.p2_wins / h2h.total_matchups) * 100).toFixed(1) : 0}%)
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Performance Stats */}
+                            <div>
+                                <StatRow
+                                    label="Avg Score"
+                                    icon={Trophy}
+                                    value1={h2h.p1_avg_score}
+                                    value2={h2h.p2_avg_score}
+                                    format={(v: number) => v.toFixed(1)}
+                                />
+                                <StatRow
+                                    label="Total Kills"
+                                    icon={Target}
+                                    value1={h2h.p1_total_kills}
+                                    value2={h2h.p2_total_kills}
+                                />
+                            </div>
+
+                            {/* Common Maps */}
+                            {h2h.common_maps && h2h.common_maps.length > 0 && (
+                                <div className="pt-4 border-t border-border/50">
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wide text-center mb-3">
+                                        Common Battlefields ({h2h.common_maps.length} maps)
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 justify-center">
+                                        {h2h.common_maps.slice(0, 8).map((mapName) => (
+                                            <Badge key={mapName} variant="outline" className="text-xs">
+                                                {mapName}
+                                            </Badge>
+                                        ))}
+                                        {h2h.common_maps.length > 8 && (
+                                            <Badge variant="outline" className="text-xs text-muted-foreground">
+                                                +{h2h.common_maps.length - 8} more
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <Swords className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                            <p className="text-sm">No recorded matchups found between these players.</p>
+                            <p className="text-xs mt-2">They haven't fought in the same ranked rounds yet.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

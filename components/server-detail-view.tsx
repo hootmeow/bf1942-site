@@ -12,6 +12,7 @@ import { ServerPeakHeatmap } from "@/components/server-peak-heatmap";
 import { MapBalanceTable, MapBalanceStat } from "@/components/map-balance-table";
 import { ServerRegularsList } from "@/components/server-regulars-list";
 import { ServerLeaderboard } from "@/components/server-leaderboard";
+import { ServerOwnerDisplay } from "@/components/server-owner-display";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -339,6 +340,15 @@ export function ServerDetailView({ initialData, slug }: { initialData: ServerDet
               </span>
             </>
           )}
+        </div>
+
+        {/* Server Owner - New Line */}
+        <div className="mt-2">
+          <ServerOwnerDisplay
+            serverId={server_info.server_id}
+            serverName={server_info.current_server_name || "Unknown Server"}
+            serverSlug={slug}
+          />
         </div>
       </div>
 

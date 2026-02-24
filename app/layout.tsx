@@ -65,6 +65,7 @@ export const metadata: Metadata = {
 
 import { auth } from "@/lib/auth"; // Import auth
 import { SessionProvider } from "@/components/session-provider";
+import { Toaster } from "sonner";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -102,6 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProvider>
           <ThemeProvider>
             <AppShell user={session?.user}>{children}</AppShell>
+            <Toaster position="bottom-right" richColors />
           </ThemeProvider>
         </SessionProvider>
       </body>
