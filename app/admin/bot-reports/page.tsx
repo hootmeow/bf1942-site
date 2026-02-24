@@ -166,27 +166,27 @@ export default function AdminBotReportsPage() {
                                                     >
                                                         {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                                     </Button>
-                                                    {report.status === "pending" && (
-                                                        <>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                className="text-green-500 hover:text-green-400"
-                                                                disabled={reviewingId === report.report_id}
-                                                                onClick={() => handleReview(report.report_id, "approved")}
-                                                            >
-                                                                <Check className="h-4 w-4 mr-1" /> Approve
-                                                            </Button>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                className="text-muted-foreground"
-                                                                disabled={reviewingId === report.report_id}
-                                                                onClick={() => handleReview(report.report_id, "dismissed")}
-                                                            >
-                                                                <X className="h-4 w-4 mr-1" /> Dismiss
-                                                            </Button>
-                                                        </>
+                                                    {report.status !== "approved" && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="text-green-500 hover:text-green-400"
+                                                            disabled={reviewingId === report.report_id}
+                                                            onClick={() => handleReview(report.report_id, "approved")}
+                                                        >
+                                                            <Check className="h-4 w-4 mr-1" /> Mark Unranked
+                                                        </Button>
+                                                    )}
+                                                    {report.status !== "dismissed" && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="text-muted-foreground"
+                                                            disabled={reviewingId === report.report_id}
+                                                            onClick={() => handleReview(report.report_id, "dismissed")}
+                                                        >
+                                                            <X className="h-4 w-4 mr-1" /> Dismiss
+                                                        </Button>
                                                     )}
                                                     <Button variant="outline" size="sm" asChild>
                                                         <Link href={`/stats/rounds/${report.round_id}`}>
