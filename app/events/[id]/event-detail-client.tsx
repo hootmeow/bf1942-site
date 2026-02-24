@@ -16,6 +16,7 @@ import { deleteEvent, updateEvent } from "@/app/actions/event-actions"
 import { getNextOccurrence } from "@/lib/event-utils"
 import { getIsAdmin } from "@/app/actions/admin-actions"
 import { useToast } from "@/components/ui/toast-simple"
+import { trackEvent } from "@/lib/analytics"
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   tournament: { label: "Tournament", color: "bg-red-500/10 text-red-500 border-red-500/20" },
@@ -104,6 +105,7 @@ export default function EventDetailPage() {
           if (data.ok) {
             setEvent(data.event)
             setRsvps(data.rsvps)
+            trackEvent("event_view", { event_id: String(eventId) })
           } else {
             setError("Event not found")
           }

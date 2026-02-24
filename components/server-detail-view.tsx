@@ -35,6 +35,7 @@ import { ServerFame } from "@/components/server-fame";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Info, Monitor, Shield, Package, Bookmark, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trackEvent } from "@/lib/analytics";
 
 // Types
 interface ServerInfo {
@@ -151,6 +152,12 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
   const communityLinks = server_info?.server_id ? SERVER_LINKS[server_info.server_id] : null;
 
   const { data: geo } = useServerGeo(server_info?.ip);
+
+  useEffect(() => {
+    if (server_info?.current_server_name) {
+      trackEvent("server_view", { server_name: server_info.current_server_name });
+    }
+  }, [server_info?.current_server_name]);
 
   useEffect(() => {
     async function fetchMetrics() {

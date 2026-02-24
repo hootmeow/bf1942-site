@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/toast-simple"
 import { Calendar, Loader2, LogIn } from "lucide-react"
 import { useSession, signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
+import { trackEvent } from "@/lib/analytics"
 
 export default function CreateEventPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function CreateEventPage() {
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
         <Calendar className="h-12 w-12 text-muted-foreground/50" />
         <p className="text-muted-foreground">You must be logged in to create an event.</p>
-        <Button onClick={() => signIn("discord")} className="gap-2">
+        <Button onClick={() => { trackEvent("auth_login", { method: "discord" }); signIn("discord") }} className="gap-2">
           <LogIn className="h-4 w-4" />
           Sign in with Discord
         </Button>
@@ -47,6 +48,7 @@ export default function CreateEventPage() {
     const result = await createEvent(formData)
 
     if (result.ok) {
+      trackEvent("event_create", { event_type: (formData.get("eventType") as string) || "" })
       toast({ title: "Event Created", variant: "success" })
       router.push(`/events/${result.eventId}`)
     } else {

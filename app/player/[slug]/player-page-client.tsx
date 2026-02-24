@@ -39,6 +39,7 @@ import { PlayerServerRanks } from "@/components/player-server-ranks";
 import { PlayerMapPerformance, MapPerformanceStat } from "@/components/player-map-performance";
 import { ProfileGallery } from "@/components/profile-gallery";
 import { getThemeClasses } from "@/components/theme-picker";
+import { trackEvent } from "@/lib/analytics";
 import { WarStoryCard } from "@/components/war-story-card";
 import { PlayerMatchHistory } from "@/components/player-match-history";
 import { BookOpen, Flame } from "lucide-react";
@@ -191,6 +192,7 @@ function ClaimProfileDialog({ playerId, playerName, isVerified, isLoggedIn }: { 
     setLoading(false)
 
     if (res.ok) {
+      trackEvent("claim_player", { player_name: playerName })
       setOpen(false)
       toast({ title: "Request Sent", description: res.message, variant: "success" })
     } else {
@@ -303,6 +305,7 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
       const profileData = profileRes.status === 'fulfilled' ? profileRes.value : null;
       if (profileData?.ok) {
         setProfile(profileData);
+        trackEvent("player_view", { player_name: playerName! });
       } else {
         setError("Failed to load player profile.");
       }

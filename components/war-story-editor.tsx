@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/toast-simple"
+import { trackEvent } from "@/lib/analytics"
 
 interface WarStoryEditorProps {
   playerId: number
@@ -44,6 +45,7 @@ export function WarStoryEditor({ playerId, onCreated }: WarStoryEditorProps) {
 
       const data = await res.json()
       if (data.ok) {
+        trackEvent("war_story_create", { player_id: String(playerId) })
         toast({ title: "War Story Created", variant: "success" })
         setOpen(false)
         onCreated()

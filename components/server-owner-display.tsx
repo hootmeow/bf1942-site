@@ -7,6 +7,7 @@ import { submitServerClaimRequest } from "@/app/actions/claim-actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 interface ServerOwnerDisplayProps {
     serverId: number;
@@ -37,6 +38,7 @@ export function ServerOwnerDisplay({ serverId, serverName, serverSlug, initialOw
         try {
             const result = await submitServerClaimRequest(serverId, serverName);
             if (result.ok) {
+                trackEvent("claim_server", { server_name: serverName });
                 toast.success(result.message);
             } else {
                 toast.error(result.error);

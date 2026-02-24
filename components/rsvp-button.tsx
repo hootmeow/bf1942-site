@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Check, HelpCircle, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { rsvpEvent } from "@/app/actions/event-actions"
+import { trackEvent } from "@/lib/analytics"
 
 interface RsvpButtonProps {
   eventId: number
@@ -27,6 +28,7 @@ export function RsvpButton({ eventId, currentStatus, onStatusChange }: RsvpButto
     try {
       const res = await rsvpEvent(eventId, newStatus)
       if (res.ok) {
+        trackEvent("event_rsvp", { event_id: String(eventId), status: res.status! })
         setStatus(res.status === "not_going" ? null : res.status)
         onStatusChange?.(res.status!)
       }

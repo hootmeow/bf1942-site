@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/components/ui/toast-simple"
 import { Pencil, Loader2, Save, X, Plus } from "lucide-react"
 import { updateProfileSettings, type ProfileUpdateState } from "@/app/actions/profile-actions"
+import { trackEvent } from "@/lib/analytics"
 import { ThemePicker } from "@/components/theme-picker"
 
 // --- ISO Country List ---
@@ -80,6 +81,7 @@ export function EditProfileDialog({
     const [newUrl, setNewUrl] = useState("")
 
     if (state.ok && open) {
+        trackEvent("profile_edit", { player_id: String(playerId) })
         setOpen(false)
         toast({ title: "Updated", description: state.message, variant: "success" })
         state.ok = false

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlayerSearchAutocomplete, PlayerSearchResult } from "@/components/player-search-autocomplete";
 import { ComparisonView } from "@/components/comparison-view";
+import { trackEvent } from "@/lib/analytics";
 
 // --- Player Search Types ---
 interface PlayerSearchApiResult {
@@ -91,6 +92,7 @@ function PlayerSearchTab() {
                 const data: PlayerSearchApiResponse = await response.json();
                 if (data.ok) {
                     setResults(data.players);
+                    trackEvent("search_player", { query, result_count: data.players.length });
                 } else {
                     setResults([]);
                 }
@@ -459,6 +461,12 @@ function RoundsTab() {
 function CompareTab() {
     const [player1, setPlayer1] = useState<PlayerSearchResult | null>(null);
     const [player2, setPlayer2] = useState<PlayerSearchResult | null>(null);
+
+    useEffect(() => {
+        if (player1 && player2) {
+            trackEvent("search_compare", { player1: player1.last_known_name, player2: player2.last_known_name });
+        }
+    }, [player1, player2]);
 
     return (
         <div className="space-y-8">

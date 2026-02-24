@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/toast-simple"
 import { Users, Loader2, LogIn } from "lucide-react"
 import { useSession, signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
+import { trackEvent } from "@/lib/analytics"
 
 export default function CreateOrgPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function CreateOrgPage() {
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
         <Users className="h-12 w-12 text-muted-foreground/50" />
         <p className="text-muted-foreground">You must be logged in to create an organization.</p>
-        <Button onClick={() => signIn("discord")} className="gap-2">
+        <Button onClick={() => { trackEvent("auth_login", { method: "discord" }); signIn("discord") }} className="gap-2">
           <LogIn className="h-4 w-4" />
           Sign in with Discord
         </Button>
@@ -47,6 +48,7 @@ export default function CreateOrgPage() {
     const result = await createOrganization(formData)
 
     if (result.ok) {
+      trackEvent("org_create", { org_name: (formData.get("name") as string)?.trim() || "" })
       toast({ title: "Organization Created", variant: "success" })
       router.push(`/orgs/${result.orgId}`)
     } else {

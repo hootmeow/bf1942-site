@@ -14,6 +14,7 @@ import { deleteOrganization, removeMember, updateMemberRole, updateOrganization 
 import { getIsAdmin } from "@/app/actions/admin-actions"
 import { useToast } from "@/components/ui/toast-simple"
 import Link from "next/link"
+import { trackEvent } from "@/lib/analytics"
 
 interface Org {
   org_id: number
@@ -100,6 +101,7 @@ export default function OrgDetailPage() {
           if (orgData.ok) {
             setOrg(orgData.organization)
             setRoster(orgData.roster)
+            trackEvent("org_view", { org_id: String(orgId) })
 
             const tag = orgData.organization.tag
             if (tag) {
