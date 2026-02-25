@@ -139,6 +139,38 @@ export default function AboutPage() {
         </div>
       </div>
 
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <Card className="border-border/60 bg-card/40">
+          <CardContent className="p-4 text-center">
+            <BarChart3 className="h-6 w-6 mx-auto mb-2 text-primary" />
+            <p className="text-2xl font-bold text-foreground">100K+</p>
+            <p className="text-xs text-muted-foreground">Rounds Tracked</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 bg-card/40">
+          <CardContent className="p-4 text-center">
+            <Users className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+            <p className="text-2xl font-bold text-foreground">15K+</p>
+            <p className="text-xs text-muted-foreground">Players Seen</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 bg-card/40">
+          <CardContent className="p-4 text-center">
+            <Server className="h-6 w-6 mx-auto mb-2 text-blue-500" />
+            <p className="text-2xl font-bold text-foreground">24/7</p>
+            <p className="text-xs text-muted-foreground">Live Monitoring</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 bg-card/40">
+          <CardContent className="p-4 text-center">
+            <Trophy className="h-6 w-6 mx-auto mb-2 text-amber-500" />
+            <p className="text-2xl font-bold text-foreground">1M+</p>
+            <p className="text-xs text-muted-foreground">Kills Logged</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Features Grid */}
       <div className="mb-10">
         <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">

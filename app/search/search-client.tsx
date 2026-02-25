@@ -148,11 +148,17 @@ function PlayerSearchTab() {
             )}
 
             {!loading && !error && hasSearched && results.length === 0 && (
-                <Alert>
-                    <User className="h-4 w-4" />
-                    <AlertTitle>No Results</AlertTitle>
-                    <AlertDescription>No players found matching "{query}".</AlertDescription>
-                </Alert>
+                <Card className="border-border/60 bg-card/40">
+                    <CardContent className="py-12 flex flex-col items-center text-center">
+                        <div className="rounded-full bg-muted/50 p-4 mb-4">
+                            <User className="h-10 w-10 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No Players Found</h3>
+                        <p className="text-sm text-muted-foreground max-w-sm">
+                            No players match "{query}". Try adjusting your search or check the spelling.
+                        </p>
+                    </CardContent>
+                </Card>
             )}
 
             {!loading && results.length > 0 && (
@@ -556,9 +562,32 @@ function SearchContent() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">Search & Browse</h1>
-                <p className="mt-1 text-muted-foreground">Find players, browse rounds, and compare stats.</p>
+            {/* Hero Header */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+                {/* Background blur orbs */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-purple-500/10 blur-[70px]" />
+
+                <div className="relative z-10">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+                        <div className="rounded-xl bg-primary/20 p-3">
+                            <Search className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                    Search & Browse
+                                </h1>
+                                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
+                                    Explore
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Find players, browse round history, and compare stats side-by-side
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
