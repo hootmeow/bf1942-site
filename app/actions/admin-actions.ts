@@ -116,3 +116,51 @@ export async function denyServerClaim(claimId: string) {
     )
     revalidatePath("/admin/server-claims")
 }
+
+// ── Challenge Admin Actions ──
+
+export async function createChallenge(data: {
+    title: string
+    description?: string
+    stat_type: string
+    target_value: number
+    period_type: string
+    scope?: string
+    icon?: string
+    end_time: string
+}) {
+    await checkAdmin()
+
+    const res = await pool.query(
+        `INSERT INTO challenges
+            (title, description, stat_type, target_value, scope, period_type,
+             start_time, end_time, icon, calculation_mode)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8, 'incremental')
+         RETURNING challenge_id`,
+        [
+            data.title,
+            data.description || null,
+            data.stat_type,
+            data.target_value,
+            data.scope || "community",
+            data.period_type,
+            data.end_time,
+            data.icon || null,
+        ]
+    )
+    revalidatePath("/admin/challenges")
+    revalidatePath("/challenges")
+    return { ok: true, challenge_id: res.rows[0].challenge_id }
+}
+
+export async function deleteChallenge(challengeId: number) {
+    await checkAdmin()
+
+    await pool.query(
+        "UPDATE challenges SET is_active = FALSE WHERE challenge_id = $1",
+        [challengeId]
+    )
+    revalidatePath("/admin/challenges")
+    revalidatePath("/challenges")
+    return { ok: true }
+}

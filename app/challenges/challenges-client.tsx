@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Target, Clock, Trophy, Users, Server, Loader2, Star, Hash, Skull, AlertTriangle } from "lucide-react";
+import { Target, Clock, Trophy, Users, Server, Loader2, Star, Hash, Skull, AlertTriangle, Zap, Shuffle, UserCheck, Map, Shield, Scale, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -27,11 +27,35 @@ interface Challenge {
   icon: string | null;
 }
 
+interface HistoryEntry {
+  history_id: number;
+  title: string;
+  stat_type: string;
+  target_value: number;
+  final_value: number;
+  progress_percent: number;
+  period_type: string;
+  start_time: string;
+  end_time: string;
+  is_completed: boolean;
+  icon: string | null;
+}
+
 const STAT_ICONS: Record<string, React.ElementType> = {
   kills: Target,
   score: Star,
   rounds: Hash,
   deaths: Skull,
+  player_count: Users,
+  full_house_rounds: Users,
+  ace_rounds: Zap,
+  playtime: Clock,
+  unique_server_players: Shuffle,
+  active_players: UserCheck,
+  unique_maps: Map,
+  playtime_hours: Clock,
+  community_kdr: Shield,
+  close_rounds: Scale,
 };
 
 function formatNumber(num: number): string {
@@ -154,15 +178,19 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
 
 export default function ChallengesClient() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchChallenges() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/v1/challenges");
-        if (res.ok) {
-          const data = await res.json();
+        const [chalRes, histRes] = await Promise.all([
+          fetch("/api/v1/challenges"),
+          fetch("/api/v1/challenges/history?limit=10"),
+        ]);
+        if (chalRes.ok) {
+          const data = await chalRes.json();
           if (data.ok) {
             setChallenges(data.challenges || []);
           } else {
@@ -171,6 +199,10 @@ export default function ChallengesClient() {
         } else {
           setError("Failed to load challenges");
         }
+        if (histRes.ok) {
+          const data = await histRes.json();
+          if (data.ok) setHistory(data.history || []);
+        }
       } catch (e) {
         console.error("Failed to fetch challenges", e);
         setError("Failed to load challenges");
@@ -178,7 +210,7 @@ export default function ChallengesClient() {
         setLoading(false);
       }
     }
-    fetchChallenges();
+    fetchData();
   }, []);
 
   const activeChallenges = challenges.filter((c) => !c.is_completed);
@@ -257,6 +289,42 @@ export default function ChallengesClient() {
             {completedChallenges.map((challenge) => (
               <ChallengeCard key={challenge.challenge_id} challenge={challenge} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Challenge History */}
+      {history.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <History className="h-5 w-5 text-muted-foreground" />
+            Past Challenges
+          </h2>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {history.map((h) => {
+              const HistIcon = STAT_ICONS[h.stat_type] || Target;
+              const progress = Math.min(h.progress_percent || 0, 100);
+              return (
+                <Card key={h.history_id} className="border-border/40 bg-muted/20">
+                  <CardContent className="pt-4 pb-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <HistIcon className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">{h.title}</span>
+                      {h.is_completed && (
+                        <Trophy className="h-3.5 w-3.5 text-green-500 ml-auto" />
+                      )}
+                    </div>
+                    <Progress value={progress} className={cn("h-2", h.is_completed && "[&>div]:bg-green-500")} />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>{formatNumber(h.final_value)} / {formatNumber(h.target_value)}</span>
+                      <span>
+                        {new Date(h.start_time).toLocaleDateString()} — {new Date(h.end_time).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}

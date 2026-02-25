@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Target, Clock, Trophy, Users, Server, Loader2, Star, Hash, Skull } from "lucide-react";
+import { Target, Clock, Trophy, Users, Server, Loader2, Star, Hash, Skull, Zap, Shuffle, UserCheck, Map, Shield, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Challenge {
@@ -36,6 +36,16 @@ const STAT_ICONS: Record<string, React.ElementType> = {
   score: Star,
   rounds: Hash,
   deaths: Skull,
+  player_count: Users,
+  full_house_rounds: Users,
+  ace_rounds: Zap,
+  playtime: Clock,
+  unique_server_players: Shuffle,
+  active_players: UserCheck,
+  unique_maps: Map,
+  playtime_hours: Clock,
+  community_kdr: Shield,
+  close_rounds: Scale,
 };
 
 function formatNumber(num: number): string {
