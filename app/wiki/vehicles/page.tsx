@@ -59,14 +59,29 @@ export default function VehiclesPage() {
             </div>
 
             {/* Header */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-primary/10">
-                        <Truck className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">Vehicles</h1>
-                        <p className="text-muted-foreground">Master land, air, and sea combat</p>
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+                {/* Background blur orbs */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-amber-500/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-primary/10 blur-[70px]" />
+
+                <div className="relative z-10">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+                        <div className="rounded-xl bg-amber-500/20 p-3">
+                            <Truck className="h-8 w-8 text-amber-400" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                    Vehicles
+                                </h1>
+                                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                                    35+ Vehicles
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Master land, air, and sea combat with tanks, aircraft, and warships
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

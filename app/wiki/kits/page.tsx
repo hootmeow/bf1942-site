@@ -148,14 +148,29 @@ export default function KitsPage() {
             </div>
 
             {/* Header */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-orange-500/10">
-                        <Shield className="h-6 w-6 text-orange-500" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">Soldier Kits</h1>
-                        <p className="text-muted-foreground">The 5 infantry classes and their specialized roles</p>
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+                {/* Background blur orbs */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-orange-500/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-primary/10 blur-[70px]" />
+
+                <div className="relative z-10">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+                        <div className="rounded-xl bg-orange-500/20 p-3">
+                            <Shield className="h-8 w-8 text-orange-400" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                    Soldier Kits
+                                </h1>
+                                <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs">
+                                    5 Classes
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Master the 5 infantry classes and their specialized roles on the battlefield
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

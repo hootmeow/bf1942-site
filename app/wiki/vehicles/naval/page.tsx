@@ -87,14 +87,29 @@ export default function NavalVehiclesPage() {
             </div>
 
             {/* Header */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-indigo-500/10">
-                        <Anchor className="h-6 w-6 text-indigo-500" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">Naval Vessels</h1>
-                        <p className="text-muted-foreground">Destroyers, submarines, battleships, carriers, and landing craft</p>
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+                {/* Background blur orbs */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-indigo-500/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-primary/10 blur-[70px]" />
+
+                <div className="relative z-10">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+                        <div className="rounded-xl bg-indigo-500/20 p-3">
+                            <Anchor className="h-8 w-8 text-indigo-400" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                    Naval Vessels
+                                </h1>
+                                <Badge className="bg-indigo-500/20 text-indigo-400 border-indigo-500/30 text-xs">
+                                    Naval Warfare
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Destroyers, submarines, battleships, carriers, and landing craft
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
