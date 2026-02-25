@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Swords, Flag, Clock, Medal, Trophy, AlertTriangle, Info } from "lucide-react";
 
 import type { Metadata } from 'next';
@@ -10,20 +11,43 @@ export const metadata: Metadata = {
 
 export default function RankSystemPage() {
     return (
-        <div className="container py-6 md:py-10 space-y-8 max-w-4xl mx-auto">
-            <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Ranking System</h1>
-                <p className="text-muted-foreground text-lg">
-                    Understanding how your Rating Points (RP) are calculated.
-                </p>
+        <div className="space-y-8">
+            {/* Hero Header */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+                {/* Background blur orbs */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-blue-500/10 blur-[70px]" />
+
+                <div className="relative z-10">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+                        <div className="rounded-xl bg-primary/20 p-3">
+                            <Medal className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                    Ranking System
+                                </h1>
+                                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                                    RP Rating
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Understanding how your Rating Points (RP) are calculated and what makes a round count.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="grid gap-6">
                 {/* Core Concept */}
-                <Card className="border-border/60 bg-card/50">
+                <Card className="border-border/60 bg-card/40 card-hover">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Medal className="h-6 w-6 text-primary" />
+                        <CardTitle as="h2" className="flex items-center gap-2">
+                            <div className="rounded-lg bg-primary/15 p-2 text-primary">
+                                <Medal className="h-5 w-5" />
+                            </div>
                             How RP Works
                         </CardTitle>
                     </CardHeader>
@@ -43,99 +67,116 @@ export default function RankSystemPage() {
                 </Card>
 
                 {/* RP Components */}
-                <div className="grid gap-6 md:grid-cols-3">
-                    <Card className="border-border/60">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Card className="border-border/60 bg-card/40 card-hover">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <Flag className="h-5 w-5 text-orange-500" />
+                                <div className="rounded-lg bg-orange-500/15 p-2 text-orange-400">
+                                    <Flag className="h-4 w-4" />
+                                </div>
                                 Objective / Round
                             </CardTitle>
                             <CardDescription>30% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Objective score per round — flag captures, defenses, and team assists. Calculated as (Score - Kills) / Rounds.</p>
+                            <p className="text-muted-foreground">Objective score per round — flag captures, defenses, and team assists. Calculated as (Score - Kills) / Rounds.</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-border/60">
+                    <Card className="border-border/60 bg-card/40 card-hover">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <Swords className="h-5 w-5 text-red-500" />
+                                <div className="rounded-lg bg-red-500/15 p-2 text-red-400">
+                                    <Swords className="h-4 w-4" />
+                                </div>
                                 Kill/Death Ratio
                             </CardTitle>
                             <CardDescription>25% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Your overall KDR across all ranked rounds. Higher KDR means more efficient combat.</p>
+                            <p className="text-muted-foreground">Your overall KDR across all ranked rounds. Higher KDR means more efficient combat.</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-border/60">
+                    <Card className="border-border/60 bg-card/40 card-hover">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <Clock className="h-5 w-5 text-yellow-500" />
+                                <div className="rounded-lg bg-yellow-500/15 p-2 text-yellow-400">
+                                    <Clock className="h-4 w-4" />
+                                </div>
                                 Kills / Minute
                             </CardTitle>
                             <CardDescription>20% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Combat tempo — how quickly you eliminate enemies relative to round duration.</p>
+                            <p className="text-muted-foreground">Combat tempo — how quickly you eliminate enemies relative to round duration.</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-border/60">
+                    <Card className="border-border/60 bg-card/40 card-hover">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <Trophy className="h-5 w-5 text-green-500" />
+                                <div className="rounded-lg bg-green-500/15 p-2 text-green-400">
+                                    <Trophy className="h-4 w-4" />
+                                </div>
                                 Win Rate
                             </CardTitle>
                             <CardDescription>10% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Percentage of rounds where your team won. Rewards teamplay and choosing the right moments.</p>
+                            <p className="text-muted-foreground">Percentage of rounds where your team won. Rewards teamplay and choosing the right moments.</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-border/60">
+                    <Card className="border-border/60 bg-card/40 card-hover">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <Medal className="h-5 w-5 text-blue-500" />
+                                <div className="rounded-lg bg-blue-500/15 p-2 text-blue-400">
+                                    <Medal className="h-4 w-4" />
+                                </div>
                                 Map Variety
                             </CardTitle>
                             <CardDescription>10% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Number of distinct maps played. Encourages versatility across different battlefields.</p>
+                            <p className="text-muted-foreground">Number of distinct maps played. Encourages versatility across different battlefields.</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-border/60">
+                    <Card className="border-border/60 bg-card/40 card-hover">
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <Info className="h-5 w-5 text-purple-500" />
+                                <div className="rounded-lg bg-purple-500/15 p-2 text-purple-400">
+                                    <Info className="h-4 w-4" />
+                                </div>
                                 Score / Round
                             </CardTitle>
                             <CardDescription>5% weight</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                            <p>Average total score per round. A general measure of overall impact each game.</p>
+                            <p className="text-muted-foreground">Average total score per round. A general measure of overall impact each game.</p>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Eligibility */}
-                <Card className="border-border/60">
+                <Card className="border-border/60 bg-card/40">
                     <CardHeader>
-                        <CardTitle>Eligibility</CardTitle>
+                        <CardTitle as="h2" className="flex items-center gap-2">
+                            <div className="rounded-lg bg-cyan-500/15 p-2 text-cyan-400">
+                                <Info className="h-5 w-5" />
+                            </div>
+                            Eligibility
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-3">
                         <p className="leading-relaxed text-muted-foreground">
                             To appear on the leaderboard and receive an RP score, you must meet these criteria:
                         </p>
-                        <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
-                            <li><b>3+ ranked rounds</b> played (with at least 1 kill or 1 death each)</li>
-                            <li><b>Active in the last 60 days</b></li>
-                            <li><b>Experience multiplier:</b> RP scales linearly up to 30 rounds — players with fewer rounds receive proportionally less RP to prevent small-sample-size inflation</li>
+                        <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
+                            <li><b className="text-foreground">3+ ranked rounds</b> played (with at least 1 kill or 1 death each)</li>
+                            <li><b className="text-foreground">Active in the last 60 days</b></li>
+                            <li><b className="text-foreground">Experience multiplier:</b> RP scales linearly up to 30 rounds — players with fewer rounds receive proportionally less RP to prevent small-sample-size inflation</li>
                         </ul>
                     </CardContent>
                 </Card>
@@ -184,14 +225,19 @@ export default function RankSystemPage() {
 
                 {/* Achievements List */}
                 <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                        <Trophy className="h-6 w-6 text-primary" />
-                        <h2 className="text-2xl font-bold tracking-tight">Earnable Achievements</h2>
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                            <Trophy className="h-6 w-6 text-primary" />
+                            Earnable Achievements
+                        </h2>
+                        <p className="text-muted-foreground mt-1">
+                            Unlock achievements by completing various in-game milestones and challenges.
+                        </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {ALL_ACHIEVEMENTS.map((ach) => (
-                            <Card key={ach.name} className="border-border/60 overflow-hidden hover:bg-muted/50 transition-colors">
+                            <Card key={ach.name} className="border-border/60 bg-card/40 overflow-hidden hover:bg-muted/30 transition-colors">
                                 <CardContent className="p-4 flex items-center gap-4">
                                     <div className="shrink-0 w-[82px] h-[32px] bg-background/50 rounded-sm overflow-hidden shadow-sm border border-border/50">
                                         <img

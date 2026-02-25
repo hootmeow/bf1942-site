@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import {
     Card,
@@ -21,11 +20,11 @@ import {
     Plane,
     Target,
     Users,
-    Info,
     Lightbulb,
     Swords,
     Shield,
-    Zap
+    Zap,
+    BookOpen,
 } from "lucide-react"
 
 export const metadata: Metadata = {
@@ -33,7 +32,6 @@ export const metadata: Metadata = {
     description: "A comprehensive collection of community tips, mechanics, and strategies for Battlefield 1942.",
 };
 
-// --- Tip Data Structure ---
 const infantryTips = [
     "**Keep Moving:** Always zig-zag! Standing still makes you an easy target for snipers.",
     "**Barbed Wire:** You can run through or jump over widely spaced wire posts, but the wire itself causes damage over time.",
@@ -84,24 +82,41 @@ const mechanicsTips = [
 
 export default function PlayerGuidePage() {
     return (
-        <div className="container mx-auto max-w-5xl py-12 space-y-12">
+        <div className="space-y-8">
 
-            {/* Header */}
-            <div className="space-y-4 text-center">
-                <Badge variant="outline" className="mb-2">Community Knowledge Base</Badge>
-                <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
-                    The Ultimate Player's Guide
-                </h1>
-                <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                    A collection of veteran tactics, hidden mechanics, and advanced strategies to dominate the battlefield.
-                </p>
+            {/* Hero Header */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+                {/* Background blur orbs */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-blue-500/10 blur-[70px]" />
+
+                <div className="relative z-10">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+                        <div className="rounded-xl bg-primary/20 p-3">
+                            <BookOpen className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                    Ultimate Player's Guide
+                                </h1>
+                                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                                    Community Knowledge
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Veteran tactics, hidden mechanics, and advanced strategies from the BF1942 community.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* Hero Tip */}
-            <Alert className="border-primary/50 bg-primary/5">
+            {/* Pro Tip Alert */}
+            <Alert className="border-primary/30 bg-primary/5">
                 <Lightbulb className="h-5 w-5 text-primary" />
                 <AlertTitle className="text-lg font-semibold text-primary">Pro Tip: The Buddy List</AlertTitle>
-                <AlertDescription className="mt-2 text-base text-foreground/80">
+                <AlertDescription className="mt-2 text-base">
                     Want to track your friends or rivals? Open the console (~ key) and type
                     <code className="mx-2 rounded bg-muted px-1.5 py-0.5 font-mono text-sm font-bold">ab &lt;player_id&gt;</code>
                     (e.g., ab 4). That player's name and kills will now show up in <span className="text-green-600 font-bold">GREEN</span> in the kill feed.
@@ -109,22 +124,25 @@ export default function PlayerGuidePage() {
                 </AlertDescription>
             </Alert>
 
-            {/* Content Grid */}
-            <div className="grid gap-8 md:grid-cols-2">
+            {/* Combat Tips Grid */}
+            <div className="grid gap-4 md:grid-cols-2">
 
                 {/* Infantry */}
-                <Card className="border-t-4 border-t-red-500 shadow-sm">
+                <Card className="border-border/60 bg-card/40 card-hover">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-2xl">
-                            <Users className="h-6 w-6 text-red-500" /> Infantry Tactics
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                            <div className="rounded-lg bg-red-500/15 p-2 text-red-400">
+                                <Users className="h-5 w-5" />
+                            </div>
+                            Infantry Tactics
                         </CardTitle>
                         <CardDescription>Survival on the ground.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ul className="space-y-3">
+                        <ul className="space-y-2.5">
                             {infantryTips.map((tip, i) => (
                                 <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
-                                    <span className="text-red-500 font-bold select-none">•</span>
+                                    <span className="text-red-400 font-bold select-none mt-0.5">•</span>
                                     <span dangerouslySetInnerHTML={{ __html: tip.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') }} />
                                 </li>
                             ))}
@@ -133,18 +151,21 @@ export default function PlayerGuidePage() {
                 </Card>
 
                 {/* Vehicles */}
-                <Card className="border-t-4 border-t-green-500 shadow-sm">
+                <Card className="border-border/60 bg-card/40 card-hover">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-2xl">
-                            <Swords className="h-6 w-6 text-green-500" /> Tank & Armor
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                            <div className="rounded-lg bg-green-500/15 p-2 text-green-400">
+                                <Swords className="h-5 w-5" />
+                            </div>
+                            Tank & Armor
                         </CardTitle>
                         <CardDescription>Mastering heavy metal.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ul className="space-y-3">
+                        <ul className="space-y-2.5">
                             {vehicleTips.map((tip, i) => (
                                 <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
-                                    <span className="text-green-500 font-bold select-none">•</span>
+                                    <span className="text-green-400 font-bold select-none mt-0.5">•</span>
                                     <span dangerouslySetInnerHTML={{ __html: tip.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') }} />
                                 </li>
                             ))}
@@ -153,18 +174,21 @@ export default function PlayerGuidePage() {
                 </Card>
 
                 {/* Planes */}
-                <Card className="border-t-4 border-t-blue-500 shadow-sm">
+                <Card className="border-border/60 bg-card/40 card-hover">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-2xl">
-                            <Plane className="h-6 w-6 text-blue-500" /> Air Combat
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                            <div className="rounded-lg bg-blue-500/15 p-2 text-blue-400">
+                                <Plane className="h-5 w-5" />
+                            </div>
+                            Air Combat
                         </CardTitle>
                         <CardDescription>Dogfighting and bombing runs.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ul className="space-y-3">
+                        <ul className="space-y-2.5">
                             {planeTips.map((tip, i) => (
                                 <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
-                                    <span className="text-blue-500 font-bold select-none">•</span>
+                                    <span className="text-blue-400 font-bold select-none mt-0.5">•</span>
                                     <span dangerouslySetInnerHTML={{ __html: tip.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') }} />
                                 </li>
                             ))}
@@ -173,18 +197,21 @@ export default function PlayerGuidePage() {
                 </Card>
 
                 {/* Ships */}
-                <Card className="border-t-4 border-t-cyan-600 shadow-sm">
+                <Card className="border-border/60 bg-card/40 card-hover">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-2xl">
-                            <Ship className="h-6 w-6 text-cyan-600" /> Naval Warfare
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                            <div className="rounded-lg bg-cyan-500/15 p-2 text-cyan-400">
+                                <Ship className="h-5 w-5" />
+                            </div>
+                            Naval Warfare
                         </CardTitle>
                         <CardDescription>Ruling the high seas.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ul className="space-y-3">
+                        <ul className="space-y-2.5">
                             {shipTips.map((tip, i) => (
                                 <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
-                                    <span className="text-cyan-600 font-bold select-none">•</span>
+                                    <span className="text-cyan-400 font-bold select-none mt-0.5">•</span>
                                     <span dangerouslySetInnerHTML={{ __html: tip.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') }} />
                                 </li>
                             ))}
@@ -194,41 +221,63 @@ export default function PlayerGuidePage() {
 
             </div>
 
-            {/* Mechanics Accordion */}
+            {/* Mechanics & Hidden Features */}
             <div className="space-y-4">
-                <h2 className="text-2xl font-bold tracking-tight">Game Mechanics & Hidden Features</h2>
-                <Accordion type="single" collapsible className="w-full bg-card rounded-lg border px-4">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger className="text-lg font-medium">
-                            <span className="flex items-center gap-2"><Zap className="h-5 w-5 text-yellow-500" /> Advanced Controls & Chat</span>
-                        </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground space-y-2">
-                            <p>• <strong>Auto-Run:</strong> Hold <code>W</code> and press <code>K</code> or <code>L</code> to open chat. You will keep running while typing.</p>
-                            <p>• <strong>Console:</strong> Access the console with <code>~</code>. Use Page Up/Down to scroll through chat history.</p>
-                            <p>• <strong>Radio Silence:</strong> Enemy players can hear your <code>F5-F7</code> voice commands if they are close. They cannot hear radio requests (F1-F4).</p>
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="item-2">
-                        <AccordionTrigger className="text-lg font-medium">
-                            <span className="flex items-center gap-2"><Target className="h-5 w-5 text-red-500" /> Hitboxes & Damage</span>
-                        </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground space-y-2">
-                            <p>• <strong>Headshots:</strong> Bullets to the head do ~60% more damage than to the chest.</p>
-                            <p>• <strong>Legs:</strong> Hitting legs does 40% less damage than the chest. Always aim center-mass or high.</p>
-                            <p>• <strong>Distance:</strong> Shotgun and Medic SMG damage drops off significantly over distance.</p>
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="item-3">
-                        <AccordionTrigger className="text-lg font-medium">
-                            <span className="flex items-center gap-2"><Shield className="h-5 w-5 text-blue-500" /> Protocol & Etiquette</span>
-                        </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground space-y-2">
-                            <p>• <strong>Don't steal repairs:</strong> If you see a vehicle empty but near an engineer, don't jump in. They are likely repairing it.</p>
-                            <p>• <strong>No Solo Tanking:</strong> If someone is in the gunner seat, don't drive off to the middle of nowhere without checking targets.</p>
-                            <p>• <strong>Spotting:</strong> As a spotter, spot once. Don't spam. It blocks the artillery player's view.</p>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                        <Zap className="h-6 w-6 text-primary" />
+                        Game Mechanics & Hidden Features
+                    </h2>
+                    <p className="text-muted-foreground mt-1">
+                        Advanced techniques and lesser-known game mechanics.
+                    </p>
+                </div>
+
+                <Card className="border-border/60 bg-card/40">
+                    <CardContent className="p-0">
+                        <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="item-1" className="border-border/40">
+                                <AccordionTrigger className="px-6 hover:no-underline hover:bg-muted/30">
+                                    <span className="flex items-center gap-2">
+                                        <Zap className="h-5 w-5 text-amber-400" />
+                                        <span className="font-medium">Advanced Controls & Chat</span>
+                                    </span>
+                                </AccordionTrigger>
+                                <AccordionContent className="px-6 pb-4 text-sm space-y-2">
+                                    <p className="leading-relaxed"><strong>Auto-Run:</strong> Hold <code className="bg-muted px-1 py-0.5 rounded text-xs">W</code> and press <code className="bg-muted px-1 py-0.5 rounded text-xs">K</code> or <code className="bg-muted px-1 py-0.5 rounded text-xs">L</code> to open chat. You will keep running while typing.</p>
+                                    <p className="leading-relaxed"><strong>Console:</strong> Access the console with <code className="bg-muted px-1 py-0.5 rounded text-xs">~</code>. Use Page Up/Down to scroll through chat history.</p>
+                                    <p className="leading-relaxed"><strong>Radio Silence:</strong> Enemy players can hear your <code className="bg-muted px-1 py-0.5 rounded text-xs">F5-F7</code> voice commands if they are close. They cannot hear radio requests (F1-F4).</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                            <AccordionItem value="item-2" className="border-border/40">
+                                <AccordionTrigger className="px-6 hover:no-underline hover:bg-muted/30">
+                                    <span className="flex items-center gap-2">
+                                        <Target className="h-5 w-5 text-red-400" />
+                                        <span className="font-medium">Hitboxes & Damage</span>
+                                    </span>
+                                </AccordionTrigger>
+                                <AccordionContent className="px-6 pb-4 text-sm space-y-2">
+                                    <p className="leading-relaxed"><strong>Headshots:</strong> Bullets to the head do ~60% more damage than to the chest.</p>
+                                    <p className="leading-relaxed"><strong>Legs:</strong> Hitting legs does 40% less damage than the chest. Always aim center-mass or high.</p>
+                                    <p className="leading-relaxed"><strong>Distance:</strong> Shotgun and Medic SMG damage drops off significantly over distance.</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                            <AccordionItem value="item-3" className="border-b-0">
+                                <AccordionTrigger className="px-6 hover:no-underline hover:bg-muted/30">
+                                    <span className="flex items-center gap-2">
+                                        <Shield className="h-5 w-5 text-blue-400" />
+                                        <span className="font-medium">Protocol & Etiquette</span>
+                                    </span>
+                                </AccordionTrigger>
+                                <AccordionContent className="px-6 pb-4 text-sm space-y-2">
+                                    <p className="leading-relaxed"><strong>Don't steal repairs:</strong> If you see a vehicle empty but near an engineer, don't jump in. They are likely repairing it.</p>
+                                    <p className="leading-relaxed"><strong>No Solo Tanking:</strong> If someone is in the gunner seat, don't drive off to the middle of nowhere without checking targets.</p>
+                                    <p className="leading-relaxed"><strong>Spotting:</strong> As a spotter, spot once. Don't spam. It blocks the artillery player's view.</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </CardContent>
+                </Card>
             </div>
 
         </div>
