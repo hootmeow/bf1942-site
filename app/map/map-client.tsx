@@ -27,11 +27,8 @@ export default function MapClient() {
         if (res.ok) {
           const data = await res.json();
           if (data.servers) {
-            // Filter to only include active servers with players
-            const activeServers = data.servers.filter(
-              (s: any) => s.current_state === "ACTIVE" || s.current_player_count > 0
-            );
-            setServers(activeServers);
+            // Show ALL servers
+            setServers(data.servers);
           }
         } else {
           setError("Failed to load servers");

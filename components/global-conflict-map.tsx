@@ -5,7 +5,7 @@ import { GeoData } from "@/hooks/use-server-geo";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Map as MapIcon, RefreshCw, Server, Map as MapLucide } from "lucide-react"; // Renamed Map to MapLucide avoiding conflict
+import { Map as MapIcon, RefreshCw, Server, Map as MapLucide, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LiveServer {
@@ -70,51 +70,71 @@ const STATIC_GEO_CACHE: Record<string, GeoData> = {
 // Internal cache to avoid re-fetching within the session
 const GEO_CACHE: Record<string, GeoData> = { ...STATIC_GEO_CACHE };
 
-async function fetchGeoForIP(ip: string): Promise<GeoData | null> {
-    if (GEO_CACHE[ip]) return GEO_CACHE[ip];
+async function fetchGeoForIPs(ips: string[]): Promise<Record<string, GeoData>> {
+    const results: Record<string, GeoData> = {};
+    const uncachedIPs: string[] = [];
 
-    // Check LocalStorage
-    try {
-        const stored = localStorage.getItem("server_geo_full_cache");
-        if (stored) {
-            const cache = JSON.parse(stored);
-            if (cache[ip]) {
-                GEO_CACHE[ip] = cache[ip];
-                return cache[ip];
-            }
+    // Check memory cache and localStorage first
+    for (const ip of ips) {
+        if (GEO_CACHE[ip]) {
+            results[ip] = GEO_CACHE[ip];
+            continue;
         }
-    } catch { }
 
-    try {
-        const res = await fetch(`https://ipwho.is/${ip}?fields=country,country_code,city,region,latitude,longitude,timezone`);
-        if (res.ok) {
-            const result = await res.json();
-            if (result && result.country_code) {
-                const geo = {
-                    country: result.country,
-                    country_code: result.country_code,
-                    city: result.city,
-                    region: result.region,
-                    latitude: result.latitude,
-                    longitude: result.longitude,
-                    timezone: result.timezone
-                };
-                GEO_CACHE[ip] = geo;
-                // Update LS
-                try {
-                    const stored = localStorage.getItem("server_geo_full_cache");
-                    const cache = stored ? JSON.parse(stored) : {};
-                    // Merge static cache just in case
-                    const final = { ...cache, ...STATIC_GEO_CACHE, [ip]: geo };
-                    localStorage.setItem("server_geo_full_cache", JSON.stringify(final));
-                } catch { }
-                return geo;
+        try {
+            const stored = localStorage.getItem("server_geo_full_cache");
+            if (stored) {
+                const cache = JSON.parse(stored);
+                if (cache[ip]) {
+                    GEO_CACHE[ip] = cache[ip];
+                    results[ip] = cache[ip];
+                    continue;
+                }
             }
-        }
-    } catch (e) {
-        console.error("Geo fetch failed", e);
+        } catch { }
+
+        uncachedIPs.push(ip);
     }
-    return null;
+
+    // Fetch uncached IPs from backend (which caches in DB)
+    if (uncachedIPs.length > 0) {
+        try {
+            const res = await fetch(`/api/v1/servers/geoip?ips=${uncachedIPs.join(',')}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.ok && data.geoip) {
+                    for (const [ip, geoData] of Object.entries(data.geoip)) {
+                        const geo = geoData as any;
+                        if (geo.latitude != null && geo.longitude != null && isValidCoordinates(geo.latitude, geo.longitude)) {
+                            const geoObj: GeoData = {
+                                country: geo.country,
+                                country_code: geo.country_code,
+                                city: geo.city,
+                                region: geo.region,
+                                latitude: geo.latitude,
+                                longitude: geo.longitude,
+                                timezone: geo.timezone
+                            };
+                            GEO_CACHE[ip] = geoObj;
+                            results[ip] = geoObj;
+                        }
+                    }
+
+                    // Update localStorage
+                    try {
+                        const stored = localStorage.getItem("server_geo_full_cache");
+                        const cache = stored ? JSON.parse(stored) : {};
+                        const final = { ...cache, ...STATIC_GEO_CACHE, ...results };
+                        localStorage.setItem("server_geo_full_cache", JSON.stringify(final));
+                    } catch { }
+                }
+            }
+        } catch (e) {
+            console.error("Geo fetch failed", e);
+        }
+    }
+
+    return results;
 }
 
 interface Cluster {
@@ -125,79 +145,126 @@ interface Cluster {
     geo: GeoData;
 }
 
+// Helper to validate coordinates are valid and meaningful
+function isValidCoordinates(lat: number, lng: number): boolean {
+    // Check valid ranges
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return false;
+    // Exclude 0,0 (Gulf of Guinea) as it's likely an API failure or unknown location
+    if (lat === 0 && lng === 0) return false;
+    return true;
+}
+
 // Helper to guess location if API fails completely
-function guessGeoFromName(name: string): GeoData {
+function guessGeoFromName(name: string): GeoData | null {
     const n = name.toLowerCase();
 
-    // Default to "Unknown Operations" in mid-Atlantic if totally unknown
-    // Lat 0, Long 0 is too generic. Let's put them near the equator/prime meridian intersection but slightly visible.
-    let geo: GeoData = {
-        country: "Unknown", country_code: "UN", city: "Classified Location", region: "Unknown",
-        latitude: 0, longitude: 0, timezone: { id: "", abbr: "", utc: "", current_time: "" }
-    };
-
     if (n.includes("usa") || n.includes("america") || n.includes("new york") || n.includes("chicago") || n.includes("miami")) {
-        geo = { country: "United States", country_code: "US", city: "Unknown Site (USA)", region: "North America", latitude: 39.8, longitude: -98.5, timezone: { id: "EST", abbr: "EST", utc: "-05:00", current_time: "" } };
+        return { country: "United States", country_code: "US", city: "Unknown Site (USA)", region: "North America", latitude: 39.8, longitude: -98.5, timezone: { id: "EST", abbr: "EST", utc: "-05:00", current_time: "" } };
     } else if (n.includes("de") || n.includes("germany") || n.includes("berlin") || n.includes("frankfurt")) {
-        geo = { country: "Germany", country_code: "DE", city: "Unknown Site (DE)", region: "Europe", latitude: 51.1, longitude: 10.4, timezone: { id: "CET", abbr: "CET", utc: "+01:00", current_time: "" } };
+        return { country: "Germany", country_code: "DE", city: "Unknown Site (DE)", region: "Europe", latitude: 51.1, longitude: 10.4, timezone: { id: "CET", abbr: "CET", utc: "+01:00", current_time: "" } };
     } else if (n.includes("fr") || n.includes("france") || n.includes("paris")) {
-        geo = { country: "France", country_code: "FR", city: "Unknown Site (FR)", region: "Europe", latitude: 46.2, longitude: 2.2, timezone: { id: "CET", abbr: "CET", utc: "+01:00", current_time: "" } };
+        return { country: "France", country_code: "FR", city: "Unknown Site (FR)", region: "Europe", latitude: 46.2, longitude: 2.2, timezone: { id: "CET", abbr: "CET", utc: "+01:00", current_time: "" } };
     } else if (n.includes("uk") || n.includes("london") || n.includes("britain")) {
-        geo = { country: "United Kingdom", country_code: "GB", city: "Unknown Site (UK)", region: "Europe", latitude: 55.3, longitude: -3.4, timezone: { id: "GMT", abbr: "GMT", utc: "+00:00", current_time: "" } };
+        return { country: "United Kingdom", country_code: "GB", city: "Unknown Site (UK)", region: "Europe", latitude: 55.3, longitude: -3.4, timezone: { id: "GMT", abbr: "GMT", utc: "+00:00", current_time: "" } };
     } else if (n.includes("ru") || n.includes("russia") || n.includes("moscow")) {
-        geo = { country: "Russia", country_code: "RU", city: "Unknown Site (RU)", region: "Asia", latitude: 61.5, longitude: 105.3, timezone: { id: "MSK", abbr: "MSK", utc: "+03:00", current_time: "" } };
+        return { country: "Russia", country_code: "RU", city: "Unknown Site (RU)", region: "Asia", latitude: 61.5, longitude: 105.3, timezone: { id: "MSK", abbr: "MSK", utc: "+03:00", current_time: "" } };
     } else if (n.includes("jp") || n.includes("japan") || n.includes("tokyo")) {
-        geo = { country: "Japan", country_code: "JP", city: "Unknown Site (JP)", region: "Asia", latitude: 36.2, longitude: 138.2, timezone: { id: "JST", abbr: "JST", utc: "+09:00", current_time: "" } };
+        return { country: "Japan", country_code: "JP", city: "Unknown Site (JP)", region: "Asia", latitude: 36.2, longitude: 138.2, timezone: { id: "JST", abbr: "JST", utc: "+09:00", current_time: "" } };
     }
 
-    return geo;
+    // Return null if we can't determine a valid location
+    return null;
 }
+
+// Map alignment adjustments (percentage offsets)
+const MAP_OFFSET_X = 0; // Adjust if markers are horizontally offset
+const MAP_OFFSET_Y = 0; // Adjust if markers are vertically offset
 
 export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
     const [geoMap, setGeoMap] = useState<Record<string, GeoData>>({});
     const [loading, setLoading] = useState(true);
+    const [cacheCleared, setCacheCleared] = useState(false);
+    const [zoom, setZoom] = useState(1);
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-    // 1. Bulk Fetch Geo Data (Sequential to avoid Rate Limits)
+    // Mouse drag handlers for panning
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (zoom > 1) {
+            setIsDragging(true);
+            setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isDragging && zoom > 1) {
+            setPan({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y
+            });
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleMouseLeave = () => {
+        setIsDragging(false);
+    };
+
+    // Clear cache function
+    const clearGeoCache = () => {
+        try {
+            localStorage.removeItem("server_geo_full_cache");
+            // Clear memory cache except static entries
+            Object.keys(GEO_CACHE).forEach(key => {
+                if (!STATIC_GEO_CACHE[key]) {
+                    delete GEO_CACHE[key];
+                }
+            });
+            setGeoMap({});
+            setCacheCleared(true);
+            setTimeout(() => setCacheCleared(false), 3000);
+            console.log("[Map] Cache cleared, will refetch all coordinates");
+        } catch (e) {
+            console.error("Failed to clear cache", e);
+        }
+    };
+
+    // 1. Bulk Fetch Geo Data (uses backend caching)
     useEffect(() => {
         let mounted = true;
 
         async function loadAll() {
             setLoading(true);
             const uniqueIPs = Array.from(new Set(servers.map(s => s.ip)));
-            const results: Record<string, GeoData> = {};
-            let hasNewData = false;
 
-            for (const ip of uniqueIPs) {
-                if (!mounted) break;
+            // Filter out already-cached IPs
+            const uncachedIPs = uniqueIPs.filter(ip => !geoMap[ip]);
 
-                // Check if we already have it in state to avoid re-fetching
-                if (geoMap[ip]) continue;
+            if (uncachedIPs.length > 0) {
+                const results = await fetchGeoForIPs(uncachedIPs);
 
-                let data = await fetchGeoForIP(ip);
-
-                // FALLBACK: If API failed, guess from server name
-                if (!data) {
-                    const server = servers.find(s => s.ip === ip);
-                    if (server) {
-                        data = guessGeoFromName(server.current_server_name);
+                // FALLBACK: Guess from server name for any that still failed
+                for (const ip of uncachedIPs) {
+                    if (!results[ip]) {
+                        const server = servers.find(s => s.ip === ip);
+                        if (server) {
+                            const guessedGeo = guessGeoFromName(server.current_server_name);
+                            if (guessedGeo && isValidCoordinates(guessedGeo.latitude, guessedGeo.longitude)) {
+                                results[ip] = guessedGeo;
+                            }
+                        }
                     }
                 }
 
-                if (data) {
-                    results[ip] = data;
-                    hasNewData = true;
+                if (mounted && Object.keys(results).length > 0) {
+                    setGeoMap(prev => ({ ...prev, ...results }));
                 }
-
-                // Wait 400ms between requests to be safe (API limit is usually ~2/sec or ~45/min for free tiers)
-                // Only wait if we actually performed a fetch (i.e. not cached) - fetchGeoForIP handles cache check internally
-                // but we can't easily know if it hit network or cache without changing signature. 
-                // Let's just wait a bit to be safe.
-                await new Promise(r => setTimeout(r, 400));
             }
 
-            if (mounted && hasNewData) {
-                setGeoMap(prev => ({ ...prev, ...results }));
-            }
             if (mounted) setLoading(false);
         }
 
@@ -208,7 +275,7 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
         }
 
         return () => { mounted = false; };
-    }, [servers]); // depend on servers, but logic checks duplicates
+    }, [servers, geoMap]); // depend on servers and geoMap
 
     // 2. Group into Clusters
     const clusters = useMemo(() => {
@@ -216,24 +283,31 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
 
         servers.forEach(server => {
             const geo = geoMap[server.ip];
-            if (!geo || !geo.latitude || !geo.longitude) return;
+            if (!geo || geo.latitude == null || geo.longitude == null) return;
 
-            // Rounding to create 'buckets' for clustering slightly different IPs in same city
-            // 0.1 degree is roughly 11km. 
-            const latKey = geo.latitude.toFixed(1);
-            const lonKey = geo.longitude.toFixed(1);
+            // Validate coordinates before clustering
+            if (!isValidCoordinates(geo.latitude, geo.longitude)) {
+                console.warn(`[Map] Skipping server ${server.current_server_name} (${server.ip}) - invalid coords: ${geo.latitude}, ${geo.longitude}`);
+                return;
+            }
+
+            // Use more precise coordinates for clustering - only group if at exact same location
+            // 0.01 degree is roughly 1km - close enough to be "same location"
+            const latKey = geo.latitude.toFixed(2);
+            const lonKey = geo.longitude.toFixed(2);
             const key = `${latKey},${lonKey}`;
 
             if (!groups[key]) {
+                // Equirectangular Projection with offset adjustments
+                const x = ((geo.longitude + 180) / 360) * 100 + MAP_OFFSET_X;
+                const y = ((90 - geo.latitude) / 180) * 100 + MAP_OFFSET_Y;
+
+                console.log(`[Map] Plotting ${server.current_server_name}: ${geo.city}, ${geo.country} (lat:${geo.latitude.toFixed(2)}, lng:${geo.longitude.toFixed(2)}) -> x:${x.toFixed(1)}%, y:${y.toFixed(1)}%`);
+
                 groups[key] = {
                     id: key,
-                    // Equirectangular Projection
-                    // x: -180..180 -> 0..100
-                    x: ((geo.longitude + 180) / 360) * 100,
-                    // y: 90..-90 -> 0..100
-                    // Lat increases North (up), but CSS top increases South (down).
-                    // So 90 (North Pole) -> 0% Top. -90 (South Pole) -> 100% Top.
-                    y: ((90 - geo.latitude) / 180) * 100,
+                    x: x,
+                    y: y,
                     servers: [],
                     geo: geo
                 };
@@ -245,14 +319,10 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
     }, [servers, geoMap]);
 
 
-    // Sort for sidebar
-    const sortedServers = [...servers].sort((a, b) => b.current_player_count - a.current_player_count).slice(0, 5);
-    const totalPlayers = servers.reduce((acc, s) => acc + s.current_player_count, 0);
-
     return (
         <div className="relative rounded-xl border border-blue-500/30 bg-[#0a0f1c] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden">
             {/* Header Overlay */}
-            <div className="absolute top-0 left-0 w-full p-4 flex items-start justify-between z-10 pointer-events-none">
+            <div className="absolute top-0 left-0 p-4 z-10 pointer-events-none">
                 <div>
                     <h2 className="text-xl font-bold tracking-widest text-blue-400 uppercase drop-shadow-[0_0_5px_rgba(59,130,246,0.5)] flex items-center gap-2">
                         <MapLucide className="h-5 w-5" />
@@ -261,32 +331,85 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                     <p className="text-[10px] text-blue-500/60 font-mono mt-1">
                         LIVE GEOLOCATION FEED v2.0
                     </p>
+                    <Button
+                        onClick={clearGeoCache}
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 text-[10px] h-6 px-2 pointer-events-auto text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    >
+                        <RefreshCw className={cn("h-3 w-3 mr-1", cacheCleared && "animate-spin")} />
+                        Clear Cache
+                    </Button>
                 </div>
-                <div className="bg-black/40 backdrop-blur border border-blue-500/20 p-2 rounded-md pointer-events-auto">
-                    <div className="text-[10px] text-muted-foreground uppercase text-center mb-1">Total Deployed</div>
-                    <div className="text-2xl font-mono font-bold text-center text-blue-400">{totalPlayers}</div>
+            </div>
+
+            {/* Zoom Controls */}
+            <div className="absolute top-20 left-4 z-20 flex flex-col gap-2 pointer-events-auto">
+                <Button
+                    onClick={() => setZoom(z => Math.min(z + 0.5, 4))}
+                    variant="outline"
+                    size="icon"
+                    className="bg-black/40 backdrop-blur border-blue-500/20 text-blue-400 hover:bg-blue-500/20"
+                    disabled={zoom >= 4}
+                >
+                    <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button
+                    onClick={() => setZoom(z => Math.max(z - 0.5, 0.5))}
+                    variant="outline"
+                    size="icon"
+                    className="bg-black/40 backdrop-blur border-blue-500/20 text-blue-400 hover:bg-blue-500/20"
+                    disabled={zoom <= 0.5}
+                >
+                    <ZoomOut className="h-4 w-4" />
+                </Button>
+                <Button
+                    onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+                    variant="outline"
+                    size="icon"
+                    className="bg-black/40 backdrop-blur border-blue-500/20 text-blue-400 hover:bg-blue-500/20"
+                >
+                    <Maximize2 className="h-4 w-4" />
+                </Button>
+                <div className="text-[10px] text-center text-blue-400 font-mono bg-black/40 px-2 py-1 rounded">
+                    {(zoom * 100).toFixed(0)}%
                 </div>
             </div>
 
             {/* Map Container - SVG Based for perfect alignment */}
-            <div className="relative w-full aspect-[2/1] bg-[#0f172a] rounded-lg overflow-hidden border border-slate-800">
+            <div
+                className={cn("relative w-full aspect-[2/1] bg-[#0f172a] rounded-lg overflow-hidden border border-slate-800",
+                    zoom > 1 ? (isDragging ? "cursor-grabbing" : "cursor-grab") : "cursor-default"
+                )}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+            >
 
-                {/* 1. Tactical Grid Background */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(30,41,59,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(30,41,59,0.3)_1px,transparent_1px)] bg-[size:4%_8%] pointer-events-none"></div>
+                {/* Zoomable/Pannable Inner Container */}
+                <div
+                    className="absolute inset-0 origin-center transition-transform duration-200"
+                    style={{
+                        transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`
+                    }}
+                >
+                    {/* 1. Tactical Grid Background */}
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(30,41,59,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(30,41,59,0.3)_1px,transparent_1px)] bg-[size:4%_8%] pointer-events-none"></div>
 
-                {/* 2. Equirectangular Map Image (Strict 2:1 Ratio to match projection) 
-                    Using a verified Equirectangular projection image source.
-                    Styled with CSS filters to match the 'Cyberpunk' aesthetic.
+                {/* 2. Equirectangular Map Image (Strict 2:1 Ratio to match projection)
+                    Using reliable Wikimedia Commons equirectangular projection
                 */}
                 <div
                     className="absolute inset-0 pointer-events-none transition-opacity duration-1000"
                     style={{
-                        backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/World_map_blank_without_borders.svg/2000px-World_map_blank_without_borders.svg.png')`,
+                        backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg')`,
                         backgroundSize: '100% 100%',
-                        backgroundPosition: 'center',
+                        backgroundPosition: '0 0',
                         backgroundRepeat: 'no-repeat',
-                        // High-tech dark mode filter: Invert to make land dark/light, rotate to blue/cyan
-                        filter: 'invert(1) grayscale(100%) brightness(0.5) sepia(1) hue-rotate(180deg) saturate(2)'
+                        // Brighter styling for better visibility
+                        filter: 'grayscale(100%) brightness(0.7) sepia(1) hue-rotate(180deg) saturate(1.5) contrast(1.2)',
+                        opacity: 0.85
                     }}
                 ></div>
 
@@ -296,7 +419,8 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                 {/* 3. Plot Clusters */}
                 {clusters.map(cluster => {
                     const count = cluster.servers.length;
-                    const sizePx = 6 + (Math.min(count, 10) * 3);
+                    // Base size 12px, add 4px per server up to 5 servers, then slower scaling
+                    const sizePx = count === 1 ? 12 : 12 + (Math.min(count, 5) * 4) + (Math.max(0, count - 5) * 2);
                     const isSingleServer = count === 1;
 
                     const clusterDot = (
@@ -324,7 +448,11 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                         <div
                             key={cluster.id}
                             className="absolute group z-20 cursor-pointer"
-                            style={{ left: `${cluster.x}%`, top: `${cluster.y}%`, transform: 'translate(-50%, -50%)' }}
+                            style={{
+                                left: `${cluster.x}%`,
+                                top: `${cluster.y}%`,
+                                transform: `translate(-50%, -50%) scale(${1 / zoom})`
+                            }}
                         >
                             {isSingleServer ? (
                                 <Link href={`/servers/${cluster.servers[0].server_id}`} className="block">
@@ -361,31 +489,9 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                         </div>
                     );
                 })}
+                </div> {/* End Zoomable Container */}
             </div>
 
-            {/* Sidebar / Overlay for Active Theaters */}
-            <div className="absolute top-20 right-4 w-64 hidden md:block z-10 transition-all hover:translate-x-0 translate-x-4 opacity-90 hover:opacity-100">
-                <div className="bg-[#0f172a]/90 backdrop-blur border border-yellow-500/20 rounded-lg p-3 shadow-xl">
-                    <h3 className="text-xs font-bold text-yellow-400 uppercase mb-3 tracking-wider flex items-center justify-between">
-                        Active Theaters
-                        <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                    </h3>
-                    <div className="space-y-2">
-                        {sortedServers.map(server => (
-                            <Link href={`/servers/${server.server_id}`} key={server.server_id} className="block group">
-                                <div className="flex items-center justify-between text-xs p-1.5 rounded hover:bg-yellow-500/10 transition-colors border border-transparent hover:border-yellow-500/20">
-                                    <div className="truncate max-w-[130px] font-medium text-slate-300 group-hover:text-yellow-200">
-                                        {server.current_server_name}
-                                    </div>
-                                    <div className="font-mono text-slate-400 group-hover:text-white">
-                                        {server.current_player_count}/{server.current_max_players}
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            </div>
 
             {/* Cyberpunk details */}
             <div className="absolute bottom-2 left-4 text-[9px] font-mono text-blue-500/30">

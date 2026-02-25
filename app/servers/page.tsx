@@ -1,8 +1,10 @@
 import { ServerDirectory } from "@/components/server-directory";
 import { ServerListSchema } from "@/lib/schemas";
-import { AlertTriangle, Server as ServerIcon } from "lucide-react";
+import { AlertTriangle, Server as ServerIcon, MapIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +85,12 @@ export default async function ServersPage() {
                 Real-time tracking of all active Battlefield 1942 servers worldwide
               </p>
             </div>
+            <Link href="/map">
+              <Button variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300">
+                <MapIcon className="h-4 w-4 mr-2" />
+                View Map
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
