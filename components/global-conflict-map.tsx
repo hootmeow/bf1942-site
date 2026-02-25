@@ -180,6 +180,35 @@ function guessGeoFromName(name: string): GeoData | null {
 const MAP_OFFSET_X = 0; // Adjust if markers are horizontally offset
 const MAP_OFFSET_Y = 0; // Adjust if markers are vertically offset
 
+// Continent colors for server markers
+const CONTINENT_COLORS: Record<string, { bg: string; border: string; shadow: string; text: string }> = {
+    'North America': { bg: 'bg-blue-500', border: 'border-blue-300', shadow: 'shadow-[0_0_15px_rgba(59,130,246,1)]', text: 'text-blue-400' },
+    'South America': { bg: 'bg-green-500', border: 'border-green-300', shadow: 'shadow-[0_0_15px_rgba(34,197,94,1)]', text: 'text-green-400' },
+    'Europe': { bg: 'bg-purple-500', border: 'border-purple-300', shadow: 'shadow-[0_0_15px_rgba(168,85,247,1)]', text: 'text-purple-400' },
+    'Asia': { bg: 'bg-red-500', border: 'border-red-300', shadow: 'shadow-[0_0_15px_rgba(239,68,68,1)]', text: 'text-red-400' },
+    'Africa': { bg: 'bg-yellow-500', border: 'border-yellow-300', shadow: 'shadow-[0_0_15px_rgba(234,179,8,1)]', text: 'text-yellow-400' },
+    'Oceania': { bg: 'bg-cyan-500', border: 'border-cyan-300', shadow: 'shadow-[0_0_15px_rgba(6,182,212,1)]', text: 'text-cyan-400' },
+    'Unknown': { bg: 'bg-gray-500', border: 'border-gray-300', shadow: 'shadow-[0_0_15px_rgba(107,114,128,1)]', text: 'text-gray-400' },
+};
+
+// Helper to determine continent from country code
+function getContinentFromCountryCode(countryCode: string): string {
+    const northAmerica = ['US', 'CA', 'MX', 'GL', 'BM', 'PM'];
+    const southAmerica = ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'BO', 'PY', 'UY', 'GY', 'SR', 'GF'];
+    const europe = ['GB', 'FR', 'DE', 'IT', 'ES', 'NL', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'RO', 'PT', 'GR', 'HU', 'IE', 'SK', 'BG', 'HR', 'SI', 'LT', 'LV', 'EE', 'LU', 'MT', 'CY', 'IS', 'AL', 'RS', 'BA', 'MK', 'ME', 'XK', 'MD', 'BY', 'UA', 'RU'];
+    const asia = ['CN', 'IN', 'JP', 'KR', 'ID', 'TH', 'VN', 'PH', 'MY', 'SG', 'BD', 'PK', 'KZ', 'UZ', 'TM', 'KG', 'TJ', 'MN', 'MM', 'KH', 'LA', 'NP', 'LK', 'AF', 'IR', 'IQ', 'SA', 'YE', 'SY', 'JO', 'IL', 'PS', 'LB', 'OM', 'KW', 'AE', 'QA', 'BH', 'TR', 'GE', 'AM', 'AZ'];
+    const africa = ['ZA', 'EG', 'NG', 'KE', 'GH', 'TZ', 'UG', 'DZ', 'MA', 'AO', 'SD', 'ET', 'CD', 'CM', 'CI', 'MG', 'BF', 'ML', 'MW', 'ZM', 'SN', 'SO', 'TD', 'ZW', 'RW', 'BJ', 'TN', 'BI', 'SS', 'TG', 'LY', 'LR', 'MR', 'CF', 'ER', 'GM', 'BW', 'GA', 'GN', 'SL', 'MZ', 'LS', 'GW', 'MU', 'SZ', 'DJ', 'RE', 'KM', 'CV', 'ST', 'SC', 'YT', 'EH'];
+    const oceania = ['AU', 'NZ', 'PG', 'FJ', 'SB', 'NC', 'PF', 'VU', 'WS', 'GU', 'KI', 'FM', 'TO', 'PW', 'MH', 'NR', 'TV', 'AS', 'MP', 'CK'];
+
+    if (northAmerica.includes(countryCode)) return 'North America';
+    if (southAmerica.includes(countryCode)) return 'South America';
+    if (europe.includes(countryCode)) return 'Europe';
+    if (asia.includes(countryCode)) return 'Asia';
+    if (africa.includes(countryCode)) return 'Africa';
+    if (oceania.includes(countryCode)) return 'Oceania';
+    return 'Unknown';
+}
+
 export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
     const [geoMap, setGeoMap] = useState<Record<string, GeoData>>({});
     const [loading, setLoading] = useState(true);
@@ -423,20 +452,24 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                     const sizePx = count === 1 ? 12 : 12 + (Math.min(count, 5) * 4) + (Math.max(0, count - 5) * 2);
                     const isSingleServer = count === 1;
 
+                    // Determine continent color
+                    const continent = getContinentFromCountryCode(cluster.geo.country_code);
+                    const colors = CONTINENT_COLORS[continent];
+
                     const clusterDot = (
                         <>
                             {/* Radar Scan Effect */}
-                            <div className="absolute -inset-2 rounded-full border border-green-500/30 animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100"></div>
+                            <div className={`absolute -inset-2 rounded-full border ${colors.border}/30 animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100`}></div>
 
-                            {/* Pulse - High Visibility Neon */}
+                            {/* Pulse - Continent Color */}
                             <span
-                                className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow-400 opacity-75"
+                                className={`absolute inline-flex h-full w-full animate-ping rounded-full ${colors.bg} opacity-75`}
                                 style={{ animationDuration: '1.5s' }}
                             ></span>
 
-                            {/* Core Dot (Bright Gold/Green mix for max contrast on dark blue) */}
+                            {/* Core Dot */}
                             <span
-                                className="relative inline-flex items-center justify-center rounded-full bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,1)] border-2 border-white text-[10px] font-bold text-black z-30"
+                                className={`relative inline-flex items-center justify-center rounded-full ${colors.bg} ${colors.shadow} border-2 ${colors.border} text-[10px] font-bold text-white z-30`}
                                 style={{ width: `${sizePx}px`, height: `${sizePx}px` }}
                             >
                                 {count > 1 && count}
@@ -466,10 +499,10 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
 
                             {/* Tooltip */}
                             <div className="absolute left-1/2 bottom-[140%] mb-2 -translate-x-1/2 hidden group-hover:block z-50 min-w-[220px]">
-                                <div className="bg-slate-900/95 backdrop-blur text-white text-xs rounded border border-green-500/30 shadow-2xl overflow-hidden">
-                                    <div className="px-3 py-2 bg-green-500/10 border-b border-green-500/20 font-bold flex justify-between items-center text-green-400 uppercase tracking-wider">
+                                <div className={`bg-slate-900/95 backdrop-blur text-white text-xs rounded border ${colors.border}/30 shadow-2xl overflow-hidden`}>
+                                    <div className={`px-3 py-2 ${colors.bg}/10 border-b ${colors.border}/20 font-bold flex justify-between items-center ${colors.text} uppercase tracking-wider`}>
                                         <span className="flex items-center gap-2"><MapLucide className="h-3 w-3" /> {cluster.geo.city || "Unknown Grid"}</span>
-                                        <span className="text-xs">{count} Active</span>
+                                        <span className="text-xs">{count} Server{count !== 1 ? 's' : ''}</span>
                                     </div>
                                     <div className="p-1 max-h-[200px] overflow-y-auto custom-scrollbar">
                                         {cluster.servers.map(s => (
@@ -484,7 +517,7 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                                         ))}
                                     </div>
                                 </div>
-                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-green-900/90 absolute left-1/2 -translate-x-1/2 top-full shadow-sm"></div>
+                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-slate-900/90 absolute left-1/2 -translate-x-1/2 top-full shadow-sm"></div>
                             </div>
                         </div>
                     );
