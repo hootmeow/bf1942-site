@@ -249,41 +249,54 @@ export default function RankInfoClient() {
 
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-primary/10">
-                            <Trophy className="h-6 w-6 text-primary" />
+            {/* Hero Header */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+                {/* Background blur orbs */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-amber-500/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-primary/10 blur-[70px]" />
+
+                <div className="relative z-10">
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+                            <div className="rounded-xl bg-amber-500/20 p-3">
+                                <Trophy className="h-8 w-8 text-amber-400" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                        Leaderboards
+                                    </h1>
+                                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                                        Top 100
+                                    </Badge>
+                                </div>
+                                <p className="text-sm text-slate-400">
+                                    Elite soldiers ranked by Rating Points (RP) across all theaters
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Leaderboards</h1>
-                            <p className="text-muted-foreground">
-                                Top 100 players ranked by Rating Points (RP)
-                            </p>
-                        </div>
+
+                        {/* Info Card */}
+                        <Card className="border-border/60 bg-card/40 lg:max-w-sm w-full backdrop-blur-sm animate-fade-in-up stagger-1">
+                            <CardContent className="p-4 flex items-start gap-3">
+                                <div className="bg-primary/15 p-2 rounded-lg text-primary shrink-0">
+                                    <Info className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-sm mb-1 text-white">How RP Works</h3>
+                                    <p className="text-xs text-slate-400 mb-2">
+                                        RP (0–2,000) measures skill across 6 components: Objectives, KDR, Kills/Min, Win Rate, Map Variety, and Score/Round.
+                                    </p>
+                                    <Button variant="link" size="sm" className="h-auto p-0 text-xs gap-1 text-primary" asChild>
+                                        <Link href="/rank-system">
+                                            Full breakdown <ChevronRight className="h-3 w-3" />
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
-
-                {/* Info Card */}
-                <Card className="border-border/60 bg-muted/20 lg:max-w-sm w-full">
-                    <CardContent className="p-4 flex items-start gap-3">
-                        <div className="bg-primary/10 p-2 rounded-full text-primary shrink-0">
-                            <Info className="h-4 w-4" />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-sm mb-1">How RP Works</h3>
-                            <p className="text-xs text-muted-foreground mb-2">
-                                RP (0–2,000) measures skill across 6 components: Objectives, KDR, Kills/Min, Win Rate, Map Variety, and Score/Round. Coop rounds are excluded.
-                            </p>
-                            <Button variant="link" size="sm" className="h-auto p-0 text-xs gap-1" asChild>
-                                <Link href="/rank-system">
-                                    Full breakdown <ChevronRight className="h-3 w-3" />
-                                </Link>
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* Tabs */}

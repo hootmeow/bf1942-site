@@ -1,4 +1,4 @@
-import { Bot, Terminal, FileCode, LucideIcon, BarChart3, ExternalLink, Sparkles } from 'lucide-react';
+import { Bot, Terminal, FileCode, LucideIcon, BarChart3, ExternalLink, Sparkles, Globe, Download } from 'lucide-react';
 
 export interface ToolInfo {
   slug: string;
@@ -64,5 +64,31 @@ export const toolsList: ToolInfo[] = [
     external: true,
     author: "uuuzbf",
     authorUrl: "https://github.com/uuuzbf",
+  },
+  {
+    slug: 'bf1942eu',
+    title: "BF1942.eu",
+    description: "Comprehensive BF1942 information hub by the master server manager. Find server lists, game information, patches, mods, maps, and community resources all in one place.",
+    icon: Globe,
+    href: "http://bf1942.eu/",
+    category: "Community Hub",
+    color: "text-violet-500",
+    bgColor: "bg-violet-500/10",
+    external: true,
+    author: "Arkyliën",
+    authorUrl: "https://github.com/Ahrkylien",
+  },
+  {
+    slug: 'datafield42',
+    title: "DataField42",
+    description: "Automatic map and mod download tool for Battlefield 1942. Seamlessly downloads missing content when joining servers, eliminating manual installation hassles.",
+    icon: Download,
+    href: "https://github.com/Ahrkylien/BF1942-DataField42",
+    category: "Game Enhancement",
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-500/10",
+    external: true,
+    author: "Arkyliën",
+    authorUrl: "https://github.com/Ahrkylien",
   },
 ];

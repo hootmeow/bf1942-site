@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   BarChart3, BookOpen, Download, Globe, Heart, History,
@@ -109,33 +110,45 @@ export default function AboutPage() {
       />
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 via-card/80 to-transparent p-8 md:p-12 mb-10">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <Globe className="h-6 w-6 text-primary" />
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl mb-10">
+        {/* Background blur orbs */}
+        <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
+        <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-emerald-500/10 blur-[70px]" />
+
+        <div className="relative z-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+            <div className="rounded-xl bg-primary/20 p-3">
+              <Globe className="h-8 w-8 text-primary" />
             </div>
-            <span className="text-sm font-medium uppercase tracking-wider text-primary">About</span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                  BF1942 Online
+                </h1>
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+                  About the Project
+                </Badge>
+              </div>
+              <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+                A passion project built for the Battlefield 1942 community. We provide a modern,
+                comprehensive hub for live server tracking, detailed player statistics, historical
+                round data, and everything else the community needs to keep this classic alive.
+              </p>
+            </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
-            BF1942 Online
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-            A passion project built for the Battlefield 1942 community. We provide a modern,
-            comprehensive hub for live server tracking, detailed player statistics, historical
-            round data, and everything else the community needs to keep this classic alive.
-          </p>
         </div>
       </div>
 
       {/* Features Grid */}
       <div className="mb-10">
-        <h2 className="text-2xl font-bold text-foreground mb-6">What We Offer</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+          <BookOpen className="h-6 w-6 text-primary" />
+          What We Offer
+        </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
             <Link key={f.title} href={f.href}>
-              <Card className="border-border/60 h-full hover:border-primary/40 transition-colors group">
+              <Card className="border-border/60 bg-card/40 h-full card-hover group">
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3">
                     <div className={`p-2 rounded-lg ${f.bg} shrink-0`}>
@@ -156,10 +169,12 @@ export default function AboutPage() {
       {/* Credits + Community CTA side by side */}
       <div className="grid gap-4 md:grid-cols-2 mb-10">
         {/* Credits */}
-        <Card className="border-border/60">
+        <Card className="border-border/60 bg-card/40">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-3">
-              <Heart className="h-5 w-5 text-red-500" />
+              <div className="rounded-lg bg-red-500/15 p-2">
+                <Heart className="h-4 w-4 text-red-400" />
+              </div>
               <h2 className="text-lg font-bold text-foreground">Built With Love</h2>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
@@ -175,10 +190,12 @@ export default function AboutPage() {
         </Card>
 
         {/* Community CTA */}
-        <Card className="border-border/60 bg-gradient-to-br from-emerald-500/5 to-transparent flex flex-col">
+        <Card className="border-border/60 bg-card/40 bg-gradient-to-br from-emerald-500/5 to-transparent flex flex-col">
           <CardContent className="p-6 flex flex-col flex-1">
             <div className="flex items-center gap-2 mb-3">
-              <Shield className="h-5 w-5 text-emerald-500" />
+              <div className="rounded-lg bg-emerald-500/15 p-2">
+                <Shield className="h-4 w-4 text-emerald-400" />
+              </div>
               <h2 className="text-lg font-bold text-foreground">Join the Fight</h2>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6 flex-1">
