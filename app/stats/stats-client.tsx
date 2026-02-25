@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { PlayerSearch } from "@/components/player-search";
-import { AlertTriangle, Loader2, Skull, Trophy, Target, Star } from "lucide-react";
+import { AlertTriangle, Loader2, Skull, Trophy, Target, Star, BarChart3 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // --- API Types ---
@@ -118,16 +119,40 @@ export default function StatsClient() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Player Statistics</h1>
-      </div>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+        {/* Background blur orbs */}
+        <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
+        <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-cyan-500/10 blur-[70px]" />
 
-      {/* Player Search Bar - Centered and "Giant" */}
-      <div className="mx-auto w-full max-w-2xl py-4">
-        <PlayerSearch
-          containerClassName="max-w-none" // Remove max-w-sm
-          inputClassName="h-14 text-lg" // Make input giant
-        />
+        <div className="relative z-10">
+          <div className="flex flex-col items-center text-center gap-4 animate-fade-in-up">
+            <div className="rounded-xl bg-primary/20 p-3">
+              <BarChart3 className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                  Player Statistics
+                </h1>
+                <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs">
+                  Analytics Hub
+                </Badge>
+              </div>
+              <p className="text-sm text-slate-400 max-w-2xl">
+                Search for any player, explore global records, and discover the legends of BF1942
+              </p>
+            </div>
+          </div>
+
+          {/* Player Search Bar - Centered and Giant */}
+          <div className="mx-auto w-full max-w-2xl mt-6 animate-fade-in-up stagger-1">
+            <PlayerSearch
+              containerClassName="max-w-none"
+              inputClassName="h-14 text-lg bg-white/5 border-white/10 text-white placeholder:text-slate-400"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Loading / Error State */}
@@ -149,10 +174,14 @@ export default function StatsClient() {
       {records && (
         <div className="space-y-6">
           {/* Hall of Fame */}
-          <Card className="border-border/60">
+          <Card className="border-border/60 bg-card/40">
             <CardHeader>
-              {/* --- UPDATED: Use as="h2" --- */}
-              <CardTitle as="h2">Hall of Fame</CardTitle>
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <div className="rounded-lg bg-amber-500/15 p-2 text-amber-400">
+                  <Trophy className="h-5 w-5" />
+                </div>
+                Hall of Fame
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <RecordStatCard
@@ -192,10 +221,14 @@ export default function StatsClient() {
           </Card>
 
           {/* Hall of Shame */}
-          <Card className="border-border/60">
+          <Card className="border-border/60 bg-card/40">
             <CardHeader>
-              {/* --- UPDATED: Use as="h2" --- */}
-              <CardTitle as="h2">Hall of Shame</CardTitle>
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <div className="rounded-lg bg-red-500/15 p-2 text-red-400">
+                  <Skull className="h-5 w-5" />
+                </div>
+                Hall of Shame
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <RecordStatCard

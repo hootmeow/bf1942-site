@@ -1,7 +1,8 @@
 import { ServerDirectory } from "@/components/server-directory";
 import { ServerListSchema } from "@/lib/schemas";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Server as ServerIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 
@@ -54,13 +55,36 @@ export default async function ServersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          Server Directory
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Live list of all active battlefields.
-        </p>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+        {/* Background blur orbs */}
+        <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-green-500/10 blur-[80px]" />
+        <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-blue-500/10 blur-[70px]" />
+
+        <div className="relative z-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+            <div className="rounded-xl bg-green-500/20 p-3">
+              <ServerIcon className="h-8 w-8 text-green-400" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                  Server Browser
+                </h1>
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                  <span className="relative flex h-2 w-2 mr-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                  </span>
+                  Live
+                </Badge>
+              </div>
+              <p className="text-sm text-slate-400 mt-1">
+                Real-time tracking of all active Battlefield 1942 servers worldwide
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {(!data || !data.ok) && (

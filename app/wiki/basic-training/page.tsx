@@ -144,20 +144,35 @@ export default function BasicTrainingPage() {
             </div>
 
             {/* Header */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-green-500/10">
-                        <GraduationCap className="h-6 w-6 text-green-500" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">Basic Training</h1>
-                        <p className="text-muted-foreground">Essential gameplay mechanics for new recruits</p>
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+                {/* Background blur orbs */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-green-500/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-primary/10 blur-[70px]" />
+
+                <div className="relative z-10">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
+                        <div className="rounded-xl bg-green-500/20 p-3">
+                            <GraduationCap className="h-8 w-8 text-green-400" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                    Basic Training
+                                </h1>
+                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                                    Getting Started
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Essential gameplay mechanics for new recruits — controls, combat, and communication
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Quick Controls Reference */}
-            <Card className="border-primary/30 bg-primary/5">
+            <Card className="border-primary/30 bg-card/40 bg-gradient-to-br from-primary/5 to-transparent">
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Keyboard className="h-5 w-5 text-primary" />
