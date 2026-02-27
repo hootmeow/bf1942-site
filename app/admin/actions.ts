@@ -129,17 +129,18 @@ export async function getRoundDetails(roundId: string) {
     const client = await pool.connect()
     try {
         const roundRes = await client.query(`
-            SELECT 
-                r.round_id::text, 
-                r.server_id::text, 
-                r.map_name, 
-                r.start_time, 
-                r.end_time, 
-                r.duration_seconds, 
-                r.winner_team, 
+            SELECT
+                r.round_id::text,
+                r.server_id::text,
+                r.map_name,
+                r.start_time,
+                r.end_time,
+                r.duration_seconds,
+                r.winner_team,
                 r.gamemode,
+                r.is_ranked,
                 COALESCE(s.current_server_name, 'Unknown Server') as server_name
-            FROM rounds r 
+            FROM rounds r
             LEFT JOIN servers s ON r.server_id = s.server_id
             WHERE r.round_id = $1
         `, [roundId])
@@ -254,6 +255,27 @@ export async function deleteDigest(weekNumber: number) {
     } catch (e) {
         console.error("Failed to delete digest", e)
         return { ok: false, error: "Failed to delete digest" }
+    } finally {
+        client.release()
+    }
+}
+
+export async function toggleRoundRanked(roundId: string, isRanked: boolean) {
+    await ensureAdmin()
+    const client = await pool.connect()
+    try {
+        await client.query(`
+            UPDATE rounds
+            SET is_ranked = $1
+            WHERE round_id = $2
+        `, [isRanked, roundId])
+
+        revalidatePath('/admin/rounds')
+        revalidatePath(`/admin/rounds/${roundId}`)
+        return { success: true }
+    } catch (e) {
+        console.error("Failed to toggle round ranked status", e)
+        return { success: false, error: "Failed to update round" }
     } finally {
         client.release()
     }

@@ -1,10 +1,12 @@
 import { getRoundDetails, getRoundPlayers } from "@/app/admin/actions"
 import DeleteRoundButton from "../../components/delete-button"
+import ToggleRankedButton from "../../components/toggle-ranked-button"
 import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Shield, ShieldOff } from "lucide-react"
 import {
     Table,
     TableBody,
@@ -43,8 +45,25 @@ export default async function AdminRoundDetailPage({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="md:col-span-1 h-fit">
                     <CardHeader>
-                        <CardTitle>Round #{round.round_id}</CardTitle>
-                        <CardDescription>Basic Information</CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Round #{round.round_id}</CardTitle>
+                                <CardDescription>Basic Information</CardDescription>
+                            </div>
+                            <Badge variant={round.is_ranked ? "default" : "secondary"} className="flex items-center gap-1">
+                                {round.is_ranked ? (
+                                    <>
+                                        <Shield className="h-3 w-3" />
+                                        Ranked
+                                    </>
+                                ) : (
+                                    <>
+                                        <ShieldOff className="h-3 w-3" />
+                                        Unranked
+                                    </>
+                                )}
+                            </Badge>
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -79,12 +98,24 @@ export default async function AdminRoundDetailPage({
                             </div>
                         </div>
 
-                        <div className="pt-6 border-t">
-                            <h3 className="text-lg font-medium text-destructive mb-2">Danger Zone</h3>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                Deleting this round will remove it from all statistics. This action cannot be undone.
-                            </p>
-                            <DeleteRoundButton roundId={round.round_id} className="w-full" />
+                        <div className="pt-6 border-t space-y-4">
+                            <div>
+                                <h3 className="text-lg font-medium mb-2">Ranking Status</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    {round.is_ranked
+                                        ? "This round is currently ranked and counts toward player statistics."
+                                        : "This round is unranked and does not count toward player statistics."}
+                                </p>
+                                <ToggleRankedButton roundId={round.round_id} isRanked={round.is_ranked} />
+                            </div>
+
+                            <div>
+                                <h3 className="text-lg font-medium text-destructive mb-2">Danger Zone</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Deleting this round will remove it from all statistics. This action cannot be undone.
+                                </p>
+                                <DeleteRoundButton roundId={round.round_id} className="w-full" />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
