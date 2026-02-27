@@ -280,7 +280,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
               <span>•</span>
               <div className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
-                <span>{geo.timezone.current_time.split('T')[1].split('-')[0].split('+')[0]} ({geo.timezone.abbr})</span>
+                <span>{geo.timezone?.current_time ? `${geo.timezone.current_time.split('T')[1]?.split('-')[0]?.split('+')[0]} (${geo.timezone.abbr})` : geo.timezone?.abbr || 'Unknown'}</span>
               </div>
             </>
           ) : (
