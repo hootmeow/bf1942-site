@@ -40,6 +40,8 @@ import {
     ExternalLink,
     ArrowRight,
     Info,
+    MessageCircle,
+    Link as LinkIcon,
 } from "lucide-react";
 
 // Icon and color mapping for mods
@@ -210,42 +212,86 @@ export default function ModDetailPageClient() {
                 </div>
             </div>
 
-            {/* Downloads Section */}
-            {mod.downloadLinks && mod.downloadLinks.length > 0 && (
-                <Card className={`${theme.borderColor} border ${theme.bgColor}`}>
-                    <CardHeader className="pb-3">
-                        <CardTitle className={`flex items-center gap-2 ${theme.color}`}>
-                            <Download className="h-5 w-5" />
-                            Downloads
-                        </CardTitle>
-                        <CardDescription>
-                            Official download links for {mod.name}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            {mod.downloadLinks.map((link) => (
-                                <Button
-                                    asChild
-                                    key={link.name}
-                                    variant="outline"
-                                    className={`justify-between h-auto py-3 px-4 ${theme.borderColor} hover:${theme.bgColor}`}
-                                >
-                                    <a href={link.url} target="_blank" rel="noreferrer">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${theme.bgColor}`}>
-                                                <Download className={`h-4 w-4 ${theme.color}`} />
+            {/* Downloads & Social Section */}
+            <div className="grid gap-6 md:grid-cols-2">
+                {/* Downloads Section */}
+                {mod.downloadLinks && mod.downloadLinks.length > 0 && (
+                    <Card className={`${theme.borderColor} border ${theme.bgColor}`}>
+                        <CardHeader className="pb-3">
+                            <CardTitle className={`flex items-center gap-2 ${theme.color}`}>
+                                <Download className="h-5 w-5" />
+                                Downloads
+                            </CardTitle>
+                            <CardDescription>
+                                Official download links for {mod.name}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-3">
+                                {mod.downloadLinks.map((link) => (
+                                    <Button
+                                        asChild
+                                        key={link.name}
+                                        variant="outline"
+                                        className={`justify-between h-auto py-3 px-4 ${theme.borderColor} hover:${theme.bgColor}`}
+                                    >
+                                        <a href={link.url} target="_blank" rel="noreferrer">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg ${theme.bgColor}`}>
+                                                    <Download className={`h-4 w-4 ${theme.color}`} />
+                                                </div>
+                                                <span className="font-medium">{link.name}</span>
                                             </div>
-                                            <span className="font-medium">{link.name}</span>
-                                        </div>
-                                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                                    </a>
-                                </Button>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                        </a>
+                                    </Button>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Social Links Section */}
+                {mod.socialLinks && mod.socialLinks.length > 0 && (
+                    <Card className={`${theme.borderColor} border ${theme.bgColor}`}>
+                        <CardHeader className="pb-3">
+                            <CardTitle className={`flex items-center gap-2 ${theme.color}`}>
+                                <MessageCircle className="h-5 w-5" />
+                                Community
+                            </CardTitle>
+                            <CardDescription>
+                                Connect with the {mod.name} community
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-3">
+                                {mod.socialLinks.map((link) => (
+                                    <Button
+                                        asChild
+                                        key={link.name}
+                                        variant="outline"
+                                        className={`justify-between h-auto py-3 px-4 ${theme.borderColor} hover:${theme.bgColor}`}
+                                    >
+                                        <a href={link.url} target="_blank" rel="noreferrer">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg ${theme.bgColor}`}>
+                                                    {link.url.includes('discord') ? (
+                                                        <MessageCircle className={`h-4 w-4 ${theme.color}`} />
+                                                    ) : (
+                                                        <LinkIcon className={`h-4 w-4 ${theme.color}`} />
+                                                    )}
+                                                </div>
+                                                <span className="font-medium">{link.name}</span>
+                                            </div>
+                                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                        </a>
+                                    </Button>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
 
             {/* Gallery Section */}
             {mod.galleryImages && mod.galleryImages.length > 0 && (

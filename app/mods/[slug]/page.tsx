@@ -4,26 +4,27 @@ import ModDetailPageClient from "./mod-page-client"; // Import the new client co
 
 // This is the server-side metadata function
 export async function generateMetadata(
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-  
-  if (!params.slug) {
+  const { slug } = await params;
+
+  if (!slug) {
     return { title: "Mod Not Found" };
   }
 
   try {
     // --- THIS IS THE FIX ---
     // We add .tsx to the path for the SERVER-SIDE import
-    const modModule = await import(`@/content/mods/${params.slug}.tsx`);
+    const modModule = await import(`@/content/mods/${slug}.tsx`);
     // --- END FIX ---
-    
+
     const mod: ModData = modModule.default;
 
     return {
-      title: `${mod.name} Mod`,
+      title: `${mod.name} - Battlefield 1942 Mod`,
       description: mod.description,
       openGraph: {
-        title: mod.name,
+        title: `${mod.name} - BF1942 Mod`,
         description: mod.description,
       },
     };

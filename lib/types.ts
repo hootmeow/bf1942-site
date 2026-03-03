@@ -27,8 +27,9 @@ export interface ModData {
   name: string;
   version: string;
   description: string;
-  downloadLinks?: DownloadLink[]; 
-  galleryImages?: string[]; 
+  downloadLinks?: DownloadLink[];
+  socialLinks?: DownloadLink[];
+  galleryImages?: string[];
   content: React.ReactNode;
   maps: ModMap[];
 }
