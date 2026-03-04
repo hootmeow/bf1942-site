@@ -1092,7 +1092,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
       )}
     </div>
   );
-}
+});
 
 // --- Stat Card Sub-component ---
 function MetricCard({
