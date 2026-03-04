@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Users } from "lucide-react"
 import Link from "next/link"
@@ -20,8 +21,14 @@ export function OrgCard({ org }: OrgCardProps) {
     <Link href={`/orgs/${org.org_id}`}>
       <Card className="border-border/60 bg-card/40 card-interactive overflow-hidden">
         {org.banner_url && (
-          <div className="h-24 overflow-hidden bg-muted/30">
-            <img src={org.banner_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <div className="h-24 overflow-hidden bg-muted/30 relative">
+            <Image
+              src={org.banner_url}
+              alt={`${org.name} banner`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
           </div>
         )}
         <CardContent className="p-4">

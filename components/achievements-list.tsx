@@ -1,6 +1,7 @@
 
 "use client";
 
+import Image from "next/image";
 import {
     Card,
     CardContent,
@@ -116,8 +117,14 @@ export function AchievementsList({ achievements }: AchievementsListProps) {
                                             tierStyle
                                         )}>
                                             {ach.image_url ? (
-                                                <div className="w-[82px] h-[32px] rounded-sm overflow-hidden shadow-md bg-background/50">
-                                                    <img src={ach.image_url} alt={ach.name} className="w-full h-full object-fill" />
+                                                <div className="w-[82px] h-[32px] rounded-sm overflow-hidden shadow-md bg-background/50 relative">
+                                                    <Image
+                                                        src={ach.image_url}
+                                                        alt={ach.name}
+                                                        fill
+                                                        className="object-fill"
+                                                        sizes="82px"
+                                                    />
                                                 </div>
                                             ) : (
                                                 <div className={cn("p-2 rounded-sm bg-background/50 shadow-sm")}>

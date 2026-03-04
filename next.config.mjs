@@ -4,6 +4,18 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['recharts', 'lucide-react'],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+      },
+    ],
+  },
   // Add this 'async rewrites' function
   async rewrites() {
     return [

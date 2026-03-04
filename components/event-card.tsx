@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, Hash } from "lucide-react"
@@ -68,8 +69,14 @@ export function EventCard({ event }: EventCardProps) {
       <Card className={`border-border/60 bg-card/40 card-interactive overflow-hidden ${isPast ? "opacity-60" : ""}`}>
         {event.banner_url && (
           <div className="h-32 overflow-hidden bg-muted/30 relative">
-            <img src={event.banner_url} alt="" className="h-full w-full object-cover" loading="lazy" />
-            <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+            <Image
+              src={event.banner_url}
+              alt={event.title || "Event banner"}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent z-10" />
           </div>
         )}
         <CardContent className="p-4">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useReducer, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Activity, Users, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
@@ -8,13 +9,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlayerActivityChart } from "@/components/charts";
 import { cn } from "@/lib/utils";
 import { GlobalMetrics, GlobalMetricsSchema, ServerListSchema } from "@/lib/schemas";
 import { Server } from "@/components/server-directory";
 import { ServerSummaryCard } from "@/components/server-summary-card";
 import { LiveTicker } from "@/components/live-ticker";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/ui/loading-state";
+
+// Lazy load heavy chart component
+const PlayerActivityChart = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.PlayerActivityChart })),
+  {
+    loading: () => <LoadingState variant="skeleton" skeletonHeight="h-[300px]" />,
+    ssr: false,
+  }
+);
 
 // Mirror the sort order from components/server-directory.tsx
 const SERVER_STATUS_ORDER: Record<string, number> = {
@@ -23,14 +33,50 @@ const SERVER_STATUS_ORDER: Record<string, number> = {
   OFFLINE: 3
 };
 
+// State management with useReducer
+type HomeState = {
+  data: GlobalMetrics | null;
+  topServers: Server[];
+  loading: boolean;
+  error: string | null;
+};
+
+type HomeAction =
+  | { type: "FETCH_START" }
+  | { type: "FETCH_SUCCESS"; payload: { data: GlobalMetrics; topServers: Server[] } }
+  | { type: "FETCH_ERROR"; payload: string };
+
+function homeReducer(state: HomeState, action: HomeAction): HomeState {
+  switch (action.type) {
+    case "FETCH_START":
+      return { ...state, loading: true, error: null };
+    case "FETCH_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        data: action.payload.data,
+        topServers: action.payload.topServers,
+        error: null,
+      };
+    case "FETCH_ERROR":
+      return { ...state, loading: false, error: action.payload };
+    default:
+      return state;
+  }
+}
+
 export default function HomeClient() {
-  const [data, setData] = useState<GlobalMetrics | null>(null);
-  const [topServers, setTopServers] = useState<Server[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(homeReducer, {
+    data: null,
+    topServers: [],
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
     async function fetchDashboardData() {
+      dispatch({ type: "FETCH_START" });
+
       try {
         const [metricsRes, serversRes] = await Promise.all([
           fetch("/api/v1/metrics/global"),
@@ -41,13 +87,14 @@ export default function HomeClient() {
         if (!metricsRes.ok) throw new Error("Failed to fetch metrics");
         const metricsJson = await metricsRes.json();
         const parsed = GlobalMetricsSchema.safeParse(metricsJson);
-        if (parsed.success) {
-          setData(parsed.data);
-        } else {
+
+        if (!parsed.success) {
           console.error("Metrics validation error:", parsed.error);
+          throw new Error("Invalid metrics data");
         }
 
         // 2. Process Active Servers for Top 12 List
+        let topServers: Server[] = [];
         if (serversRes.ok) {
           const serversJson = await serversRes.json();
           const serversParsed = ServerListSchema.safeParse(serversJson);
@@ -58,19 +105,26 @@ export default function HomeClient() {
               if (statusA !== statusB) return statusA - statusB;
               return b.current_player_count - a.current_player_count;
             });
-            setTopServers(sorted.slice(0, 12));
+            topServers = sorted.slice(0, 12);
           }
         }
 
+        dispatch({
+          type: "FETCH_SUCCESS",
+          payload: { data: parsed.data, topServers },
+        });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
-      } finally {
-        setLoading(false);
+        dispatch({
+          type: "FETCH_ERROR",
+          payload: err instanceof Error ? err.message : "An unknown error occurred",
+        });
       }
     }
 
     fetchDashboardData();
   }, []);
+
+  const { data, topServers, loading, error } = state;
 
   if (loading) {
     return (

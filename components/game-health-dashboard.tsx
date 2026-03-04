@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -174,7 +174,7 @@ function formatDay(day: string) {
 
 const tickInterval = (dataLength: number) => Math.max(1, Math.floor(dataLength / 6));
 
-export function GameHealthDashboard({
+export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   healthData,
   globalMetrics,
 }: GameHealthDashboardProps) {
@@ -1144,4 +1144,4 @@ function MetricCard({
       </CardContent>
     </Card>
   );
-}
+});

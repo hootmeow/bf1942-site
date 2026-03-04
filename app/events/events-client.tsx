@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useReducer } from "react"
 import { Button } from "@/components/ui/button"
 import { EventCard, type EventSummary } from "@/components/event-card"
 import { EventCalendar, expandRecurringEvents } from "@/components/event-calendar"
@@ -20,18 +20,50 @@ const EVENT_TYPES = [
   { value: "other", label: "Other", icon: "✨" },
 ]
 
+// State management for events data
+type EventsState = {
+  events: EventSummary[];
+  loading: boolean;
+  total: number;
+};
+
+type EventsAction =
+  | { type: "FETCH_START" }
+  | { type: "FETCH_SUCCESS"; payload: { events: EventSummary[]; total: number } }
+  | { type: "FETCH_ERROR" };
+
+function eventsReducer(state: EventsState, action: EventsAction): EventsState {
+  switch (action.type) {
+    case "FETCH_START":
+      return { ...state, loading: true };
+    case "FETCH_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        events: action.payload.events,
+        total: action.payload.total,
+      };
+    case "FETCH_ERROR":
+      return { ...state, loading: false };
+    default:
+      return state;
+  }
+}
+
 export default function EventsPage() {
-  const [events, setEvents] = useState<EventSummary[]>([])
-  const [loading, setLoading] = useState(true)
+  const [state, dispatch] = useReducer(eventsReducer, {
+    events: [],
+    loading: true,
+    total: 0,
+  });
   const [typeFilter, setTypeFilter] = useState("")
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const { data: session } = useSession()
 
   useEffect(() => {
     async function fetchEvents() {
-      setLoading(true)
+      dispatch({ type: "FETCH_START" });
       try {
         const params = new URLSearchParams({ page: String(page), limit: "50" })
         if (typeFilter) params.set("event_type", typeFilter)
@@ -39,18 +71,25 @@ export default function EventsPage() {
         if (res.ok) {
           const data = await res.json()
           if (data.ok) {
-            setEvents(data.events)
-            setTotal(data.total)
+            dispatch({
+              type: "FETCH_SUCCESS",
+              payload: { events: data.events, total: data.total },
+            });
+          } else {
+            dispatch({ type: "FETCH_ERROR" });
           }
+        } else {
+          dispatch({ type: "FETCH_ERROR" });
         }
       } catch (e) {
         console.error("Failed to fetch events:", e)
-      } finally {
-        setLoading(false)
+        dispatch({ type: "FETCH_ERROR" });
       }
     }
     fetchEvents()
   }, [typeFilter, page])
+
+  const { events, loading, total } = state;
 
   // Filter events to the selected calendar date
   const filteredEvents = useMemo(() => {
