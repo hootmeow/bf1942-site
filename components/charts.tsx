@@ -339,6 +339,9 @@ const processMetricsData = (playerData: any[], pingData: any[]) => {
 
 export const ServerActivityChart = React.memo(function ServerActivityChart({ playerData, pingData }: { playerData: any[], pingData: any[] }) {
   const chartData = processMetricsData(playerData, pingData);
+  // Calculate interval to show approximately 6-8 ticks evenly spaced
+  const tickInterval = chartData.length > 0 ? Math.ceil(chartData.length / 6) : 0;
+
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -356,7 +359,7 @@ export const ServerActivityChart = React.memo(function ServerActivityChart({ pla
           axisLine={false}
           fontSize={11}
           tickMargin={8}
-          interval="preserveStartEnd"
+          interval={tickInterval}
         />
         <YAxis
           yAxisId="left"

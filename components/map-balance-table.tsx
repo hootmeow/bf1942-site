@@ -15,7 +15,7 @@ export interface MapBalanceStat {
     average_duration: number;
 }
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 12;
 
 function getBalanceLabel(axisRate: number, alliedRate: number): { label: string; color: string } {
     const diff = Math.abs(axisRate - alliedRate);
@@ -40,59 +40,41 @@ function MapBalanceCard({ stat, rank }: MapBalanceCardProps) {
     const balance = getBalanceLabel(stat.axis_win_rate, stat.allied_win_rate);
 
     return (
-        <div className="group relative rounded-lg border border-border/60 bg-card/40 p-4 transition-all hover:bg-card/60 hover:border-border">
+        <div className="group relative rounded-lg border border-border/60 bg-card/40 p-3 transition-all hover:bg-card/60 hover:border-border">
             {/* Map Name & Stats Row */}
-            <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate" title={stat.map_name}>
+                    <h3 className="font-semibold text-sm text-foreground truncate" title={stat.map_name}>
                         {stat.map_name}
                     </h3>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                            <Trophy className="h-3 w-3" />
-                            {stat.total_rounds} rounds
+                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-0.5">
+                            <Trophy className="h-2.5 w-2.5" />
+                            {stat.total_rounds}
                         </span>
                         {stat.average_duration > 0 && (
-                            <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {formatDuration(stat.average_duration)} avg
+                            <span className="flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" />
+                                {formatDuration(stat.average_duration)}
                             </span>
                         )}
                     </div>
                 </div>
-                <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full bg-muted/50", balance.color)}>
+                <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-muted/50 whitespace-nowrap", balance.color)}>
                     {balance.label}
                 </span>
             </div>
 
             {/* Balance Bar */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
-                    <TooltipProvider>
-                        <Tooltip delayDuration={100}>
-                            <TooltipTrigger asChild>
-                                <span className="font-bold text-red-500 cursor-default">{axisPercent}%</span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                                <p>Axis Win Rate</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">vs</span>
-                    <TooltipProvider>
-                        <Tooltip delayDuration={100}>
-                            <TooltipTrigger asChild>
-                                <span className="font-bold text-blue-500 cursor-default">{alliedPercent}%</span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                                <p>Allied Win Rate</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                    <span className="font-bold text-red-500">{axisPercent}%</span>
+                    <span className="text-[9px] text-muted-foreground uppercase tracking-wider">vs</span>
+                    <span className="font-bold text-blue-500">{alliedPercent}%</span>
                 </div>
 
                 {/* Visual Bar */}
-                <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/30">
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/30">
                     {/* Axis side (left) */}
                     <div
                         className="absolute left-0 top-0 h-full bg-gradient-to-r from-red-600 to-red-500 transition-all"
@@ -108,7 +90,7 @@ function MapBalanceCard({ stat, rank }: MapBalanceCardProps) {
                 </div>
 
                 {/* Labels */}
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="flex items-center justify-between text-[9px] text-muted-foreground">
                     <span className="text-red-400">AXIS</span>
                     <span className="text-blue-400">ALLIES</span>
                 </div>
@@ -187,7 +169,7 @@ export function MapBalanceTable({ stats }: { stats: MapBalanceStat[] }) {
                         <p className="text-sm">No map balance data available yet.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {paginatedStats.map((stat, index) => (
                             <MapBalanceCard
                                 key={stat.map_name}

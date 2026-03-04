@@ -88,7 +88,7 @@ function StatCard({ title, value, icon, copyable, children }: StatCardProps) {
     // Attempt to stringify if it's a node, or just ignore copying for complex nodes unless explicitly handled
     let textToCopy = String(value);
     if (typeof value === 'object') {
-      // If rich content, maybe don't copy, or try to get textContent? 
+      // If rich content, maybe don't copy, or try to get textContent?
       // For now, let's assume if it's an object/node, it's not copyable mainly, or just copy empty.
       // Actually, for the "Players" card, copy isn't enabled anyway.
       textToCopy = "";
@@ -104,27 +104,42 @@ function StatCard({ title, value, icon, copyable, children }: StatCardProps) {
   return (
     <div
       className={cn(
-        "rounded-lg border border-border/60 bg-card/40 p-4 transition-all duration-200 relative overflow-hidden group/stat",
-        "hover:border-border/80 hover:bg-card/60 hover:shadow-sm",
-        copyable && "cursor-pointer hover:border-primary/40 active:scale-[0.98]"
+        "rounded-lg border border-border/60 bg-gradient-to-br from-card/50 to-card/30 p-4 transition-all duration-300 relative overflow-hidden group/stat",
+        "hover:border-primary/30 hover:from-card/70 hover:to-card/50 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)]",
+        copyable && "cursor-pointer hover:border-primary/50 active:scale-[0.97]"
       )}
       onClick={handleCopy}
       title={copyable ? "Click to copy" : undefined}
     >
-      {/* Subtle top accent line */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
+      {/* Animated gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-primary/[0.02] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-500" />
+
+      {/* Top accent line with shine effect */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
+
+      {/* Corner accent */}
+      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-primary/5 to-transparent rounded-bl-full opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
+
       <div className="flex items-center gap-3 relative z-10">
         <div className={cn(
-          "rounded-full p-2 transition-all duration-200",
+          "rounded-full p-2 transition-all duration-300 relative",
           copied
-            ? "bg-green-500/10 text-green-500"
-            : "bg-primary/10 text-primary group-hover/stat:bg-primary/15 group-hover/stat:shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)]"
+            ? "bg-green-500/15 text-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+            : "bg-primary/10 text-primary group-hover/stat:bg-primary/15 group-hover/stat:shadow-[0_0_16px_rgba(var(--primary-rgb),0.2)] group-hover/stat:scale-110"
         )}>
-          {copied ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+          {/* Icon glow effect */}
+          <div className={cn(
+            "absolute inset-0 rounded-full blur-md opacity-0 group-hover/stat:opacity-50 transition-opacity duration-300",
+            copied ? "bg-green-500/30" : "bg-primary/30"
+          )} />
+          {copied ? <Check className="h-4 w-4 relative z-10" /> : <Icon className="h-4 w-4 relative z-10" />}
         </div>
-        <div>
-          <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
-          <div className={cn("text-base font-semibold text-foreground", copied && "text-green-500")}>
+        <div className="flex-1">
+          <h3 className="text-xs font-medium text-muted-foreground group-hover/stat:text-muted-foreground/80 transition-colors">{title}</h3>
+          <div className={cn(
+            "text-base font-semibold transition-colors duration-300",
+            copied ? "text-green-500" : "text-foreground group-hover/stat:text-primary"
+          )}>
             {copied ? "Copied!" : value}
           </div>
         </div>
@@ -379,9 +394,14 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
         </div>
       )}
 
-      <Card className="border-border/60">
-        <CardHeader><CardTitle as="h2">Server Details</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <Card className="border-border/60 bg-gradient-to-br from-card/80 to-card/40 shadow-lg">
+        <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/[0.02] to-transparent">
+          <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
+            Server Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4 pt-6">
           <StatCard title="Address" value={`${server_info.ip}:${server_info.current_game_port}`} icon={Server} copyable={true} />
           <StatCard
             title="Players"
@@ -399,14 +419,16 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
           />
           <StatCard title="Current Map" value={server_info.current_map || "N/A"} icon={Map} />
           {/* New Game Mode Card */}
-          <div className="rounded-lg border border-border/60 bg-card/40 p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-primary/10 p-2 text-primary">
-                <Server className="h-4 w-4" /> {/* Or custom icon */}
+          <div className="rounded-lg border border-border/60 bg-gradient-to-br from-card/50 to-card/30 p-4 transition-all duration-300 hover:from-card/70 hover:to-card/50 hover:border-primary/30 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)] relative overflow-hidden group/stat">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-primary/[0.02] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-500" />
+            <div className="flex items-center gap-3 relative z-10">
+              <div className="rounded-full bg-primary/10 p-2 text-primary transition-all duration-300 group-hover/stat:bg-primary/15 group-hover/stat:shadow-[0_0_16px_rgba(var(--primary-rgb),0.2)] group-hover/stat:scale-110 relative">
+                <div className="absolute inset-0 rounded-full blur-md bg-primary/30 opacity-0 group-hover/stat:opacity-50 transition-opacity duration-300" />
+                <Server className="h-4 w-4 relative z-10" />
               </div>
-              <div>
-                <h3 className="text-xs font-medium text-muted-foreground">Game Mode</h3>
-                <p className="text-base font-semibold text-foreground uppercase">{server_info.current_gametype || "N/A"}</p>
+              <div className="flex-1">
+                <h3 className="text-xs font-medium text-muted-foreground group-hover/stat:text-muted-foreground/80 transition-colors">Game Mode</h3>
+                <p className="text-base font-semibold text-foreground uppercase group-hover/stat:text-primary transition-colors duration-300">{server_info.current_gametype || "N/A"}</p>
               </div>
             </div>
           </div>
@@ -420,14 +442,16 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
 
           <StatCard title="Version" value={server_info.version || "v1.61"} icon={Tag} />
 
-          <div className="rounded-lg border border-border/60 bg-card/40 p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-primary/10 p-2 text-primary">
-                <LockIcon status={server_info.password} className="h-4 w-4" />
+          <div className="rounded-lg border border-border/60 bg-gradient-to-br from-card/50 to-card/30 p-4 transition-all duration-300 hover:from-card/70 hover:to-card/50 hover:border-primary/30 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)] relative overflow-hidden group/stat">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-primary/[0.02] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-500" />
+            <div className="flex items-center gap-3 relative z-10">
+              <div className="rounded-full bg-primary/10 p-2 text-primary transition-all duration-300 group-hover/stat:bg-primary/15 group-hover/stat:shadow-[0_0_16px_rgba(var(--primary-rgb),0.2)] group-hover/stat:scale-110 relative">
+                <div className="absolute inset-0 rounded-full blur-md bg-primary/30 opacity-0 group-hover/stat:opacity-50 transition-opacity duration-300" />
+                <LockIcon status={server_info.password} className="h-4 w-4 relative z-10" />
               </div>
-              <div>
-                <h3 className="text-xs font-medium text-muted-foreground">Password</h3>
-                <p className="text-base font-semibold text-foreground uppercase">
+              <div className="flex-1">
+                <h3 className="text-xs font-medium text-muted-foreground group-hover/stat:text-muted-foreground/80 transition-colors">Password</h3>
+                <p className="text-base font-semibold text-foreground uppercase group-hover/stat:text-primary transition-colors duration-300">
                   {(String(server_info.password) !== '0' && String(server_info.password) !== '') ? "Yes" : "No"}
                 </p>
               </div>
@@ -438,47 +462,82 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className={cn(
-          "border-border/60 overflow-hidden transition-shadow duration-300",
+          "border-border/60 overflow-hidden transition-all duration-500 relative",
+          "bg-gradient-to-br from-card/60 to-card/30",
           winner === 1
-            ? "border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]"
-            : "hover:shadow-[0_0_12px_rgba(239,68,68,0.08)]"
+            ? "border-red-500/60 shadow-[0_0_32px_rgba(239,68,68,0.25)] scale-[1.02]"
+            : "hover:shadow-[0_0_20px_rgba(239,68,68,0.12)] hover:border-red-500/30"
         )}>
-          <CardHeader className={cn("border-b border-red-900/20 relative overflow-hidden", winner === 1 ? "bg-red-900/30" : "bg-red-950/20")}>
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-transparent" />
+          {/* Animated winning glow */}
+          {winner === 1 && (
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.03] via-transparent to-red-500/[0.03] animate-pulse pointer-events-none" />
+          )}
+          <CardHeader className={cn("border-b relative overflow-hidden backdrop-blur-sm", winner === 1 ? "bg-red-900/40 border-red-500/30" : "bg-red-950/25 border-red-900/20")}>
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent" />
+            {winner === 1 && (
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-red-500/60 to-transparent" />
+            )}
             <div className="flex items-center justify-between relative z-10">
-              <CardTitle as="h2" className="text-red-500 flex items-center gap-2">
-                {winner === 1 && <span className="text-xs bg-red-500/20 px-2 py-0.5 rounded-full font-bold tracking-wider">WINNING</span>}
+              <CardTitle as="h2" className="text-red-500 flex items-center gap-2 font-bold">
+                {winner === 1 && (
+                  <span className="text-xs bg-red-500/25 px-2.5 py-1 rounded-full font-bold tracking-wider border border-red-500/40 shadow-[0_0_12px_rgba(239,68,68,0.3)] animate-pulse">
+                    WINNING
+                  </span>
+                )}
                 Axis
               </CardTitle>
-              <div className="text-2xl font-bold text-red-500 tabular-nums">{server_info.tickets1 ?? 'N/A'} <span className="text-sm font-medium text-red-400/70">Tickets</span></div>
+              <div className="text-2xl font-bold text-red-500 tabular-nums flex items-baseline gap-1.5">
+                {server_info.tickets1 ?? 'N/A'}
+                <span className="text-sm font-medium text-red-400/70">Tickets</span>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-4"><ScoreboardTable players={team1} topThreeNames={topThreeNames} /></CardContent>
+          <CardContent className="pt-4 relative z-10"><ScoreboardTable players={team1} topThreeNames={topThreeNames} /></CardContent>
         </Card>
         <Card className={cn(
-          "border-border/60 overflow-hidden transition-shadow duration-300",
+          "border-border/60 overflow-hidden transition-all duration-500 relative",
+          "bg-gradient-to-br from-card/60 to-card/30",
           winner === 2
-            ? "border-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.15)]"
-            : "hover:shadow-[0_0_12px_rgba(59,130,246,0.08)]"
+            ? "border-blue-500/60 shadow-[0_0_32px_rgba(59,130,246,0.25)] scale-[1.02]"
+            : "hover:shadow-[0_0_20px_rgba(59,130,246,0.12)] hover:border-blue-500/30"
         )}>
-          <CardHeader className={cn("border-b border-blue-900/20 relative overflow-hidden", winner === 2 ? "bg-blue-900/30" : "bg-blue-950/20")}>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-transparent" />
+          {/* Animated winning glow */}
+          {winner === 2 && (
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.03] via-transparent to-blue-500/[0.03] animate-pulse pointer-events-none" />
+          )}
+          <CardHeader className={cn("border-b relative overflow-hidden backdrop-blur-sm", winner === 2 ? "bg-blue-900/40 border-blue-500/30" : "bg-blue-950/25 border-blue-900/20")}>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent" />
+            {winner === 2 && (
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" />
+            )}
             <div className="flex items-center justify-between relative z-10">
-              <CardTitle as="h2" className="text-blue-500 flex items-center gap-2">
-                {winner === 2 && <span className="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full font-bold tracking-wider">WINNING</span>}
+              <CardTitle as="h2" className="text-blue-500 flex items-center gap-2 font-bold">
+                {winner === 2 && (
+                  <span className="text-xs bg-blue-500/25 px-2.5 py-1 rounded-full font-bold tracking-wider border border-blue-500/40 shadow-[0_0_12px_rgba(59,130,246,0.3)] animate-pulse">
+                    WINNING
+                  </span>
+                )}
                 Allies
               </CardTitle>
-              <div className="text-2xl font-bold text-blue-500 tabular-nums">{server_info.tickets2 ?? 'N/A'} <span className="text-sm font-medium text-blue-400/70">Tickets</span></div>
+              <div className="text-2xl font-bold text-blue-500 tabular-nums flex items-baseline gap-1.5">
+                {server_info.tickets2 ?? 'N/A'}
+                <span className="text-sm font-medium text-blue-400/70">Tickets</span>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-4"><ScoreboardTable players={team2} topThreeNames={topThreeNames} /></CardContent>
+          <CardContent className="pt-4 relative z-10"><ScoreboardTable players={team2} topThreeNames={topThreeNames} /></CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {metrics && (
-          <Card className="border-border/60">
-            <CardHeader><CardTitle as="h2">24 Hour Activity</CardTitle></CardHeader>
+          <Card className="border-border/60 bg-gradient-to-br from-card/60 to-card/30 shadow-md hover:shadow-lg transition-all duration-300">
+            <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/[0.02] to-transparent">
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                24 Hour Activity
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <ServerActivityChart playerData={metrics.player_count_24h} pingData={metrics.avg_ping_24h} />
             </CardContent>
@@ -508,18 +567,26 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {metrics && (
-          <Card className="border-border/60 lg:col-span-1">
-            <CardHeader><CardTitle as="h2">Map Rotation</CardTitle></CardHeader>
+          <Card className="border-border/60 lg:col-span-1 bg-gradient-to-br from-card/60 to-card/30 shadow-md hover:shadow-lg transition-all duration-300">
+            <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/[0.02] to-transparent">
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <Map className="h-4 w-4 text-primary" />
+                Map Rotation
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <ServerMapsPieChart mapData={metrics.popular_maps_24h} />
             </CardContent>
           </Card>
         )}
 
-        <Card className={cn("border-border/60", metrics ? "lg:col-span-2" : "lg:col-span-3")}>
-          <CardHeader>
+        <Card className={cn("border-border/60 bg-gradient-to-br from-card/60 to-card/30 shadow-md hover:shadow-lg transition-all duration-300", metrics ? "lg:col-span-2" : "lg:col-span-3")}>
+          <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/[0.02] to-transparent">
             <div className="flex items-center justify-between">
-              <CardTitle as="h2">Round History</CardTitle>
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                Round History
+              </CardTitle>
               {roundsTotalCount > 0 && (
                 <span className="text-sm text-muted-foreground">{roundsTotalCount} rounds</span>
               )}
@@ -589,11 +656,12 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
         </div>
       )}
 
-      {/* Records, Retention & Fame */}
-      <ServerRecords slug={slug} />
-
+      {/* Records & Retention - Side by Side */}
       {server_info?.server_id && (
-        <ServerRetention serverId={server_info.server_id} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ServerRetention serverId={server_info.server_id} />
+          <ServerRecords slug={slug} />
+        </div>
       )}
 
       <ServerFame slug={slug} />
