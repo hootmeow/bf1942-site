@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { isUserAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
-import { localDatetimeToUTC } from "@/lib/datetime-utils"
 
 export async function createEvent(formData: FormData) {
     const session = await auth()
@@ -13,12 +12,12 @@ export async function createEvent(formData: FormData) {
     const title = (formData.get("title") as string)?.trim()
     const description = (formData.get("description") as string)?.trim()
     const eventType = (formData.get("eventType") as string) || "other"
-    const eventDateLocal = formData.get("eventDate") as string
-    const endDateLocal = (formData.get("endDate") as string) || null
+    const eventDate = formData.get("eventDate") as string // Already converted to UTC on client
+    const endDate = (formData.get("endDate") as string) || null // Already converted to UTC on client
     const organizerOrgId = formData.get("organizerOrgId") ? Number(formData.get("organizerOrgId")) : null
     const bannerUrl = (formData.get("bannerUrl") as string)?.trim()
     const recurrenceFrequency = (formData.get("recurrenceFrequency") as string)?.trim() || null
-    const recurrenceEndLocal = (formData.get("recurrenceEnd") as string)?.trim() || null
+    const recurrenceEnd = (formData.get("recurrenceEnd") as string)?.trim() || null // Already converted to UTC on client
     const serverId = formData.get("serverId") ? Number(formData.get("serverId")) : null
     const serverNameManual = (formData.get("serverNameManual") as string)?.trim() || null
     const tagsStr = (formData.get("tags") as string)?.trim()
@@ -26,15 +25,10 @@ export async function createEvent(formData: FormData) {
     const discordLink = (formData.get("discordLink") as string)?.trim() || null
 
     if (!title || title.length > 200) return { error: "Title required, max 200 chars" }
-    if (!eventDateLocal) return { error: "Event date required" }
+    if (!eventDate) return { error: "Event date required" }
     if (recurrenceFrequency && !["weekly", "biweekly", "monthly"].includes(recurrenceFrequency)) {
         return { error: "Invalid recurrence frequency" }
     }
-
-    // Convert local datetime to UTC for storage
-    const eventDate = localDatetimeToUTC(eventDateLocal)
-    const endDate = endDateLocal ? localDatetimeToUTC(endDateLocal) : null
-    const recurrenceEnd = recurrenceEndLocal ? localDatetimeToUTC(recurrenceEndLocal) : null
 
     const client = await pool.connect()
     try {
@@ -70,11 +64,11 @@ export async function updateEvent(eventId: number, formData: FormData) {
         const title = (formData.get("title") as string)?.trim()
         const description = (formData.get("description") as string)?.trim()
         const eventType = (formData.get("eventType") as string) || "other"
-        const eventDateLocal = formData.get("eventDate") as string
-        const endDateLocal = (formData.get("endDate") as string) || null
+        const eventDate = formData.get("eventDate") as string // Already converted to UTC on client
+        const endDate = (formData.get("endDate") as string) || null // Already converted to UTC on client
         const bannerUrl = (formData.get("bannerUrl") as string)?.trim()
         const recurrenceFrequency = (formData.get("recurrenceFrequency") as string)?.trim() || null
-        const recurrenceEndLocal = (formData.get("recurrenceEnd") as string)?.trim() || null
+        const recurrenceEnd = (formData.get("recurrenceEnd") as string)?.trim() || null // Already converted to UTC on client
         const serverId = formData.get("serverId") ? Number(formData.get("serverId")) : null
         const serverNameManual = (formData.get("serverNameManual") as string)?.trim() || null
         const tagsStr = (formData.get("tags") as string)?.trim()
@@ -85,11 +79,6 @@ export async function updateEvent(eventId: number, formData: FormData) {
         if (recurrenceFrequency && !["weekly", "biweekly", "monthly"].includes(recurrenceFrequency)) {
             return { error: "Invalid recurrence frequency" }
         }
-
-        // Convert local datetime to UTC for storage
-        const eventDate = localDatetimeToUTC(eventDateLocal)
-        const endDate = endDateLocal ? localDatetimeToUTC(endDateLocal) : null
-        const recurrenceEnd = recurrenceEndLocal ? localDatetimeToUTC(recurrenceEndLocal) : null
 
         await client.query(
             `UPDATE events SET title = $1, description = $2, event_type = $3, event_date = $4,

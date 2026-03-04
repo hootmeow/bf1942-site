@@ -142,6 +142,22 @@ export default function EventDetailPage() {
     e.preventDefault()
     setEditLoading(true)
     const formData = new FormData(e.currentTarget)
+
+    // Convert datetime-local values to UTC on the client side BEFORE sending to server
+    const eventDateLocal = formData.get("eventDate") as string
+    const endDateLocal = formData.get("endDate") as string
+    const recurrenceEndLocal = formData.get("recurrenceEnd") as string
+
+    if (eventDateLocal) {
+      formData.set("eventDate", localDatetimeToUTC(eventDateLocal))
+    }
+    if (endDateLocal) {
+      formData.set("endDate", localDatetimeToUTC(endDateLocal))
+    }
+    if (recurrenceEndLocal) {
+      formData.set("recurrenceEnd", localDatetimeToUTC(recurrenceEndLocal))
+    }
+
     const res = await updateEvent(eventId, formData)
     if (res.ok) {
       toast({ title: "Event Updated", variant: "success" })
@@ -149,21 +165,16 @@ export default function EventDetailPage() {
       const tagsStr = (formData.get("tags") as string)?.trim()
       const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()).filter(Boolean) : null
 
-      // Convert local datetime inputs to UTC for local state
-      const eventDateLocal = formData.get("eventDate") as string
-      const endDateLocal = formData.get("endDate") as string
-      const recurrenceEndLocal = formData.get("recurrenceEnd") as string
-
       setEvent({
         ...event!,
         title: (formData.get("title") as string)?.trim() || event!.title,
         description: (formData.get("description") as string)?.trim() || null,
         event_type: (formData.get("eventType") as string) || event!.event_type,
-        event_date: eventDateLocal ? localDatetimeToUTC(eventDateLocal) : event!.event_date,
-        end_date: endDateLocal ? localDatetimeToUTC(endDateLocal) : null,
+        event_date: formData.get("eventDate") as string, // Already UTC
+        end_date: (formData.get("endDate") as string) || null, // Already UTC
         banner_url: (formData.get("bannerUrl") as string)?.trim() || null,
         recurrence_frequency: (formData.get("recurrenceFrequency") as string) || null,
-        recurrence_end: recurrenceEndLocal ? localDatetimeToUTC(recurrenceEndLocal) : null,
+        recurrence_end: (formData.get("recurrenceEnd") as string) || null, // Already UTC
         server_id: formData.get("serverId") ? Number(formData.get("serverId")) : null,
         server_name_manual: (formData.get("serverNameManual") as string)?.trim() || null,
         tags,

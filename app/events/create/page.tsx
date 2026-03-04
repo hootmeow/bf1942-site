@@ -10,6 +10,7 @@ import { Calendar, Loader2, LogIn } from "lucide-react"
 import { useSession, signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { trackEvent } from "@/lib/analytics"
+import { localDatetimeToUTC } from "@/lib/datetime-utils"
 
 export default function CreateEventPage() {
   const router = useRouter()
@@ -45,6 +46,22 @@ export default function CreateEventPage() {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
+
+    // Convert datetime-local values to UTC on the client side
+    const eventDate = formData.get("eventDate") as string
+    const endDate = formData.get("endDate") as string
+    const recurrenceEnd = formData.get("recurrenceEnd") as string
+
+    if (eventDate) {
+      formData.set("eventDate", localDatetimeToUTC(eventDate))
+    }
+    if (endDate) {
+      formData.set("endDate", localDatetimeToUTC(endDate))
+    }
+    if (recurrenceEnd) {
+      formData.set("recurrenceEnd", localDatetimeToUTC(recurrenceEnd))
+    }
+
     const result = await createEvent(formData)
 
     if (result.ok) {
