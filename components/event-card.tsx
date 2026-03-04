@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, Hash } from "lucide-react"
 import Link from "next/link"
 import { getNextOccurrence } from "@/lib/event-utils"
+import { formatLocalTime } from "@/lib/datetime-utils"
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   tournament: { label: "Tournament", color: "bg-red-500/10 text-red-500 border-red-500/20" },
@@ -113,9 +114,7 @@ export function EventCard({ event }: EventCardProps) {
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               {event.recurrence_frequency ? "Next: " : ""}
-              {nextDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-              {" "}
-              {nextDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+              {nextDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} {formatLocalTime(nextDate.toISOString(), { hour: "numeric", minute: "2-digit" })}
             </span>
             {(event.org_name || event.organizer_name) && (
               <span>

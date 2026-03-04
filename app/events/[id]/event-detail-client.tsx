@@ -17,6 +17,7 @@ import { getNextOccurrence } from "@/lib/event-utils"
 import { getIsAdmin } from "@/app/actions/admin-actions"
 import { useToast } from "@/components/ui/toast-simple"
 import { trackEvent } from "@/lib/analytics"
+import { utcToLocalDatetime, formatLocalDate, formatLocalTime, formatUTCTime, localDatetimeToUTC } from "@/lib/datetime-utils"
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   tournament: { label: "Tournament", color: "bg-red-500/10 text-red-500 border-red-500/20" },
@@ -70,13 +71,6 @@ interface Rsvp {
   image?: string | null
   status: string
   responded_at: string
-}
-
-function toLocalDatetimeValue(iso: string) {
-  const d = new Date(iso)
-  const offset = d.getTimezoneOffset()
-  const local = new Date(d.getTime() - offset * 60000)
-  return local.toISOString().slice(0, 16)
 }
 
 export default function EventDetailPage() {
@@ -154,19 +148,24 @@ export default function EventDetailPage() {
       setEditing(false)
       const tagsStr = (formData.get("tags") as string)?.trim()
       const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()).filter(Boolean) : null
+
+      // Convert local datetime inputs to UTC for local state
+      const eventDateLocal = formData.get("eventDate") as string
+      const endDateLocal = formData.get("endDate") as string
+      const recurrenceEndLocal = formData.get("recurrenceEnd") as string
+
       setEvent({
         ...event!,
         title: (formData.get("title") as string)?.trim() || event!.title,
         description: (formData.get("description") as string)?.trim() || null,
         event_type: (formData.get("eventType") as string) || event!.event_type,
-        event_date: (formData.get("eventDate") as string) || event!.event_date,
-        end_date: (formData.get("endDate") as string) || null,
+        event_date: eventDateLocal ? localDatetimeToUTC(eventDateLocal) : event!.event_date,
+        end_date: endDateLocal ? localDatetimeToUTC(endDateLocal) : null,
         banner_url: (formData.get("bannerUrl") as string)?.trim() || null,
         recurrence_frequency: (formData.get("recurrenceFrequency") as string) || null,
-        recurrence_end: (formData.get("recurrenceEnd") as string) || null,
+        recurrence_end: recurrenceEndLocal ? localDatetimeToUTC(recurrenceEndLocal) : null,
         server_id: formData.get("serverId") ? Number(formData.get("serverId")) : null,
         server_name_manual: (formData.get("serverNameManual") as string)?.trim() || null,
-        timezone: (formData.get("timezone") as string) || null,
         tags,
         discord_link: (formData.get("discordLink") as string)?.trim() || null,
       })
@@ -232,14 +231,13 @@ export default function EventDetailPage() {
                 initialTitle={event.title}
                 initialDescription={event.description || ""}
                 initialEventType={event.event_type}
-                initialEventDate={event.event_date ? toLocalDatetimeValue(event.event_date) : ""}
-                initialEndDate={event.end_date ? toLocalDatetimeValue(event.end_date) : ""}
+                initialEventDate={event.event_date ? utcToLocalDatetime(event.event_date) : ""}
+                initialEndDate={event.end_date ? utcToLocalDatetime(event.end_date) : ""}
                 initialBannerUrl={event.banner_url || ""}
                 initialRecurrenceFrequency={event.recurrence_frequency || ""}
-                initialRecurrenceEnd={event.recurrence_end ? toLocalDatetimeValue(event.recurrence_end).slice(0, 10) : ""}
+                initialRecurrenceEnd={event.recurrence_end ? utcToLocalDatetime(event.recurrence_end).slice(0, 10) : ""}
                 initialServerId={event.server_id ? String(event.server_id) : ""}
                 initialServerNameManual={event.server_name_manual || ""}
-                initialTimezone={event.timezone || ""}
                 initialTags={event.tags || []}
                 initialDiscordLink={event.discord_link || ""}
                 loading={editLoading}
@@ -265,10 +263,7 @@ export default function EventDetailPage() {
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">{event.title}</h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  A {typeInfo.label} on{" "}
-                  {event.timezone
-                    ? date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: event.timezone })
-                    : date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                  A {typeInfo.label} on {formatLocalDate(event.event_date)}
                 </p>
               </div>
               {event.tags && event.tags.length > 0 && (
@@ -321,29 +316,18 @@ export default function EventDetailPage() {
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-primary" />
               <span>
-                {event.timezone
-                  ? date.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: event.timezone })
-                  : date.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-                {" at "}
-                {event.timezone
-                  ? date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", timeZone: event.timezone, timeZoneName: "short" })
-                  : date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                {formatLocalDate(event.event_date)} at {formatLocalTime(event.event_date)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground ml-6">
               <Globe className="h-3 w-3" />
-              <span>
-                {date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })} UTC
-                {event.timezone && event.timezone !== "UTC" && (
-                  <> &middot; {date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })} your time</>
-                )}
-              </span>
+              <span>{formatUTCTime(event.event_date)}</span>
             </div>
           </div>
           {event.end_date && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>Ends: {new Date(event.end_date).toLocaleString()}</span>
+              <span>Ends: {formatLocalDate(event.end_date)} at {formatLocalTime(event.end_date)}</span>
             </div>
           )}
           {event.recurrence_frequency && (
@@ -352,17 +336,14 @@ export default function EventDetailPage() {
                 <Calendar className="h-4 w-4" />
                 <span>
                   Repeats {RECURRENCE_LABELS[event.recurrence_frequency]?.toLowerCase() || event.recurrence_frequency}
-                  {event.recurrence_end && <> until {new Date(event.recurrence_end).toLocaleDateString()}</>}
+                  {event.recurrence_end && <> until {formatLocalDate(event.recurrence_end)}</>}
                 </span>
               </div>
               {!isPast && nextDate.getTime() !== date.getTime() && (
                 <div className="flex items-center gap-2 text-sm">
                   <CalendarClock className="h-4 w-4 text-primary" />
                   <span>
-                    Next occurrence:{" "}
-                    {nextDate.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-                    {" at "}
-                    {nextDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                    Next occurrence: {nextDate.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })} at {nextDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
               )}

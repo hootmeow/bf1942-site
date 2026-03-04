@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { isUserAdmin } from "@/lib/admin-auth"
 import { revalidatePath } from "next/cache"
+import { localDatetimeToUTC } from "@/lib/datetime-utils"
 
 export async function createEvent(formData: FormData) {
     const session = await auth()
@@ -12,31 +13,35 @@ export async function createEvent(formData: FormData) {
     const title = (formData.get("title") as string)?.trim()
     const description = (formData.get("description") as string)?.trim()
     const eventType = (formData.get("eventType") as string) || "other"
-    const eventDate = formData.get("eventDate") as string
-    const endDate = (formData.get("endDate") as string) || null
+    const eventDateLocal = formData.get("eventDate") as string
+    const endDateLocal = (formData.get("endDate") as string) || null
     const organizerOrgId = formData.get("organizerOrgId") ? Number(formData.get("organizerOrgId")) : null
     const bannerUrl = (formData.get("bannerUrl") as string)?.trim()
     const recurrenceFrequency = (formData.get("recurrenceFrequency") as string)?.trim() || null
-    const recurrenceEnd = (formData.get("recurrenceEnd") as string)?.trim() || null
+    const recurrenceEndLocal = (formData.get("recurrenceEnd") as string)?.trim() || null
     const serverId = formData.get("serverId") ? Number(formData.get("serverId")) : null
     const serverNameManual = (formData.get("serverNameManual") as string)?.trim() || null
-    const timezone = (formData.get("timezone") as string)?.trim() || null
     const tagsStr = (formData.get("tags") as string)?.trim()
     const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()).filter(Boolean) : null
     const discordLink = (formData.get("discordLink") as string)?.trim() || null
 
     if (!title || title.length > 200) return { error: "Title required, max 200 chars" }
-    if (!eventDate) return { error: "Event date required" }
+    if (!eventDateLocal) return { error: "Event date required" }
     if (recurrenceFrequency && !["weekly", "biweekly", "monthly"].includes(recurrenceFrequency)) {
         return { error: "Invalid recurrence frequency" }
     }
 
+    // Convert local datetime to UTC for storage
+    const eventDate = localDatetimeToUTC(eventDateLocal)
+    const endDate = endDateLocal ? localDatetimeToUTC(endDateLocal) : null
+    const recurrenceEnd = recurrenceEndLocal ? localDatetimeToUTC(recurrenceEndLocal) : null
+
     const client = await pool.connect()
     try {
         const res = await client.query(
-            `INSERT INTO events (title, description, event_type, event_date, end_date, organizer_user_id, organizer_org_id, banner_url, recurrence_frequency, recurrence_end, server_id, server_name_manual, timezone, tags, discord_link)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING event_id`,
-            [title, description || null, eventType, eventDate, endDate, session.user.id, organizerOrgId, bannerUrl || null, recurrenceFrequency, recurrenceEnd, serverId, serverNameManual, timezone, tags, discordLink]
+            `INSERT INTO events (title, description, event_type, event_date, end_date, organizer_user_id, organizer_org_id, banner_url, recurrence_frequency, recurrence_end, server_id, server_name_manual, tags, discord_link)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING event_id`,
+            [title, description || null, eventType, eventDate, endDate, session.user.id, organizerOrgId, bannerUrl || null, recurrenceFrequency, recurrenceEnd, serverId, serverNameManual, tags, discordLink]
         )
         revalidatePath("/events")
         return { ok: true, eventId: res.rows[0].event_id }
@@ -65,14 +70,13 @@ export async function updateEvent(eventId: number, formData: FormData) {
         const title = (formData.get("title") as string)?.trim()
         const description = (formData.get("description") as string)?.trim()
         const eventType = (formData.get("eventType") as string) || "other"
-        const eventDate = formData.get("eventDate") as string
-        const endDate = (formData.get("endDate") as string) || null
+        const eventDateLocal = formData.get("eventDate") as string
+        const endDateLocal = (formData.get("endDate") as string) || null
         const bannerUrl = (formData.get("bannerUrl") as string)?.trim()
         const recurrenceFrequency = (formData.get("recurrenceFrequency") as string)?.trim() || null
-        const recurrenceEnd = (formData.get("recurrenceEnd") as string)?.trim() || null
+        const recurrenceEndLocal = (formData.get("recurrenceEnd") as string)?.trim() || null
         const serverId = formData.get("serverId") ? Number(formData.get("serverId")) : null
         const serverNameManual = (formData.get("serverNameManual") as string)?.trim() || null
-        const timezone = (formData.get("timezone") as string)?.trim() || null
         const tagsStr = (formData.get("tags") as string)?.trim()
         const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()).filter(Boolean) : null
         const discordLink = (formData.get("discordLink") as string)?.trim() || null
@@ -82,12 +86,17 @@ export async function updateEvent(eventId: number, formData: FormData) {
             return { error: "Invalid recurrence frequency" }
         }
 
+        // Convert local datetime to UTC for storage
+        const eventDate = localDatetimeToUTC(eventDateLocal)
+        const endDate = endDateLocal ? localDatetimeToUTC(endDateLocal) : null
+        const recurrenceEnd = recurrenceEndLocal ? localDatetimeToUTC(recurrenceEndLocal) : null
+
         await client.query(
             `UPDATE events SET title = $1, description = $2, event_type = $3, event_date = $4,
                     end_date = $5, banner_url = $6, recurrence_frequency = $7, recurrence_end = $8,
-                    server_id = $9, server_name_manual = $10, timezone = $11, tags = $12, discord_link = $13, updated_at = NOW()
-             WHERE event_id = $14`,
-            [title, description || null, eventType, eventDate, endDate, bannerUrl || null, recurrenceFrequency, recurrenceEnd, serverId, serverNameManual, timezone, tags, discordLink, eventId]
+                    server_id = $9, server_name_manual = $10, tags = $11, discord_link = $12, updated_at = NOW()
+             WHERE event_id = $13`,
+            [title, description || null, eventType, eventDate, endDate, bannerUrl || null, recurrenceFrequency, recurrenceEnd, serverId, serverNameManual, tags, discordLink, eventId]
         )
         revalidatePath(`/events/${eventId}`)
         return { ok: true }

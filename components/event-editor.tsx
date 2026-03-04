@@ -18,7 +18,6 @@ interface EventEditorProps {
   initialRecurrenceEnd?: string
   initialServerId?: string
   initialServerNameManual?: string
-  initialTimezone?: string
   initialTags?: string[]
   initialDiscordLink?: string
   loading?: boolean
@@ -42,20 +41,6 @@ const RECURRENCE_OPTIONS = [
   { value: "monthly", label: "Monthly" },
 ]
 
-const TIMEZONES = [
-  { value: "", label: "Local Time (browser)" },
-  { value: "UTC", label: "UTC" },
-  { value: "America/New_York", label: "US Eastern" },
-  { value: "America/Chicago", label: "US Central" },
-  { value: "America/Denver", label: "US Mountain" },
-  { value: "America/Los_Angeles", label: "US Pacific" },
-  { value: "Europe/London", label: "UK / GMT" },
-  { value: "Europe/Berlin", label: "Central Europe" },
-  { value: "Europe/Helsinki", label: "Eastern Europe" },
-  { value: "Asia/Tokyo", label: "Japan" },
-  { value: "Australia/Sydney", label: "Australia Eastern" },
-]
-
 interface ServerOption {
   server_id: number
   name: string
@@ -72,7 +57,6 @@ export function EventEditor({
   initialRecurrenceEnd = "",
   initialServerId = "",
   initialServerNameManual = "",
-  initialTimezone = "",
   initialTags = [],
   initialDiscordLink = "",
   loading,
@@ -151,25 +135,13 @@ export function EventEditor({
         <div className="space-y-2">
           <Label htmlFor="ev-date">Start Date & Time</Label>
           <Input id="ev-date" name="eventDate" type="datetime-local" defaultValue={initialEventDate} required />
+          <p className="text-[0.8rem] text-muted-foreground">Enter time in your local timezone. It will display correctly for all users.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="ev-end">End Date & Time (optional)</Label>
           <Input id="ev-end" name="endDate" type="datetime-local" defaultValue={initialEndDate} />
+          <p className="text-[0.8rem] text-muted-foreground">Also in your local timezone.</p>
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="ev-tz">Timezone</Label>
-        <select
-          id="ev-tz"
-          name="timezone"
-          defaultValue={initialTimezone}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          {TIMEZONES.map((tz) => (
-            <option key={tz.value} value={tz.value}>{tz.label}</option>
-          ))}
-        </select>
-        <p className="text-[0.8rem] text-muted-foreground">UTC time will always be shown alongside the selected timezone.</p>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
