@@ -97,6 +97,13 @@ interface PingTrendEntry {
   p95_ping: number;
 }
 
+interface RoundQualityEntry {
+  day: string;
+  ranked_rounds: number;
+  unranked_rounds: number;
+  ranked_pct: number;
+}
+
 interface HealthData {
   ok: boolean;
   population_trend: PopulationEntry[];
@@ -109,6 +116,10 @@ interface HealthData {
   player_churn?: PlayerChurn;
   player_experience?: PlayerExperience;
   map_trends_all?: MapTrendEntry[];
+  rounds_today?: number;
+  servers_today?: number;
+  players_today_unique?: number;
+  round_quality_trend?: RoundQualityEntry[];
 }
 
 interface GameHealthDashboardProps {
@@ -194,6 +205,15 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   const [activeRoundsOnly, setActiveRoundsOnly] = useState(true);
   const map_trends = activeRoundsOnly ? initialMapTrends : initialMapTrendsAll;
 
+  const round_quality_trend = healthData.round_quality_trend ?? [];
+  const avgRankedPct =
+    round_quality_trend.length > 0
+      ? Math.round(
+          round_quality_trend.reduce((s, d) => s + d.ranked_pct, 0) /
+            round_quality_trend.length
+        )
+      : 0;
+
   // Compute summary stats
   const stats = useMemo(() => {
     const avg30d =
@@ -227,26 +247,21 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         ? Math.round(((last7Avg - prev7Avg) / prev7Avg) * 100)
         : 0;
 
-    const serversToday =
+    // Use dedicated today fields (trend arrays only contain completed days now)
+    const serversToday = healthData.servers_today ?? 0;
+    const serversYesterday =
       server_trend.length > 0
         ? server_trend[server_trend.length - 1].active_servers
-        : 0;
-    const serversYesterday =
-      server_trend.length > 1
-        ? server_trend[server_trend.length - 2].active_servers
         : 0;
     const serversPct =
       serversYesterday > 0
         ? Math.round(((serversToday - serversYesterday) / serversYesterday) * 100)
         : undefined;
 
-    const roundsToday =
+    const roundsToday = healthData.rounds_today ?? 0;
+    const roundsYesterday =
       rounds_trend.length > 0
         ? rounds_trend[rounds_trend.length - 1].rounds_played
-        : 0;
-    const roundsYesterday =
-      rounds_trend.length > 1
-        ? rounds_trend[rounds_trend.length - 2].rounds_played
         : 0;
     const roundsPct =
       roundsYesterday > 0
@@ -254,7 +269,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         : undefined;
 
     return { avg30d, peakDay, trendPct, serversToday, roundsToday, serversPct, roundsPct };
-  }, [population_trend, server_trend, rounds_trend]);
+  }, [population_trend, server_trend, rounds_trend, healthData]);
 
   // Player retention summary stats
   const retentionStats = useMemo(() => {
@@ -730,6 +745,93 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           </CardContent>
         </Card>
       </div>
+
+      {/* Round Quality */}
+      {round_quality_trend.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-emerald-400" />
+                Round Quality (30 Days)
+              </CardTitle>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-3 w-3 rounded-sm bg-emerald-500/80" />
+                  <span className="text-muted-foreground">Ranked</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-3 w-3 rounded-sm bg-muted-foreground/30" />
+                  <span className="text-muted-foreground">Unranked</span>
+                </span>
+                <Badge
+                  variant="outline"
+                  className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-mono text-xs"
+                >
+                  {avgRankedPct}% avg ranked
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={round_quality_trend} barSize={10}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                    opacity={0.3}
+                  />
+                  <XAxis
+                    dataKey="day"
+                    tickFormatter={formatDay}
+                    tick={{
+                      fontSize: 11,
+                      fill: "hsl(var(--muted-foreground))",
+                    }}
+                    interval={tickInterval(round_quality_trend.length)}
+                  />
+                  <YAxis
+                    tick={{
+                      fontSize: 11,
+                      fill: "hsl(var(--muted-foreground))",
+                    }}
+                    width={35}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                    }}
+                    labelFormatter={formatDay}
+                    formatter={(value: number, name: string) => [
+                      value,
+                      name === "ranked_rounds" ? "Ranked" : "Unranked",
+                    ]}
+                  />
+                  <Bar
+                    dataKey="ranked_rounds"
+                    stackId="quality"
+                    fill="#10b981"
+                    fillOpacity={0.8}
+                    name="ranked_rounds"
+                  />
+                  <Bar
+                    dataKey="unranked_rounds"
+                    stackId="quality"
+                    fill="hsl(var(--muted-foreground))"
+                    fillOpacity={0.3}
+                    name="unranked_rounds"
+                    radius={[2, 2, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* NEW: Map Popularity Trends */}
       {map_trends.length > 0 && (

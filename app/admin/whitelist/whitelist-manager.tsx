@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database } from "lucide-react"
+import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database, Gamepad2, Server } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,11 +33,92 @@ function formatTimeAgo(date: Date): string {
     return date.toLocaleDateString()
 }
 
+function StateBadge({ state }: { state: string | null }) {
+    if (!state) return null
+    const styles: Record<string, string> = {
+        ACTIVE: "bg-green-500 hover:bg-green-600 text-white",
+        EMPTY: "bg-blue-500 hover:bg-blue-600 text-white",
+        OFFLINE: "bg-muted text-muted-foreground",
+        UNKNOWN: "bg-yellow-500 hover:bg-yellow-600 text-white",
+    }
+    return (
+        <Badge className={`text-[10px] flex items-center gap-1 ${styles[state] ?? ""}`}>
+            <Circle className="h-2 w-2 fill-current" />
+            {state.charAt(0) + state.slice(1).toLowerCase()}
+        </Badge>
+    )
+}
+
+function ServerRow({ server, actions }: { server: WhitelistedServer; actions: React.ReactNode }) {
+    const displayName = server.live_server_name || server.server_name || "Unknown Server"
+    const adminLabel = server.server_name && server.server_name !== server.live_server_name ? server.server_name : null
+    const ipPort = server.port ? `${server.ip}:${server.port}` : server.ip
+
+    return (
+        <div className="space-y-1.5 flex-1 min-w-0">
+            <div className="font-medium flex items-center gap-2 flex-wrap">
+                <span className="truncate">{displayName}</span>
+                {adminLabel && (
+                    <Badge variant="outline" className="text-[10px] font-normal shrink-0">
+                        Label: {adminLabel}
+                    </Badge>
+                )}
+                <StateBadge state={server.current_state} />
+                {server.admin_notes && <Badge variant="secondary" className="text-[10px] shrink-0">Has Notes</Badge>}
+            </div>
+            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1 font-mono">
+                    <Server className="h-3 w-3" />
+                    {ipPort}
+                </span>
+                {server.last_seen ? (
+                    <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
+                        <Clock className="h-3 w-3" />
+                        {formatTimeAgo(new Date(server.last_seen))}
+                    </span>
+                ) : (
+                    <span className="flex items-center gap-1 italic">
+                        <Clock className="h-3 w-3" />
+                        Never seen
+                    </span>
+                )}
+                {server.current_player_count !== null && server.current_state !== 'OFFLINE' && (
+                    <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {server.current_player_count}/{server.current_max_players}
+                    </span>
+                )}
+                {server.current_map && server.current_state !== 'OFFLINE' && (
+                    <span className="flex items-center gap-1">
+                        <MapIcon className="h-3 w-3" />
+                        {server.current_map}
+                    </span>
+                )}
+                {server.current_gametype && server.current_state !== 'OFFLINE' && (
+                    <span className="flex items-center gap-1">
+                        <Gamepad2 className="h-3 w-3" />
+                        {server.current_gametype}
+                    </span>
+                )}
+                {server.total_rounds !== null && server.total_rounds > 0 && (
+                    <span className="flex items-center gap-1">
+                        <Database className="h-3 w-3" />
+                        {server.total_rounds.toLocaleString()} rounds
+                    </span>
+                )}
+            </div>
+            <div className="text-xs text-muted-foreground">
+                Added by {server.added_by || "System"}{server.added_at ? ` · ${new Date(server.added_at).toLocaleDateString()}` : ""}
+                {server.owner_contact && <> · Contact: <span className="font-mono">{server.owner_contact}</span></>}
+            </div>
+        </div>
+    )
+}
+
 export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
     const [isPending, startTransition] = useTransition()
     const [error, setError] = useState<string | null>(null)
 
-    // Separate servers by status
     const activeServers = initialServers.filter(s => s.is_active && !s.is_ignored)
     const inactiveServers = initialServers.filter(s => !s.is_active && !s.is_ignored)
     const ignoredServers = initialServers.filter(s => s.is_ignored)
@@ -49,7 +130,6 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
             if (result.error) {
                 setError(result.error)
             } else {
-                // Clear the form
                 const form = document.getElementById("add-server-form") as HTMLFormElement
                 form.reset()
             }
@@ -57,6 +137,7 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
     }
 
     const DetailsDialog = ({ server }: { server: WhitelistedServer }) => {
+        const [serverName, setServerName] = useState(server.server_name || "")
         const [notes, setNotes] = useState(server.admin_notes || "")
         const [contact, setContact] = useState(server.owner_contact || "")
         const [open, setOpen] = useState(false)
@@ -64,7 +145,7 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
 
         const handleSave = async () => {
             setSaving(true)
-            await updateServerDetails(server.ip, notes, contact)
+            await updateServerDetails(server.ip, serverName, notes, contact)
             setSaving(false)
             setOpen(false)
         }
@@ -78,10 +159,20 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Server Details: {server.server_name}</DialogTitle>
-                        <DialogDescription>Add internal notes or contact info for {server.ip}</DialogDescription>
+                        <DialogTitle>Server Details</DialogTitle>
+                        <DialogDescription className="font-mono text-xs">{server.ip}{server.port ? `:${server.port}` : ""}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="server-name">Admin Label</Label>
+                            <Input
+                                id="server-name"
+                                placeholder={server.live_server_name || "Custom display name…"}
+                                value={serverName}
+                                onChange={(e) => setServerName(e.target.value)}
+                            />
+                            <p className="text-xs text-muted-foreground">Overrides the live server name in this list.</p>
+                        </div>
                         <div className="grid gap-2">
                             <Label htmlFor="contact">Owner Contact</Label>
                             <Input
@@ -95,7 +186,7 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
                             <Label htmlFor="notes">Admin Notes</Label>
                             <Textarea
                                 id="notes"
-                                placeholder="Internal comments about this server..."
+                                placeholder="Internal comments about this server…"
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                             />
@@ -126,7 +217,7 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
                             <Input name="ip" id="ip" placeholder="1.2.3.4" required />
                         </div>
                         <div className="grid w-full gap-1.5">
-                            <label htmlFor="name" className="text-sm font-medium">Server Name (Optional)</label>
+                            <label htmlFor="name" className="text-sm font-medium">Admin Label (Optional)</label>
                             <Input name="name" id="name" placeholder="My BF1942 Server" />
                         </div>
                         <Button type="submit" disabled={isPending}>
@@ -163,60 +254,9 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
                             <div className="rounded-md border">
                                 <div className="divide-y">
                                     {activeServers.map((server) => (
-                                        <div key={server.ip} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                                            <div className="space-y-2 flex-1">
-                                                <div className="font-medium flex items-center gap-2 flex-wrap">
-                                                    {server.server_name || "Unknown Server"}
-                                                    <Badge variant="outline" className="text-xs font-normal font-mono">{server.ip}</Badge>
-                                                    {server.is_online ? (
-                                                        <Badge variant="default" className="text-[10px] bg-green-500 hover:bg-green-600 flex items-center gap-1">
-                                                            <Circle className="h-2 w-2 fill-current" />
-                                                            Online
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="secondary" className="text-[10px] flex items-center gap-1">
-                                                            <Circle className="h-2 w-2 fill-current" />
-                                                            Offline
-                                                        </Badge>
-                                                    )}
-                                                    {server.admin_notes && <Badge variant="secondary" className="text-[10px]">Has Notes</Badge>}
-                                                </div>
-                                                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                                    {server.last_seen ? (
-                                                        <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
-                                                            <Clock className="h-3 w-3" />
-                                                            Last seen: {formatTimeAgo(new Date(server.last_seen))}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="h-3 w-3" />
-                                                            Never seen
-                                                        </span>
-                                                    )}
-                                                    {server.is_online && server.current_player_count !== null && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Users className="h-3 w-3" />
-                                                            {server.current_player_count}/{server.current_max_players} players
-                                                        </span>
-                                                    )}
-                                                    {server.is_online && server.current_map && (
-                                                        <span className="flex items-center gap-1">
-                                                            <MapIcon className="h-3 w-3" />
-                                                            {server.current_map}
-                                                        </span>
-                                                    )}
-                                                    {server.total_rounds !== null && server.total_rounds > 0 && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Database className="h-3 w-3" />
-                                                            {server.total_rounds.toLocaleString()} rounds
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    Added by {server.added_by || "System"} on {new Date(server.added_at).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-4">
+                                        <div key={server.ip} className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50 transition-colors">
+                                            <ServerRow server={server} actions={null} />
+                                            <div className="flex items-center gap-4 shrink-0">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-sm text-muted-foreground hidden md:inline">Tracking</span>
                                                     <Switch
@@ -266,47 +306,9 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
                             <div className="rounded-md border bg-yellow-500/5 border-yellow-200 dark:border-yellow-900/50">
                                 <div className="divide-y divide-yellow-200 dark:divide-yellow-900/50">
                                     {inactiveServers.map((server) => (
-                                        <div key={server.ip} className="flex items-center justify-between p-4">
-                                            <div className="space-y-2 flex-1">
-                                                <div className="font-medium flex items-center gap-2 flex-wrap">
-                                                    {server.server_name || "Unknown Server"}
-                                                    <Badge variant="outline" className="text-xs font-normal font-mono">{server.ip}</Badge>
-                                                    {server.is_online ? (
-                                                        <Badge variant="default" className="text-[10px] bg-green-500 hover:bg-green-600 flex items-center gap-1">
-                                                            <Circle className="h-2 w-2 fill-current" />
-                                                            Online
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="secondary" className="text-[10px] flex items-center gap-1">
-                                                            <Circle className="h-2 w-2 fill-current" />
-                                                            Offline
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                                    {server.last_seen ? (
-                                                        <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
-                                                            <Clock className="h-3 w-3" />
-                                                            Last seen: {formatTimeAgo(new Date(server.last_seen))}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="h-3 w-3" />
-                                                            Never seen
-                                                        </span>
-                                                    )}
-                                                    {server.is_online && server.current_player_count !== null && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Users className="h-3 w-3" />
-                                                            {server.current_player_count}/{server.current_max_players} players
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    Added by {server.added_by || "System"}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
+                                        <div key={server.ip} className="flex items-center justify-between gap-4 p-4">
+                                            <ServerRow server={server} actions={null} />
+                                            <div className="flex items-center gap-2 shrink-0">
                                                 <Button
                                                     size="sm"
                                                     className="bg-green-600 hover:bg-green-700 text-white"
@@ -353,21 +355,27 @@ export function WhitelistManager({ initialServers }: WhitelistManagerProps) {
                             </div>
                         </AccordionTrigger>
                         <AccordionContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2 pb-4">
+                            <div className="divide-y pt-2 pb-4">
                                 {ignoredServers.map((server) => (
-                                    <div key={server.ip} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                                        <div className="space-y-1 overflow-hidden min-w-0">
-                                            <div className="font-medium truncate text-sm" title={server.server_name || "Unknown"}>
-                                                {server.server_name || "Unknown"}
+                                    <div key={server.ip} className="flex items-center justify-between gap-4 py-3">
+                                        <div className="space-y-0.5 min-w-0">
+                                            <div className="font-medium text-sm truncate">
+                                                {server.live_server_name || server.server_name || "Unknown"}
                                             </div>
-                                            <div className="text-xs font-mono text-muted-foreground truncate">
-                                                {server.ip}
+                                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground font-mono">
+                                                <span>{server.port ? `${server.ip}:${server.port}` : server.ip}</span>
+                                                {server.last_seen && (
+                                                    <span className="flex items-center gap-1 font-sans" title={new Date(server.last_seen).toLocaleString()}>
+                                                        <Clock className="h-3 w-3" />
+                                                        {formatTimeAgo(new Date(server.last_seen))}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            className="ml-2 shrink-0"
+                                            className="shrink-0"
                                             onClick={() => startTransition(async () => { await unignoreServer(server.ip) })}
                                             disabled={isPending}
                                         >

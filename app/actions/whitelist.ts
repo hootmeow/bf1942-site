@@ -22,6 +22,10 @@ export type WhitelistedServer = {
     admin_notes: string | null
     owner_contact: string | null
     // Live server data
+    live_server_name: string | null
+    port: number | null
+    current_state: 'ACTIVE' | 'EMPTY' | 'OFFLINE' | 'UNKNOWN' | null
+    current_gametype: string | null
     last_seen: Date | null
     current_player_count: number | null
     current_max_players: number | null
@@ -54,17 +58,27 @@ export async function getWhitelistedServers(): Promise<WhitelistedServer[]> {
                 ws.is_ignored,
                 ws.admin_notes,
                 ws.owner_contact,
-                s.last_successful_poll as last_seen,
+                s.current_server_name AS live_server_name,
+                s.port,
+                s.current_state,
+                s.current_gametype,
+                s.last_successful_poll AS last_seen,
                 s.current_player_count,
                 s.current_max_players,
                 s.current_map,
                 CASE
                     WHEN s.last_successful_poll > NOW() - INTERVAL '10 minutes' THEN true
                     ELSE false
-                END as is_online,
-                (SELECT COUNT(*) FROM rounds r WHERE r.server_id = s.server_id) as total_rounds
+                END AS is_online,
+                (SELECT COUNT(*) FROM rounds r WHERE r.server_id = s.server_id) AS total_rounds
             FROM whitelisted_servers ws
-            LEFT JOIN servers s ON ws.ip = s.ip::text
+            LEFT JOIN LATERAL (
+                SELECT *
+                FROM servers
+                WHERE ip = ws.ip
+                ORDER BY last_successful_poll DESC NULLS LAST
+                LIMIT 1
+            ) s ON true
             ORDER BY ws.added_at DESC
         `)
         return res.rows
@@ -110,14 +124,14 @@ export async function addWhitelistedServer(formData: FormData) {
     }
 }
 
-export async function updateServerDetails(ip: string, notes: string, contact: string) {
+export async function updateServerDetails(ip: string, serverName: string, notes: string, contact: string) {
     await verifyAdmin()
 
     const client = await pool.connect()
     try {
         await client.query(
-            "UPDATE whitelisted_servers SET admin_notes = $2, owner_contact = $3 WHERE ip = $1",
-            [ip, notes, contact]
+            "UPDATE whitelisted_servers SET server_name = $2, admin_notes = $3, owner_contact = $4 WHERE ip = $1",
+            [ip, serverName || null, notes, contact]
         )
         revalidatePath("/admin/whitelist")
         return { success: true }
