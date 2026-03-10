@@ -13,10 +13,8 @@ export default async function WhitelistPage() {
     const session = await auth()
     if (!session?.user?.id) return redirect("/")
 
-    // Double check admin status
     const isAdmin = await isUserAdmin(session.user.id)
-    if (!isAdmin) return redirect("/")
-
+    // Non-admins who reach this page (via viewer access) get read-only view
     const servers = await getWhitelistedServers()
 
     return (
@@ -29,7 +27,7 @@ export default async function WhitelistPage() {
                 </p>
             </div>
 
-            <WhitelistManager initialServers={servers} />
+            <WhitelistManager initialServers={servers} isReadOnly={!isAdmin} />
         </div>
     )
 }

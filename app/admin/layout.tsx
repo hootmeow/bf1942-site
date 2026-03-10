@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth"
-import { isUserAdmin } from "@/lib/admin-auth"
+import { isUserAdmin, isUserViewer } from "@/lib/admin-auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Shield, List, LayoutDashboard, UserCheck, Users, Calendar, Youtube, Newspaper, Bot, Server, Crown, Target, AlertTriangle, Eye } from "lucide-react"
@@ -15,7 +15,8 @@ export default async function AdminLayout({
     }
 
     const isAdmin = await isUserAdmin(session.user.id)
-    if (!isAdmin) {
+    const canView = isAdmin || await isUserViewer(session.user.id)
+    if (!canView) {
         redirect("/")
     }
 

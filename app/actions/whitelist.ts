@@ -73,9 +73,18 @@ export async function getWhitelistedServers(): Promise<WhitelistedServer[]> {
                 (SELECT COUNT(*) FROM rounds r WHERE r.server_id = s.server_id) AS total_rounds
             FROM whitelisted_servers ws
             LEFT JOIN LATERAL (
-                SELECT *
+                SELECT
+                    server_id,
+                    port,
+                    current_server_name,
+                    current_state::text AS current_state,
+                    current_gametype,
+                    current_map,
+                    current_player_count,
+                    current_max_players,
+                    last_successful_poll
                 FROM servers
-                WHERE ip = ws.ip
+                WHERE ip::text = ws.ip::text
                 ORDER BY last_successful_poll DESC NULLS LAST
                 LIMIT 1
             ) s ON true
