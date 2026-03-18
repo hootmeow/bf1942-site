@@ -19,6 +19,7 @@ export type WhitelistedServer = {
     added_at: Date
     is_active: boolean
     is_ignored: boolean
+    is_blocked: boolean
     admin_notes: string | null
     owner_contact: string | null
     // Live server data
@@ -56,6 +57,7 @@ export async function getWhitelistedServers(): Promise<WhitelistedServer[]> {
                 ws.added_at,
                 ws.is_active,
                 ws.is_ignored,
+                COALESCE(ws.is_blocked, FALSE) AS is_blocked,
                 ws.admin_notes,
                 ws.owner_contact,
                 s.current_server_name AS live_server_name,
@@ -195,6 +197,52 @@ export async function toggleServerStatus(ip: string, isActive: boolean) {
         return { success: true }
     } catch (e: any) {
         return { error: "Failed to update status" }
+    } finally {
+        client.release()
+    }
+}
+
+export async function blockServer(ip: string) {
+    await verifyAdmin()
+
+    const client = await pool.connect()
+    try {
+        // Mark as blocked in the whitelist
+        await client.query(
+            "UPDATE whitelisted_servers SET is_ignored = TRUE, is_blocked = TRUE, is_active = FALSE WHERE ip::text = $1::text",
+            [ip]
+        )
+        // Also set is_blacklisted on any matching server records so the ingest engine skips it
+        await client.query(
+            "UPDATE servers SET is_blacklisted = TRUE WHERE ip::text = $1::text",
+            [ip]
+        )
+        revalidatePath("/admin/whitelist")
+        return { success: true }
+    } catch (e: any) {
+        return { error: "Failed to block server" }
+    } finally {
+        client.release()
+    }
+}
+
+export async function unblockServer(ip: string) {
+    await verifyAdmin()
+
+    const client = await pool.connect()
+    try {
+        await client.query(
+            "UPDATE whitelisted_servers SET is_blocked = FALSE, is_ignored = FALSE WHERE ip::text = $1::text",
+            [ip]
+        )
+        await client.query(
+            "UPDATE servers SET is_blacklisted = FALSE WHERE ip::text = $1::text",
+            [ip]
+        )
+        revalidatePath("/admin/whitelist")
+        return { success: true }
+    } catch (e: any) {
+        return { error: "Failed to unblock server" }
     } finally {
         client.release()
     }

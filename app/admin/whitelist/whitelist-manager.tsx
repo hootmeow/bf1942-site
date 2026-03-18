@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { addWhitelistedServer, removeWhitelistedServer, toggleServerStatus, unignoreServer, updateServerDetails } from "@/app/actions/whitelist"
+import { addWhitelistedServer, removeWhitelistedServer, toggleServerStatus, unignoreServer, updateServerDetails, blockServer, unblockServer } from "@/app/actions/whitelist"
 import type { WhitelistedServer } from "@/app/actions/whitelist"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database, Gamepad2, Server, Eye } from "lucide-react"
+import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database, Gamepad2, Server, Eye, Ban } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Textarea } from "@/components/ui/textarea"
@@ -34,6 +34,20 @@ function formatTimeAgo(date: Date): string {
     return date.toLocaleDateString()
 }
 
+/** Returns the best human-readable name for a server, ignoring auto-generated placeholders. */
+function resolveDisplayName(server: WhitelistedServer): string {
+    const liveIsReal = server.live_server_name && server.live_server_name.trim().length > 0
+    const labelIsReal = server.server_name
+        && server.server_name.trim().length > 0
+        && server.server_name !== "New Discovery"
+
+    return liveIsReal
+        ? server.live_server_name!
+        : labelIsReal
+            ? server.server_name!
+            : "Unknown Server"
+}
+
 function StateBadge({ state }: { state: string | null }) {
     if (!state) return null
     const styles: Record<string, string> = {
@@ -50,9 +64,14 @@ function StateBadge({ state }: { state: string | null }) {
     )
 }
 
-function ServerRow({ server, actions }: { server: WhitelistedServer; actions: React.ReactNode }) {
-    const displayName = server.live_server_name || server.server_name || "Unknown Server"
-    const adminLabel = server.server_name && server.server_name !== server.live_server_name ? server.server_name : null
+function ServerRow({ server }: { server: WhitelistedServer }) {
+    const displayName = resolveDisplayName(server)
+    // Only show the admin label as a tag if it differs from the live name and isn't a placeholder
+    const adminLabel = server.server_name
+        && server.server_name !== "New Discovery"
+        && server.server_name !== server.live_server_name
+        ? server.server_name
+        : null
     const ipPort = server.port ? `${server.ip}:${server.port}` : server.ip
 
     return (
@@ -120,9 +139,10 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
     const [isPending, startTransition] = useTransition()
     const [error, setError] = useState<string | null>(null)
 
-    const activeServers = initialServers.filter(s => s.is_active && !s.is_ignored)
-    const inactiveServers = initialServers.filter(s => !s.is_active && !s.is_ignored)
-    const ignoredServers = initialServers.filter(s => s.is_ignored)
+    const activeServers = initialServers.filter(s => s.is_active && !s.is_ignored && !s.is_blocked)
+    const inactiveServers = initialServers.filter(s => !s.is_active && !s.is_ignored && !s.is_blocked)
+    const ignoredServers = initialServers.filter(s => s.is_ignored && !s.is_blocked)
+    const blockedServers = initialServers.filter(s => s.is_blocked)
 
     async function handleAddServer(formData: FormData) {
         setError(null)
@@ -138,7 +158,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
     }
 
     const DetailsDialog = ({ server }: { server: WhitelistedServer }) => {
-        const [serverName, setServerName] = useState(server.server_name || "")
+        const [serverName, setServerName] = useState(server.server_name && server.server_name !== "New Discovery" ? server.server_name : "")
         const [notes, setNotes] = useState(server.admin_notes || "")
         const [contact, setContact] = useState(server.owner_contact || "")
         const [open, setOpen] = useState(false)
@@ -266,7 +286,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                 <div className="divide-y">
                                     {activeServers.map((server) => (
                                         <div key={server.ip} className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50 transition-colors">
-                                            <ServerRow server={server} actions={null} />
+                                            <ServerRow server={server} />
                                             {!isReadOnly && (
                                                 <div className="flex items-center gap-4 shrink-0">
                                                     <div className="flex items-center gap-2">
@@ -281,9 +301,9 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
-                                                        className="text-muted-foreground hover:text-destructive"
+                                                        className="text-muted-foreground hover:text-yellow-500"
                                                         onClick={() => {
-                                                            if (confirm("Are you sure you want to ignore this server? It will be removed from lists.")) {
+                                                            if (confirm("Ignore this server? It will be hidden but can be restored later.")) {
                                                                 startTransition(async () => { await removeWhitelistedServer(server.ip) })
                                                             }
                                                         }}
@@ -291,6 +311,20 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                         title="Ignore Server"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="text-muted-foreground hover:text-destructive"
+                                                        onClick={() => {
+                                                            if (confirm(`Block ${resolveDisplayName(server)}? This will permanently blacklist the IP and prevent it from being processed. You can unblock it later.`)) {
+                                                                startTransition(async () => { await blockServer(server.ip) })
+                                                            }
+                                                        }}
+                                                        disabled={isPending}
+                                                        title="Block Server"
+                                                    >
+                                                        <Ban className="w-4 h-4" />
                                                     </Button>
                                                 </div>
                                             )}
@@ -302,7 +336,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                     </CardContent>
                 </Card>
 
-                {/* Pending Servers */}
+                {/* Pending / Inactive Servers */}
                 {inactiveServers.length > 0 && (
                     <Card>
                         <CardHeader>
@@ -313,14 +347,14 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                 </span>
                                 <Badge variant="secondary">{inactiveServers.length}</Badge>
                             </CardTitle>
-                            <CardDescription>Known servers that are currently disabled or pending approval.</CardDescription>
+                            <CardDescription>Servers seen by the ingest engine but not yet approved.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="rounded-md border bg-yellow-500/5 border-yellow-200 dark:border-yellow-900/50">
                                 <div className="divide-y divide-yellow-200 dark:divide-yellow-900/50">
                                     {inactiveServers.map((server) => (
                                         <div key={server.ip} className="flex items-center justify-between gap-4 p-4">
-                                            <ServerRow server={server} actions={null} />
+                                            <ServerRow server={server} />
                                             {!isReadOnly && (
                                                 <div className="flex items-center gap-2 shrink-0">
                                                     <Button
@@ -336,9 +370,9 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="text-destructive hover:bg-destructive/10 border-destructive/20"
+                                                        className="text-yellow-600 hover:bg-yellow-500/10 border-yellow-500/30"
                                                         onClick={() => {
-                                                            if (confirm("Ignore this server? It will be hidden.")) {
+                                                            if (confirm("Ignore this server? It will be hidden but can be restored later.")) {
                                                                 startTransition(async () => { await removeWhitelistedServer(server.ip) })
                                                             }
                                                         }}
@@ -346,6 +380,20 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                     >
                                                         <ShieldAlert className="w-4 h-4 mr-2" />
                                                         Ignore
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-destructive hover:bg-destructive/10 border-destructive/20"
+                                                        onClick={() => {
+                                                            if (confirm(`Block ${resolveDisplayName(server)}? This permanently blacklists the IP. You can unblock it later.`)) {
+                                                                startTransition(async () => { await blockServer(server.ip) })
+                                                            }
+                                                        }}
+                                                        disabled={isPending}
+                                                    >
+                                                        <Ban className="w-4 h-4 mr-2" />
+                                                        Block
                                                     </Button>
                                                 </div>
                                             )}
@@ -372,32 +420,113 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                         <AccordionContent>
                             <div className="divide-y pt-2 pb-4">
                                 {ignoredServers.map((server) => (
-                                    <div key={server.ip} className="flex items-center justify-between gap-4 py-3">
-                                        <div className="space-y-0.5 min-w-0">
-                                            <div className="font-medium text-sm truncate">
-                                                {server.live_server_name || server.server_name || "Unknown"}
+                                    <div key={server.ip} className="flex items-start justify-between gap-4 py-3">
+                                        <div className="space-y-1 min-w-0 flex-1">
+                                            <div className="font-medium text-sm">
+                                                {resolveDisplayName(server)}
                                             </div>
-                                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground font-mono">
-                                                <span>{server.port ? `${server.ip}:${server.port}` : server.ip}</span>
+                                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                                <span className="font-mono">{server.port ? `${server.ip}:${server.port}` : server.ip}</span>
                                                 {server.last_seen && (
-                                                    <span className="flex items-center gap-1 font-sans" title={new Date(server.last_seen).toLocaleString()}>
+                                                    <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
                                                         <Clock className="h-3 w-3" />
                                                         {formatTimeAgo(new Date(server.last_seen))}
                                                     </span>
                                                 )}
                                             </div>
+                                            {server.admin_notes && (
+                                                <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2 mt-1">
+                                                    {server.admin_notes}
+                                                </p>
+                                            )}
                                         </div>
                                         {!isReadOnly && (
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="shrink-0"
-                                                onClick={() => startTransition(async () => { await unignoreServer(server.ip) })}
-                                                disabled={isPending}
-                                            >
-                                                <RotateCcw className="w-3 h-3 mr-2" />
-                                                Restore
-                                            </Button>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <DetailsDialog server={server} />
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => startTransition(async () => { await unignoreServer(server.ip) })}
+                                                    disabled={isPending}
+                                                >
+                                                    <RotateCcw className="w-3 h-3 mr-2" />
+                                                    Restore
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-destructive hover:bg-destructive/10 border-destructive/20"
+                                                    onClick={() => {
+                                                        if (confirm(`Block ${resolveDisplayName(server)}? This permanently blacklists the IP.`)) {
+                                                            startTransition(async () => { await blockServer(server.ip) })
+                                                        }
+                                                    }}
+                                                    disabled={isPending}
+                                                >
+                                                    <Ban className="w-3 h-3 mr-2" />
+                                                    Block
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            )}
+
+            {/* Blocked Servers Accordion */}
+            {blockedServers.length > 0 && (
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="blocked" className="border border-destructive/30 rounded-lg px-4 bg-destructive/5">
+                        <AccordionTrigger className="hover:no-underline py-4">
+                            <div className="flex items-center gap-2 text-destructive">
+                                <Ban className="w-4 h-4" />
+                                <span>Blocked Servers</span>
+                                <Badge variant="destructive" className="ml-2">{blockedServers.length}</Badge>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <div className="divide-y divide-destructive/10 pt-2 pb-4">
+                                {blockedServers.map((server) => (
+                                    <div key={server.ip} className="flex items-start justify-between gap-4 py-3">
+                                        <div className="space-y-1 min-w-0 flex-1">
+                                            <div className="font-medium text-sm text-destructive/80">
+                                                {resolveDisplayName(server)}
+                                            </div>
+                                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                                <span className="font-mono">{server.port ? `${server.ip}:${server.port}` : server.ip}</span>
+                                                {server.last_seen && (
+                                                    <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
+                                                        <Clock className="h-3 w-3" />
+                                                        Last seen {formatTimeAgo(new Date(server.last_seen))}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {server.admin_notes && (
+                                                <p className="text-xs text-muted-foreground italic border-l-2 border-destructive/30 pl-2 mt-1">
+                                                    {server.admin_notes}
+                                                </p>
+                                            )}
+                                        </div>
+                                        {!isReadOnly && (
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <DetailsDialog server={server} />
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        if (confirm(`Unblock ${resolveDisplayName(server)}? This will remove the blacklist flag and move it to the Ignored list.`)) {
+                                                            startTransition(async () => { await unblockServer(server.ip) })
+                                                        }
+                                                    }}
+                                                    disabled={isPending}
+                                                >
+                                                    <RotateCcw className="w-3 h-3 mr-2" />
+                                                    Unblock
+                                                </Button>
+                                            </div>
                                         )}
                                     </div>
                                 ))}
