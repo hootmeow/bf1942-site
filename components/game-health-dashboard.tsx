@@ -23,6 +23,8 @@ import {
   Shield,
   UserMinus,
   BarChart3,
+  Clock,
+  Zap,
 } from "lucide-react";
 import {
   ComposedChart,
@@ -37,6 +39,7 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
 import { GlobalPeakTimes } from "@/components/global-peak-times";
 import type { GlobalMetrics } from "@/lib/schemas";
@@ -104,6 +107,33 @@ interface RoundQualityEntry {
   ranked_pct: number;
 }
 
+interface RoundDurationEntry {
+  day: string;
+  avg_minutes: number;
+}
+
+interface TeamBalanceEntry {
+  day: string;
+  allied_win_pct: number;
+  axis_win_pct: number;
+  decisive_rounds: number;
+}
+
+interface AvgPlayersPerRoundEntry {
+  day: string;
+  avg_players_per_round: number;
+}
+
+interface DailyKillsEntry {
+  day: string;
+  total_kills: number;
+}
+
+interface FillRateEntry {
+  day: string;
+  fill_pct: number;
+}
+
 interface HealthData {
   ok: boolean;
   population_trend: PopulationEntry[];
@@ -120,6 +150,11 @@ interface HealthData {
   servers_today?: number;
   players_today_unique?: number;
   round_quality_trend?: RoundQualityEntry[];
+  round_duration_trend?: RoundDurationEntry[];
+  team_balance_trend?: TeamBalanceEntry[];
+  avg_players_per_round_trend?: AvgPlayersPerRoundEntry[];
+  daily_kills_trend?: DailyKillsEntry[];
+  fill_rate_trend?: FillRateEntry[];
 }
 
 interface GameHealthDashboardProps {
@@ -206,6 +241,11 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   const map_trends = activeRoundsOnly ? initialMapTrends : initialMapTrendsAll;
 
   const round_quality_trend = healthData.round_quality_trend ?? [];
+  const round_duration_trend = healthData.round_duration_trend ?? [];
+  const team_balance_trend = healthData.team_balance_trend ?? [];
+  const avg_players_per_round_trend = healthData.avg_players_per_round_trend ?? [];
+  const daily_kills_trend = healthData.daily_kills_trend ?? [];
+  const fill_rate_trend = healthData.fill_rate_trend ?? [];
   const avgRankedPct =
     round_quality_trend.length > 0
       ? Math.round(
@@ -1183,6 +1223,186 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Round Duration + Avg Players per Round */}
+      {(round_duration_trend.length > 0 || avg_players_per_round_trend.length > 0) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {round_duration_trend.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-sky-400" />
+                  Avg Round Duration (30 Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={round_duration_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="durationGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} />
+                      <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(round_duration_trend.length)} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}m`} width={38} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number) => [`${v.toFixed(1)} min`, "Avg Duration"]}
+                        labelFormatter={formatDay}
+                      />
+                      <Area type="monotone" dataKey="avg_minutes" stroke="#0ea5e9" strokeWidth={2} fill="url(#durationGrad)" dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {avg_players_per_round_trend.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-emerald-400" />
+                  Avg Players per Round (30 Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={avg_players_per_round_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="avgPlayersGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} />
+                      <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(avg_players_per_round_trend.length)} />
+                      <YAxis tick={{ fontSize: 11 }} width={32} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number) => [v, "Avg Players"]}
+                        labelFormatter={formatDay}
+                      />
+                      <Area type="monotone" dataKey="avg_players_per_round" stroke="#10b981" strokeWidth={2} fill="url(#avgPlayersGrad)" dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Team Win Balance */}
+      {team_balance_trend.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle as="h2" className="flex items-center gap-2">
+                <Swords className="h-5 w-5 text-red-400" />
+                Team Win Balance (30 Days)
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Percentage of decisive rounds won by each faction</p>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={team_balance_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} />
+                  <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(team_balance_trend.length)} />
+                  <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} width={38} />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                    formatter={(v: number, name: string) => [`${v.toFixed(1)}%`, name]}
+                    labelFormatter={(label) => `${formatDay(label)} · ${team_balance_trend.find(d => d.day === label)?.decisive_rounds ?? 0} rounds`}
+                  />
+                  <ReferenceLine y={50} stroke="#6b7280" strokeDasharray="4 4" strokeOpacity={0.5} label={{ value: "50%", position: "insideTopRight", fontSize: 10, fill: "#6b7280" }} />
+                  <Line type="monotone" dataKey="allied_win_pct" stroke="#3b82f6" strokeWidth={2} dot={false} name="Allies" />
+                  <Line type="monotone" dataKey="axis_win_pct" stroke="#ef4444" strokeWidth={2} dot={false} name="Axis" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-blue-500" />Allies</div>
+              <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-red-500" />Axis</div>
+              <div className="flex items-center gap-1.5"><div className="h-0.5 w-4 border-t-2 border-dashed border-muted-foreground/50" />50% Balance</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Daily Kills + Server Fill Rate */}
+      {(daily_kills_trend.length > 0 || fill_rate_trend.length > 0) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {daily_kills_trend.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-amber-400" />
+                  Daily Total Kills (30 Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={daily_kills_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} vertical={false} />
+                      <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(daily_kills_trend.length)} />
+                      <YAxis tick={{ fontSize: 11 }} width={42} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number) => [v.toLocaleString(), "Total Kills"]}
+                        labelFormatter={formatDay}
+                      />
+                      <Bar dataKey="total_kills" fill="#f59e0b" radius={[3, 3, 0, 0]} maxBarSize={20} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {fill_rate_trend.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-violet-400" />
+                  Server Fill Rate (30 Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={fill_rate_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="fillRateGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} />
+                      <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(fill_rate_trend.length)} />
+                      <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} width={38} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number) => [`${v.toFixed(1)}%`, "Avg Fill Rate"]}
+                        labelFormatter={formatDay}
+                      />
+                      <Area type="monotone" dataKey="fill_pct" stroke="#8b5cf6" strokeWidth={2} fill="url(#fillRateGrad)" dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">Avg % of server slots occupied when servers had at least 1 player</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Peak Times Heatmap */}
