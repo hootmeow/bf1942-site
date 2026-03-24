@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database, Gamepad2, Server, Eye, Ban } from "lucide-react"
+import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database, Ban, Eye } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Textarea } from "@/components/ui/textarea"
@@ -34,7 +34,6 @@ function formatTimeAgo(date: Date): string {
     return date.toLocaleDateString()
 }
 
-/** Returns the best human-readable name for a server, ignoring auto-generated placeholders. */
 function resolveDisplayName(server: WhitelistedServer): string {
     const liveIsReal = server.live_server_name && server.live_server_name.trim().length > 0
     const labelIsReal = server.server_name
@@ -64,73 +63,85 @@ function StateBadge({ state }: { state: string | null }) {
     )
 }
 
-function ServerRow({ server }: { server: WhitelistedServer }) {
-    const displayName = resolveDisplayName(server)
-    // Only show the admin label as a tag if it differs from the live name and isn't a placeholder
-    const adminLabel = server.server_name
-        && server.server_name !== "New Discovery"
-        && server.server_name !== server.live_server_name
-        ? server.server_name
-        : null
-    const ipPort = server.port ? `${server.ip}:${server.port}` : server.ip
+function DetailsDialog({ server }: { server: WhitelistedServer }) {
+    const [serverName, setServerName] = useState(server.server_name && server.server_name !== "New Discovery" ? server.server_name : "")
+    const [notes, setNotes] = useState(server.admin_notes || "")
+    const [contact, setContact] = useState(server.owner_contact || "")
+    const [open, setOpen] = useState(false)
+    const [saving, setSaving] = useState(false)
+
+    const handleSave = async () => {
+        setSaving(true)
+        await updateServerDetails(server.ip, serverName, notes, contact)
+        setSaving(false)
+        setOpen(false)
+    }
 
     return (
-        <div className="space-y-1.5 flex-1 min-w-0">
-            <div className="font-medium flex items-center gap-2 flex-wrap">
-                <span className="truncate">{displayName}</span>
-                {adminLabel && (
-                    <Badge variant="outline" className="text-[10px] font-normal shrink-0">
-                        Label: {adminLabel}
-                    </Badge>
-                )}
-                <StateBadge state={server.current_state} />
-                {server.admin_notes && <Badge variant="secondary" className="text-[10px] shrink-0">Has Notes</Badge>}
-            </div>
-            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1 font-mono">
-                    <Server className="h-3 w-3" />
-                    {ipPort}
-                </span>
-                {server.last_seen ? (
-                    <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
-                        <Clock className="h-3 w-3" />
-                        {formatTimeAgo(new Date(server.last_seen))}
-                    </span>
-                ) : (
-                    <span className="flex items-center gap-1 italic">
-                        <Clock className="h-3 w-3" />
-                        Never seen
-                    </span>
-                )}
-                {server.current_player_count !== null && server.current_state !== 'OFFLINE' && (
-                    <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {server.current_player_count}/{server.current_max_players}
-                    </span>
-                )}
-                {server.current_map && server.current_state !== 'OFFLINE' && (
-                    <span className="flex items-center gap-1">
-                        <MapIcon className="h-3 w-3" />
-                        {server.current_map}
-                    </span>
-                )}
-                {server.current_gametype && server.current_state !== 'OFFLINE' && (
-                    <span className="flex items-center gap-1">
-                        <Gamepad2 className="h-3 w-3" />
-                        {server.current_gametype}
-                    </span>
-                )}
-                {server.total_rounds !== null && server.total_rounds > 0 && (
-                    <span className="flex items-center gap-1">
-                        <Database className="h-3 w-3" />
-                        {server.total_rounds.toLocaleString()} rounds
-                    </span>
-                )}
-            </div>
-            <div className="text-xs text-muted-foreground">
-                Added by {server.added_by || "System"}{server.added_at ? ` · ${new Date(server.added_at).toLocaleDateString()}` : ""}
-                {server.owner_contact && <> · Contact: <span className="font-mono">{server.owner_contact}</span></>}
-            </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" title="Edit Details">
+                    <FileText className="h-4 w-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Server Details</DialogTitle>
+                    <DialogDescription className="font-mono text-xs">{server.ip}{server.port ? `:${server.port}` : ""}</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="server-name">Admin Label</Label>
+                        <Input
+                            id="server-name"
+                            placeholder={server.live_server_name || "Custom display name…"}
+                            value={serverName}
+                            onChange={(e) => setServerName(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Overrides the live server name in this list.</p>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="contact">Owner Contact</Label>
+                        <Input
+                            id="contact"
+                            placeholder="Discord ID, Email, etc."
+                            value={contact}
+                            onChange={(e) => setContact(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="notes">Admin Notes</Label>
+                        <Textarea
+                            id="notes"
+                            placeholder="Internal comments about this server…"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSave} disabled={saving}>
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                        Save Changes
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+function ServerNameCell({ server }: { server: WhitelistedServer }) {
+    const displayName = resolveDisplayName(server)
+    const ipPort = server.port ? `${server.ip}:${server.port}` : server.ip
+    return (
+        <div className="min-w-0">
+            <div className="font-medium text-sm truncate max-w-[220px]" title={displayName}>{displayName}</div>
+            <div className="text-xs text-muted-foreground font-mono">{ipPort}</div>
+            {server.admin_notes && (
+                <div className="text-[10px] text-muted-foreground italic truncate max-w-[220px] mt-0.5" title={server.admin_notes}>
+                    {server.admin_notes}
+                </div>
+            )}
         </div>
     )
 }
@@ -157,75 +168,8 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
         })
     }
 
-    const DetailsDialog = ({ server }: { server: WhitelistedServer }) => {
-        const [serverName, setServerName] = useState(server.server_name && server.server_name !== "New Discovery" ? server.server_name : "")
-        const [notes, setNotes] = useState(server.admin_notes || "")
-        const [contact, setContact] = useState(server.owner_contact || "")
-        const [open, setOpen] = useState(false)
-        const [saving, setSaving] = useState(false)
-
-        const handleSave = async () => {
-            setSaving(true)
-            await updateServerDetails(server.ip, serverName, notes, contact)
-            setSaving(false)
-            setOpen(false)
-        }
-
-        return (
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" title="Edit Details">
-                        <FileText className="h-4 w-4" />
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Server Details</DialogTitle>
-                        <DialogDescription className="font-mono text-xs">{server.ip}{server.port ? `:${server.port}` : ""}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="server-name">Admin Label</Label>
-                            <Input
-                                id="server-name"
-                                placeholder={server.live_server_name || "Custom display name…"}
-                                value={serverName}
-                                onChange={(e) => setServerName(e.target.value)}
-                            />
-                            <p className="text-xs text-muted-foreground">Overrides the live server name in this list.</p>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="contact">Owner Contact</Label>
-                            <Input
-                                id="contact"
-                                placeholder="Discord ID, Email, etc."
-                                value={contact}
-                                onChange={(e) => setContact(e.target.value)}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="notes">Admin Notes</Label>
-                            <Textarea
-                                id="notes"
-                                placeholder="Internal comments about this server…"
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={handleSave} disabled={saving}>
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        )
-    }
-
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             {isReadOnly && (
                 <Alert>
                     <Eye className="h-4 w-4" />
@@ -236,12 +180,12 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
 
             {!isReadOnly && (
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="pb-3">
                         <CardTitle>Add New Server</CardTitle>
                         <CardDescription>Manually add a server to the whitelist (or re-activate an existing one).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form id="add-server-form" action={handleAddServer} className="flex flex-col md:flex-row gap-4 items-end">
+                        <form id="add-server-form" action={handleAddServer} className="flex flex-col md:flex-row gap-3 items-end">
                             <div className="grid w-full gap-1.5">
                                 <label htmlFor="ip" className="text-sm font-medium">Server IP</label>
                                 <Input name="ip" id="ip" placeholder="1.2.3.4" required />
@@ -250,7 +194,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                 <label htmlFor="name" className="text-sm font-medium">Admin Label (Optional)</label>
                                 <Input name="name" id="name" placeholder="My BF1942 Server" />
                             </div>
-                            <Button type="submit" disabled={isPending}>
+                            <Button type="submit" disabled={isPending} className="shrink-0">
                                 {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Server"}
                             </Button>
                         </form>
@@ -265,271 +209,359 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                 </Card>
             )}
 
-            <div className="grid grid-cols-1 gap-8">
-                {/* Active Servers */}
-                <Card>
-                    <CardHeader>
+            {/* Pending / Inactive — shown first, needs action */}
+            {inactiveServers.length > 0 && (
+                <Card className="border-yellow-500/40 bg-yellow-500/5">
+                    <CardHeader className="pb-3">
                         <CardTitle className="flex items-center justify-between">
                             <span className="flex items-center gap-2">
-                                <ShieldCheck className="w-5 h-5 text-green-500" />
-                                Active Whitelist
+                                <AlertCircle className="w-5 h-5 text-yellow-500" />
+                                Pending Approval
                             </span>
-                            <Badge variant="secondary">{activeServers.length}</Badge>
+                            <Badge className="bg-yellow-500 text-white">{inactiveServers.length}</Badge>
                         </CardTitle>
-                        <CardDescription>Servers currently being tracked and displayed.</CardDescription>
+                        <CardDescription>Servers seen by the ingest engine but not yet approved. Review and approve, ignore, or block each one.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        {activeServers.length === 0 ? (
-                            <p className="text-sm text-muted-foreground italic">No active servers.</p>
-                        ) : (
-                            <div className="rounded-md border">
-                                <div className="divide-y">
-                                    {activeServers.map((server) => (
-                                        <div key={server.ip} className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50 transition-colors">
-                                            <ServerRow server={server} />
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-y border-yellow-500/20 bg-yellow-500/10">
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Server</th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">State</th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><Users className="h-3 w-3" />Players</span>
+                                        </th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><MapIcon className="h-3 w-3" />Map</span>
+                                        </th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Last Seen</span>
+                                        </th>
+                                        {!isReadOnly && <th className="text-right text-xs font-medium text-muted-foreground px-4 py-2">Actions</th>}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-yellow-500/10">
+                                    {inactiveServers.map((server) => (
+                                        <tr key={server.ip} className="hover:bg-yellow-500/10 transition-colors">
+                                            <td className="px-4 py-2.5"><ServerNameCell server={server} /></td>
+                                            <td className="px-3 py-2.5"><StateBadge state={server.current_state} /></td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                {server.current_player_count !== null && server.current_state !== 'OFFLINE'
+                                                    ? `${server.current_player_count}/${server.current_max_players}`
+                                                    : <span className="text-muted-foreground/50">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground max-w-[140px]">
+                                                {server.current_map && server.current_state !== 'OFFLINE'
+                                                    ? <span className="truncate block" title={server.current_map}>{server.current_map}</span>
+                                                    : <span className="text-muted-foreground/50">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                {server.last_seen
+                                                    ? <span title={new Date(server.last_seen).toLocaleString()}>{formatTimeAgo(new Date(server.last_seen))}</span>
+                                                    : <span className="italic">Never</span>}
+                                            </td>
                                             {!isReadOnly && (
-                                                <div className="flex items-center gap-4 shrink-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm text-muted-foreground hidden md:inline">Tracking</span>
+                                                <td className="px-4 py-2.5">
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <Button
+                                                            size="sm"
+                                                            className="bg-green-600 hover:bg-green-700 text-white h-7 text-xs px-2.5"
+                                                            onClick={() => startTransition(async () => { await toggleServerStatus(server.ip, true) })}
+                                                            disabled={isPending}
+                                                        >
+                                                            <ShieldCheck className="w-3 h-3 mr-1" />
+                                                            Approve
+                                                        </Button>
+                                                        <DetailsDialog server={server} />
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs px-2.5 text-yellow-600 hover:bg-yellow-500/10 border-yellow-500/30"
+                                                            onClick={() => {
+                                                                if (confirm("Ignore this server? It will be hidden but can be restored later.")) {
+                                                                    startTransition(async () => { await removeWhitelistedServer(server.ip) })
+                                                                }
+                                                            }}
+                                                            disabled={isPending}
+                                                        >
+                                                            <ShieldAlert className="w-3 h-3 mr-1" />
+                                                            Ignore
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs px-2.5 text-destructive hover:bg-destructive/10 border-destructive/20"
+                                                            onClick={() => {
+                                                                if (confirm(`Block ${resolveDisplayName(server)}? This permanently blacklists the IP. You can unblock it later.`)) {
+                                                                    startTransition(async () => { await blockServer(server.ip) })
+                                                                }
+                                                            }}
+                                                            disabled={isPending}
+                                                        >
+                                                            <Ban className="w-3 h-3 mr-1" />
+                                                            Block
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Active Whitelist */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-green-500" />
+                            Active Whitelist
+                        </span>
+                        <Badge variant="secondary">{activeServers.length}</Badge>
+                    </CardTitle>
+                    <CardDescription>Servers currently being tracked and displayed.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {activeServers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic px-4 pb-4">No active servers.</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-y bg-muted/40">
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Server</th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">State</th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><Users className="h-3 w-3" />Players</span>
+                                        </th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><MapIcon className="h-3 w-3" />Map</span>
+                                        </th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><Database className="h-3 w-3" />Rounds</span>
+                                        </th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Last Seen</span>
+                                        </th>
+                                        {!isReadOnly && <th className="text-right text-xs font-medium text-muted-foreground px-4 py-2">Actions</th>}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {activeServers.map((server) => (
+                                        <tr key={server.ip} className="hover:bg-muted/30 transition-colors">
+                                            <td className="px-4 py-2.5"><ServerNameCell server={server} /></td>
+                                            <td className="px-3 py-2.5"><StateBadge state={server.current_state} /></td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                {server.current_player_count !== null && server.current_state !== 'OFFLINE'
+                                                    ? `${server.current_player_count}/${server.current_max_players}`
+                                                    : <span className="text-muted-foreground/50">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground max-w-[140px]">
+                                                {server.current_map && server.current_state !== 'OFFLINE'
+                                                    ? <span className="truncate block" title={server.current_map}>{server.current_map}</span>
+                                                    : <span className="text-muted-foreground/50">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                {server.total_rounds > 0 ? server.total_rounds.toLocaleString() : <span className="text-muted-foreground/50">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                {server.last_seen
+                                                    ? <span title={new Date(server.last_seen).toLocaleString()}>{formatTimeAgo(new Date(server.last_seen))}</span>
+                                                    : <span className="italic">Never</span>}
+                                            </td>
+                                            {!isReadOnly && (
+                                                <td className="px-4 py-2.5">
+                                                    <div className="flex items-center justify-end gap-1">
                                                         <Switch
                                                             checked={server.is_active}
                                                             onCheckedChange={(checked) => startTransition(async () => { await toggleServerStatus(server.ip, checked) })}
                                                             disabled={isPending}
+                                                            title="Toggle tracking"
                                                         />
+                                                        <DetailsDialog server={server} />
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 text-muted-foreground hover:text-yellow-500"
+                                                            onClick={() => {
+                                                                if (confirm("Ignore this server? It will be hidden but can be restored later.")) {
+                                                                    startTransition(async () => { await removeWhitelistedServer(server.ip) })
+                                                                }
+                                                            }}
+                                                            disabled={isPending}
+                                                            title="Ignore Server"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                            onClick={() => {
+                                                                if (confirm(`Block ${resolveDisplayName(server)}? This will permanently blacklist the IP. You can unblock it later.`)) {
+                                                                    startTransition(async () => { await blockServer(server.ip) })
+                                                                }
+                                                            }}
+                                                            disabled={isPending}
+                                                            title="Block Server"
+                                                        >
+                                                            <Ban className="w-4 h-4" />
+                                                        </Button>
                                                     </div>
-                                                    <DetailsDialog server={server} />
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="text-muted-foreground hover:text-yellow-500"
-                                                        onClick={() => {
-                                                            if (confirm("Ignore this server? It will be hidden but can be restored later.")) {
-                                                                startTransition(async () => { await removeWhitelistedServer(server.ip) })
-                                                            }
-                                                        }}
-                                                        disabled={isPending}
-                                                        title="Ignore Server"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="text-muted-foreground hover:text-destructive"
-                                                        onClick={() => {
-                                                            if (confirm(`Block ${resolveDisplayName(server)}? This will permanently blacklist the IP and prevent it from being processed. You can unblock it later.`)) {
-                                                                startTransition(async () => { await blockServer(server.ip) })
-                                                            }
-                                                        }}
-                                                        disabled={isPending}
-                                                        title="Block Server"
-                                                    >
-                                                        <Ban className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
+                                                </td>
                                             )}
-                                        </div>
+                                        </tr>
                                     ))}
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
-                {/* Pending / Inactive Servers */}
-                {inactiveServers.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                                <span className="flex items-center gap-2">
-                                    <AlertCircle className="w-5 h-5 text-yellow-500" />
-                                    Detected / Inactive
-                                </span>
-                                <Badge variant="secondary">{inactiveServers.length}</Badge>
-                            </CardTitle>
-                            <CardDescription>Servers seen by the ingest engine but not yet approved.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="rounded-md border bg-yellow-500/5 border-yellow-200 dark:border-yellow-900/50">
-                                <div className="divide-y divide-yellow-200 dark:divide-yellow-900/50">
-                                    {inactiveServers.map((server) => (
-                                        <div key={server.ip} className="flex items-center justify-between gap-4 p-4">
-                                            <ServerRow server={server} />
-                                            {!isReadOnly && (
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                                        onClick={() => startTransition(async () => { await toggleServerStatus(server.ip, true) })}
-                                                        disabled={isPending}
-                                                    >
-                                                        <ShieldCheck className="w-4 h-4 mr-2" />
-                                                        Approve
-                                                    </Button>
-                                                    <DetailsDialog server={server} />
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="text-yellow-600 hover:bg-yellow-500/10 border-yellow-500/30"
-                                                        onClick={() => {
-                                                            if (confirm("Ignore this server? It will be hidden but can be restored later.")) {
-                                                                startTransition(async () => { await removeWhitelistedServer(server.ip) })
-                                                            }
-                                                        }}
-                                                        disabled={isPending}
-                                                    >
-                                                        <ShieldAlert className="w-4 h-4 mr-2" />
-                                                        Ignore
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="text-destructive hover:bg-destructive/10 border-destructive/20"
-                                                        onClick={() => {
-                                                            if (confirm(`Block ${resolveDisplayName(server)}? This permanently blacklists the IP. You can unblock it later.`)) {
-                                                                startTransition(async () => { await blockServer(server.ip) })
-                                                            }
-                                                        }}
-                                                        disabled={isPending}
-                                                    >
-                                                        <Ban className="w-4 h-4 mr-2" />
-                                                        Block
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-
-            {/* Ignored Servers Accordion */}
+            {/* Ignored Servers */}
             {ignoredServers.length > 0 && (
                 <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="ignored" className="border rounded-lg px-4">
-                        <AccordionTrigger className="hover:no-underline py-4">
+                    <AccordionItem value="ignored" className="border rounded-lg overflow-hidden">
+                        <AccordionTrigger className="hover:no-underline px-4 py-3">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <ShieldAlert className="w-4 h-4" />
-                                <span>Ignored Servers</span>
-                                <Badge variant="outline" className="ml-2">{ignoredServers.length}</Badge>
+                                <span className="text-sm">Ignored Servers</span>
+                                <Badge variant="outline" className="ml-1">{ignoredServers.length}</Badge>
                             </div>
                         </AccordionTrigger>
-                        <AccordionContent>
-                            <div className="divide-y pt-2 pb-4">
-                                {ignoredServers.map((server) => (
-                                    <div key={server.ip} className="flex items-start justify-between gap-4 py-3">
-                                        <div className="space-y-1 min-w-0 flex-1">
-                                            <div className="font-medium text-sm">
-                                                {resolveDisplayName(server)}
-                                            </div>
-                                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                                <span className="font-mono">{server.port ? `${server.ip}:${server.port}` : server.ip}</span>
-                                                {server.last_seen && (
-                                                    <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
-                                                        <Clock className="h-3 w-3" />
-                                                        {formatTimeAgo(new Date(server.last_seen))}
-                                                    </span>
+                        <AccordionContent className="p-0">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-y bg-muted/40">
+                                            <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Server</th>
+                                            <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                                <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Last Seen</span>
+                                            </th>
+                                            {!isReadOnly && <th className="text-right text-xs font-medium text-muted-foreground px-4 py-2">Actions</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {ignoredServers.map((server) => (
+                                            <tr key={server.ip} className="hover:bg-muted/30 transition-colors">
+                                                <td className="px-4 py-2.5"><ServerNameCell server={server} /></td>
+                                                <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                    {server.last_seen
+                                                        ? <span title={new Date(server.last_seen).toLocaleString()}>{formatTimeAgo(new Date(server.last_seen))}</span>
+                                                        : <span className="italic">Never</span>}
+                                                </td>
+                                                {!isReadOnly && (
+                                                    <td className="px-4 py-2.5">
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            <DetailsDialog server={server} />
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-7 text-xs px-2.5"
+                                                                onClick={() => startTransition(async () => { await unignoreServer(server.ip) })}
+                                                                disabled={isPending}
+                                                            >
+                                                                <RotateCcw className="w-3 h-3 mr-1" />
+                                                                Restore
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-7 text-xs px-2.5 text-destructive hover:bg-destructive/10 border-destructive/20"
+                                                                onClick={() => {
+                                                                    if (confirm(`Block ${resolveDisplayName(server)}? This permanently blacklists the IP.`)) {
+                                                                        startTransition(async () => { await blockServer(server.ip) })
+                                                                    }
+                                                                }}
+                                                                disabled={isPending}
+                                                            >
+                                                                <Ban className="w-3 h-3 mr-1" />
+                                                                Block
+                                                            </Button>
+                                                        </div>
+                                                    </td>
                                                 )}
-                                            </div>
-                                            {server.admin_notes && (
-                                                <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2 mt-1">
-                                                    {server.admin_notes}
-                                                </p>
-                                            )}
-                                        </div>
-                                        {!isReadOnly && (
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <DetailsDialog server={server} />
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => startTransition(async () => { await unignoreServer(server.ip) })}
-                                                    disabled={isPending}
-                                                >
-                                                    <RotateCcw className="w-3 h-3 mr-2" />
-                                                    Restore
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="text-destructive hover:bg-destructive/10 border-destructive/20"
-                                                    onClick={() => {
-                                                        if (confirm(`Block ${resolveDisplayName(server)}? This permanently blacklists the IP.`)) {
-                                                            startTransition(async () => { await blockServer(server.ip) })
-                                                        }
-                                                    }}
-                                                    disabled={isPending}
-                                                >
-                                                    <Ban className="w-3 h-3 mr-2" />
-                                                    Block
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
             )}
 
-            {/* Blocked Servers Accordion */}
+            {/* Blocked Servers */}
             {blockedServers.length > 0 && (
                 <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="blocked" className="border border-destructive/30 rounded-lg px-4 bg-destructive/5">
-                        <AccordionTrigger className="hover:no-underline py-4">
+                    <AccordionItem value="blocked" className="border border-destructive/30 rounded-lg overflow-hidden bg-destructive/5">
+                        <AccordionTrigger className="hover:no-underline px-4 py-3">
                             <div className="flex items-center gap-2 text-destructive">
                                 <Ban className="w-4 h-4" />
-                                <span>Blocked Servers</span>
-                                <Badge variant="destructive" className="ml-2">{blockedServers.length}</Badge>
+                                <span className="text-sm">Blocked Servers</span>
+                                <Badge variant="destructive" className="ml-1">{blockedServers.length}</Badge>
                             </div>
                         </AccordionTrigger>
-                        <AccordionContent>
-                            <div className="divide-y divide-destructive/10 pt-2 pb-4">
-                                {blockedServers.map((server) => (
-                                    <div key={server.ip} className="flex items-start justify-between gap-4 py-3">
-                                        <div className="space-y-1 min-w-0 flex-1">
-                                            <div className="font-medium text-sm text-destructive/80">
-                                                {resolveDisplayName(server)}
-                                            </div>
-                                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                                <span className="font-mono">{server.port ? `${server.ip}:${server.port}` : server.ip}</span>
-                                                {server.last_seen && (
-                                                    <span className="flex items-center gap-1" title={new Date(server.last_seen).toLocaleString()}>
-                                                        <Clock className="h-3 w-3" />
-                                                        Last seen {formatTimeAgo(new Date(server.last_seen))}
-                                                    </span>
+                        <AccordionContent className="p-0">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-y border-destructive/20 bg-destructive/10">
+                                            <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Server</th>
+                                            <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                                <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Last Seen</span>
+                                            </th>
+                                            {!isReadOnly && <th className="text-right text-xs font-medium text-muted-foreground px-4 py-2">Actions</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-destructive/10">
+                                        {blockedServers.map((server) => (
+                                            <tr key={server.ip} className="hover:bg-destructive/10 transition-colors">
+                                                <td className="px-4 py-2.5">
+                                                    <div className="min-w-0">
+                                                        <div className="font-medium text-sm text-destructive/80 truncate max-w-[220px]">{resolveDisplayName(server)}</div>
+                                                        <div className="text-xs text-muted-foreground font-mono">{server.port ? `${server.ip}:${server.port}` : server.ip}</div>
+                                                        {server.admin_notes && (
+                                                            <div className="text-[10px] text-muted-foreground italic truncate max-w-[220px] mt-0.5">{server.admin_notes}</div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                    {server.last_seen
+                                                        ? <span title={new Date(server.last_seen).toLocaleString()}>{formatTimeAgo(new Date(server.last_seen))}</span>
+                                                        : <span className="italic">Never</span>}
+                                                </td>
+                                                {!isReadOnly && (
+                                                    <td className="px-4 py-2.5">
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            <DetailsDialog server={server} />
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-7 text-xs px-2.5"
+                                                                onClick={() => {
+                                                                    if (confirm(`Unblock ${resolveDisplayName(server)}? This will remove the blacklist flag and move it to the Ignored list.`)) {
+                                                                        startTransition(async () => { await unblockServer(server.ip) })
+                                                                    }
+                                                                }}
+                                                                disabled={isPending}
+                                                            >
+                                                                <RotateCcw className="w-3 h-3 mr-1" />
+                                                                Unblock
+                                                            </Button>
+                                                        </div>
+                                                    </td>
                                                 )}
-                                            </div>
-                                            {server.admin_notes && (
-                                                <p className="text-xs text-muted-foreground italic border-l-2 border-destructive/30 pl-2 mt-1">
-                                                    {server.admin_notes}
-                                                </p>
-                                            )}
-                                        </div>
-                                        {!isReadOnly && (
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <DetailsDialog server={server} />
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        if (confirm(`Unblock ${resolveDisplayName(server)}? This will remove the blacklist flag and move it to the Ignored list.`)) {
-                                                            startTransition(async () => { await unblockServer(server.ip) })
-                                                        }
-                                                    }}
-                                                    disabled={isPending}
-                                                >
-                                                    <RotateCcw className="w-3 h-3 mr-2" />
-                                                    Unblock
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
