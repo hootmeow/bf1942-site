@@ -367,7 +367,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                     : <span className="text-muted-foreground/50">—</span>}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
-                                                {server.total_rounds > 0 ? server.total_rounds.toLocaleString() : <span className="text-muted-foreground/50">—</span>}
+                                                {(server.total_rounds ?? 0) > 0 ? server.total_rounds!.toLocaleString() : <span className="text-muted-foreground/50">—</span>}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
                                                 {server.last_seen
