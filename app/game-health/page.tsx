@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Game Health",
   description:
-    "30-day population trends, server activity, rounds played, and game mode breakdown for Battlefield 1942.",
+    "Population trends, server activity, rounds played, and game mode breakdown for Battlefield 1942. View weekly, monthly, and quarterly data.",
 };
 
 async function getHealthData() {

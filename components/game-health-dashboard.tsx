@@ -220,10 +220,33 @@ function formatDay(day: string) {
 
 const tickInterval = (dataLength: number) => Math.max(1, Math.floor(dataLength / 6));
 
+const PERIODS = [
+  { label: "7 Days", days: 7 },
+  { label: "30 Days", days: 30 },
+  { label: "90 Days", days: 90 },
+] as const;
+
 export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   healthData,
   globalMetrics,
 }: GameHealthDashboardProps) {
+  const [period, setPeriod] = useState<7 | 30 | 90>(30);
+  const [data, setData] = useState<HealthData>(healthData);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (period === 30) {
+      setData(healthData);
+      return;
+    }
+    setLoading(true);
+    fetch(`/api/v1/metrics/global/health?days=${period}`)
+      .then((r) => r.json())
+      .then((json) => { if (json.ok) setData(json); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [period, healthData]);
+
   const {
     population_trend,
     server_trend,
@@ -235,17 +258,17 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
     player_churn,
     player_experience,
     map_trends_all: initialMapTrendsAll = [],
-  } = healthData;
+  } = data;
 
   const [activeRoundsOnly, setActiveRoundsOnly] = useState(true);
   const map_trends = activeRoundsOnly ? initialMapTrends : initialMapTrendsAll;
 
-  const round_quality_trend = healthData.round_quality_trend ?? [];
-  const round_duration_trend = healthData.round_duration_trend ?? [];
-  const team_balance_trend = healthData.team_balance_trend ?? [];
-  const avg_players_per_round_trend = healthData.avg_players_per_round_trend ?? [];
-  const daily_kills_trend = healthData.daily_kills_trend ?? [];
-  const fill_rate_trend = healthData.fill_rate_trend ?? [];
+  const round_quality_trend = data.round_quality_trend ?? [];
+  const round_duration_trend = data.round_duration_trend ?? [];
+  const team_balance_trend = data.team_balance_trend ?? [];
+  const avg_players_per_round_trend = data.avg_players_per_round_trend ?? [];
+  const daily_kills_trend = data.daily_kills_trend ?? [];
+  const fill_rate_trend = data.fill_rate_trend ?? [];
   const avgRankedPct =
     round_quality_trend.length > 0
       ? Math.round(
@@ -288,7 +311,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         : 0;
 
     // Use dedicated today fields (trend arrays only contain completed days now)
-    const serversToday = healthData.servers_today ?? 0;
+    const serversToday = data.servers_today ?? 0;
     const serversYesterday =
       server_trend.length > 0
         ? server_trend[server_trend.length - 1].active_servers
@@ -298,7 +321,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         ? Math.round(((serversToday - serversYesterday) / serversYesterday) * 100)
         : undefined;
 
-    const roundsToday = healthData.rounds_today ?? 0;
+    const roundsToday = data.rounds_today ?? 0;
     const roundsYesterday =
       rounds_trend.length > 0
         ? rounds_trend[rounds_trend.length - 1].rounds_played
@@ -309,7 +332,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         : undefined;
 
     return { avg30d, peakDay, trendPct, serversToday, roundsToday, serversPct, roundsPct };
-  }, [population_trend, server_trend, rounds_trend, healthData]);
+  }, [population_trend, server_trend, rounds_trend, data]);
 
   // Player retention summary stats
   const retentionStats = useMemo(() => {
@@ -369,8 +392,31 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
             Game Health
           </h1>
           <p className="mt-2 max-w-[500px] text-lg text-slate-400">
-            30-day population trends, server activity, and game mode analytics.
+            Population trends, server activity, and game mode analytics.
           </p>
+
+          {/* Period toggle */}
+          <div className="mt-5 flex items-center gap-2 flex-wrap">
+            {PERIODS.map(({ label, days }) => (
+              <button
+                key={days}
+                onClick={() => setPeriod(days)}
+                disabled={loading}
+                className={[
+                  "px-4 py-1.5 rounded-full text-sm font-semibold border transition-all",
+                  period === days
+                    ? "bg-green-500/20 border-green-500/50 text-green-400"
+                    : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20 hover:text-white",
+                  loading ? "opacity-50 cursor-not-allowed" : "",
+                ].join(" ")}
+              >
+                {label}
+              </button>
+            ))}
+            {loading && (
+              <span className="text-xs text-slate-500 animate-pulse">Loading…</span>
+            )}
+          </div>
         </div>
       </div>
 

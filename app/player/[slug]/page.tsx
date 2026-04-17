@@ -18,12 +18,21 @@ export async function generateMetadata(
     // Decode the player name from the URL slug
     const playerName = decodeURIComponent(params.slug);
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online";
+    const sigUrl = `${siteUrl}/sig/${encodeURIComponent(playerName)}.png`;
     return {
       title: `Player Profile for ${playerName}`,
       description: `View the full Battlefield 1942 stats, match history, and playstyle habits for ${playerName}.`,
       openGraph: {
-        title: `Player Profile for ${playerName}`,
-        description: `View the full Battlefield 1942 stats for ${playerName}.`,
+        title: `${playerName} — BF1942 Stats`,
+        description: `Score, rank, and lifetime stats for ${playerName} in Battlefield 1942.`,
+        images: [{ url: sigUrl, width: 500, height: 120, alt: `${playerName}'s BF1942 stats card` }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${playerName} — BF1942 Stats`,
+        description: `Score, rank, and lifetime stats for ${playerName} in Battlefield 1942.`,
+        images: [sigUrl],
       },
     };
   } catch (e) {
