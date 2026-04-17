@@ -146,11 +146,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         zIndex: 10,
                         textShadow: '0 2px 4px #000, 0 0 10px #000',
                         maxWidth: 210,
-                        gap: 3,
+                        gap: 4,
                     }}>
                         <div style={{
                             display: 'flex',
-                            fontSize: 15,
+                            fontSize: 17,
                             fontWeight: 'bold',
                             color: '#ffffff',
                             lineHeight: 1.2,
@@ -158,18 +158,18 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                             {serverName}
                         </div>
                         {ipDisplay ? (
-                            <div style={{ display: 'flex', fontSize: 10, color: '#94a3b8', fontWeight: '600' }}>
+                            <div style={{ display: 'flex', fontSize: 12, color: '#94a3b8', fontWeight: '600' }}>
                                 {ipDisplay}
                             </div>
                         ) : null}
                         {globalRank ? (
-                            <div style={{ display: 'flex', fontSize: 10, color: '#fbbf24', fontWeight: '700' }}>
+                            <div style={{ display: 'flex', fontSize: 12, color: '#fbbf24', fontWeight: '700' }}>
                                 RANK {globalRank}
                             </div>
                         ) : null}
                     </div>
 
-                    {/* Right — large player count, mode, map, time */}
+                    {/* Right — player count with label, mode, map, time */}
                     <div style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -179,17 +179,14 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         gap: 2,
                         maxWidth: 240,
                     }}>
-                        {/* Player count — large, no label */}
-                        <div style={{ display: 'flex', fontSize: 32, fontWeight: 'bold', color: '#ea580c', lineHeight: 1 }}>
+                        {/* PLAYERS: label above count */}
+                        <div style={{ display: 'flex', fontSize: 9, color: 'rgba(255,255,255,0.55)', fontWeight: '600', letterSpacing: '0.08em' }}>
+                            PLAYERS:
+                        </div>
+                        {/* Player count */}
+                        <div style={{ display: 'flex', fontSize: 32, fontWeight: 'bold', color: '#ea580c', lineHeight: 1, marginTop: -2 }}>
                             {playerCount}/{maxPlayers}
                         </div>
-
-                        {/* Game mode */}
-                        {gameMode ? (
-                            <span style={{ display: 'flex', fontSize: 11, color: '#ffffff', fontWeight: '600' }}>
-                                {gameMode}
-                            </span>
-                        ) : null}
 
                         {/* Map */}
                         <span style={{ display: 'flex', fontSize: 11, color: '#cbd5e1', textAlign: 'right' }}>
