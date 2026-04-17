@@ -91,7 +91,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                         left: 0,
                         width: 500,
                         height: 120,
-                        background: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.85) 100%)',
+                        background: 'linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.72) 100%)',
                         zIndex: 1,
                     }} />
 

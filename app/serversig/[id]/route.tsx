@@ -43,7 +43,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                     const s = data.server_info;
 
                     serverName = s.current_server_name || 'Unknown Server';
-                    ipDisplay = s.ip ? String(s.ip) : '';
+                    ipDisplay = s.ip
+                        ? (s.current_game_port ? `${String(s.ip)}:${s.current_game_port}` : String(s.ip))
+                        : '';
                     playerCount = String(s.current_player_count ?? 0);
                     maxPlayers = String(s.current_max_players ?? 0);
 
@@ -110,14 +112,14 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                             height: 120,
                         }}
                     />
-                    {/* Dark overlay — use explicit dimensions, not inset shorthand */}
+                    {/* Dark overlay — slightly transparent so background shows through */}
                     <div style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
                         width: 500,
                         height: 120,
-                        background: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.85) 100%)',
+                        background: 'linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.72) 100%)',
                         zIndex: 1,
                     }} />
 
@@ -137,43 +139,49 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         </div>
                     )}
 
-                    {/* Left — server name + IP */}
+                    {/* Left — server name, IP:port, rank */}
                     <div style={{
                         display: 'flex',
                         flexDirection: 'column',
                         zIndex: 10,
                         textShadow: '0 2px 4px #000, 0 0 10px #000',
-                        maxWidth: 240,
+                        maxWidth: 210,
+                        gap: 3,
                     }}>
                         <div style={{
                             display: 'flex',
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: 'bold',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
+                            color: '#ffffff',
+                            lineHeight: 1.2,
                         }}>
                             {serverName}
                         </div>
-                        <div style={{ display: 'flex', fontSize: 10, color: '#94a3b8', marginTop: 3, fontWeight: '600' }}>
-                            {ipDisplay}
-                        </div>
+                        {ipDisplay ? (
+                            <div style={{ display: 'flex', fontSize: 10, color: '#94a3b8', fontWeight: '600' }}>
+                                {ipDisplay}
+                            </div>
+                        ) : null}
+                        {globalRank ? (
+                            <div style={{ display: 'flex', fontSize: 10, color: '#fbbf24', fontWeight: '700' }}>
+                                RANK {globalRank}
+                            </div>
+                        ) : null}
                     </div>
 
-                    {/* Right — players, mode, map, rank, time */}
+                    {/* Right — large player count, mode, map, time */}
                     <div style={{
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'flex-end',
-                        gap: 2,
                         zIndex: 10,
                         textShadow: '0 2px 4px #000, 0 0 10px #000',
+                        gap: 2,
+                        maxWidth: 240,
                     }}>
-                        {/* Players — most prominent */}
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                            <span style={{ display: 'flex', fontSize: 10, color: '#fff', opacity: 0.7, fontWeight: '600' }}>PLAYERS</span>
-                            <span style={{ display: 'flex', fontSize: 22, fontWeight: 'bold', color: '#ea580c' }}>
-                                {playerCount}/{maxPlayers}
-                            </span>
+                        {/* Player count — large, no label */}
+                        <div style={{ display: 'flex', fontSize: 32, fontWeight: 'bold', color: '#ea580c', lineHeight: 1 }}>
+                            {playerCount}/{maxPlayers}
                         </div>
 
                         {/* Game mode */}
@@ -184,23 +192,16 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         ) : null}
 
                         {/* Map */}
-                        <span style={{ display: 'flex', fontSize: 11, color: '#cbd5e1' }}>
+                        <span style={{ display: 'flex', fontSize: 11, color: '#cbd5e1', textAlign: 'right' }}>
                             {mapName}
                         </span>
 
-                        {/* Rank + time remaining */}
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            {globalRank ? (
-                                <span style={{ display: 'flex', fontSize: 10, color: '#fbbf24', fontWeight: '700' }}>
-                                    RANK {globalRank}
-                                </span>
-                            ) : null}
-                            {timeRemaining ? (
-                                <span style={{ display: 'flex', fontSize: 10, color: '#94a3b8' }}>
-                                    {timeRemaining}
-                                </span>
-                            ) : null}
-                        </div>
+                        {/* Time remaining */}
+                        {timeRemaining ? (
+                            <span style={{ display: 'flex', fontSize: 10, color: '#94a3b8' }}>
+                                {timeRemaining}
+                            </span>
+                        ) : null}
                     </div>
 
                     {/* Watermark */}
