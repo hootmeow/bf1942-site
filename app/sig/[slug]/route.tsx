@@ -12,10 +12,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
         let globalRank = "# --";  // Changed from kdr
         let rank = "Private";
         let rankAbbr = "Pvt";
-        // Decode Player Name
+        // Decode Player Name — strip .png/.jpg extension so forum hotlinks work
         if (slug) {
             const rawSlug = Array.isArray(slug) ? slug.join('/') : slug;
-            playerName = decodeURIComponent(rawSlug);
+            playerName = decodeURIComponent(rawSlug).replace(/\.(png|jpg|jpeg|gif)$/i, '');
         }
         // --- DYNAMIC API URL RESOLUTION ---
         // Use env var (configured in .env.local), fallback to localhost

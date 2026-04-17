@@ -33,9 +33,13 @@ import { ServerHealth } from "@/components/server-health";
 import { ServerRecords } from "@/components/server-records";
 import { ServerFame } from "@/components/server-fame";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { Info, Monitor, Shield, Package, Bookmark, ChevronRight } from "lucide-react";
+import { Info, Monitor, Shield, Package, Bookmark, ChevronRight, Copy, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast-simple";
 
 // Types
 interface ServerInfo {
@@ -157,6 +161,7 @@ function LockIcon({ status, className }: { status?: string | number, className?:
 }
 
 export function ServerDetailView({ initialData, slug, serverOwner }: { initialData: ServerDetailsData | null, slug: string, serverOwner?: any }) {
+  const { toast } = useToast();
   const [metrics, setMetrics] = useState<any>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [recentRounds, setRecentRounds] = useState<any[]>([]);
@@ -373,6 +378,61 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
             initialOwner={serverOwner}
           />
         </div>
+
+        {/* Forum Signature */}
+        {server_info.server_id && (
+          <div className="mt-3">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Forum Signature
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Server Forum Signature</DialogTitle>
+                  <DialogDescription>
+                    Use this dynamic image on forums or Discord. It shows live player count and current map.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="rounded-md border p-1 bg-black/50 overflow-hidden flex justify-center">
+                    <img
+                      src={`/serversig/${server_info.server_id}`}
+                      alt="Server Signature Preview"
+                      className="max-w-full h-auto"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Direct Link</Label>
+                    <div className="flex gap-2">
+                      <Input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/serversig/${server_info.server_id}.png`} />
+                      <Button size="icon" variant="outline" onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/serversig/${server_info.server_id}.png`);
+                        toast({ title: "Copied!", variant: "success" });
+                      }}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>BBCode (Forums)</Label>
+                    <div className="flex gap-2">
+                      <Input readOnly value={`[img]${typeof window !== 'undefined' ? window.location.origin : ''}/serversig/${server_info.server_id}.png[/img]`} />
+                      <Button size="icon" variant="outline" onClick={() => {
+                        navigator.clipboard.writeText(`[img]${window.location.origin}/serversig/${server_info.server_id}.png[/img]`);
+                        toast({ title: "Copied!", variant: "success" });
+                      }}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
 
       {/* Blacklist Warning - Force Display */}

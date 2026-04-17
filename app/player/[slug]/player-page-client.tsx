@@ -577,9 +577,9 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
                 <div className="space-y-2">
                   <Label>Direct Link</Label>
                   <div className="flex gap-2">
-                    <Input readOnly value={`${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}`} />
+                    <Input readOnly value={`${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}.png`} />
                     <Button size="icon" variant="outline" onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}`);
+                      navigator.clipboard.writeText(`${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}.png`);
                       toast({ title: "Copied!", variant: "success" });
                     }}>
                       <Copy className="h-4 w-4" />
@@ -589,9 +589,9 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
                 <div className="space-y-2">
                   <Label>BBCode (Forums)</Label>
                   <div className="flex gap-2">
-                    <Input readOnly value={`[img]${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}[/img]`} />
+                    <Input readOnly value={`[img]${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}.png[/img]`} />
                     <Button size="icon" variant="outline" onClick={() => {
-                      navigator.clipboard.writeText(`[img]${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}[/img]`);
+                      navigator.clipboard.writeText(`[img]${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}.png[/img]`);
                       toast({ title: "Copied!", variant: "success" });
                     }}>
                       <Copy className="h-4 w-4" />
