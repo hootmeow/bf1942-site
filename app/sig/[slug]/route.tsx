@@ -9,13 +9,12 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
         const params = await props.params;
         const { slug } = params;
 
-        // Default values
         let playerName = "Unknown";
         let score = "0";
         let globalRank = "# --";
         let rank = "Private";
 
-        // Decode player name — strip image extension so forum hotlinks work
+        // Strip image extension so forum hotlinks work
         if (slug) {
             const rawSlug = Array.isArray(slug) ? slug.join('/') : slug;
             playerName = decodeURIComponent(rawSlug).replace(/\.(png|jpg|jpeg|gif)$/i, '');
@@ -25,15 +24,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
             ? process.env.API_URL.replace(/\/+$/, "")
             : "http://127.0.0.1:8000/api/v1";
 
-        const profileUrl = `${envApiUrl}/players/search/profile?name=${encodeURIComponent(playerName)}`;
-        const advancedUrl = `${envApiUrl}/players/search/profile_advanced?name=${encodeURIComponent(playerName)}`;
-
         let debugStatus = "OK";
         try {
-            console.log(`[Sig] Fetching profile: ${profileUrl}`);
             const [profileRes, advancedRes] = await Promise.all([
-                fetch(profileUrl, { next: { revalidate: 60 } }),
-                fetch(advancedUrl, { next: { revalidate: 60 } })
+                fetch(`${envApiUrl}/players/search/profile?name=${encodeURIComponent(playerName)}`, { next: { revalidate: 60 } }),
+                fetch(`${envApiUrl}/players/search/profile_advanced?name=${encodeURIComponent(playerName)}`, { next: { revalidate: 60 } })
             ]);
 
             if (profileRes.ok) {
@@ -50,48 +45,23 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
             if (advancedRes.ok) {
                 const advData = await advancedRes.json();
                 if (advData.ok && advData.skill_rating) {
-                    if (advData.skill_rating.score) {
-                        score = advData.skill_rating.score.toLocaleString();
-                    }
-                    if (advData.skill_rating.label) {
-                        rank = advData.skill_rating.label;
-                    }
-                    if (advData.skill_rating.global_rank) {
-                        globalRank = `# ${advData.skill_rating.global_rank}`;
-                    }
+                    if (advData.skill_rating.score) score = advData.skill_rating.score.toLocaleString();
+                    if (advData.skill_rating.label) rank = advData.skill_rating.label;
+                    if (advData.skill_rating.global_rank) globalRank = `# ${advData.skill_rating.global_rank}`;
                 }
             }
         } catch (e: any) {
-            debugStatus = "FetchFail";
-            if (e.cause && e.cause.code === 'ECONNREFUSED') {
-                debugStatus = "ConnRefused";
-            }
+            debugStatus = e?.cause?.code === 'ECONNREFUSED' ? "ConnRefused" : "FetchFail";
             console.error("[Sig] Fetch Exception:", e);
         }
 
         const randomBg = getRandomBgDataUri();
 
-        const errorBadge = debugStatus !== "OK" ? (
-            <div style={{
-                display: 'flex',
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                background: 'red',
-                color: 'white',
-                fontSize: '10px',
-                padding: '2px 4px',
-                zIndex: 50
-            }}>
-                {debugStatus}
-            </div>
-        ) : null;
-
         return new ImageResponse(
             (
                 <div style={{
-                    width: '500px',
-                    height: '120px',
+                    width: 500,
+                    height: 120,
                     backgroundColor: '#0f172a',
                     display: 'flex',
                     alignItems: 'center',
@@ -101,50 +71,80 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                     fontFamily: 'sans-serif',
                     color: 'white',
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
                 }}>
-                    {errorBadge}
+                    {/* Background image — width/height MUST be in style for Satori */}
                     <img
                         src={randomBg}
-                        width="500"
-                        height="120"
-                        style={{ position: 'absolute', top: 0, left: 0, objectFit: 'cover', zIndex: 0 }}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: 500,
+                            height: 120,
+                        }}
                     />
+                    {/* Dark overlay — inset:0 not reliable in Satori, use explicit dimensions */}
                     <div style={{
                         position: 'absolute',
-                        inset: 0,
+                        top: 0,
+                        left: 0,
+                        width: 500,
+                        height: 120,
                         background: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.85) 100%)',
-                        zIndex: 1
+                        zIndex: 1,
                     }} />
-                    <div style={{ display: 'flex', flexDirection: 'column', zIndex: 10, textShadow: '0 2px 4px #000000, 0 0 10px #000000' }}>
-                        <div style={{ display: 'flex', fontSize: '24px', fontWeight: 'bold', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis' }}>
+
+                    {debugStatus !== "OK" && (
+                        <div style={{
+                            display: 'flex',
+                            position: 'absolute',
+                            top: 0,
+                            right: 0,
+                            background: 'red',
+                            color: 'white',
+                            fontSize: 10,
+                            padding: '2px 4px',
+                            zIndex: 50,
+                        }}>
+                            {debugStatus}
+                        </div>
+                    )}
+
+                    {/* Left — name + rank */}
+                    <div style={{ display: 'flex', flexDirection: 'column', zIndex: 10, textShadow: '0 2px 4px #000, 0 0 10px #000' }}>
+                        <div style={{ display: 'flex', fontSize: 24, fontWeight: 'bold', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 280 }}>
                             {playerName}
                         </div>
-                        <div style={{ display: 'flex', fontSize: '14px', color: '#ea580c', marginTop: '2px', fontWeight: '700', textTransform: 'uppercase' }}>
-                            {rank}
+                        <div style={{ display: 'flex', fontSize: 14, color: '#ea580c', marginTop: 2, fontWeight: '700' }}>
+                            {rank.toUpperCase()}
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', zIndex: 10, textShadow: '0 2px 4px #000000, 0 0 10px #000000' }}>
+
+                    {/* Right — score + global rank */}
+                    <div style={{ display: 'flex', gap: 20, alignItems: 'center', zIndex: 10, textShadow: '0 2px 4px #000, 0 0 10px #000' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ display: 'flex', fontSize: '10px', color: '#ffffff', fontWeight: '600', opacity: 0.9 }}>SCORE</span>
-                            <span style={{ display: 'flex', fontSize: '18px', fontWeight: 'bold' }}>{score}</span>
+                            <span style={{ display: 'flex', fontSize: 10, color: '#fff', fontWeight: '600', opacity: 0.9 }}>SCORE</span>
+                            <span style={{ display: 'flex', fontSize: 18, fontWeight: 'bold' }}>{score}</span>
                         </div>
-                        <div style={{ display: 'flex', width: '1px', height: '30px', background: 'rgba(255,255,255,0.6)' }}></div>
+                        <div style={{ display: 'flex', width: 1, height: 30, background: 'rgba(255,255,255,0.6)' }} />
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ display: 'flex', fontSize: '10px', color: '#ffffff', fontWeight: '600', opacity: 0.9 }}>GLOBAL RANK</span>
-                            <span style={{ display: 'flex', fontSize: '24px', fontWeight: 'bold', color: '#ea580c' }}>{globalRank}</span>
+                            <span style={{ display: 'flex', fontSize: 10, color: '#fff', fontWeight: '600', opacity: 0.9 }}>GLOBAL RANK</span>
+                            <span style={{ display: 'flex', fontSize: 24, fontWeight: 'bold', color: '#ea580c' }}>{globalRank}</span>
                         </div>
                     </div>
+
+                    {/* Watermark */}
                     <div style={{
                         display: 'flex',
                         position: 'absolute',
-                        bottom: '4px',
-                        right: '6px',
-                        fontSize: '8px',
-                        color: 'rgba(255, 255, 255, 0.8)',
+                        bottom: 4,
+                        right: 6,
+                        fontSize: 8,
+                        color: 'rgba(255,255,255,0.8)',
                         zIndex: 20,
                         letterSpacing: '0.5px',
-                        textShadow: '0 2px 4px #000000, 0 0 10px #000000'
+                        textShadow: '0 2px 4px #000, 0 0 10px #000',
                     }}>
                         bf1942.online
                     </div>
