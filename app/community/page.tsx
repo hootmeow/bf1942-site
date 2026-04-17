@@ -12,6 +12,14 @@ export const metadata: Metadata = {
 
 const communities = [
   {
+    title: "-[ECHO]- Gaming",
+    description: "A community centered on Desert Combat, running custom and modded maps. Known for organized events and a tight-knit player base that keeps the DC scene active.",
+    website: "https://echo-gaming.com/",
+    discord: "https://discord.gg/y7XrcnuzeG",
+    types: ["Active", "Modded", "Events", "Desert Combat"],
+    featured: true,
+  },
+  {
     title: "Moongamers",
     description: "Established in 2004, this friendly community runs popular servers known for comprehensive installers. Join them for weekly events, including CTF on Saturdays and Expansions on Sundays.",
     website: "http://www.moongamers.com/",
@@ -25,7 +33,7 @@ const communities = [
     website: "https://www.helloclan.eu/",
     discord: "https://discord.gg/helloclan-the-social-gaming-network-276061597636624395",
     types: ["Active", "Modded"],
-    featured: true,
+    featured: false,
   },
   {
     title: "Team SiMPLE",
@@ -71,6 +79,7 @@ const typeColors: Record<string, { bg: string; text: string; border: string }> =
   'PvE': { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/30' },
   '24/7': { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30' },
   'USA': { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30' },
+  'Desert Combat': { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
   'Mod-specific': { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/30' },
   'Racing': { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/30' },
   'Vehicles': { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
