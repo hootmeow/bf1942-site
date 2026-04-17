@@ -1,13 +1,13 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
-import { SIG_BACKGROUNDS } from '../../sig/static-assets';
+import { getRandomBgDataUri } from '../../sig/bg-loader';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
     try {
         const params = await props.params;
-        // Strip .png/.jpg extension so forum hotlinks work
+        // Strip image extension so forum hotlinks work
         const serverId = params.id.replace(/\.(png|jpg|jpeg|gif)$/i, '');
 
         const envApiUrl = process.env.API_URL
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                     const s = data.server_info;
                     serverName = s.current_server_name || 'Unknown Server';
                     ipDisplay = s.ip ? String(s.ip) : '';
-                    // Format map name: strip path prefixes, replace underscores with spaces, title-case
+                    // Format map: strip path prefix, replace underscores, title-case
                     const rawMap: string = s.current_map || '---';
                     mapName = rawMap
                         .split('/')
@@ -50,8 +50,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
             console.error('[ServerSig] Fetch Exception:', e);
         }
 
-        // Pick random background (same pool as player sigs)
-        const randomBg = SIG_BACKGROUNDS[Math.floor(Math.random() * SIG_BACKGROUNDS.length)];
+        const randomBg = getRandomBgDataUri();
 
         const errorBadge = debugStatus !== 'OK' ? (
             <div style={{
@@ -87,15 +86,12 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                 }}>
                     {errorBadge}
 
-                    {/* Background image */}
                     <img
                         src={randomBg}
                         width="500"
                         height="120"
                         style={{ position: 'absolute', top: 0, left: 0, objectFit: 'cover', zIndex: 0 }}
                     />
-
-                    {/* Dark overlay */}
                     <div style={{
                         position: 'absolute',
                         inset: 0,
@@ -147,7 +143,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         </div>
                     </div>
 
-                    {/* Watermark */}
                     <div style={{
                         display: 'flex',
                         position: 'absolute',

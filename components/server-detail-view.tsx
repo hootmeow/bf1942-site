@@ -370,69 +370,68 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
         </div>
 
         {/* Server Owner - New Line */}
-        <div className="mt-2">
+        <div className="mt-2 flex items-center gap-3 flex-wrap">
           <ServerOwnerDisplay
             serverId={server_info.server_id}
             serverName={server_info.current_server_name || "Unknown Server"}
             serverSlug={slug}
             initialOwner={serverOwner}
           />
+          {server_info.server_id && (
+            <>
+              <span className="text-muted-foreground text-sm">•</span>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="text-sm text-primary hover:underline flex items-center gap-1">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    Share Stats Card
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Server Stats Card</DialogTitle>
+                    <DialogDescription>
+                      Embed this live image on forums or Discord. Updates automatically with current map and player count.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div className="rounded-md border p-1 bg-black/50 overflow-hidden flex justify-center">
+                      <img
+                        src={`/serversig/${server_info.server_id}`}
+                        alt="Server Stats Card Preview"
+                        className="max-w-full h-auto"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Direct Link</Label>
+                      <div className="flex gap-2">
+                        <Input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/serversig/${server_info.server_id}.png`} />
+                        <Button size="icon" variant="outline" onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/serversig/${server_info.server_id}.png`);
+                          toast({ title: "Copied!", variant: "success" });
+                        }}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>BBCode (Forums)</Label>
+                      <div className="flex gap-2">
+                        <Input readOnly value={`[img]${typeof window !== 'undefined' ? window.location.origin : ''}/serversig/${server_info.server_id}.png[/img]`} />
+                        <Button size="icon" variant="outline" onClick={() => {
+                          navigator.clipboard.writeText(`[img]${window.location.origin}/serversig/${server_info.server_id}.png[/img]`);
+                          toast({ title: "Copied!", variant: "success" });
+                        }}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
-
-        {/* Forum Signature */}
-        {server_info.server_id && (
-          <div className="mt-3">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  Forum Signature
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Server Forum Signature</DialogTitle>
-                  <DialogDescription>
-                    Use this dynamic image on forums or Discord. It shows live player count and current map.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="rounded-md border p-1 bg-black/50 overflow-hidden flex justify-center">
-                    <img
-                      src={`/serversig/${server_info.server_id}`}
-                      alt="Server Signature Preview"
-                      className="max-w-full h-auto"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Direct Link</Label>
-                    <div className="flex gap-2">
-                      <Input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/serversig/${server_info.server_id}.png`} />
-                      <Button size="icon" variant="outline" onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/serversig/${server_info.server_id}.png`);
-                        toast({ title: "Copied!", variant: "success" });
-                      }}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>BBCode (Forums)</Label>
-                    <div className="flex gap-2">
-                      <Input readOnly value={`[img]${typeof window !== 'undefined' ? window.location.origin : ''}/serversig/${server_info.server_id}.png[/img]`} />
-                      <Button size="icon" variant="outline" onClick={() => {
-                        navigator.clipboard.writeText(`[img]${window.location.origin}/serversig/${server_info.server_id}.png[/img]`);
-                        toast({ title: "Copied!", variant: "success" });
-                      }}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
       </div>
 
       {/* Blacklist Warning - Force Display */}

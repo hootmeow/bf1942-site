@@ -1,41 +1,44 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
-import { SIG_BACKGROUNDS } from '../static-assets';
+import { getRandomBgDataUri } from '../bg-loader';
+
 export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
     try {
         const params = await props.params;
         const { slug } = params;
+
         // Default values
         let playerName = "Unknown";
         let score = "0";
-        let globalRank = "# --";  // Changed from kdr
+        let globalRank = "# --";
         let rank = "Private";
-        let rankAbbr = "Pvt";
-        // Decode Player Name — strip .png/.jpg extension so forum hotlinks work
+
+        // Decode player name — strip image extension so forum hotlinks work
         if (slug) {
             const rawSlug = Array.isArray(slug) ? slug.join('/') : slug;
             playerName = decodeURIComponent(rawSlug).replace(/\.(png|jpg|jpeg|gif)$/i, '');
         }
-        // --- DYNAMIC API URL RESOLUTION ---
-        // Use env var (configured in .env.local), fallback to localhost
-        const envApiUrl = process.env.API_URL 
-            ? process.env.API_URL.replace(/\/+$/, "") 
+
+        const envApiUrl = process.env.API_URL
+            ? process.env.API_URL.replace(/\/+$/, "")
             : "http://127.0.0.1:8000/api/v1";
+
         const profileUrl = `${envApiUrl}/players/search/profile?name=${encodeURIComponent(playerName)}`;
         const advancedUrl = `${envApiUrl}/players/search/profile_advanced?name=${encodeURIComponent(playerName)}`;
+
         let debugStatus = "OK";
         try {
             console.log(`[Sig] Fetching profile: ${profileUrl}`);
-            // Parallel Fetch
             const [profileRes, advancedRes] = await Promise.all([
                 fetch(profileUrl, { next: { revalidate: 60 } }),
                 fetch(advancedUrl, { next: { revalidate: 60 } })
             ]);
+
             if (profileRes.ok) {
                 const data = await profileRes.json();
                 if (data.ok && data.lifetime_stats) {
-                    // Fallback score if advanced fails or has no rating
                     score = data.lifetime_stats.total_score?.toLocaleString() || "0";
                 } else {
                     debugStatus = "InvData";
@@ -43,7 +46,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
             } else {
                 debugStatus = `Err${profileRes.status}`;
             }
-            // Override score with Skill Rating if available (matches Profile Page)
+
             if (advancedRes.ok) {
                 const advData = await advancedRes.json();
                 if (advData.ok && advData.skill_rating) {
@@ -51,7 +54,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                         score = advData.skill_rating.score.toLocaleString();
                     }
                     if (advData.skill_rating.label) {
-                        // Optional: Use rank label from advanced stats if preferred
                         rank = advData.skill_rating.label;
                     }
                     if (advData.skill_rating.global_rank) {
@@ -66,9 +68,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
             }
             console.error("[Sig] Fetch Exception:", e);
         }
-        // Pick random theme from all available backgrounds
-        const randomBg = SIG_BACKGROUNDS[Math.floor(Math.random() * SIG_BACKGROUNDS.length)];
-        // VISUAL ERROR INDICATOR
+
+        const randomBg = getRandomBgDataUri();
+
         const errorBadge = debugStatus !== "OK" ? (
             <div style={{
                 display: 'flex',
@@ -84,46 +86,36 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                 {debugStatus}
             </div>
         ) : null;
+
         return new ImageResponse(
             (
-                <div
-                    style={{
-                        width: '500px',
-                        height: '120px',
-                        backgroundColor: '#0f172a',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0 20px',
-                        borderLeft: '4px solid rgba(255,255,255,0.5)',
-                        fontFamily: 'sans-serif',
-                        color: 'white',
-                        position: 'relative',
-                        overflow: 'hidden'
-                    }}
-                >
+                <div style={{
+                    width: '500px',
+                    height: '120px',
+                    backgroundColor: '#0f172a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 20px',
+                    borderLeft: '4px solid rgba(255,255,255,0.5)',
+                    fontFamily: 'sans-serif',
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
                     {errorBadge}
-                    {/* BACKGROUND IMAGE (Randomized) */}
                     <img
                         src={randomBg}
                         width="500"
                         height="120"
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            objectFit: 'cover',
-                            zIndex: 0
-                        }}
+                        style={{ position: 'absolute', top: 0, left: 0, objectFit: 'cover', zIndex: 0 }}
                     />
-                    {/* Dark Overlay for readability - Maximum Contrast */}
                     <div style={{
                         position: 'absolute',
                         inset: 0,
                         background: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.85) 100%)',
                         zIndex: 1
                     }} />
-                    {/* Left Column - Name & Rank */}
                     <div style={{ display: 'flex', flexDirection: 'column', zIndex: 10, textShadow: '0 2px 4px #000000, 0 0 10px #000000' }}>
                         <div style={{ display: 'flex', fontSize: '24px', fontWeight: 'bold', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '280px', textOverflow: 'ellipsis' }}>
                             {playerName}
@@ -132,7 +124,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                             {rank}
                         </div>
                     </div>
-                    {/* Right Column - Stats */}
                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center', zIndex: 10, textShadow: '0 2px 4px #000000, 0 0 10px #000000' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                             <span style={{ display: 'flex', fontSize: '10px', color: '#ffffff', fontWeight: '600', opacity: 0.9 }}>SCORE</span>
@@ -144,7 +135,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                             <span style={{ display: 'flex', fontSize: '24px', fontWeight: 'bold', color: '#ea580c' }}>{globalRank}</span>
                         </div>
                     </div>
-                    {/* Bottom Right Watermark (Requested) */}
                     <div style={{
                         display: 'flex',
                         position: 'absolute',
@@ -160,10 +150,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                     </div>
                 </div>
             ),
-            {
-                width: 500,
-                height: 120,
-            }
+            { width: 500, height: 120 }
         );
     } catch (e: any) {
         console.error("Signature Generation Fatal Error:", e);
