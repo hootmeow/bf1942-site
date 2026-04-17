@@ -3,7 +3,7 @@
 import { useReducer, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Activity, Users, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp } from "lucide-react";
+import { Activity, Users, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, Shield, MessageCircle } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -175,6 +175,24 @@ export default function HomeClient() {
 
   const activeServerCount = topServers.filter(s => s.current_state === "ACTIVE").length;
 
+  const heatmap = data.global_concurrency_heatmap_7d;
+  const peakHourIndex = heatmap.length
+    ? heatmap.reduce((maxIdx, val, idx, arr) => (val > arr[maxIdx] ? idx : maxIdx), 0)
+    : -1;
+  const peakHour = peakHourIndex >= 0 ? `${String(peakHourIndex).padStart(2, "0")}:00 UTC` : "—";
+
+  const topMapRaw = data.popular_maps_7_days[0]?.map_name ?? "";
+  const topMap = topMapRaw
+    ? topMapRaw.split("/").pop()!.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+    : "—";
+
+  const statStrip = [
+    { label: "Top Map This Week", value: topMap },
+    { label: "7-Day Active Players", value: data.active_players_7d.toLocaleString() },
+    { label: "Total Rounds Logged", value: data.total_rounds_processed.toLocaleString() },
+    { label: "Peak Hour", value: peakHour },
+  ];
+
   return (
     <div className="space-y-6 pb-8 sm:space-y-8">
       {/* --- Command Center Hero --- */}
@@ -312,6 +330,45 @@ export default function HomeClient() {
         <div className="flex sm:hidden">
           <Button asChild variant="outline" size="sm" className="w-full">
             <Link href="/game-health">30-Day Report</Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* --- Stat Strip --- */}
+      <div className="overflow-x-auto">
+        <div className="flex min-w-max divide-x divide-border/60 overflow-hidden rounded-xl border border-border/60 bg-card/30">
+          {statStrip.map(({ label, value }) => (
+            <div key={label} className="flex flex-col items-center justify-center px-6 py-3 text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+              <p className="mt-0.5 text-sm font-bold text-foreground">{value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- Community Bar --- */}
+      <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary shrink-0">
+            <Shield className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Join the Community</p>
+            <p className="text-xs text-muted-foreground">Find clans, Discord servers, and organised events keeping BF1942 alive.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/community" className="flex items-center gap-1.5">
+              <MessageCircle className="h-3.5 w-3.5" />
+              Communities
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/orgs" className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              Clans &amp; Orgs
+            </Link>
           </Button>
         </div>
       </div>
