@@ -47,6 +47,7 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Legend,
 } from "recharts";
 import { GlobalPeakTimes } from "@/components/global-peak-times";
 import type { GlobalMetrics } from "@/lib/schemas";
@@ -196,6 +197,37 @@ interface PlayerEngagementEntry {
   pct: number;
 }
 
+interface GametypeTrendEntry {
+  day: string;
+  gamemode: string;
+  rounds: number;
+}
+
+interface TopActivePlayerEntry {
+  player_name: string;
+  total_rounds: number;
+  total_kills: number;
+  total_score: number;
+}
+
+interface MapAvgDurationEntry {
+  map_name: string;
+  avg_minutes: number;
+  total_rounds: number;
+}
+
+interface ScoreDistributionEntry {
+  bucket: string;
+  count: number;
+  pct: number;
+}
+
+interface KdDistributionEntry {
+  bucket: string;
+  count: number;
+  pct: number;
+}
+
 interface HealthData {
   ok: boolean;
   population_trend: PopulationEntry[];
@@ -225,6 +257,11 @@ interface HealthData {
   server_consistency?: ServerConsistencyEntry[];
   gametype_kill_stats?: GametypeKillEntry[];
   player_engagement_distribution?: PlayerEngagementEntry[];
+  gametype_trend?: GametypeTrendEntry[];
+  top_active_players?: TopActivePlayerEntry[];
+  map_avg_duration?: MapAvgDurationEntry[];
+  score_distribution?: ScoreDistributionEntry[];
+  kd_distribution?: KdDistributionEntry[];
 }
 
 interface GameHealthDashboardProps {
@@ -370,6 +407,26 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   const server_consistency = data.server_consistency ?? [];
   const gametype_kill_stats = data.gametype_kill_stats ?? [];
   const player_engagement_distribution = data.player_engagement_distribution ?? [];
+  const gametype_trend_flat = data.gametype_trend ?? [];
+  const top_active_players = data.top_active_players ?? [];
+  const map_avg_duration = data.map_avg_duration ?? [];
+  const score_distribution = data.score_distribution ?? [];
+  const kd_distribution = data.kd_distribution ?? [];
+
+  const allGamemodes = useMemo(
+    () => [...new Set(gametype_trend_flat.map((d) => d.gamemode))].sort(),
+    [gametype_trend_flat]
+  );
+  const gametype_trend = useMemo(() => {
+    const dayMap: Record<string, Record<string, number | string>> = {};
+    for (const row of gametype_trend_flat) {
+      if (!dayMap[row.day]) dayMap[row.day] = { day: row.day };
+      dayMap[row.day][row.gamemode] = row.rounds;
+    }
+    return Object.values(dayMap).sort((a, b) =>
+      (a.day as string).localeCompare(b.day as string)
+    );
+  }, [gametype_trend_flat]);
   const avgRankedPct =
     round_quality_trend.length > 0
       ? Math.round(
@@ -1620,7 +1677,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                       <RechartsTooltip
                         contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
                         formatter={(v: number, _name: string, props: { payload?: { count?: number } }) => [
-                          `${v.toFixed(1)}% (${(props.payload?.count ?? 0).toLocaleString()} sessions)`,
+                          `${v.toFixed(1)}% (${(props.payload?.count ?? 0).toLocaleString()} players)`,
                           "Share",
                         ]}
                       />
@@ -1633,7 +1690,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">Distribution of per-player session lengths (rounds &gt; 60s) across the network</p>
+                <p className="mt-2 text-xs text-muted-foreground">Total playtime per player across all rounds in the period — shows casual drop-ins vs committed players</p>
               </CardContent>
             </Card>
           )}
@@ -1834,31 +1891,261 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   Server Consistency ({period} Days)
                 </CardTitle>
               </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/40 text-xs text-muted-foreground uppercase">
+                        <th className="px-4 py-2.5 text-left font-medium">Server</th>
+                        <th className="px-4 py-2.5 text-center font-medium">Active Days</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Rounds</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Rnd/Day</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {server_consistency.map((s, i) => {
+                        const pct = s.active_days / period;
+                        const avgPerDay = s.active_days > 0 ? (s.total_rounds / s.active_days).toFixed(1) : "–";
+                        const dotColor = pct >= 0.8 ? "bg-emerald-500" : pct >= 0.5 ? "bg-blue-500" : pct >= 0.25 ? "bg-amber-500" : "bg-red-500";
+                        const textColor = pct >= 0.8 ? "text-emerald-400" : pct >= 0.5 ? "text-blue-400" : pct >= 0.25 ? "text-amber-400" : "text-red-400";
+                        return (
+                          <tr key={i} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                            <td className="px-4 py-2 max-w-[160px]">
+                              <span className="font-medium truncate block text-xs leading-tight" title={s.server_name}>
+                                {s.server_name}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              <span className={`inline-flex items-center gap-1.5 font-mono text-xs tabular-nums font-semibold ${textColor}`}>
+                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                                {s.active_days}/{period}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-right font-mono text-xs tabular-nums">{s.total_rounds.toLocaleString()}</td>
+                            <td className="px-4 py-2 text-right font-mono text-xs tabular-nums text-muted-foreground">{avgPerDay}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="px-4 py-2.5 text-xs text-muted-foreground border-t border-border/20">
+                  Active days = days with ≥1 round. Rnd/Day = rounds ÷ active days. Color: green ≥80%, blue ≥50%, amber ≥25%, red &lt;25%.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Gametype Popularity Trend */}
+      {gametype_trend.length > 0 && allGamemodes.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <CardTitle as="h2" className="flex items-center gap-2">
+              <Gamepad2 className="h-5 w-5 text-blue-400" />
+              Game Mode Trend ({period} Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={gametype_trend} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                  <defs>
+                    {allGamemodes.map((gm, i) => {
+                      const [c] = getGamemodeColor(gm, i);
+                      return (
+                        <linearGradient key={gm} id={`gtGrad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={c} stopOpacity={0.4} />
+                          <stop offset="95%" stopColor={c} stopOpacity={0.05} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} />
+                  <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(gametype_trend.length)} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                    labelFormatter={formatDay}
+                  />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  {allGamemodes.map((gm, i) => {
+                    const [c] = getGamemodeColor(gm, i);
+                    return (
+                      <Area
+                        key={gm}
+                        type="monotone"
+                        dataKey={gm}
+                        name={gm}
+                        stackId="1"
+                        stroke={c}
+                        fill={`url(#gtGrad-${i})`}
+                        strokeWidth={1.5}
+                        dot={false}
+                      />
+                    );
+                  })}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Daily rounds per game mode — shows how each mode&apos;s popularity shifts over time</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Map Average Duration + Score Distribution */}
+      {(map_avg_duration.length > 0 || score_distribution.length > 0) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {map_avg_duration.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-teal-400" />
+                  Map Average Duration ({period} Days)
+                </CardTitle>
+              </CardHeader>
               <CardContent>
                 <div className="h-[340px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={server_consistency} layout="vertical" margin={{ top: 4, right: 48, left: 8, bottom: 0 }}>
+                    <BarChart data={map_avg_duration} layout="vertical" margin={{ top: 4, right: 56, left: 8, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 11 }} domain={[0, period]} tickFormatter={(v) => `${v}d`} />
-                      <YAxis type="category" dataKey="server_name" tick={{ fontSize: 10 }} width={120} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}m`} />
+                      <YAxis type="category" dataKey="map_name" tick={{ fontSize: 10 }} width={110} />
                       <RechartsTooltip
                         contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
-                        formatter={(v: number, _name: string, props: { payload?: ServerConsistencyEntry }) => [
-                          `${v} days active (${(props.payload?.total_rounds ?? 0).toLocaleString()} rounds)`,
-                          "Active Days",
+                        formatter={(v: number, _name: string, props: { payload?: MapAvgDurationEntry }) => [
+                          `${v} min avg (${(props.payload?.total_rounds ?? 0).toLocaleString()} rounds)`,
+                          "Duration",
                         ]}
                       />
-                      <Bar dataKey="active_days" name="Active Days" radius={[0, 4, 4, 0]} maxBarSize={20}>
-                        {server_consistency.map((_entry, index) => {
-                          const pct = _entry.active_days / period;
-                          const fill = pct >= 0.8 ? "#10b981" : pct >= 0.5 ? "#3b82f6" : pct >= 0.25 ? "#f59e0b" : "#ef4444";
-                          return <Cell key={index} fill={fill} />;
+                      <Bar dataKey="avg_minutes" name="Avg Minutes" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                        {map_avg_duration.map((_entry, index) => (
+                          <Cell key={index} fill={MAP_COLORS[index % MAP_COLORS.length][0]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">Average round length per map — longer rounds may indicate more intense fights or larger servers</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {score_distribution.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-yellow-400" />
+                  Score Distribution ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={score_distribution} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                      <YAxis type="category" dataKey="bucket" tick={{ fontSize: 11 }} width={72} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number, _name: string, props: { payload?: ScoreDistributionEntry }) => [
+                          `${v.toFixed(1)}% (${(props.payload?.count ?? 0).toLocaleString()} player-rounds)`,
+                          "Share",
+                        ]}
+                      />
+                      <Bar dataKey="pct" name="% of Player-Rounds" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                        {score_distribution.map((_entry, index) => {
+                          const colors = ["#6b7280", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6"];
+                          return <Cell key={index} fill={colors[index % colors.length]} />;
                         })}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">Days each server ran at least one round — green = high consistency, red = sporadic</p>
+                <p className="mt-2 text-xs text-muted-foreground">Distribution of final scores per player per round — skewed right = most players scoring low</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* K/D Distribution + Top Active Players */}
+      {(kd_distribution.length > 0 || top_active_players.length > 0) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {kd_distribution.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-red-400" />
+                  K/D Ratio Distribution ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[240px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={kd_distribution} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                      <YAxis type="category" dataKey="bucket" tick={{ fontSize: 11 }} width={62} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number, _name: string, props: { payload?: KdDistributionEntry }) => [
+                          `${v.toFixed(1)}% (${(props.payload?.count ?? 0).toLocaleString()} players)`,
+                          "Share",
+                        ]}
+                      />
+                      <Bar dataKey="pct" name="% of Players" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                        {kd_distribution.map((_entry, index) => {
+                          const colors = ["#ef4444", "#f97316", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6"];
+                          return <Cell key={index} fill={colors[index % colors.length]} />;
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">K/D ratio per player aggregated across the period (min 10 combined kills+deaths). Peak at 1.0–1.5 is expected.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {top_active_players.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-green-400" />
+                  Most Active Players ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/40 text-xs text-muted-foreground uppercase">
+                        <th className="px-4 py-2.5 text-left font-medium">#</th>
+                        <th className="px-4 py-2.5 text-left font-medium">Player</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Rounds</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Kills</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {top_active_players.map((p, i) => (
+                        <tr key={i} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                          <td className="px-4 py-2 text-muted-foreground font-mono text-xs">{i + 1}</td>
+                          <td className="px-4 py-2 max-w-[140px]">
+                            <span className="font-medium truncate block text-xs leading-tight" title={p.player_name}>
+                              {p.player_name}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-right font-mono text-xs tabular-nums">{p.total_rounds.toLocaleString()}</td>
+                          <td className="px-4 py-2 text-right font-mono text-xs tabular-nums">{p.total_kills.toLocaleString()}</td>
+                          <td className="px-4 py-2 text-right font-mono text-xs tabular-nums">{p.total_score.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           )}
