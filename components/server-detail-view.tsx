@@ -13,6 +13,7 @@ import { MapBalanceTable, MapBalanceStat } from "@/components/map-balance-table"
 import { ServerRegularsList } from "@/components/server-regulars-list";
 import { ServerLeaderboard } from "@/components/server-leaderboard";
 import { ServerOwnerDisplay } from "@/components/server-owner-display";
+import { ServerRoundTicker } from "@/components/server-round-ticker";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -518,6 +519,9 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
           </div>
         </CardContent>
       </Card >
+
+      {/* Live Round Theater — ticker showing current round state */}
+      <ServerRoundTicker serverInfo={server_info} scoreboard={scoreboard} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className={cn(
