@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { ResponsiveContainer, XAxis, YAxis, Tooltip as ReTooltip, CartesianGrid, AreaChart, Area, Legend, ComposedChart, Label, BarChart, Bar } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // --- Mock / Static Data (unchanged) ---
 const uptimeData = Array.from({ length: 7 }).map((_, index) => ({
@@ -677,24 +679,28 @@ export const PlayerPlaytimeChart = React.memo(function PlayerPlaytimeChart({ dat
 // --- New Player Profile Charts ---
 
 export const PlayerTopMapsChart = React.memo(function PlayerTopMapsChart({ data }: { data: { map_name: string; map_play_count: number }[] }) {
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 5;
+  const totalPages = Math.ceil(data.length / PAGE_SIZE);
+  const pageData = data.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const maxValue = Math.max(...data.map(d => d.map_play_count), 1);
   const total = data.reduce((sum, d) => sum + d.map_play_count, 0);
 
-  // Gradient colors for each map
   const mapColors = [
-    ["#8b5cf6", "#a78bfa"], // Purple
-    ["#06b6d4", "#22d3ee"], // Cyan
-    ["#f59e0b", "#fbbf24"], // Amber
-    ["#ec4899", "#f472b6"], // Pink
-    ["#10b981", "#34d399"], // Emerald
+    ["#8b5cf6", "#a78bfa"],
+    ["#06b6d4", "#22d3ee"],
+    ["#f59e0b", "#fbbf24"],
+    ["#ec4899", "#f472b6"],
+    ["#10b981", "#34d399"],
   ];
 
   return (
     <div className="space-y-2.5">
-      {data.slice(0, 5).map((item, index) => {
+      {pageData.map((item, index) => {
+        const globalIndex = page * PAGE_SIZE + index;
         const percent = (item.map_play_count / maxValue) * 100;
         const sharePercent = total > 0 ? ((item.map_play_count / total) * 100).toFixed(0) : 0;
-        const colors = mapColors[index % mapColors.length];
+        const colors = mapColors[globalIndex % mapColors.length];
         return (
           <div key={item.map_name} className="group">
             <div className="flex items-center gap-3 mb-1.5">
@@ -727,21 +733,41 @@ export const PlayerTopMapsChart = React.memo(function PlayerTopMapsChart({ data 
           </div>
         );
       })}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="p-1 rounded hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {page + 1} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={page === totalPages - 1}
+            className="p-1 rounded hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 });
 
-export const PlayerTopServersChart = React.memo(function PlayerTopServersChart({ data }: { data: { current_server_name: string; server_play_count: number }[] }) {
+export const PlayerTopServersChart = React.memo(function PlayerTopServersChart({ data }: { data: { server_id?: number; current_server_name: string; server_play_count: number }[] }) {
   const maxValue = Math.max(...data.map(d => d.server_play_count), 1);
   const total = data.reduce((sum, d) => sum + d.server_play_count, 0);
 
-  // Gradient colors for servers (different palette)
   const serverColors = [
-    ["#06b6d4", "#22d3ee"], // Cyan
-    ["#3b82f6", "#60a5fa"], // Blue
-    ["#8b5cf6", "#a78bfa"], // Purple
-    ["#14b8a6", "#2dd4bf"], // Teal
-    ["#6366f1", "#818cf8"], // Indigo
+    ["#06b6d4", "#22d3ee"],
+    ["#3b82f6", "#60a5fa"],
+    ["#8b5cf6", "#a78bfa"],
+    ["#14b8a6", "#2dd4bf"],
+    ["#6366f1", "#818cf8"],
   ];
 
   return (
@@ -750,6 +776,7 @@ export const PlayerTopServersChart = React.memo(function PlayerTopServersChart({
         const percent = (item.server_play_count / maxValue) * 100;
         const sharePercent = total > 0 ? ((item.server_play_count / total) * 100).toFixed(0) : 0;
         const colors = serverColors[index % serverColors.length];
+        const serverHref = `/servers/${encodeURIComponent(item.current_server_name)}`;
         return (
           <div key={item.current_server_name} className="group">
             <div className="flex items-center gap-3 mb-1.5">
@@ -760,9 +787,14 @@ export const PlayerTopServersChart = React.memo(function PlayerTopServersChart({
                   "--tw-ring-color": colors[0] + "30"
                 } as React.CSSProperties}
               />
-              <span className="text-sm font-medium text-foreground truncate flex-1" title={item.current_server_name}>
+              <Link
+                href={serverHref}
+                className="text-sm font-medium truncate flex-1 hover:underline transition-colors"
+                style={{ color: colors[0] }}
+                title={item.current_server_name}
+              >
                 {item.current_server_name}
-              </span>
+              </Link>
               <span className="text-xs text-muted-foreground tabular-nums">
                 {item.server_play_count}
               </span>

@@ -103,7 +103,7 @@ interface PersonalBests {
 
 interface PlaystyleHabits {
   top_maps: { map_name: string; map_play_count: number }[];
-  top_servers: { current_server_name: string; server_play_count: number }[];
+  top_servers: { server_id: number; current_server_name: string; server_play_count: number }[];
   team_preference: { axis: number; allied: number };
   activity_last_7_days: { date: string; rounds: number }[];
   playtime_by_hour_utc: number[];
