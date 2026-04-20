@@ -137,12 +137,12 @@ export function ServerRoundTicker({
   );
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [duration, setDuration] = useState(90);
+  const [duration, setDuration] = useState(30);
 
   useEffect(() => {
     if (scrollRef.current && items.length > 0) {
       const oneWidth = scrollRef.current.scrollWidth / 3;
-      setDuration(Math.max(oneWidth / 55, 25));
+      setDuration(Math.max(oneWidth / 150, 10));
     }
   }, [items]);
 

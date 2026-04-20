@@ -637,15 +637,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         <SkillRatingCard rating={advancedProfile.skill_rating} />
       )}
 
-      {/* Combat DNA Radar */}
-      {advancedProfile?.skill_rating?.breakdown && lifetime_stats && (
-        <PlayerDnaRadar
-          breakdown={advancedProfile.skill_rating.breakdown}
-          lifetimeStats={lifetime_stats}
-          playerName={player_info.last_known_name}
-        />
-      )}
-
       {/* Lifetime Stats Section */}
       <Card className="border-border/60 overflow-hidden">
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 via-transparent to-transparent">
@@ -1084,12 +1075,23 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </div>
       </div>
 
-      {/* Teammate Galaxy */}
-      {advancedProfile?.related_players && advancedProfile.related_players.length > 0 && (
-        <TeammateGalaxy
-          players={advancedProfile.related_players}
-          playerName={player_info.last_known_name}
-        />
+      {/* Teammate Galaxy + Combat DNA side by side */}
+      {(advancedProfile?.related_players?.length || (advancedProfile?.skill_rating?.breakdown && lifetime_stats)) && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
+          {advancedProfile?.related_players && advancedProfile.related_players.length > 0 && (
+            <TeammateGalaxy
+              players={advancedProfile.related_players}
+              playerName={player_info.last_known_name}
+            />
+          )}
+          {advancedProfile?.skill_rating?.breakdown && lifetime_stats && (
+            <PlayerDnaRadar
+              breakdown={advancedProfile.skill_rating.breakdown}
+              lifetimeStats={lifetime_stats}
+              playerName={player_info.last_known_name}
+            />
+          )}
+        </div>
       )}
 
       {/* Session Stats - Full Width */}

@@ -43,7 +43,7 @@ export function TeammateGalaxy({
 
   if (!players || players.length === 0) return null;
 
-  // Group by tier, cap each orbit at 12 planets so they don't overlap
+  // Group by tier, cap each orbit at 20 planets so they don't overlap
   const grouped: Record<string, RelatedPlayer[]> = {
     "BATTLE BUDDY": [],
     SQUADMATE:      [],
@@ -51,7 +51,7 @@ export function TeammateGalaxy({
   };
   for (const p of players) {
     const t = p.affinity_tier ?? "ACQUAINTANCE";
-    if (grouped[t] && grouped[t].length < 12) grouped[t].push(p);
+    if (grouped[t] && grouped[t].length < 20) grouped[t].push(p);
   }
 
   const planets: Planet[] = [];
@@ -95,7 +95,7 @@ export function TeammateGalaxy({
         <div
           ref={containerRef}
           className="relative mx-auto"
-          style={{ width: "100%", maxWidth: 440, aspectRatio: "1/1" }}
+          style={{ width: "100%", maxWidth: 300, aspectRatio: "1/1" }}
           onMouseLeave={() => setHovered(null)}
         >
           <svg

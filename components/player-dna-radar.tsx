@@ -9,7 +9,13 @@ import {
   Tooltip as RechartsTooltip,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dna } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Dna, Info } from "lucide-react";
 import type { SkillRating } from "@/components/skill-rating-card";
 
 interface LifetimeStatsSlice {
@@ -27,12 +33,32 @@ interface PlayerDnaRadarProps {
   playerName: string;
 }
 
-// --- Archetype definitions ---
+// What each axis measures — shown in tooltip
+const AXIS_DESCRIPTIONS: Record<string, string> = {
+  Objective:
+    "How much you contribute to game objectives (flags, bombs, tickets). Derived from your objective score relative to your peers.",
+  "K/D Ratio":
+    "Your kill-to-death ratio normalised against the ranked player pool. 50 = average, 100 = elite.",
+  Lethality:
+    "Kills per minute — how quickly you eliminate enemies in a round. Rewards aggressive, high-tempo play.",
+  "Win Rate":
+    "How often your team wins when you are playing. Measures team impact beyond personal stats.",
+  Scoring:
+    "Average score per round relative to other ranked players. Reflects overall round contribution.",
+  Adaptability:
+    "Your performance consistency across different maps and game contexts. High = you perform well everywhere.",
+  Activity:
+    "Total rounds played this period. Reaches 100 at 400+ ranked rounds — shows how active you are.",
+  Roaming:
+    "Number of distinct servers you have played on (max 100 at 25+ servers). High = you roam the network; low = you are loyal to a home server.",
+};
+
+// --- Archetypes ---
 const ARCHETYPES: Array<{
   label: string;
   desc: string;
   color: string;
-  match: (axes: Record<string, number>) => boolean;
+  match: (a: Record<string, number>) => boolean;
 }> = [
   {
     label: "The Warlord",
@@ -48,9 +74,9 @@ const ARCHETYPES: Array<{
   },
   {
     label: "The Ghost",
-    desc: "Appears everywhere. Impossible to pin down. Masters every map.",
+    desc: "Appears everywhere. Impossible to pin down. Roams the whole network.",
     color: "#8b5cf6",
-    match: (a) => a["Versatility"] >= 65 && a["Adaptability"] >= 60,
+    match: (a) => a["Roaming"] >= 65 && a["Adaptability"] >= 55,
   },
   {
     label: "The Veteran",
@@ -83,11 +109,16 @@ function clamp01(v: number | undefined): number {
   return Math.max(0, Math.min(1, v));
 }
 
-export function PlayerDnaRadar({ breakdown, lifetimeStats, playerName }: PlayerDnaRadarProps) {
-  const rounds = lifetimeStats.total_rounds_played ?? 0;
-  const maps = lifetimeStats.unique_maps_played ?? lifetimeStats.unique_maps ?? 0;
+export function PlayerDnaRadar({
+  breakdown,
+  lifetimeStats,
+  playerName,
+}: PlayerDnaRadarProps) {
+  const rounds  = lifetimeStats.total_rounds_played ?? 0;
+  const servers = lifetimeStats.unique_servers_played ?? lifetimeStats.unique_servers ?? 0;
 
   // Normalise each axis to 0–100
+  // Roaming: 25 unique servers = 100. Most casuals are 1–5, regulars 5–15, nomads 25+.
   const axes: Record<string, number> = {
     Objective:    Math.round(clamp01(breakdown.obj_r)    * 100),
     "K/D Ratio":  Math.round(clamp01(breakdown.kdr_norm) * 100),
@@ -95,17 +126,15 @@ export function PlayerDnaRadar({ breakdown, lifetimeStats, playerName }: PlayerD
     "Win Rate":   Math.round(clamp01(breakdown.wr_norm)  * 100),
     Scoring:      Math.round(clamp01(breakdown.spr_norm) * 100),
     Adaptability: Math.round(clamp01(breakdown.mp_norm)  * 100),
-    Activity:     Math.round(Math.min(rounds / 400, 1)   * 100),
-    Versatility:  Math.round(Math.min(maps   / 16,  1)   * 100),
+    Activity:     Math.round(Math.min(rounds   / 400, 1) * 100),
+    Roaming:      Math.round(Math.min(servers  / 25,  1) * 100),
   };
 
   const chartData = Object.entries(axes).map(([axis, value]) => ({ axis, value }));
-
-  const archetype =
-    ARCHETYPES.find((a) => a.match(axes)) ?? DEFAULT_ARCHETYPE;
+  const archetype = ARCHETYPES.find((a) => a.match(axes)) ?? DEFAULT_ARCHETYPE;
 
   return (
-    <Card className="border-border/60 bg-card/40">
+    <Card className="border-border/60 bg-card/40 h-full">
       <CardHeader>
         <CardTitle as="h2" className="flex items-center gap-2">
           <Dna className="h-5 w-5 text-violet-400" />
@@ -121,7 +150,7 @@ export function PlayerDnaRadar({ breakdown, lifetimeStats, playerName }: PlayerD
                 <PolarGrid stroke="hsl(var(--border))" strokeOpacity={0.4} />
                 <PolarAngleAxis
                   dataKey="axis"
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                 />
                 <RechartsTooltip
                   contentStyle={{
@@ -130,7 +159,7 @@ export function PlayerDnaRadar({ breakdown, lifetimeStats, playerName }: PlayerD
                     borderRadius: "8px",
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => [`${v}/100`, "Score"]}
+                  formatter={(v: number) => [`${v} / 100`, "Score"]}
                 />
                 <Radar
                   dataKey="value"
@@ -155,36 +184,49 @@ export function PlayerDnaRadar({ breakdown, lifetimeStats, playerName }: PlayerD
                 background: archetype.color + "0d",
               }}
             >
-              <div
-                className="text-lg font-bold tracking-tight"
-                style={{ color: archetype.color }}
-              >
+              <div className="text-lg font-bold tracking-tight" style={{ color: archetype.color }}>
                 {archetype.label}
               </div>
               <div className="text-sm text-muted-foreground mt-1">{archetype.desc}</div>
             </div>
 
-            {/* Axis bars */}
-            <div className="space-y-2">
-              {chartData.map(({ axis, value }) => (
-                <div key={axis} className="flex items-center gap-2">
-                  <div className="w-24 text-xs text-muted-foreground shrink-0 text-right">{axis}</div>
-                  <div className="flex-1 h-1.5 rounded-full bg-muted/30 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${value}%`,
-                        background: archetype.color,
-                        opacity: 0.75,
-                      }}
-                    />
+            {/* Axis bars with tooltips */}
+            <TooltipProvider delayDuration={150}>
+              <div className="space-y-2">
+                {chartData.map(({ axis, value }) => (
+                  <div key={axis} className="flex items-center gap-2">
+                    {/* Label + info icon */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-24 flex items-center justify-end gap-1 shrink-0 cursor-help">
+                          <span className="text-xs text-muted-foreground truncate">{axis}</span>
+                          <Info className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="left"
+                        className="max-w-[220px] text-xs leading-snug"
+                      >
+                        {AXIS_DESCRIPTIONS[axis] ?? axis}
+                      </TooltipContent>
+                    </Tooltip>
+
+                    {/* Progress bar */}
+                    <div className="flex-1 h-1.5 rounded-full bg-muted/30 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${value}%`, background: archetype.color, opacity: 0.75 }}
+                      />
+                    </div>
+
+                    {/* Value */}
+                    <div className="w-7 text-right text-[10px] font-mono text-muted-foreground tabular-nums">
+                      {value}
+                    </div>
                   </div>
-                  <div className="w-7 text-right text-[10px] font-mono text-muted-foreground tabular-nums">
-                    {value}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </TooltipProvider>
           </div>
         </div>
       </CardContent>
