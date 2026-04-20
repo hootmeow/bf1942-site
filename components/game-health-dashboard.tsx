@@ -28,6 +28,10 @@ import {
   Trophy,
   Target,
   Timer,
+  Crosshair,
+  CalendarCheck,
+  Layers,
+  UserCheck,
 } from "lucide-react";
 import {
   ComposedChart,
@@ -158,6 +162,40 @@ interface SessionDistributionEntry {
   pct: number;
 }
 
+interface MapWinRateEntry {
+  map_name: string;
+  allied_wins: number;
+  axis_wins: number;
+  allied_pct: number;
+  axis_pct: number;
+  decisive_rounds: number;
+}
+
+interface RoundSizeEntry {
+  bucket: string;
+  count: number;
+  pct: number;
+}
+
+interface ServerConsistencyEntry {
+  server_name: string;
+  active_days: number;
+  total_rounds: number;
+}
+
+interface GametypeKillEntry {
+  gamemode: string;
+  total_rounds: number;
+  avg_kills_per_player: number;
+  avg_deaths_per_player: number;
+}
+
+interface PlayerEngagementEntry {
+  bucket: string;
+  player_count: number;
+  pct: number;
+}
+
 interface HealthData {
   ok: boolean;
   population_trend: PopulationEntry[];
@@ -182,6 +220,11 @@ interface HealthData {
   avg_score_trend?: AvgScoreEntry[];
   top_servers?: TopServerEntry[];
   session_distribution?: SessionDistributionEntry[];
+  map_win_rates?: MapWinRateEntry[];
+  round_size_distribution?: RoundSizeEntry[];
+  server_consistency?: ServerConsistencyEntry[];
+  gametype_kill_stats?: GametypeKillEntry[];
+  player_engagement_distribution?: PlayerEngagementEntry[];
 }
 
 interface GameHealthDashboardProps {
@@ -322,6 +365,11 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   const avg_score_trend = data.avg_score_trend ?? [];
   const top_servers = data.top_servers ?? [];
   const session_distribution = data.session_distribution ?? [];
+  const map_win_rates = data.map_win_rates ?? [];
+  const round_size_distribution = data.round_size_distribution ?? [];
+  const server_consistency = data.server_consistency ?? [];
+  const gametype_kill_stats = data.gametype_kill_stats ?? [];
+  const player_engagement_distribution = data.player_engagement_distribution ?? [];
   const avgRankedPct =
     round_quality_trend.length > 0
       ? Math.round(
@@ -1625,6 +1673,192 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </tbody>
                   </table>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Map Win Rate by Team */}
+      {map_win_rates.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <CardTitle as="h2" className="flex items-center gap-2">
+              <Crosshair className="h-5 w-5 text-red-400" />
+              Map Win Rate by Team ({period} Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={map_win_rates}
+                  layout="vertical"
+                  margin={{ top: 4, right: 48, left: 8, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                  <YAxis type="category" dataKey="map_name" tick={{ fontSize: 10 }} width={110} />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                    formatter={(v: number, name: string, props: { payload?: MapWinRateEntry }) => [
+                      `${v.toFixed(1)}% (${name === "Allied Win %" ? (props.payload?.allied_wins ?? 0) : (props.payload?.axis_wins ?? 0)} of ${props.payload?.decisive_rounds ?? 0} rounds)`,
+                      name,
+                    ]}
+                  />
+                  <Bar dataKey="allied_pct" name="Allied Win %" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} maxBarSize={20} />
+                  <Bar dataKey="axis_pct" name="Axis Win %" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} maxBarSize={20} />
+                  <ReferenceLine x={50} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" strokeOpacity={0.5} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Stacked win % per map — balanced maps sit near the 50% line. Only maps with ≥5 decisive rounds shown.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Round Size Distribution + Player Engagement Depth */}
+      {(round_size_distribution.length > 0 || player_engagement_distribution.length > 0) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {round_size_distribution.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-cyan-400" />
+                  Round Size Distribution ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={round_size_distribution} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                      <YAxis type="category" dataKey="bucket" tick={{ fontSize: 11 }} width={52} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number, _name: string, props: { payload?: RoundSizeEntry }) => [
+                          `${v.toFixed(1)}% (${(props.payload?.count ?? 0).toLocaleString()} rounds)`,
+                          "Share",
+                        ]}
+                      />
+                      <Bar dataKey="pct" name="% of Rounds" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                        {round_size_distribution.map((_entry, index) => {
+                          const colors = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#06b6d4"];
+                          return <Cell key={index} fill={colors[index % colors.length]} />;
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">Distribution of rounds by player count — shows whether servers are running full or mostly empty</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {player_engagement_distribution.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-emerald-400" />
+                  Player Engagement Depth ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={player_engagement_distribution} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                      <YAxis type="category" dataKey="bucket" tick={{ fontSize: 11 }} width={78} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number, _name: string, props: { payload?: PlayerEngagementEntry }) => [
+                          `${v.toFixed(1)}% (${(props.payload?.player_count ?? 0).toLocaleString()} players)`,
+                          "Share",
+                        ]}
+                      />
+                      <Bar dataKey="pct" name="% of Players" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                        {player_engagement_distribution.map((_entry, index) => {
+                          const colors = ["#6b7280", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6"];
+                          return <Cell key={index} fill={colors[index % colors.length]} />;
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">How many rounds each unique player played — shows casual vs dedicated player split</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Gametype Kill Stats + Server Consistency */}
+      {(gametype_kill_stats.length > 0 || server_consistency.length > 0) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {gametype_kill_stats.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Crosshair className="h-5 w-5 text-orange-400" />
+                  Combat Intensity by Game Mode ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[240px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={gametype_kill_stats} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} />
+                      <YAxis type="category" dataKey="gamemode" tick={{ fontSize: 11 }} width={90} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number, name: string) => [`${v.toFixed(1)}`, name]}
+                      />
+                      <Bar dataKey="avg_kills_per_player" name="Avg Kills / Player" fill="#ef4444" radius={[0, 4, 4, 0]} maxBarSize={24} />
+                      <Bar dataKey="avg_deaths_per_player" name="Avg Deaths / Player" fill="#6b7280" radius={[0, 4, 4, 0]} maxBarSize={24} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">Average kills and deaths per player per round, grouped by game mode (modes with ≥5 rounds)</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {server_consistency.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <CalendarCheck className="h-5 w-5 text-violet-400" />
+                  Server Consistency ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[340px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={server_consistency} layout="vertical" margin={{ top: 4, right: 48, left: 8, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} domain={[0, period]} tickFormatter={(v) => `${v}d`} />
+                      <YAxis type="category" dataKey="server_name" tick={{ fontSize: 10 }} width={120} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number, _name: string, props: { payload?: ServerConsistencyEntry }) => [
+                          `${v} days active (${(props.payload?.total_rounds ?? 0).toLocaleString()} rounds)`,
+                          "Active Days",
+                        ]}
+                      />
+                      <Bar dataKey="active_days" name="Active Days" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                        {server_consistency.map((_entry, index) => {
+                          const pct = _entry.active_days / period;
+                          const fill = pct >= 0.8 ? "#10b981" : pct >= 0.5 ? "#3b82f6" : pct >= 0.25 ? "#f59e0b" : "#ef4444";
+                          return <Cell key={index} fill={fill} />;
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">Days each server ran at least one round — green = high consistency, red = sporadic</p>
               </CardContent>
             </Card>
           )}
