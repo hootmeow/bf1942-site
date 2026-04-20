@@ -25,6 +25,9 @@ import {
   BarChart3,
   Clock,
   Zap,
+  Trophy,
+  Target,
+  Timer,
 } from "lucide-react";
 import {
   ComposedChart,
@@ -127,11 +130,32 @@ interface AvgPlayersPerRoundEntry {
 interface DailyKillsEntry {
   day: string;
   total_kills: number;
+  total_deaths?: number;
+  kd_ratio?: number;
 }
 
 interface FillRateEntry {
   day: string;
   fill_pct: number;
+}
+
+interface AvgScoreEntry {
+  day: string;
+  avg_score: number;
+}
+
+interface TopServerEntry {
+  server_name: string;
+  ip: string;
+  total_rounds: number;
+  avg_players: number;
+  total_player_rounds: number;
+}
+
+interface SessionDistributionEntry {
+  bucket: string;
+  count: number;
+  pct: number;
 }
 
 interface HealthData {
@@ -155,6 +179,9 @@ interface HealthData {
   avg_players_per_round_trend?: AvgPlayersPerRoundEntry[];
   daily_kills_trend?: DailyKillsEntry[];
   fill_rate_trend?: FillRateEntry[];
+  avg_score_trend?: AvgScoreEntry[];
+  top_servers?: TopServerEntry[];
+  session_distribution?: SessionDistributionEntry[];
 }
 
 interface GameHealthDashboardProps {
@@ -231,21 +258,44 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   globalMetrics,
 }: GameHealthDashboardProps) {
   const [period, setPeriod] = useState<7 | 30 | 90>(30);
-  const [data, setData] = useState<HealthData>(healthData);
+  const [periodCache, setPeriodCache] = useState<Partial<Record<7 | 30 | 90, HealthData>>>({ 30: healthData });
   const [loading, setLoading] = useState(false);
 
+  const cacheData = React.useCallback((days: 7 | 30 | 90, json: HealthData) => {
+    setPeriodCache((prev) => ({ ...prev, [days]: json }));
+  }, []);
+
+  // Pre-warm 7 and 90 day caches in the background on mount so switching is instant
   useEffect(() => {
-    if (period === 30) {
-      setData(healthData);
+    ([7, 90] as const).forEach((days) => {
+      fetch(`/api/v1/metrics/global/health?days=${days}`)
+        .then((r) => r.json())
+        .then((json) => { if (json.ok) cacheData(days, json); })
+        .catch(() => {});
+    });
+  }, [cacheData]);
+
+  // When SSR prop refreshes (e.g. navigation), sync the 30-day cache entry
+  useEffect(() => {
+    cacheData(30, healthData);
+  }, [healthData, cacheData]);
+
+  // currentData drives loading state and on-demand fetch when pre-warm hasn't finished
+  const currentData = periodCache[period];
+  useEffect(() => {
+    if (currentData) {
+      setLoading(false);
       return;
     }
     setLoading(true);
     fetch(`/api/v1/metrics/global/health?days=${period}`)
       .then((r) => r.json())
-      .then((json) => { if (json.ok) setData(json); })
+      .then((json) => { if (json.ok) cacheData(period, json); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [period, healthData]);
+  }, [period, currentData, cacheData]);
+
+  const data = currentData ?? periodCache[30] ?? healthData;
 
   const {
     population_trend,
@@ -269,6 +319,9 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   const avg_players_per_round_trend = data.avg_players_per_round_trend ?? [];
   const daily_kills_trend = data.daily_kills_trend ?? [];
   const fill_rate_trend = data.fill_rate_trend ?? [];
+  const avg_score_trend = data.avg_score_trend ?? [];
+  const top_servers = data.top_servers ?? [];
+  const session_distribution = data.session_distribution ?? [];
   const avgRankedPct =
     round_quality_trend.length > 0
       ? Math.round(
@@ -461,7 +514,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle as="h2" className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              Population Trend (30 Days)
+              Population Trend ({period} Days)
             </CardTitle>
             <div className="flex flex-wrap gap-3 text-sm">
               <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
@@ -584,7 +637,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle as="h2" className="flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-green-400" />
-                New vs Returning Players (30 Days)
+                New vs Returning Players ({period} Days)
               </CardTitle>
               {retentionStats && (
                 <div className="flex flex-wrap gap-3 text-sm">
@@ -684,7 +737,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           <CardHeader>
             <CardTitle as="h2" className="flex items-center gap-2">
               <Server className="h-5 w-5 text-amber-400" />
-              Active Servers (30 Days)
+              Active Servers ({period} Days)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -760,7 +813,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           <CardHeader>
             <CardTitle as="h2" className="flex items-center gap-2">
               <Swords className="h-5 w-5 text-blue-400" />
-              Rounds Played (30 Days)
+              Rounds Played ({period} Days)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -839,7 +892,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle as="h2" className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-emerald-400" />
-                Round Quality (30 Days)
+                Round Quality ({period} Days)
               </CardTitle>
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-1.5">
@@ -926,7 +979,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle as="h2" className="flex items-center gap-2">
                 <Map className="h-5 w-5 text-cyan-400" />
-                Map Popularity (30 Days)
+                Map Popularity ({period} Days)
               </CardTitle>
               <div className="flex items-center gap-1 rounded-lg border border-border/40 bg-muted/30 p-0.5">
                 <button
@@ -1106,7 +1159,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         <CardHeader>
           <CardTitle as="h2" className="flex items-center gap-2">
             <Gamepad2 className="h-5 w-5 text-pink-400" />
-            Game Mode Breakdown (Last 7 Days)
+            Game Mode Breakdown (Last {period} Days)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1175,7 +1228,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle as="h2" className="flex items-center gap-2">
                 <Wifi className="h-5 w-5 text-sky-400" />
-                Network Quality (30 Days)
+                Network Quality ({period} Days)
               </CardTitle>
               {pingStats && (
                 <div className="flex flex-wrap gap-3 text-sm">
@@ -1279,7 +1332,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               <CardHeader>
                 <CardTitle as="h2" className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-sky-400" />
-                  Avg Round Duration (30 Days)
+                  Avg Round Duration ({period} Days)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1313,7 +1366,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               <CardHeader>
                 <CardTitle as="h2" className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-emerald-400" />
-                  Avg Players per Round (30 Days)
+                  Avg Players per Round ({period} Days)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1351,7 +1404,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle as="h2" className="flex items-center gap-2">
                 <Swords className="h-5 w-5 text-red-400" />
-                Team Win Balance (30 Days)
+                Team Win Balance ({period} Days)
               </CardTitle>
               <p className="text-xs text-muted-foreground">Percentage of decisive rounds won by each faction</p>
             </div>
@@ -1383,33 +1436,80 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         </Card>
       )}
 
-      {/* Daily Kills + Server Fill Rate */}
-      {(daily_kills_trend.length > 0 || fill_rate_trend.length > 0) && (
+      {/* Daily Combat Stats (Kills + Deaths + K/D) */}
+      {daily_kills_trend.length > 0 && (
+        <Card className="border-border/60 bg-card/40">
+          <CardHeader>
+            <CardTitle as="h2" className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-400" />
+              Daily Combat Activity ({period} Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={daily_kills_trend} margin={{ top: 5, right: 48, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} vertical={false} />
+                  <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(daily_kills_trend.length)} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 11 }} width={46} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} width={36} domain={[0, "auto"]} tickFormatter={(v: number) => v.toFixed(1)} />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                    formatter={(v: number, name: string) => {
+                      if (name === "K/D Ratio") return [v.toFixed(2), name];
+                      return [v.toLocaleString(), name];
+                    }}
+                    labelFormatter={formatDay}
+                  />
+                  <Bar yAxisId="left" dataKey="total_kills" name="Kills" fill="#f59e0b" radius={[3, 3, 0, 0]} maxBarSize={14} />
+                  <Bar yAxisId="left" dataKey="total_deaths" name="Deaths" fill="#ef4444" radius={[3, 3, 0, 0]} maxBarSize={14} />
+                  <Line yAxisId="right" type="monotone" dataKey="kd_ratio" name="K/D Ratio" stroke="#10b981" strokeWidth={2} dot={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-amber-400" />Kills</div>
+              <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-red-500" />Deaths</div>
+              <div className="flex items-center gap-1.5"><div className="h-0.5 w-4 bg-emerald-400" />K/D Ratio (right axis)</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Avg Score + Server Fill Rate */}
+      {(avg_score_trend.length > 0 || fill_rate_trend.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
-          {daily_kills_trend.length > 0 && (
+          {avg_score_trend.length > 0 && (
             <Card className="border-border/60 bg-card/40">
               <CardHeader>
                 <CardTitle as="h2" className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-amber-400" />
-                  Daily Total Kills (30 Days)
+                  <Target className="h-5 w-5 text-cyan-400" />
+                  Avg Player Score per Round ({period} Days)
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={daily_kills_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                    <AreaChart data={avg_score_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="avgScoreGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} vertical={false} />
-                      <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(daily_kills_trend.length)} />
-                      <YAxis tick={{ fontSize: 11 }} width={42} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v} />
+                      <XAxis dataKey="day" tickFormatter={formatDay} tick={{ fontSize: 11 }} interval={tickInterval(avg_score_trend.length)} />
+                      <YAxis tick={{ fontSize: 11 }} width={42} />
                       <RechartsTooltip
                         contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
-                        formatter={(v: number) => [v.toLocaleString(), "Total Kills"]}
+                        formatter={(v: number) => [v.toLocaleString(), "Avg Score"]}
                         labelFormatter={formatDay}
                       />
-                      <Bar dataKey="total_kills" fill="#f59e0b" radius={[3, 3, 0, 0]} maxBarSize={20} />
-                    </BarChart>
+                      <Area type="monotone" dataKey="avg_score" stroke="#06b6d4" strokeWidth={2} fill="url(#avgScoreGrad)" dot={false} />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground">Average final score per player per round across all non-blacklisted servers</p>
               </CardContent>
             </Card>
           )}
@@ -1419,7 +1519,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               <CardHeader>
                 <CardTitle as="h2" className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-violet-400" />
-                  Server Fill Rate (30 Days)
+                  Server Fill Rate ({period} Days)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1445,6 +1545,86 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">Avg % of server slots occupied when servers had at least 1 player</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Session Length Distribution + Top Servers */}
+      {(session_distribution.length > 0 || top_servers.length > 0) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {session_distribution.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Timer className="h-5 w-5 text-orange-400" />
+                  Session Length Distribution ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={session_distribution} layout="vertical" margin={{ top: 5, right: 48, left: 4, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.08} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                      <YAxis type="category" dataKey="bucket" tick={{ fontSize: 11 }} width={70} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        formatter={(v: number, _name: string, props: { payload?: { count?: number } }) => [
+                          `${v.toFixed(1)}% (${(props.payload?.count ?? 0).toLocaleString()} sessions)`,
+                          "Share",
+                        ]}
+                      />
+                      <Bar dataKey="pct" name="% of Sessions" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                        {session_distribution.map((_entry, index) => {
+                          const colors = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6"];
+                          return <Cell key={index} fill={colors[index % colors.length]} />;
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">Distribution of per-player session lengths (rounds &gt; 60s) across the network</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {top_servers.length > 0 && (
+            <Card className="border-border/60 bg-card/40">
+              <CardHeader>
+                <CardTitle as="h2" className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-400" />
+                  Most Active Servers ({period} Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/40 text-xs text-muted-foreground uppercase">
+                        <th className="px-4 py-2.5 text-left font-medium">#</th>
+                        <th className="px-4 py-2.5 text-left font-medium">Server</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Rounds</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Avg Players</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {top_servers.map((server, i) => (
+                        <tr key={i} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                          <td className="px-4 py-2 text-muted-foreground font-mono text-xs">{i + 1}</td>
+                          <td className="px-4 py-2 max-w-[160px]">
+                            <span className="font-medium truncate block text-xs leading-tight" title={server.server_name}>
+                              {server.server_name}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-right font-mono text-xs tabular-nums">{server.total_rounds.toLocaleString()}</td>
+                          <td className="px-4 py-2 text-right font-mono text-xs tabular-nums">{server.avg_players}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           )}
