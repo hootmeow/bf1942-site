@@ -3,7 +3,7 @@
 import { useReducer, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Activity, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, TrendingDown, Map as MapIcon, Crosshair } from "lucide-react";
+import { Activity, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, TrendingDown, Clock } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -61,26 +61,6 @@ function homeReducer(state: HomeState, action: HomeAction): HomeState {
     default:
       return state;
   }
-}
-
-// Deterministic pseudo-random pings for the radar — stable across renders
-const RADAR_PINGS = [
-  { x: 22, y: 34, delay: 0 },
-  { x: 68, y: 18, delay: 0.6 },
-  { x: 81, y: 62, delay: 1.2 },
-  { x: 14, y: 71, delay: 1.8 },
-  { x: 47, y: 52, delay: 2.4 },
-  { x: 58, y: 82, delay: 0.3 },
-  { x: 35, y: 14, delay: 1.5 },
-  { x: 88, y: 38, delay: 2.1 },
-];
-
-function formatMapName(raw: string): string {
-  return raw
-    .split("/").pop()!
-    .replace(/\.[a-z0-9]+$/i, "")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 export default function HomeClient() {
@@ -145,7 +125,6 @@ export default function HomeClient() {
 
   const { data, topServers, allServers, loading, error } = state;
 
-  // Derived chart stats — always called (hooks rule), null-safe
   const chartStats = useMemo(() => {
     if (!data) return null;
     const tl = data.global_concurrency_timeline_24h ?? [];
@@ -156,10 +135,23 @@ export default function HomeClient() {
     return { peak, avg };
   }, [data]);
 
+  // Hourly activity buckets — derived from heatmap (length 24, indexed by hour-of-day)
+  const hourlyActivity = useMemo(() => {
+    if (!data) return null;
+    const raw = data.global_concurrency_heatmap_24h ?? [];
+    if (raw.length === 0) return null;
+    // Normalize to length 24 in case the source is offset; we trust it's hour-keyed already
+    const hours = Array.from({ length: 24 }, (_, h) => raw[h] ?? 0);
+    const max = Math.max(...hours, 1);
+    const peakHour = hours.indexOf(max);
+    const currentHour = new Date().getHours();
+    return { hours, max, peakHour, currentHour };
+  }, [data]);
+
   if (loading) {
     return (
       <div className="space-y-8 pb-8">
-        <Skeleton className="h-[360px] sm:h-[420px] w-full rounded-2xl sm:rounded-3xl" />
+        <Skeleton className="h-[340px] sm:h-[380px] w-full rounded-2xl" />
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 w-9 rounded-lg" />
@@ -190,192 +182,144 @@ export default function HomeClient() {
 
   const activeServerCount = allServers.filter(s => s.current_state === "ACTIVE").length;
   const totalServerCount = allServers.length;
-  const totalPlayerCapacity = allServers.reduce((sum, s) => sum + (s.current_max_players || 0), 0);
-
-  const weekChange = data.active_players_7d_change_pct;
-  const dayChange = data.active_players_24h_change_pct;
-
-  // Top maps from popular_maps_7_days, normalized
-  const topMaps = (data.popular_maps_7_days ?? [])
-    .slice(0, 6)
-    .map(m => ({
-      name: formatMapName(m.map_name),
-      rounds: m.rounds_played,
-    }));
-  const maxRounds = topMaps.length > 0 ? Math.max(...topMaps.map(m => m.rounds)) : 1;
 
   return (
     <div className="space-y-6 pb-8 sm:space-y-8">
       {/* ============================================================
-           HERO — Command Center
+           HERO — "Frontline"  (muted military, no HUD cosplay)
          ============================================================ */}
-      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-[#070912] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]">
-        {/* Layered atmosphere */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0a0e1d] to-black pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_10%,rgba(34,197,94,0.10),transparent_60%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_90%_100%,rgba(59,130,246,0.08),transparent_60%)] pointer-events-none" />
+      <section className="relative overflow-hidden rounded-2xl border border-border/60 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]">
+        {/* Base — deep field gradient with subtle olive tint */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#10130d] via-[#13160f] to-[#0b0d09]" />
+        {/* Warm rim light bottom-right */}
+        <div className="absolute -right-32 -bottom-32 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(202,138,4,0.18),transparent_60%)] pointer-events-none" />
+        {/* Cool rim light top-left */}
+        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(120,140,98,0.12),transparent_60%)] pointer-events-none" />
 
-        {/* Topographic grid */}
+        {/* Topographic contour lines — SVG */}
+        <svg
+          aria-hidden
+          className="absolute inset-0 h-full w-full pointer-events-none"
+          preserveAspectRatio="none"
+          viewBox="0 0 1200 500"
+        >
+          <defs>
+            <linearGradient id="topoFade" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="rgba(180,170,120,0.0)" />
+              <stop offset="0.4" stopColor="rgba(180,170,120,0.18)" />
+              <stop offset="1" stopColor="rgba(180,170,120,0.0)" />
+            </linearGradient>
+          </defs>
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
+            const baseY = 80 + i * 48;
+            const amp = 18 + (i % 3) * 6;
+            const phase = i * 0.6;
+            // Smooth hand-drawn-ish path
+            const pts = Array.from({ length: 13 }, (_, k) => {
+              const x = (k / 12) * 1200;
+              const y = baseY + Math.sin(k * 0.7 + phase) * amp + Math.cos(k * 0.3 + phase) * (amp * 0.4);
+              return `${k === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+            }).join(" ");
+            return (
+              <path
+                key={i}
+                d={pts}
+                fill="none"
+                stroke="url(#topoFade)"
+                strokeWidth={i % 4 === 0 ? 1.4 : 0.7}
+                opacity={0.5}
+              />
+            );
+          })}
+        </svg>
+
+        {/* Diagonal stencil stripe — subtle, like painted insignia */}
         <div
-          className="absolute inset-0 opacity-[0.18] pointer-events-none"
+          className="absolute right-0 top-0 bottom-0 w-1/3 opacity-[0.04] pointer-events-none mix-blend-screen"
           style={{
-            backgroundImage: `linear-gradient(rgba(74,222,128,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(74,222,128,0.06) 1px, transparent 1px)`,
-            backgroundSize: "56px 56px",
-            maskImage: "radial-gradient(ellipse 100% 80% at 50% 50%, black 40%, transparent 95%)",
-            WebkitMaskImage: "radial-gradient(ellipse 100% 80% at 50% 50%, black 40%, transparent 95%)",
+            backgroundImage: "repeating-linear-gradient(135deg, rgba(255,240,200,0.7) 0 2px, transparent 2px 14px)",
+            maskImage: "linear-gradient(to left, black, transparent)",
+            WebkitMaskImage: "linear-gradient(to left, black, transparent)",
           }}
         />
 
-        {/* Drifting scanline */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
-          <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent animate-scanline" />
-        </div>
-
-        {/* Pulsing pings, scattered like server geo-pings */}
-        <div className="absolute inset-0 pointer-events-none">
-          {RADAR_PINGS.map((p, i) => (
-            <div
+        {/* Drifting embers — atmosphere */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[15, 32, 48, 64, 78, 88].map((x, i) => (
+            <span
               key={i}
-              className="absolute"
-              style={{ left: `${p.x}%`, top: `${p.y}%` }}
-            >
-              <span className="relative flex h-1.5 w-1.5">
-                <span
-                  className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 animate-radar-ping"
-                  style={{ animationDelay: `${p.delay}s` }}
-                />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400/70 shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
-              </span>
-            </div>
+              className="absolute bottom-0 h-1 w-1 rounded-full bg-amber-300/40 blur-[1px] animate-ember"
+              style={{
+                left: `${x}%`,
+                animationDelay: `${i * 1.7}s`,
+                animationDuration: `${10 + i}s`,
+              }}
+            />
           ))}
         </div>
 
-        {/* HUD corner brackets */}
-        <div className="absolute top-3 left-3 sm:top-5 sm:left-5 w-6 h-6 sm:w-8 sm:h-8 border-t-2 border-l-2 border-emerald-400/40 pointer-events-none" />
-        <div className="absolute top-3 right-3 sm:top-5 sm:right-5 w-6 h-6 sm:w-8 sm:h-8 border-t-2 border-r-2 border-emerald-400/40 pointer-events-none" />
-        <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 w-6 h-6 sm:w-8 sm:h-8 border-b-2 border-l-2 border-emerald-400/40 pointer-events-none" />
-        <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 w-6 h-6 sm:w-8 sm:h-8 border-b-2 border-r-2 border-emerald-400/40 pointer-events-none" />
+        {/* Faint film grain via box-shadow stipple — using a layered radial */}
+        <div
+          className="absolute inset-0 opacity-[0.06] mix-blend-overlay pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)",
+            backgroundSize: "3px 3px, 7px 7px",
+            backgroundPosition: "0 0, 1px 2px",
+          }}
+        />
 
-        <div className="relative z-10 px-5 py-8 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 lg:gap-12 items-center">
-            {/* Left — primary readout */}
+        <div className="relative z-10 px-5 py-9 sm:px-10 sm:py-14 lg:px-14">
+          {/* Tagline */}
+          <div className="flex items-center gap-3 mb-7">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-amber-400/50" />
+            <span className="text-[10px] font-semibold tracking-[0.32em] uppercase text-amber-200/70">
+              Battlefield 1942 · Online Now
+            </span>
+            <div className="h-px flex-1 bg-gradient-to-r from-amber-400/30 to-transparent" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 lg:gap-14 items-end">
+            {/* Left — count + headline */}
             <div className="min-w-0">
-              {/* Tag row */}
-              <div className="flex flex-wrap items-center gap-3 mb-7">
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 backdrop-blur">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                  </span>
-                  <span className="text-[10px] font-mono tracking-[0.2em] font-semibold text-emerald-300 uppercase">
-                    Live Feed
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono tracking-[0.18em] text-slate-500 uppercase animate-hud-flicker">
-                  Channel · Global · BF1942
-                </span>
+              <div className="text-[5.5rem] sm:text-[7rem] lg:text-[9.5rem] font-black leading-[0.82] tracking-tight tabular-nums text-stone-100 [text-shadow:0_2px_24px_rgba(0,0,0,0.4)]">
+                <AnimatedCounter value={data.current_active_players} duration={1500} />
               </div>
-
-              {/* Massive count */}
-              <div className="relative">
-                <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-emerald-400/70 mb-3">
-                  // Soldiers Deployed
-                </p>
-                <div className="flex items-baseline gap-4 flex-wrap">
-                  <div className="text-7xl sm:text-8xl lg:text-[9rem] font-black tabular-nums leading-[0.85] tracking-tighter bg-gradient-to-b from-white via-white to-emerald-200/80 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(74,222,128,0.15)]">
-                    <AnimatedCounter value={data.current_active_players} duration={1500} />
-                  </div>
-                  <div className="text-emerald-400/50 font-mono text-2xl sm:text-3xl pb-2 animate-hud-pulse">
-                    ◢
-                  </div>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                  <span className="text-slate-300">
-                    Across <span className="text-emerald-400 font-semibold tabular-nums">{activeServerCount}</span> active fronts
-                  </span>
-                  <span className="text-slate-600">·</span>
-                  <span className="text-slate-400 font-mono text-xs tracking-wide">
-                    {totalServerCount} servers tracked
-                  </span>
-                  <span className="text-slate-600">·</span>
-                  <span className="text-slate-400 font-mono text-xs tracking-wide">
-                    {totalPlayerCapacity.toLocaleString()} max capacity
-                  </span>
-                </div>
-              </div>
-
-              {/* Stat tiles */}
-              <div className="mt-9 grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl">
-                <StatTile
-                  label="Last 24h"
-                  value={data.active_players_24h.toLocaleString()}
-                  changePct={dayChange}
-                  icon={<Activity className="h-3.5 w-3.5" />}
-                  accent="blue"
-                />
-                <StatTile
-                  label="Last 7 Days"
-                  value={data.active_players_7d.toLocaleString()}
-                  changePct={weekChange}
-                  icon={<TrendingUp className="h-3.5 w-3.5" />}
-                  accent="emerald"
-                />
-                <StatTile
-                  label="Total Tracked"
-                  value={data.total_players_seen.toLocaleString()}
-                  icon={<Crosshair className="h-3.5 w-3.5" />}
-                  accent="amber"
-                  className="col-span-2 sm:col-span-1"
-                />
-              </div>
+              <h1 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-stone-200">
+                Players in combat <span className="text-amber-300/90">right now</span>
+              </h1>
+              <p className="mt-3 max-w-xl text-sm sm:text-base text-stone-400/90 leading-relaxed">
+                Live telemetry from{" "}
+                <span className="font-semibold text-stone-200">{activeServerCount}</span>
+                {" "}of{" "}
+                <span className="font-semibold text-stone-200">{totalServerCount}</span>
+                {" "}tracked servers worldwide. Updated continuously as battles unfold.
+              </p>
             </div>
 
-            {/* Right — radar visual (hidden on small screens) */}
-            <div className="hidden lg:flex items-center justify-center shrink-0">
-              <div className="relative w-[280px] h-[280px] xl:w-[320px] xl:h-[320px]">
-                {/* Concentric rings */}
-                <div className="absolute inset-0 rounded-full border border-emerald-400/20" />
-                <div className="absolute inset-[12%] rounded-full border border-emerald-400/15" />
-                <div className="absolute inset-[28%] rounded-full border border-emerald-400/10" />
-                <div className="absolute inset-[44%] rounded-full border border-emerald-400/10" />
-                {/* Crosshair lines */}
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-emerald-400/15" />
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-emerald-400/15" />
-                {/* Center dot */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(74,222,128,0.9)]" />
-                </div>
-                {/* Sweep arm */}
-                <div className="absolute inset-0 animate-radar-sweep">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: "conic-gradient(from 0deg, transparent 0deg, transparent 320deg, rgba(74,222,128,0.0) 330deg, rgba(74,222,128,0.45) 358deg, rgba(74,222,128,0.0) 360deg)",
-                      maskImage: "radial-gradient(circle, black 60%, transparent 100%)",
-                      WebkitMaskImage: "radial-gradient(circle, black 60%, transparent 100%)",
-                    }}
-                  />
-                </div>
-                {/* Active server markers — scaled to active count */}
-                <ServerMarker x={62} y={28} delay="0s" />
-                <ServerMarker x={28} y={48} delay="0.7s" />
-                <ServerMarker x={72} y={66} delay="1.3s" />
-                <ServerMarker x={50} y={78} delay="2.0s" />
-                {/* Outer label */}
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[9px] font-mono tracking-[0.3em] text-emerald-400/60 uppercase">
-                  Sector Scan
-                </div>
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-mono tracking-[0.3em] text-emerald-400/40 uppercase">
-                  {activeServerCount} contacts
-                </div>
-              </div>
+            {/* Right — dog-tag style stat plates */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+              <DogTag
+                label="Last 24 Hours"
+                value={data.active_players_24h.toLocaleString()}
+                sub="unique players"
+                changePct={data.active_players_24h_change_pct}
+                changeLabel="vs yesterday"
+              />
+              <DogTag
+                label="Last 7 Days"
+                value={data.active_players_7d.toLocaleString()}
+                sub="unique players"
+                changePct={data.active_players_7d_change_pct}
+                changeLabel="vs prior week"
+              />
             </div>
           </div>
         </div>
       </section>
 
       {/* ============================================================
-           Top Active Servers (UNCHANGED behavior)
+           Top Active Servers (UNCHANGED)
          ============================================================ */}
       <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between">
@@ -419,26 +363,18 @@ export default function HomeClient() {
       </div>
 
       {/* ============================================================
-           Player Activity (improved)  +  Top Maps (replaces redundant Server Network)
+           Player Activity  +  Peak Hours
          ============================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Player Activity — bigger, more cinematic */}
-        <Card className="lg:col-span-2 border-border/60 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-emerald-500/[0.03] pointer-events-none" />
-          <CardHeader className="pb-3 border-b border-border/40 relative">
+        <Card className="lg:col-span-2 border-border/60 overflow-hidden">
+          <CardHeader className="pb-3 border-b border-border/40">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="rounded-md bg-primary/10 p-1.5 text-primary ring-1 ring-primary/20">
                   <Activity className="h-4 w-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                    Player Activity
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono tracking-widest uppercase text-emerald-400/80">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Live
-                    </span>
-                  </CardTitle>
+                  <CardTitle className="text-base sm:text-lg">Player Activity</CardTitle>
                   <CardDescription className="text-xs">Global concurrency over time</CardDescription>
                 </div>
               </div>
@@ -449,7 +385,6 @@ export default function HomeClient() {
               </Button>
             </div>
 
-            {/* Stat strip */}
             {chartStats && (
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-4">
                 <ChartStatBadge label="Now" value={data.current_active_players.toLocaleString()} accent="emerald" />
@@ -458,7 +393,7 @@ export default function HomeClient() {
               </div>
             )}
           </CardHeader>
-          <CardContent className="p-3 sm:p-5 relative">
+          <CardContent className="p-3 sm:p-5">
             <PlayerActivityChart
               data24h={data.global_concurrency_timeline_24h || data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_timeline_7d || data.global_concurrency_heatmap_7d}
@@ -466,79 +401,28 @@ export default function HomeClient() {
           </CardContent>
         </Card>
 
-        {/* Top Maps — replaces redundant Server Network */}
-        <Card className="border-border/60 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.04] via-transparent to-transparent pointer-events-none" />
-          <CardHeader className="pb-2 border-b border-border/40 relative">
+        {/* Peak Hours — distinct from the timeline chart, no overlap with active-server cards */}
+        <Card className="border-border/60 overflow-hidden">
+          <CardHeader className="pb-2 border-b border-border/40">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="rounded-md bg-amber-500/10 p-1.5 text-amber-500 ring-1 ring-amber-500/20">
-                <MapIcon className="h-4 w-4" />
+                <Clock className="h-4 w-4" />
               </div>
               <div>
-                <CardTitle className="text-base sm:text-lg">Most Played Maps</CardTitle>
-                <CardDescription className="text-xs">Past 7 days · by rounds played</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Peak Hours</CardTitle>
+                <CardDescription className="text-xs">When the servers fill up · your local time</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4 relative">
-            {topMaps.length > 0 ? (
-              <ol className="space-y-2.5">
-                {topMaps.map((m, idx) => {
-                  const pct = (m.rounds / maxRounds) * 100;
-                  const isTop = idx === 0;
-                  return (
-                    <li key={m.name + idx} className="group">
-                      <Link href={`/wiki/maps`} className="block">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={cn(
-                              "shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-mono font-bold tabular-nums",
-                              isTop
-                                ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40"
-                                : "bg-muted/40 text-muted-foreground"
-                            )}
-                          >
-                            {idx + 1}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-baseline justify-between gap-2 mb-1">
-                              <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                                {m.name}
-                              </p>
-                              <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
-                                {m.rounds.toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="h-1.5 rounded-full bg-border/40 overflow-hidden">
-                              <div
-                                className={cn(
-                                  "h-full rounded-full transition-all duration-700",
-                                  isTop
-                                    ? "bg-gradient-to-r from-amber-500 to-orange-400"
-                                    : "bg-gradient-to-r from-primary/70 to-primary/40"
-                                )}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ol>
+          <CardContent className="p-4">
+            {hourlyActivity ? (
+              <PeakHours data={hourlyActivity} />
             ) : (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                <MapIcon className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                No map data yet.
+                <Clock className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                Hourly data unavailable.
               </div>
             )}
-
-            <Button asChild variant="ghost" size="sm" className="w-full text-xs text-muted-foreground h-8 mt-4">
-              <Link href="/wiki/maps">
-                Browse map wiki <ArrowRight className="ml-1.5 h-3 w-3" />
-              </Link>
-            </Button>
           </CardContent>
         </Card>
 
@@ -555,73 +439,139 @@ export default function HomeClient() {
 
 /* --------------------- Sub-components --------------------- */
 
-const accentMap = {
-  emerald: { text: "text-emerald-400", bg: "bg-emerald-500/10", ring: "ring-emerald-500/30", border: "border-emerald-500/20" },
-  blue:    { text: "text-blue-400",    bg: "bg-blue-500/10",    ring: "ring-blue-500/30",    border: "border-blue-500/20" },
-  amber:   { text: "text-amber-400",   bg: "bg-amber-500/10",   ring: "ring-amber-500/30",   border: "border-amber-500/20" },
-} as const;
-
-function StatTile({
+function DogTag({
   label,
   value,
+  sub,
   changePct,
-  icon,
-  accent,
-  className,
+  changeLabel,
 }: {
   label: string;
   value: string;
+  sub?: string;
   changePct?: number;
-  icon: React.ReactNode;
-  accent: keyof typeof accentMap;
-  className?: string;
+  changeLabel?: string;
 }) {
-  const c = accentMap[accent];
   const positive = (changePct ?? 0) >= 0;
   return (
-    <div className={cn(
-      "relative rounded-lg border bg-white/[0.025] backdrop-blur p-3.5 overflow-hidden",
-      "border-white/[0.08] hover:border-white/[0.14] transition-colors",
-      className
-    )}>
-      <div className="flex items-center gap-1.5 mb-2">
-        <div className={cn("rounded p-1", c.bg, c.text)}>{icon}</div>
-        <p className="text-[10px] font-mono tracking-[0.18em] uppercase text-slate-400">{label}</p>
+    <div className="relative rounded-lg border border-stone-700/40 bg-gradient-to-br from-stone-900/80 to-stone-950/60 backdrop-blur-sm p-4 overflow-hidden">
+      {/* Edge accent */}
+      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r bg-gradient-to-b from-amber-500/70 via-amber-600/30 to-transparent" />
+      <div className="pl-2">
+        <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-stone-400">{label}</p>
+        <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
+          <span className="text-3xl sm:text-4xl font-bold tabular-nums text-stone-100 leading-none">
+            {value}
+          </span>
+          {sub && <span className="text-xs text-stone-500">{sub}</span>}
+        </div>
+        {typeof changePct === "number" && (
+          <p className={cn(
+            "mt-2.5 text-xs font-medium flex items-center gap-1.5",
+            positive ? "text-emerald-400/90" : "text-red-400/90"
+          )}>
+            {positive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+            <span className="tabular-nums">{positive ? "+" : ""}{changePct.toFixed(0)}%</span>
+            {changeLabel && <span className="text-stone-500 font-normal">{changeLabel}</span>}
+          </p>
+        )}
       </div>
-      <p className="text-2xl sm:text-3xl font-black tabular-nums text-white leading-none">{value}</p>
-      {typeof changePct === "number" && (
-        <p className={cn("mt-2 text-[10px] font-mono font-semibold flex items-center gap-1",
-          positive ? "text-emerald-400" : "text-red-400"
-        )}>
-          {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-          {positive ? "+" : ""}{changePct.toFixed(0)}%
-          <span className="text-slate-500 font-normal ml-1">vs prior</span>
-        </p>
-      )}
     </div>
   );
 }
+
+const accentMap = {
+  emerald: { text: "text-emerald-400", border: "border-emerald-500/20" },
+  blue:    { text: "text-blue-400",    border: "border-blue-500/20" },
+  amber:   { text: "text-amber-400",   border: "border-amber-500/20" },
+} as const;
 
 function ChartStatBadge({ label, value, accent }: { label: string; value: string; accent: keyof typeof accentMap }) {
   const c = accentMap[accent];
   return (
     <div className={cn("rounded-lg border bg-card/40 px-3 py-2", c.border)}>
-      <p className="text-[9px] font-mono tracking-widest uppercase text-muted-foreground">{label}</p>
+      <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">{label}</p>
       <p className={cn("text-lg sm:text-xl font-bold tabular-nums leading-tight", c.text)}>{value}</p>
     </div>
   );
 }
 
-function ServerMarker({ x, y, delay }: { x: number; y: number; delay: string }) {
+function PeakHours({ data }: { data: { hours: number[]; max: number; peakHour: number; currentHour: number } }) {
+  const { hours, max, peakHour, currentHour } = data;
+
+  const formatHour = (h: number) => {
+    const suffix = h >= 12 ? "p" : "a";
+    const display = h % 12 === 0 ? 12 : h % 12;
+    return `${display}${suffix}`;
+  };
+
   return (
-    <div className="absolute" style={{ left: `${x}%`, top: `${y}%` }}>
-      <span className="relative flex h-2 w-2 -translate-x-1 -translate-y-1">
-        <span
-          className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 animate-radar-ping"
-          style={{ animationDelay: delay }}
-        />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(74,222,128,0.9)]" />
-      </span>
+    <div className="space-y-3">
+      {/* Peak callout */}
+      <div className="flex items-baseline justify-between pb-2 border-b border-border/40">
+        <div>
+          <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Peak time</p>
+          <p className="text-xl font-bold text-amber-400 leading-tight">
+            {formatHour(peakHour)} – {formatHour((peakHour + 1) % 24)}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Right now</p>
+          <p className="text-xl font-bold text-emerald-400 tabular-nums leading-tight">
+            {hours[currentHour].toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      {/* 24-hour bar grid */}
+      <div className="flex items-end gap-[3px] h-[140px]">
+        {hours.map((v, h) => {
+          const pct = (v / max) * 100;
+          const isCurrent = h === currentHour;
+          const isPeak = h === peakHour;
+          return (
+            <div key={h} className="group relative flex-1 flex flex-col justify-end">
+              <div
+                className={cn(
+                  "w-full rounded-sm transition-all",
+                  isPeak
+                    ? "bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]"
+                    : isCurrent
+                    ? "bg-gradient-to-t from-emerald-600 to-emerald-400"
+                    : "bg-stone-600/50 group-hover:bg-stone-500/70"
+                )}
+                style={{ height: `${Math.max(pct, 4)}%`, minHeight: "3px" }}
+              />
+              {/* Hover tooltip */}
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block z-10 pointer-events-none">
+                <div className="bg-popover border border-border rounded px-1.5 py-0.5 text-[10px] font-mono whitespace-nowrap shadow">
+                  <span className="text-foreground tabular-nums">{v.toLocaleString()}</span>
+                  <span className="text-muted-foreground"> @ {formatHour(h)}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Hour axis labels — every 6h */}
+      <div className="flex justify-between text-[10px] font-medium text-muted-foreground tabular-nums px-[1px]">
+        <span>12a</span>
+        <span>6a</span>
+        <span>12p</span>
+        <span>6p</span>
+        <span>11p</span>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 pt-2 text-[10px] text-muted-foreground border-t border-border/40">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-amber-400" /> Peak hour
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-emerald-400" /> Current hour
+        </span>
+      </div>
     </div>
   );
 }

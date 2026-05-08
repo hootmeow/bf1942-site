@@ -244,43 +244,14 @@ body {
   }
 }
 
-/* --- Command Center Hero Animations --- */
-@keyframes radar-sweep {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* --- Frontline Hero Animations --- */
+@keyframes ember-drift {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.4; }
+  100% { transform: translate3d(8px, -120px, 0); opacity: 0; }
 }
-
-@keyframes radar-ping {
-  0% { transform: scale(0.4); opacity: 0; }
-  20% { opacity: 0.8; }
-  100% { transform: scale(2.4); opacity: 0; }
-}
-
-@keyframes hud-flicker {
-  0%, 100% { opacity: 1; }
-  47% { opacity: 1; }
-  48% { opacity: 0.6; }
-  49% { opacity: 1; }
-  93% { opacity: 1; }
-  94% { opacity: 0.7; }
-  95% { opacity: 1; }
-}
-
-@keyframes scanline-drift {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-}
-
-@keyframes hud-pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-.animate-radar-sweep { animation: radar-sweep 4s linear infinite; transform-origin: center; }
-.animate-radar-ping { animation: radar-ping 3s ease-out infinite; }
-.animate-hud-flicker { animation: hud-flicker 6s linear infinite; }
-.animate-scanline { animation: scanline-drift 8s linear infinite; }
-.animate-hud-pulse { animation: hud-pulse 2.4s ease-in-out infinite; }
+.animate-ember { animation: ember-drift 12s linear infinite; }
 
 /* --- Profile Themes --- */
 .theme-axis {
