@@ -32,4 +32,10 @@ export const SERVER_LINKS: Record<number, ServerCommunityLinks> = {
     28: {
         website: "https://usa-bf1942.proboards.com/",
     },
+
+    // Echo Gaming — Desert Combat
+    10917810: {
+        website: "https://echo-gaming.com/",
+        discord: "https://discord.gg/AYfbSrgUPn",
+    },
 };

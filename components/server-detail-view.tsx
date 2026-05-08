@@ -492,7 +492,9 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
         </div>
 
         {/* Server Owner - New Line */}
-        <div className="mt-2 flex items-center gap-3 flex-wrap">
+        {/* Owner band — same visual style as status band */}
+        <div className="mt-2 rounded-lg border border-border/50 bg-gradient-to-r from-card/40 via-card/20 to-card/40 px-4 py-2.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <ServerOwnerDisplay
             serverId={server_info.server_id}
             serverName={server_info.current_server_name || "Unknown Server"}
@@ -501,10 +503,10 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
           />
           {server_info.server_id && (
             <>
-              <span className="text-muted-foreground text-sm">•</span>
+              <div className="h-4 w-px bg-border/60 shrink-0" />
               <Dialog>
                 <DialogTrigger asChild>
-                  <button className="text-sm text-primary hover:underline flex items-center gap-1">
+                  <button className="flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-foreground transition-colors">
                     <ImageIcon className="h-3.5 w-3.5" />
                     Share Stats Card
                   </button>
@@ -553,6 +555,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
               </Dialog>
             </>
           )}
+          </div>
         </div>
       </div>
 

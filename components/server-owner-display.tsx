@@ -51,18 +51,20 @@ export function ServerOwnerDisplay({ serverId, serverName, serverSlug, initialOw
     };
 
     return (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
             {owner ? (
                 <>
-                    <Crown className="h-4 w-4 text-amber-500" />
-                    <span>Owned by</span>
-                    <span className="font-semibold text-foreground">{owner.discord_username}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Crown className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-xs text-muted-foreground/70">Owned by</span>
+                        <span className="text-xs font-semibold text-foreground">{owner.discord_username}</span>
+                    </div>
                     {isOwner && serverSlug && (
                         <>
-                            <span>•</span>
+                            <div className="h-4 w-px bg-border/60 shrink-0" />
                             <Link
                                 href={`/servers/${serverSlug}/admin`}
-                                className="text-primary hover:underline flex items-center gap-1"
+                                className="flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
                             >
                                 <Settings className="h-3 w-3" />
                                 Manage
@@ -72,18 +74,20 @@ export function ServerOwnerDisplay({ serverId, serverName, serverSlug, initialOw
                 </>
             ) : (
                 <>
-                    <Shield className="h-4 w-4" />
-                    <span>Unclaimed</span>
-                    <span>•</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Shield className="h-3.5 w-3.5 text-muted-foreground/50" />
+                        <span className="text-xs text-muted-foreground/60">Unclaimed</span>
+                    </div>
+                    <div className="h-4 w-px bg-border/60 shrink-0" />
                     {claiming ? (
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            Submitting...
+                            Submitting…
                         </span>
                     ) : (
                         <button
                             onClick={handleClaim}
-                            className="text-primary hover:underline flex items-center gap-1"
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-primary transition-colors"
                         >
                             Claim this server
                         </button>
