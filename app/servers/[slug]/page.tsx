@@ -71,13 +71,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: title,
       description: `Playing ${current_map} - ${current_player_count}/${current_max_players} online. View live stats, scoreboard, and more.`,
-      images: [
-        {
-          url: '/opengraph-image', // Fallback or dynamic generator if you have one
-          width: 1200,
-          height: 630,
-        }
-      ]
     }
   };
 }

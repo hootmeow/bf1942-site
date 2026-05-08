@@ -60,6 +60,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
 };
 // --- END MODIFIED METADATA ---
 
