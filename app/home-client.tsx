@@ -195,67 +195,89 @@ export default function HomeClient() {
   return (
     <div className="space-y-6 pb-8 sm:space-y-8">
       {/* --- Hero --- */}
-      <div className="relative pt-6 pb-8 sm:pt-8 sm:pb-10">
-        {/* Top accent line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 shadow-2xl">
+        {/* Atmosphere */}
+        <div className="absolute -right-24 -top-24 h-[400px] w-[400px] rounded-full bg-green-500/[0.08] blur-[100px] pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 h-[280px] w-[280px] rounded-full bg-blue-500/[0.08] blur-[80px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
 
-        {/* LIVE monitor label */}
-        <div className="flex items-center gap-2.5 mb-8 sm:mb-10">
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-          </span>
-          <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-            Live Battlefield Monitor
-          </span>
+        <div className="relative z-10 px-6 py-8 sm:px-12 sm:py-14">
+          {/* LIVE badge */}
+          <div className="flex items-center gap-2.5 mb-8">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            </span>
+            <span className="text-[10px] font-mono tracking-[0.18em] font-semibold text-green-500/80 uppercase">
+              Live · Monitoring Active Fronts
+            </span>
+          </div>
+
+          <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-14">
+            {/* Left — main stat */}
+            <div className="lg:flex-1">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Active Right Now</p>
+              <div className="text-6xl sm:text-7xl lg:text-8xl font-black tabular-nums text-white leading-none tracking-tight">
+                <AnimatedCounter value={data.current_active_players} duration={1500} />
+              </div>
+              <p className="text-xl sm:text-2xl font-light text-slate-300 mt-3">
+                Soldiers Deployed
+              </p>
+              <p className="text-sm text-slate-500 mt-2">
+                Live telemetry from <span className="text-slate-400 font-medium">{activeServerCount} active server{activeServerCount !== 1 ? "s" : ""}</span> worldwide.
+              </p>
+            </div>
+
+            {/* Right — two trend cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:w-[440px] shrink-0">
+              {/* This Week */}
+              <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-md bg-emerald-500/20 p-1.5 text-emerald-400 shrink-0">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">This Week</p>
+                </div>
+                <div>
+                  <p className="text-3xl sm:text-4xl font-black tabular-nums text-white leading-none">
+                    {data.active_players_7d.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-snug">
+                    Unique players active in the last 7 days
+                  </p>
+                </div>
+                <p className={cn("text-xs font-semibold flex items-center gap-1",
+                  data.active_players_7d_change_pct >= 0 ? "text-emerald-400" : "text-red-400"
+                )}>
+                  {data.active_players_7d_change_pct >= 0 ? "↑" : "↓"} {Math.abs(data.active_players_7d_change_pct).toFixed(0)}% compared to the prior week
+                </p>
+              </div>
+
+              {/* Last 24h */}
+              <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-md bg-blue-500/20 p-1.5 text-blue-400 shrink-0">
+                    <Activity className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Last 24 Hours</p>
+                </div>
+                <div>
+                  <p className="text-3xl sm:text-4xl font-black tabular-nums text-white leading-none">
+                    {data.active_players_24h.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-snug">
+                    Unique players active in the last 24 hours
+                  </p>
+                </div>
+                <p className={cn("text-xs font-semibold flex items-center gap-1",
+                  data.active_players_24h_change_pct >= 0 ? "text-emerald-400" : "text-red-400"
+                )}>
+                  {data.active_players_24h_change_pct >= 0 ? "↑" : "↓"} {Math.abs(data.active_players_24h_change_pct).toFixed(0)}% compared to yesterday
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Three stat columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-3">
-          {/* Right Now */}
-          <div className="sm:pr-10 pb-7 sm:pb-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-3">Right Now</p>
-            <div className="text-7xl sm:text-8xl font-black tabular-nums text-foreground leading-none tracking-tight">
-              <AnimatedCounter value={data.current_active_players} duration={1500} />
-            </div>
-            <p className="text-lg sm:text-xl text-muted-foreground mt-3 font-light">Soldiers Deployed</p>
-          </div>
-
-          {/* This Week */}
-          <div className="sm:px-10 sm:border-l sm:border-border/40 border-t border-border/40 sm:border-t-0 py-7 sm:py-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-3">This Week</p>
-            <div className="text-5xl sm:text-6xl font-black tabular-nums text-foreground leading-none tracking-tight">
-              {data.active_players_7d.toLocaleString()}
-            </div>
-            <div className={cn("flex items-center gap-1.5 mt-3 text-sm font-semibold",
-              data.active_players_7d_change_pct >= 0 ? "text-emerald-500" : "text-red-400"
-            )}>
-              {data.active_players_7d_change_pct >= 0
-                ? <TrendingUp className="h-4 w-4 shrink-0" />
-                : <TrendingDown className="h-4 w-4 shrink-0" />}
-              {data.active_players_7d_change_pct >= 0 ? "+" : ""}{data.active_players_7d_change_pct.toFixed(0)}% vs prior week
-            </div>
-          </div>
-
-          {/* Last 24h */}
-          <div className="sm:pl-10 sm:border-l sm:border-border/40 border-t border-border/40 sm:border-t-0 pt-7 sm:pt-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-3">Last 24 Hours</p>
-            <div className="text-5xl sm:text-6xl font-black tabular-nums text-foreground leading-none tracking-tight">
-              {data.active_players_24h.toLocaleString()}
-            </div>
-            <div className={cn("flex items-center gap-1.5 mt-3 text-sm font-semibold",
-              data.active_players_24h_change_pct >= 0 ? "text-emerald-500" : "text-red-400"
-            )}>
-              {data.active_players_24h_change_pct >= 0
-                ? <TrendingUp className="h-4 w-4 shrink-0" />
-                : <TrendingDown className="h-4 w-4 shrink-0" />}
-              {data.active_players_24h_change_pct >= 0 ? "+" : ""}{data.active_players_24h_change_pct.toFixed(0)}% vs yesterday
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom separator */}
-        <div className="mt-8 sm:mt-10 h-px bg-gradient-to-r from-border/70 via-border/30 to-transparent" />
       </div>
 
       {/* --- Top Active Servers Section --- */}
