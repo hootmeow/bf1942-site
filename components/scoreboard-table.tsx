@@ -57,7 +57,7 @@ function getKDRatio(kills: number, deaths: number): { ratio: string; color: stri
 function RankBadge({ rank }: { rank: number }) {
     if (rank === 1) {
         return (
-            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-500/20 text-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.3)] ring-1 ring-yellow-500/30">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-500/25 text-yellow-400 shadow-[0_0_16px_rgba(234,179,8,0.45)] ring-1 ring-yellow-500/50">
                 <Crown className="w-3.5 h-3.5" />
             </div>
         );
@@ -116,7 +116,8 @@ export function ScoreboardTable({ players, topThreeNames = [] }: ScoreboardTable
     const maxScore = Math.max(...players.map(p => p.final_score ?? p.score ?? 0), 1);
 
     return (
-        <Table>
+        <div className="overflow-x-auto">
+        <Table className="min-w-[440px]">
             <TableHeader>
                 <TableRow className="hover:bg-transparent border-b border-border/40">
                     <TableHead className="w-10">#</TableHead>
@@ -149,9 +150,9 @@ export function ScoreboardTable({ players, topThreeNames = [] }: ScoreboardTable
                             key={`${name}-${index}`}
                             className={cn(
                                 "transition-all duration-200 hover:bg-muted/20 relative group",
-                                overallRank === 1 && "bg-yellow-500/[0.06] hover:bg-yellow-500/[0.1]",
-                                overallRank === 2 && "bg-slate-300/[0.04] hover:bg-slate-300/[0.08]",
-                                overallRank === 3 && "bg-amber-600/[0.04] hover:bg-amber-600/[0.08]"
+                                overallRank === 1 && "bg-yellow-500/[0.09] hover:bg-yellow-500/[0.14] border-l-2 border-l-yellow-500/60",
+                                overallRank === 2 && "bg-slate-300/[0.05] hover:bg-slate-300/[0.09] border-l-2 border-l-slate-400/40",
+                                overallRank === 3 && "bg-amber-600/[0.05] hover:bg-amber-600/[0.09] border-l-2 border-l-amber-600/40"
                             )}
                         >
                             <TableCell className="py-2.5">
@@ -219,5 +220,6 @@ export function ScoreboardTable({ players, topThreeNames = [] }: ScoreboardTable
                 </TableRow>
             </TableFooter>
         </Table>
+        </div>
     );
 }

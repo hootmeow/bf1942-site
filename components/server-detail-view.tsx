@@ -161,15 +161,66 @@ function LockIcon({ status, className }: { status?: string | number, className?:
   return <Unlock className={className} />;
 }
 
+function TimerRingCard({ remainSeconds, totalSeconds }: { remainSeconds: number; totalSeconds: number }) {
+  const r = 20;
+  const sz = 48;
+  const circumference = 2 * Math.PI * r;
+  const progress = totalSeconds > 0 ? Math.max(0, Math.min(1, remainSeconds / totalSeconds)) : 0;
+  const dashOffset = circumference * (1 - progress);
+  const displayTime = (() => {
+    if (totalSeconds === 0 && remainSeconds === 0) return 'N/A';
+    const m = Math.floor(remainSeconds / 60);
+    const s = remainSeconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  })();
+  const ringColor =
+    totalSeconds === 0    ? 'text-primary'     :
+    progress > 0.5        ? 'text-primary'     :
+    progress > 0.25       ? 'text-yellow-500'  :
+                            'text-red-500';
+  return (
+    <div className="rounded-lg border border-border/60 bg-gradient-to-br from-card/50 to-card/30 p-4 transition-all duration-300 hover:border-primary/30 hover:from-card/70 hover:to-card/50 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)] relative overflow-hidden group/stat">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-primary/[0.02] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-500" />
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
+      <div className="flex items-center gap-3 relative z-10">
+        <div className="relative flex-shrink-0" style={{ width: sz, height: sz }}>
+          <svg width={sz} height={sz} viewBox={`0 0 ${sz} ${sz}`} className="-rotate-90">
+            <circle cx={sz / 2} cy={sz / 2} r={r} fill="none" stroke="currentColor" strokeWidth="3" className="text-muted-foreground/10" />
+            <circle
+              cx={sz / 2} cy={sz / 2} r={r}
+              fill="none" stroke="currentColor" strokeWidth="3"
+              strokeDasharray={circumference}
+              strokeDashoffset={dashOffset}
+              strokeLinecap="round"
+              className={ringColor}
+              style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)' }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Timer className="h-3.5 w-3.5 text-primary" />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xs font-medium text-muted-foreground group-hover/stat:text-muted-foreground/80 transition-colors">Time Remaining</h3>
+          <div className="text-base font-semibold font-mono text-foreground group-hover/stat:text-primary transition-colors duration-300">{displayTime}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ServerDetailView({ initialData, slug, serverOwner }: { initialData: ServerDetailsData | null, slug: string, serverOwner?: any }) {
   const { toast } = useToast();
+  const [currentData, setCurrentData] = useState(initialData);
+  const [secondsAgo, setSecondsAgo] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [recentRounds, setRecentRounds] = useState<any[]>([]);
   const [recentRoundsLoading, setRecentRoundsLoading] = useState(true);
   const [roundsTotalCount, setRoundsTotalCount] = useState(0);
 
-  const { server_info, scoreboard } = initialData || { server_info: {} as any, scoreboard: [] };
+  const { server_info, scoreboard } = currentData || { server_info: {} as any, scoreboard: [] };
   const communityLinks = server_info?.server_id ? SERVER_LINKS[server_info.server_id] : null;
 
   const { data: geo } = useServerGeo(server_info?.ip);
@@ -248,6 +299,48 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
     fetchServerData();
   }, [server_info?.server_id]);
 
+  const [localSecondsRemaining, setLocalSecondsRemaining] = useState(() =>
+    Number(initialData?.server_info?.round_time_remain ?? 0)
+  );
+
+  // Tick "seconds ago" counter up every second; reset to 0 on each successful refresh
+  useEffect(() => {
+    const ticker = setInterval(() => setSecondsAgo(s => s + 1), 1000);
+    return () => clearInterval(ticker);
+  }, []);
+
+  // Poll server data every 30 s and update live state
+  useEffect(() => {
+    const doRefresh = async () => {
+      setIsRefreshing(true);
+      try {
+        const res = await fetch(`/api/v1/servers/search?search=${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok) {
+            setCurrentData(data);
+            setSecondsAgo(0);
+          }
+        }
+      } catch (_) {}
+      setIsRefreshing(false);
+    };
+    const interval = setInterval(doRefresh, 30_000);
+    return () => clearInterval(interval);
+  }, [slug]);
+
+  // Sync countdown when fresh data arrives
+  useEffect(() => {
+    const val = Number(server_info?.round_time_remain ?? 0);
+    if (!isNaN(val)) setLocalSecondsRemaining(val);
+  }, [server_info?.round_time_remain]);
+
+  // Count down the ring every second between polls
+  useEffect(() => {
+    const t = setInterval(() => setLocalSecondsRemaining(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, []);
+
 
   const roundTime = useMemo(() => {
     if (!server_info || server_info.round_time_remain === undefined || server_info.round_time_remain === null) return "N/A";
@@ -293,25 +386,39 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
           {server_info.current_server_name || "Server Details"}
         </h1>
 
-        {/* Updated Subheader with Location Info */}
-        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-          {geo ? (
-            <>
+        {/* Subheader — flex-wrap so badges never overflow on mobile */}
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-muted-foreground">
+
+          {/* LIVE indicator */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isRefreshing ? (
+              <Loader2 className="w-3 h-3 text-primary animate-spin" />
+            ) : (
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            )}
+            <span className="text-xs font-semibold text-green-500 tracking-widest">LIVE</span>
+            <span className="text-xs text-muted-foreground/50">
+              {secondsAgo < 5 ? '· just now' : secondsAgo < 60 ? `· ${secondsAgo}s ago` : `· ${Math.floor(secondsAgo / 60)}m ago`}
+            </span>
+          </div>
+
+          {geo && (
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="hidden sm:inline text-muted-foreground/40">•</span>
               <span className="font-medium text-foreground">{geo.city}, {geo.region}</span>
-              <span>•</span>
+              <span className="text-muted-foreground/40">•</span>
               <div className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
                 <span>{geo.timezone?.current_time ? `${geo.timezone.current_time.split('T')[1]?.split('-')[0]?.split('+')[0]} (${geo.timezone.abbr})` : geo.timezone?.abbr || 'Unknown'}</span>
               </div>
-            </>
-          ) : (
-            <span>Live scoreboard and information</span>
+            </div>
           )}
+
           {/* Community Links */}
           {communityLinks && (
-            <>
-              <span>•</span>
-              <div className="flex items-center gap-1 ml-1">
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="hidden sm:inline text-muted-foreground/40">•</span>
+              <div className="flex items-center gap-1">
                 {communityLinks.website && (
                   <a
                     href={communityLinks.website}
@@ -338,12 +445,12 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
                   </a>
                 )}
               </div>
-            </>
+            </div>
           )}
 
-          {/* Ranked / Unranked Badge based on current gametype */}
-          <>
-            <span>•</span>
+          {/* Ranked / Unranked Badge */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden sm:inline text-muted-foreground/40">•</span>
             <Link href="/rank-system#ranked-unranked">
               {server_info.is_blacklisted || server_info.current_gametype?.toLowerCase() === 'coop' ? (
                 <span className="flex items-center gap-1.5 text-orange-400 font-mono font-bold bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20 hover:bg-orange-500/20 transition-colors cursor-pointer">
@@ -355,18 +462,18 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
                 </span>
               )}
             </Link>
-          </>
+          </div>
 
-          {/* Global Rank Badge - Hide if blacklisted */}
+          {/* Global Rank Badge — hidden if blacklisted */}
           {rankData && !server_info.is_blacklisted && (
-            <>
-              <span>•</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="hidden sm:inline text-muted-foreground/40">•</span>
               <span className="flex items-center gap-1.5 text-amber-400 font-mono font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
                 <span className="text-xs">GLOBAL RANK</span>
                 <span>#{rankData.rank}</span>
                 <span className="text-xs font-normal text-muted-foreground ml-1 hidden sm:inline">({rankData.activity_hours_7d}h activity)</span>
               </span>
-            </>
+            </div>
           )}
         </div>
 
@@ -492,7 +599,10 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
               </div>
             </div>
           </div>
-          <StatCard title="Time Remaining" value={roundTime} icon={Clock} />
+          <TimerRingCard
+            remainSeconds={localSecondsRemaining}
+            totalSeconds={server_info?.roundtime ? Number(server_info.roundtime) : 0}
+          />
 
           <StatCard
             title="Round Limit"
@@ -661,11 +771,12 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading rounds...
               </div>
             ) : recentRounds.length > 0 ? (
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[520px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Map</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead className="hidden sm:table-cell">Date</TableHead>
                     <TableHead className="text-right">Duration</TableHead>
                     <TableHead className="text-right">Players</TableHead>
                     <TableHead>Status</TableHead>
@@ -676,7 +787,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
                   {recentRounds.map((round) => (
                     <TableRow key={round.round_id} className="group">
                       <TableCell className="font-medium">{round.map_name}</TableCell>
-                      <TableCell className="text-muted-foreground">{new Date(round.start_time).toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground hidden sm:table-cell">{new Date(round.start_time).toLocaleString()}</TableCell>
                       <TableCell className="text-right tabular-nums">{Math.floor(round.duration_seconds / 60)}m {round.duration_seconds % 60}s</TableCell>
                       <TableCell className="text-right tabular-nums">{round.player_count}</TableCell>
                       <TableCell>
@@ -695,6 +806,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
                   ))}
                 </TableBody>
               </Table>
+              </div>
             ) : (
               <div className="p-4 text-center text-muted-foreground">No rounds found.</div>
             )}
@@ -740,7 +852,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-5 pt-0">
+              <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 pt-0">
                 <StatCard
                   title="Dedicated"
                   value={String(server_info.dedicated || '0') !== '0' ? 'Yes' : 'No'}
