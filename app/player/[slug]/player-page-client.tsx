@@ -455,15 +455,23 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           </AlertDescription>
         </Alert>
       )}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="rounded-xl border border-border/50 bg-gradient-to-br from-card/80 via-card/60 to-card/40 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden">
         <div className="flex items-start gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-sm bg-background/50 shrink-0 overflow-hidden border border-border/50">
-            {player_info.iso_country_code ? (
-              <PlayerFlag isoCode={player_info.iso_country_code} className="h-full w-full object-cover" />
-            ) : (
-              <div className="bg-primary/10 w-full h-full flex items-center justify-center">
-                <User className="h-8 w-8 text-primary" />
-              </div>
+          <div className="relative shrink-0">
+            <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-card overflow-hidden border border-border/60 shadow-lg">
+              {player_info.iso_country_code ? (
+                <PlayerFlag isoCode={player_info.iso_country_code} className="h-full w-full object-cover" />
+              ) : (
+                <div className="bg-primary/10 w-full h-full flex items-center justify-center">
+                  <User className="h-8 w-8 text-primary" />
+                </div>
+              )}
+            </div>
+            {online_status?.is_online && (
+              <span className="absolute bottom-0.5 right-0.5 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-card"></span>
+              </span>
             )}
           </div>
           <div>
@@ -501,7 +509,8 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
               {/* GLOBAL RANK BADGE */}
               {(advancedProfile?.skill_rating?.global_rank || player_info.is_flagged) && (
-                <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ${player_info.is_flagged ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/80"}`}>
+                <div className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold ${player_info.is_flagged ? "border-border/50 bg-muted/50 text-muted-foreground" : "border-primary/30 bg-primary/10 text-primary"}`}>
+                  <Trophy className="h-3 w-3" />
                   Global #{player_info.is_flagged ? "N/A" : advancedProfile?.skill_rating?.global_rank}
                 </div>
               )}
@@ -516,18 +525,30 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
             {/* Metadata Row */}
             <div className="mt-2 flex flex-col gap-1">
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 {player_info.first_seen && (
-                  <span>Playing since {new Date(player_info.first_seen).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} · </span>
+                  <>
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      Since {new Date(player_info.first_seen).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}
+                    </span>
+                    <div className="h-3 w-px bg-border/60 shrink-0" />
+                  </>
                 )}
-                <span>Last seen: {new Date(player_info.last_seen).toLocaleString()}</span>
+                <span className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3 shrink-0" />
+                  Last seen {new Date(player_info.last_seen).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
 
                 {/* Discord Display */}
                 {player_info.display_discord_id && player_info.discord_name && (
-                  <span className="flex items-center gap-1 text-indigo-400">
-                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 1-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.315-9.673-3.546-13.66a.07.07 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" /></svg>
-                    {player_info.discord_name}
-                  </span>
+                  <>
+                    <div className="h-3 w-px bg-border/60 shrink-0" />
+                    <span className="flex items-center gap-1.5 text-indigo-400">
+                      <svg className="h-3 w-3 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 1-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.315-9.673-3.546-13.66a.07.07 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" /></svg>
+                      {player_info.discord_name}
+                    </span>
+                  </>
                 )}
               </div>
 
@@ -637,8 +658,10 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         <SkillRatingCard rating={advancedProfile.skill_rating} />
       )}
 
-      {/* Lifetime Stats Section */}
-      <Card className="border-border/60 overflow-hidden">
+      {/* Stats Side-by-Side Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Lifetime Stats */}
+      <Card className="lg:col-span-2 border-border/60 overflow-hidden">
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 via-transparent to-transparent">
           <CardTitle as="h2" className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-primary/20">
@@ -650,26 +673,26 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         <CardContent className="p-0">
           {/* Hero Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border/40">
-            <div className="p-6 text-center">
-              <div className="text-4xl font-black tabular-nums text-primary">
+            <div className="p-4 text-center">
+              <div className="text-3xl font-bold tabular-nums text-primary">
                 {lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'}
               </div>
               <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">K/D Ratio</div>
             </div>
-            <div className="p-6 text-center">
-              <div className="text-4xl font-black tabular-nums text-amber-500">
-                {lifetime_stats?.win_rate?.toFixed(1) ?? '0'}<span className="text-2xl">%</span>
+            <div className="p-4 text-center">
+              <div className="text-3xl font-bold tabular-nums text-amber-500">
+                {lifetime_stats?.win_rate?.toFixed(1) ?? '0'}<span className="text-xl">%</span>
               </div>
               <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Win Rate</div>
             </div>
-            <div className="p-6 text-center">
-              <div className="text-4xl font-black tabular-nums text-foreground">
+            <div className="p-4 text-center">
+              <div className="text-3xl font-bold tabular-nums text-foreground">
                 {formatPlaytime(lifetime_stats?.total_playtime_seconds ?? 0)}
               </div>
               <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Playtime</div>
             </div>
-            <div className="p-6 text-center">
-              <div className="text-4xl font-black tabular-nums text-emerald-500">
+            <div className="p-4 text-center">
+              <div className="text-3xl font-bold tabular-nums text-emerald-500">
                 {(lifetime_stats?.total_score ?? 0).toLocaleString()}
               </div>
               <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Total Score</div>
@@ -722,7 +745,7 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </CardContent>
       </Card>
 
-      {/* Personal Bests Section */}
+      {/* Personal Bests */}
       <Card className="border-border/60 overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-b border-border/40">
           <CardTitle as="h2" className="flex items-center gap-2">
@@ -732,7 +755,7 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             Personal Bests
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-3 gap-3 p-4">
+        <CardContent className="grid grid-cols-1 gap-3 p-4">
           {[
             { value: personal_bests?.best_round_score ?? 0, label: "Best Score", roundId: personal_bests?.best_score_round_id, color: "amber" },
             { value: personal_bests?.best_round_kills ?? 0, label: "Best Kills", roundId: personal_bests?.best_kill_round_id, color: "red" },
@@ -766,6 +789,7 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           })}
         </CardContent>
       </Card>
+      </div>
 
       {/* Achievements */}
       {profile.achievements && (
