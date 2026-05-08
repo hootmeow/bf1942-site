@@ -140,12 +140,27 @@ export default function HomeClient() {
     if (!data) return null;
     const raw = data.global_concurrency_heatmap_24h ?? [];
     if (raw.length === 0) return null;
-    // Normalize to length 24 in case the source is offset; we trust it's hour-keyed already
     const hours = Array.from({ length: 24 }, (_, h) => raw[h] ?? 0);
     const max = Math.max(...hours, 1);
+    const min = Math.min(...hours);
     const peakHour = hours.indexOf(max);
+    const quietHour = hours.indexOf(min);
     const currentHour = new Date().getHours();
-    return { hours, max, peakHour, currentHour };
+    const avg = Math.round(hours.reduce((a, b) => a + b, 0) / 24);
+
+    // Best 3-hour rolling window
+    let bestWindowStart = 0;
+    let bestWindowSum = -Infinity;
+    for (let i = 0; i < 24; i++) {
+      const sum = hours[i] + hours[(i + 1) % 24] + hours[(i + 2) % 24];
+      if (sum > bestWindowSum) {
+        bestWindowSum = sum;
+        bestWindowStart = i;
+      }
+    }
+    const bestWindowAvg = Math.round(bestWindowSum / 3);
+
+    return { hours, max, min, peakHour, quietHour, currentHour, avg, bestWindowStart, bestWindowAvg };
   }, [data]);
 
   if (loading) {
@@ -186,15 +201,15 @@ export default function HomeClient() {
   return (
     <div className="space-y-6 pb-8 sm:space-y-8">
       {/* ============================================================
-           HERO — "Frontline"  (muted military, no HUD cosplay)
+           HERO — "Frontline"  (matches site: near-black + amber accent)
          ============================================================ */}
       <section className="relative overflow-hidden rounded-2xl border border-border/60 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]">
-        {/* Base — deep field gradient with subtle olive tint */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#10130d] via-[#13160f] to-[#0b0d09]" />
-        {/* Warm rim light bottom-right */}
-        <div className="absolute -right-32 -bottom-32 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(202,138,4,0.18),transparent_60%)] pointer-events-none" />
-        {/* Cool rim light top-left */}
-        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(120,140,98,0.12),transparent_60%)] pointer-events-none" />
+        {/* Base — neutral near-black matching site bg */}
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-neutral-950 to-black" />
+        {/* Warm amber rim light — matches site's active-server accent */}
+        <div className="absolute -right-32 -bottom-40 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.14),transparent_65%)] pointer-events-none" />
+        {/* Soft primary glow top-left */}
+        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_65%)] pointer-events-none" />
 
         {/* Topographic contour lines — SVG */}
         <svg
@@ -205,9 +220,9 @@ export default function HomeClient() {
         >
           <defs>
             <linearGradient id="topoFade" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="rgba(180,170,120,0.0)" />
-              <stop offset="0.4" stopColor="rgba(180,170,120,0.18)" />
-              <stop offset="1" stopColor="rgba(180,170,120,0.0)" />
+              <stop offset="0" stopColor="rgba(255,255,255,0.0)" />
+              <stop offset="0.4" stopColor="rgba(255,255,255,0.10)" />
+              <stop offset="1" stopColor="rgba(255,255,255,0.0)" />
             </linearGradient>
           </defs>
           {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
@@ -288,13 +303,24 @@ export default function HomeClient() {
               <h1 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-stone-200">
                 Players in combat <span className="text-amber-300/90">right now</span>
               </h1>
-              <p className="mt-3 max-w-xl text-sm sm:text-base text-stone-400/90 leading-relaxed">
-                Live telemetry from{" "}
-                <span className="font-semibold text-stone-200">{activeServerCount}</span>
-                {" "}of{" "}
-                <span className="font-semibold text-stone-200">{totalServerCount}</span>
-                {" "}tracked servers worldwide. Updated continuously as battles unfold.
-              </p>
+              {/* Compact server status pills — replaces the wordy "Live telemetry from..." */}
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  <span className="text-xs font-medium text-emerald-200/90 tabular-nums">
+                    {activeServerCount} active
+                  </span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-700/50 bg-stone-800/30 px-3 py-1.5">
+                  <ServerIcon className="h-3 w-3 text-stone-400" />
+                  <span className="text-xs font-medium text-stone-300 tabular-nums">
+                    {totalServerCount} tracked
+                  </span>
+                </span>
+              </div>
             </div>
 
             {/* Right — dog-tag style stat plates */}
@@ -366,11 +392,15 @@ export default function HomeClient() {
            Player Activity  +  Peak Hours
          ============================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <Card className="lg:col-span-2 border-border/60 overflow-hidden">
-          <CardHeader className="pb-3 border-b border-border/40">
+        <Card className="lg:col-span-2 border-border/60 overflow-hidden relative">
+          {/* Subtle ambient backdrop */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(245,158,11,0.05),transparent_60%)] pointer-events-none" />
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent pointer-events-none" />
+
+          <CardHeader className="pb-3 border-b border-border/40 relative">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-md bg-primary/10 p-1.5 text-primary ring-1 ring-primary/20">
+                <div className="rounded-md bg-amber-500/10 p-1.5 text-amber-400 ring-1 ring-amber-500/20">
                   <Activity className="h-4 w-4" />
                 </div>
                 <div>
@@ -388,12 +418,12 @@ export default function HomeClient() {
             {chartStats && (
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-4">
                 <ChartStatBadge label="Now" value={data.current_active_players.toLocaleString()} accent="emerald" />
-                <ChartStatBadge label="24h Avg" value={chartStats.avg.toLocaleString()} accent="blue" />
+                <ChartStatBadge label="24h Avg" value={chartStats.avg.toLocaleString()} accent="stone" />
                 <ChartStatBadge label="24h Peak" value={chartStats.peak.toLocaleString()} accent="amber" />
               </div>
             )}
           </CardHeader>
-          <CardContent className="p-3 sm:p-5">
+          <CardContent className="p-3 sm:p-5 relative">
             <PlayerActivityChart
               data24h={data.global_concurrency_timeline_24h || data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_timeline_7d || data.global_concurrency_heatmap_7d}
@@ -484,6 +514,7 @@ const accentMap = {
   emerald: { text: "text-emerald-400", border: "border-emerald-500/20" },
   blue:    { text: "text-blue-400",    border: "border-blue-500/20" },
   amber:   { text: "text-amber-400",   border: "border-amber-500/20" },
+  stone:   { text: "text-stone-200",   border: "border-stone-600/30" },
 } as const;
 
 function ChartStatBadge({ label, value, accent }: { label: string; value: string; accent: keyof typeof accentMap }) {
@@ -496,8 +527,20 @@ function ChartStatBadge({ label, value, accent }: { label: string; value: string
   );
 }
 
-function PeakHours({ data }: { data: { hours: number[]; max: number; peakHour: number; currentHour: number } }) {
-  const { hours, max, peakHour, currentHour } = data;
+type HourlyData = {
+  hours: number[];
+  max: number;
+  min: number;
+  peakHour: number;
+  quietHour: number;
+  currentHour: number;
+  avg: number;
+  bestWindowStart: number;
+  bestWindowAvg: number;
+};
+
+function PeakHours({ data }: { data: HourlyData }) {
+  const { hours, max, peakHour, currentHour, avg, bestWindowStart, bestWindowAvg } = data;
 
   const formatHour = (h: number) => {
     const suffix = h >= 12 ? "p" : "a";
@@ -505,72 +548,139 @@ function PeakHours({ data }: { data: { hours: number[]; max: number; peakHour: n
     return `${display}${suffix}`;
   };
 
+  // Color-encode bars by intensity: cool muted → warm amber as activity rises
+  const getBarColor = (v: number) => {
+    const t = max > 0 ? v / max : 0;
+    if (t >= 0.85) return "from-amber-500 to-amber-300";
+    if (t >= 0.65) return "from-amber-600/90 to-amber-400/90";
+    if (t >= 0.45) return "from-amber-700/70 to-amber-500/70";
+    if (t >= 0.25) return "from-stone-600 to-stone-500";
+    return "from-stone-700 to-stone-600";
+  };
+
+  // Build smooth area path overlay (sparkline-style)
+  const W = 100;
+  const H = 100;
+  const stepX = W / 23;
+  const points = hours.map((v, i) => {
+    const x = i * stepX;
+    const y = H - (v / max) * H * 0.95;
+    return [x, y] as const;
+  });
+  const linePath = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+  const areaPath = `${linePath} L${W},${H} L0,${H} Z`;
+
   return (
-    <div className="space-y-3">
-      {/* Peak callout */}
-      <div className="flex items-baseline justify-between pb-2 border-b border-border/40">
-        <div>
-          <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Peak time</p>
-          <p className="text-xl font-bold text-amber-400 leading-tight">
-            {formatHour(peakHour)} – {formatHour((peakHour + 1) % 24)}
+    <div className="space-y-4">
+      {/* Top stat row — Now vs Peak */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-2.5">
+          <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Right Now
           </p>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Right now</p>
-          <p className="text-xl font-bold text-emerald-400 tabular-nums leading-tight">
+          <p className="mt-0.5 text-lg font-bold tabular-nums text-emerald-400 leading-tight">
             {hours[currentHour].toLocaleString()}
           </p>
+          <p className="text-[10px] text-muted-foreground tabular-nums">{formatHour(currentHour)} hour</p>
+        </div>
+        <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-2.5">
+          <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Peak Hour</p>
+          <p className="mt-0.5 text-lg font-bold tabular-nums text-amber-400 leading-tight">
+            {max.toLocaleString()}
+          </p>
+          <p className="text-[10px] text-muted-foreground tabular-nums">{formatHour(peakHour)}–{formatHour((peakHour + 1) % 24)}</p>
         </div>
       </div>
 
-      {/* 24-hour bar grid */}
-      <div className="flex items-end gap-[3px] h-[140px]">
-        {hours.map((v, h) => {
-          const pct = (v / max) * 100;
-          const isCurrent = h === currentHour;
-          const isPeak = h === peakHour;
-          return (
-            <div key={h} className="group relative flex-1 flex flex-col justify-end">
-              <div
-                className={cn(
-                  "w-full rounded-sm transition-all",
-                  isPeak
-                    ? "bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]"
-                    : isCurrent
-                    ? "bg-gradient-to-t from-emerald-600 to-emerald-400"
-                    : "bg-stone-600/50 group-hover:bg-stone-500/70"
-                )}
-                style={{ height: `${Math.max(pct, 4)}%`, minHeight: "3px" }}
-              />
-              {/* Hover tooltip */}
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block z-10 pointer-events-none">
-                <div className="bg-popover border border-border rounded px-1.5 py-0.5 text-[10px] font-mono whitespace-nowrap shadow">
-                  <span className="text-foreground tabular-nums">{v.toLocaleString()}</span>
-                  <span className="text-muted-foreground"> @ {formatHour(h)}</span>
+      {/* Chart — 24 bars + smooth area overlay */}
+      <div className="relative">
+        {/* Average reference line */}
+        <div
+          className="absolute inset-x-0 border-t border-dashed border-stone-600/40 z-10 pointer-events-none"
+          style={{ top: `${100 - (avg / max) * 95}%` }}
+        >
+          <span className="absolute -top-3 right-0 text-[9px] font-medium text-stone-500 tabular-nums bg-card/80 px-1 rounded">
+            avg {avg}
+          </span>
+        </div>
+
+        {/* Smooth area overlay (subtle) */}
+        <svg
+          aria-hidden
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="absolute inset-0 h-[90px] w-full pointer-events-none"
+        >
+          <defs>
+            <linearGradient id="peakAreaFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="rgba(245,158,11,0.18)" />
+              <stop offset="1" stopColor="rgba(245,158,11,0)" />
+            </linearGradient>
+          </defs>
+          <path d={areaPath} fill="url(#peakAreaFill)" />
+          <path d={linePath} fill="none" stroke="rgba(245,158,11,0.45)" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
+        </svg>
+
+        {/* Bars */}
+        <div className="flex items-end gap-[2px] h-[90px] relative">
+          {hours.map((v, h) => {
+            const pct = (v / max) * 100;
+            const isCurrent = h === currentHour;
+            const isPeak = h === peakHour;
+            const colorClasses = getBarColor(v);
+            return (
+              <div key={h} className="group relative flex-1 flex flex-col justify-end">
+                <div
+                  className={cn(
+                    "w-full rounded-[2px] bg-gradient-to-t transition-all",
+                    colorClasses,
+                    isPeak && "shadow-[0_0_10px_rgba(245,158,11,0.6)] ring-1 ring-amber-300/40",
+                    isCurrent && !isPeak && "ring-1 ring-emerald-400/70 shadow-[0_0_8px_rgba(52,211,153,0.4)]"
+                  )}
+                  style={{ height: `${Math.max(pct, 6)}%`, minHeight: "4px" }}
+                />
+                {/* Tooltip */}
+                <div className="absolute -top-9 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 pointer-events-none">
+                  <div className="bg-popover border border-border rounded px-2 py-1 text-[10px] font-mono whitespace-nowrap shadow-md">
+                    <div className="text-foreground tabular-nums font-semibold">{v.toLocaleString()} players</div>
+                    <div className="text-muted-foreground tabular-nums">{formatHour(h)}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        {/* Hour axis labels */}
+        <div className="flex justify-between text-[9px] font-medium text-muted-foreground tabular-nums mt-1.5 px-[1px]">
+          <span>12a</span>
+          <span>6a</span>
+          <span>12p</span>
+          <span>6p</span>
+          <span>11p</span>
+        </div>
       </div>
 
-      {/* Hour axis labels — every 6h */}
-      <div className="flex justify-between text-[10px] font-medium text-muted-foreground tabular-nums px-[1px]">
-        <span>12a</span>
-        <span>6a</span>
-        <span>12p</span>
-        <span>6p</span>
-        <span>11p</span>
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-4 pt-2 text-[10px] text-muted-foreground border-t border-border/40">
-        <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-sm bg-amber-400" /> Peak hour
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-sm bg-emerald-400" /> Current hour
-        </span>
+      {/* Best window — additional data point */}
+      <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Best 3-hour Window</p>
+            <p className="mt-0.5 text-base font-semibold text-foreground tabular-nums">
+              {formatHour(bestWindowStart)} – {formatHour((bestWindowStart + 3) % 24)}
+            </p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Avg</p>
+            <p className="text-base font-semibold text-amber-400 tabular-nums">
+              {bestWindowAvg.toLocaleString()}
+            </p>
+          </div>
+        </div>
+        <p className="mt-1.5 text-[11px] text-muted-foreground leading-snug">
+          Plan your sessions here to find the most populated servers.
+        </p>
       </div>
     </div>
   );
