@@ -16,12 +16,22 @@ const nextConfig = {
       },
     ],
   },
-  // Add this 'async rewrites' function
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'bf1942.online' }],
+        destination: 'https://www.bf1942.online/:path*',
+        permanent: true,
+      },
+    ];
+  },
+
   async rewrites() {
     return [
       {
-        source: '/api/v1/:path*', // This one rule handles everything under /api/v1/
-        destination: `${process.env.API_URL}:path*`, // The real API server
+        source: '/api/v1/:path*',
+        destination: `${process.env.API_URL}:path*`,
       },
     ];
   },

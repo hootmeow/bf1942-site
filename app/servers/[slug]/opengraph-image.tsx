@@ -1,9 +1,10 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
 export const alt = 'BF1942 Server Status';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
+
+const API_BASE = 'http://127.0.0.1:3000/api/v1';
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
@@ -15,12 +16,10 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     let rank: string | null = null;
     let state = 'UNKNOWN';
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bf1942.online';
-
     try {
         const res = await fetch(
-            `${baseUrl}/api/v1/servers/search?search=${encodeURIComponent(slug)}`,
-            { cache: 'no-store' }
+            `${API_BASE}/servers/search?search=${encodeURIComponent(slug)}`,
+            { cache: 'no-store', signal: AbortSignal.timeout(5000) }
         );
         if (res.ok) {
             const data = await res.json();
@@ -37,8 +36,8 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
     try {
         const rankRes = await fetch(
-            `${baseUrl}/api/v1/servers/rankings?limit=250`,
-            { cache: 'force-cache' }
+            `${API_BASE}/servers/rankings?limit=250`,
+            { next: { revalidate: 300 } }
         );
         if (rankRes.ok) {
             const rankData = await rankRes.json();
