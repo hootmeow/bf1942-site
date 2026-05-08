@@ -9,22 +9,52 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        // ip-api.com is much more reliable than ipwho.is; free tier, no key needed
         const res = await fetch(
-            `https://ipwho.is/${ip}?fields=country,country_code,city,region,latitude,longitude,timezone`,
+            `http://ip-api.com/json/${ip}?fields=status,country,countryCode,city,regionName,lat,lon,timezone`,
             {
-                next: { revalidate: 86400 }, // cache for 24 h — IPs rarely change region
+                next: { revalidate: 86400 },
                 signal: AbortSignal.timeout(5000),
             }
         );
-        if (!res.ok) throw new Error(`ipwho.is ${res.status}`);
+        if (!res.ok) throw new Error(`ip-api.com ${res.status}`);
 
-        const data = await res.json();
-        if (!data.country_code) throw new Error('No country_code in response');
+        const d = await res.json();
+        if (d.status !== 'success' || !d.countryCode) throw new Error('ip-api returned non-success');
 
-        return NextResponse.json(data, {
-            headers: {
-                'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+        // Compute timezone metadata using Intl (runs in Node.js, no extra deps)
+        const now = new Date();
+        const tzId: string = d.timezone || 'UTC';
+
+        const abbr = new Intl.DateTimeFormat('en-US', { timeZone: tzId, timeZoneName: 'short' })
+            .formatToParts(now)
+            .find(p => p.type === 'timeZoneName')?.value ?? tzId;
+
+        // "2024-01-15 14:30:00" → "2024-01-15T14:30:00" (matches what the UI splits on 'T')
+        const localStr = new Intl.DateTimeFormat('sv-SE', {
+            timeZone: tzId,
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false,
+        }).format(now).replace(' ', 'T');
+
+        const geo = {
+            country: d.country,
+            country_code: d.countryCode,
+            city: d.city,
+            region: d.regionName,
+            latitude: d.lat,
+            longitude: d.lon,
+            timezone: {
+                id: tzId,
+                abbr,
+                utc: '',
+                current_time: localStr,
             },
+        };
+
+        return NextResponse.json(geo, {
+            headers: { 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800' },
         });
     } catch (e) {
         console.error('[geo] lookup failed for', ip, e);

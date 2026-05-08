@@ -386,89 +386,109 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
           {server_info.current_server_name || "Server Details"}
         </h1>
 
-        {/* Row 1: Live pulse + location + community links */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-          {/* LIVE indicator with ping animation */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {isRefreshing ? (
-              <Loader2 className="w-3 h-3 text-green-500 animate-spin" />
-            ) : (
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-              </span>
-            )}
-            <span className="text-green-500 font-semibold text-xs tracking-widest">LIVE</span>
-            <span className="text-xs text-muted-foreground/50">
-              {secondsAgo < 5 ? '· just now' : secondsAgo < 60 ? `· ${secondsAgo}s ago` : `· ${Math.floor(secondsAgo / 60)}m ago`}
-            </span>
-          </div>
+        {/* Status band */}
+        <div className="mt-3 rounded-lg border border-border/50 bg-gradient-to-r from-card/40 via-card/20 to-card/40 px-4 py-2.5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
 
-          {geo && (
-            <>
-              <span className="text-border/50 hidden sm:inline select-none">|</span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <MapPin className="h-3 w-3 shrink-0" />
-                <span>{geo.city}, {geo.region}</span>
-              </div>
-              <div className="hidden sm:flex items-center gap-1 shrink-0">
-                <Clock className="h-3 w-3 shrink-0" />
-                <span>
-                  {geo.timezone?.current_time
-                    ? `${geo.timezone.current_time.split('T')[1]?.split('-')[0]?.split('+')[0]} ${geo.timezone.abbr}`
-                    : geo.timezone?.abbr || ''}
+            {/* LIVE pulse */}
+            <div className="flex items-center gap-2 shrink-0">
+              {isRefreshing ? (
+                <Loader2 className="w-3.5 h-3.5 text-green-500 animate-spin" />
+              ) : (
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75" />
+                  <span className="relative rounded-full h-2.5 w-2.5 bg-green-500" />
                 </span>
-              </div>
-            </>
-          )}
-
-          {communityLinks && (
-            <div className="flex items-center gap-0.5 shrink-0">
-              <span className="text-border/50 hidden sm:inline mr-1.5 select-none">|</span>
-              {communityLinks.website && (
-                <a href={communityLinks.website} target="_blank" rel="noopener noreferrer"
-                  className="p-1 rounded hover:bg-muted text-muted-foreground/60 hover:text-foreground transition-colors"
-                  title="Visit Website">
-                  <Globe className="h-3.5 w-3.5" />
-                </a>
               )}
-              {communityLinks.discord && (
-                <a href={communityLinks.discord} target="_blank" rel="noopener noreferrer"
-                  className="p-1 rounded hover:bg-[#5865F2]/10 text-muted-foreground/60 hover:text-[#5865F2] transition-colors"
-                  title="Join Discord">
-                  <svg role="img" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
-                    <title>Discord</title>
-                    <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.5382-9.6739-3.5479-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z" />
-                  </svg>
-                </a>
+              <span className="text-green-400 font-bold text-sm tracking-wider">LIVE</span>
+              <span className="text-xs text-muted-foreground/50">
+                {secondsAgo < 5 ? 'just now' : secondsAgo < 60 ? `${secondsAgo}s ago` : `${Math.floor(secondsAgo / 60)}m ago`}
+              </span>
+            </div>
+
+            <div className="hidden sm:block h-4 w-px bg-border/60 shrink-0" />
+
+            {/* Location — flag + city inline */}
+            {geo ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+                <img
+                  src={`https://flagcdn.com/w20/${geo.country_code.toLowerCase()}.png`}
+                  srcSet={`https://flagcdn.com/w40/${geo.country_code.toLowerCase()}.png 2x`}
+                  alt={geo.country_code}
+                  className="h-3.5 w-auto rounded-[2px] shadow-sm object-cover"
+                />
+                <span>{geo.city}, {geo.region}</span>
+                {geo.timezone?.current_time && (
+                  <>
+                    <span className="hidden sm:inline text-border/60">·</span>
+                    <span className="hidden sm:inline text-xs">
+                      {geo.timezone.current_time.split('T')[1]?.split('-')[0]?.split('+')[0]} {geo.timezone.abbr}
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground/40 shrink-0">
+                <MapPin className="h-3 w-3" />
+                <span>Locating…</span>
+              </div>
+            )}
+
+            {/* Community links */}
+            {communityLinks && (
+              <>
+                <div className="hidden sm:block h-4 w-px bg-border/60 shrink-0" />
+                <div className="flex items-center gap-0.5 shrink-0">
+                  {communityLinks.website && (
+                    <a href={communityLinks.website} target="_blank" rel="noopener noreferrer"
+                      className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground/50 hover:text-foreground transition-colors"
+                      title="Website">
+                      <Globe className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                  {communityLinks.discord && (
+                    <a href={communityLinks.discord} target="_blank" rel="noopener noreferrer"
+                      className="p-1.5 rounded hover:bg-[#5865F2]/10 text-muted-foreground/50 hover:text-[#5865F2] transition-colors"
+                      title="Discord">
+                      <svg role="img" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
+                        <title>Discord</title>
+                        <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.5382-9.6739-3.5479-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Push chips to the far right on wide screens */}
+            <div className="hidden sm:block flex-1 min-w-0" />
+
+            {/* Rank chips */}
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <Link href="/rank-system#ranked-unranked">
+                {server_info.is_blacklisted || server_info.current_gametype?.toLowerCase() === 'coop' ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wider px-3 py-1.5 rounded-md border border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    UNRANKED{server_info.current_gametype?.toLowerCase() === 'coop' ? ' · COOP' : ''}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wider px-3 py-1.5 rounded-md border border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors">
+                    <Check className="h-3.5 w-3.5" />
+                    RANKED
+                  </span>
+                )}
+              </Link>
+
+              {rankData && !server_info.is_blacklisted && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wider px-3 py-1.5 rounded-md border border-amber-400/25 bg-amber-400/10 text-amber-400">
+                  <Trophy className="h-3.5 w-3.5" />
+                  #{rankData.rank} Global
+                  <span className="hidden sm:inline font-normal text-muted-foreground/60 tracking-normal">· {rankData.activity_hours_7d}h/7d</span>
+                </span>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Row 2: Stat chips */}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Link href="/rank-system#ranked-unranked">
-            {server_info.is_blacklisted || server_info.current_gametype?.toLowerCase() === 'coop' ? (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors cursor-pointer">
-                <AlertTriangle className="h-3 w-3" />
-                UNRANKED{server_info.current_gametype?.toLowerCase() === 'coop' ? ' · COOP' : ''}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors cursor-pointer">
-                <Check className="h-3 w-3" />
-                RANKED
-              </span>
-            )}
-          </Link>
-
-          {rankData && !server_info.is_blacklisted && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-400/30 bg-amber-400/10 text-amber-400">
-              <Trophy className="h-3 w-3" />
-              #{rankData.rank} Global
-              <span className="font-normal text-muted-foreground/60 hidden sm:inline">· {rankData.activity_hours_7d}h/7d</span>
-            </span>
-          )}
+          </div>
         </div>
 
         {/* Server Owner - New Line */}
