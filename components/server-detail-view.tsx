@@ -578,6 +578,9 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
         </div>
       )}
 
+      {/* Live Round Theater — ticker showing current round state */}
+      <ServerRoundTicker serverInfo={server_info} scoreboard={scoreboard} />
+
       <Card className="border-border/60 bg-gradient-to-br from-card/80 to-card/40 shadow-lg">
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/[0.02] to-transparent">
           <CardTitle as="h2" className="flex items-center gap-2">
@@ -646,9 +649,6 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
           </div>
         </CardContent>
       </Card >
-
-      {/* Live Round Theater — ticker showing current round state */}
-      <ServerRoundTicker serverInfo={server_info} scoreboard={scoreboard} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className={cn(

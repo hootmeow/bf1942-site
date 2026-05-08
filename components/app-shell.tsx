@@ -52,12 +52,14 @@ interface NavItem {
   icon?: LucideIcon;
   overviewLabel?: string | null;
   children?: NavItem[];
+  type?: 'divider';
 }
 
 // --- MODIFIED: Updated navItems data structure ---
 const navItems: NavItem[] = [
   { label: "Dashboard", icon: Home, href: "/" },
   { label: "News & Updates", icon: Newspaper, href: "/news" },
+  { type: "divider", label: "", href: "" },
   {
     label: "Server Info",
     icon: Server,
@@ -79,6 +81,7 @@ const navItems: NavItem[] = [
       { label: "Stats FAQ", href: "/rank-system" },
     ],
   },
+  { type: "divider", label: "", href: "" },
   { label: "Mods & Expansions", icon: Cog, href: "/mods" },
   {
     label: "Game Wiki",
@@ -231,8 +234,8 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
         {/* --- END MODIFIED SECTION --- */}
         {!collapsed && (
           <div>
-            <p className="text-[10px] sm:text-sm font-semibold uppercase tracking-wide text-muted-foreground leading-tight">Command Center</p>
-            <p className="text-sm sm:text-lg font-bold text-foreground">BF1942.online</p>
+            <p className="text-sm sm:text-lg font-bold text-foreground leading-tight">BF1942.online</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground/60 leading-tight">Live Stats &amp; Community</p>
           </div>
         )}
       </div>
@@ -240,7 +243,13 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
       {/* --- NAVIGATION SECTION (from previous step, handles submenus) --- */}
       <nav className="flex-1 space-y-1 px-3">
         <TooltipProvider delayDuration={0}>
-          {navItems.map((item) => {
+          {navItems.map((item, idx) => {
+            // Divider separator
+            if (item.type === 'divider') {
+              if (collapsed) return null;
+              return <div key={`divider-${idx}`} className="my-2 h-px bg-border/40 mx-1" />;
+            }
+
             const Icon = item.icon || ActivitySquare; // Fallback icon
 
             // --- 1. Collapsed View (Icons Only) ---
@@ -278,8 +287,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                     <AccordionTrigger
                       className={cn(
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground hover:no-underline",
-                        // Highlight if parent or a child is active
-                        (pathname.startsWith(item.href)) && "text-primary"
+                        pathname.startsWith(item.href) ? "bg-primary/10 text-primary" : ""
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -294,7 +302,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                           onClick={onCloseMobile}
                           className={cn(
                             "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
-                            pathname === item.href && "text-primary" // Active state for parent
+                            pathname === item.href && "bg-primary/10 text-primary"
                           )}
                         >
                           {/* @ts-ignore */}
@@ -313,7 +321,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                                 onClick={onCloseMobile}
                                 className={cn(
                                   "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
-                                  pathname === child.href && "text-primary"
+                                  pathname === child.href && "bg-primary/10 text-primary"
                                 )}
                               >
                                 {child.label}
@@ -345,7 +353,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                             onClick={onCloseMobile}
                             className={cn(
                               "block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-accent-foreground",
-                              pathname === child.href && "text-primary" // Active state for child
+                              pathname === child.href && "bg-primary/10 text-primary"
                             )}
                           >
                             {child.label}
@@ -366,8 +374,8 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                 href={item.href}
                 onClick={onCloseMobile}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                  isActive && "bg-primary/20 text-primary"
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground border-l-2",
+                  isActive ? "border-primary bg-primary/10 text-primary" : "border-transparent"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -379,7 +387,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
       </nav>
       {/* --- END NAVIGATION --- */}
 
-      <div className="px-3 pb-6">
+      <div className="px-3 pb-6 mt-1 pt-3 border-t border-border/40">
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
