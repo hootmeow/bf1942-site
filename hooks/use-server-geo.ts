@@ -48,15 +48,14 @@ export function useServerGeo(ip: string) {
             console.error("Error reading geo cache", e);
         }
 
-        // 3. Fetch
+        // 3. Fetch via server-side proxy (avoids CORS + caches at the edge)
         let mounted = true;
         async function fetchGeo() {
             setLoading(true);
             try {
-                const res = await fetch(`https://ipwho.is/${ip}?fields=country,country_code,city,region,latitude,longitude,timezone`);
+                const res = await fetch(`/api/geo?ip=${encodeURIComponent(ip)}`);
                 if (res.ok) {
                     const result = await res.json();
-                    // ipwho.is returns a 'success' field too, but let's check basic validity
                     if (result && result.country_code) {
                         const geo: GeoData = {
                             country: result.country,
@@ -65,9 +64,8 @@ export function useServerGeo(ip: string) {
                             region: result.region,
                             latitude: result.latitude,
                             longitude: result.longitude,
-                            timezone: result.timezone
+                            timezone: result.timezone,
                         };
-
                         if (mounted) {
                             setData(geo);
                             memoryCache[ip] = geo;
