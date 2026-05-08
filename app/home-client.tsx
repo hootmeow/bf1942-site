@@ -3,7 +3,7 @@
 import { useReducer, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Activity, Users, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, Shield, MessageCircle } from "lucide-react";
+import { Activity, Users, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, TrendingDown, Shield, MessageCircle, Map as MapIcon, Clock } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -186,12 +186,11 @@ export default function HomeClient() {
     ? topMapRaw.split("/").pop()!.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
     : "—";
 
-  const statStrip = [
-    { label: "Top Map This Week", value: topMap },
-    { label: "7-Day Active Players", value: data.active_players_7d.toLocaleString() },
-    { label: "Total Rounds Logged", value: data.total_rounds_processed.toLocaleString() },
-    { label: "Peak Hour", value: peakHour },
-  ];
+  const topMaps = data.popular_maps_7_days.slice(0, 7).map(m => ({
+    name: m.map_name.split("/").pop()!.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+    rounds: m.rounds_played,
+  }));
+  const maxMapRounds = topMaps[0]?.rounds ?? 1;
 
   return (
     <div className="space-y-6 pb-8 sm:space-y-8">
@@ -251,6 +250,29 @@ export default function HomeClient() {
               </div>
             </div>
           </div>
+
+          {/* Quick Stats Chips */}
+          <div className="mt-5 sm:mt-6 flex flex-wrap gap-2 sm:gap-3 animate-fade-in-up stagger-4">
+            {([
+              { label: "Active Servers", value: String(activeServerCount), Icon: ServerIcon },
+              { label: "7-Day Players", value: data.active_players_7d.toLocaleString(), Icon: Users, change: data.active_players_7d_change_pct },
+              { label: "Top Map", value: topMap, Icon: MapIcon },
+              { label: "Peak Hour (UTC)", value: peakHour, Icon: Clock },
+            ] as const).map(({ label, value, Icon, change }: any) => (
+              <div key={label} className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm px-3 py-2.5">
+                <Icon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider leading-none">{label}</p>
+                  <p className="text-sm font-semibold text-white leading-tight mt-0.5 truncate">{value}</p>
+                </div>
+                {change !== undefined && (
+                  <span className={cn("text-[10px] font-semibold ml-0.5 shrink-0", change >= 0 ? "text-green-400" : "text-red-400")}>
+                    {change >= 0 ? "+" : ""}{change.toFixed(0)}%
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -299,27 +321,29 @@ export default function HomeClient() {
         </div>
       </div>
 
-      {/* --- Activity Chart Section --- */}
-      <div className="space-y-3 sm:space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="rounded-md sm:rounded-lg bg-primary/10 p-1.5 sm:p-2 text-primary">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+      {/* --- Activity + Top Maps Grid --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Chart — 2/3 width on large screens */}
+        <Card className="lg:col-span-2 border-border/60 overflow-hidden">
+          <CardHeader className="pb-2 border-b border-border/40">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="rounded-md bg-primary/10 p-1.5 text-primary">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <div>
+                  <CardTitle className="text-base sm:text-lg">Player Activity</CardTitle>
+                  <CardDescription className="text-xs">Global player count over time</CardDescription>
+                </div>
+              </div>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:flex text-xs text-muted-foreground">
+                <Link href="/game-health">
+                  Full Report <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Link>
+              </Button>
             </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-foreground">Player Activity</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground">Global player count over time</p>
-            </div>
-          </div>
-          <Button asChild variant="outline" size="sm" className="hidden sm:flex">
-            <Link href="/game-health">
-              30-Day Report <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-
-        <Card className="border-border/60 overflow-hidden">
-          <CardContent className="p-3 sm:p-6">
+          </CardHeader>
+          <CardContent className="p-3 sm:p-5">
             <PlayerActivityChart
               data24h={data.global_concurrency_timeline_24h || data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_timeline_7d || data.global_concurrency_heatmap_7d}
@@ -327,22 +351,60 @@ export default function HomeClient() {
           </CardContent>
         </Card>
 
-        <div className="flex sm:hidden">
+        {/* Top Maps — 1/3 width */}
+        <Card className="border-border/60 overflow-hidden">
+          <CardHeader className="pb-2 border-b border-border/40">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="rounded-md bg-amber-500/10 p-1.5 text-amber-500">
+                <MapIcon className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base sm:text-lg">Top Maps</CardTitle>
+                <CardDescription className="text-xs">Most played this week</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-4">
+            <div className="space-y-3">
+              {topMaps.map((map, i) => (
+                <div key={map.name} className="group">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={cn(
+                        "text-[10px] font-bold tabular-nums w-4 shrink-0",
+                        i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-amber-700" : "text-muted-foreground/50"
+                      )}>#{i + 1}</span>
+                      <span className="text-xs font-medium text-foreground truncate">{map.name}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground tabular-nums shrink-0 ml-2">{map.rounds.toLocaleString()}r</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-border/40 overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-700",
+                        i === 0 ? "bg-amber-500/70" : "bg-primary/50"
+                      )}
+                      style={{ width: `${Math.round((map.rounds / maxMapRounds) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-3 border-t border-border/40">
+              <Button asChild variant="ghost" size="sm" className="w-full text-xs text-muted-foreground h-8">
+                <Link href="/game-health">
+                  View full activity report <ArrowRight className="ml-1.5 h-3 w-3" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Mobile Full Report button */}
+        <div className="flex lg:hidden">
           <Button asChild variant="outline" size="sm" className="w-full">
             <Link href="/game-health">30-Day Report</Link>
           </Button>
-        </div>
-      </div>
-
-      {/* --- Stat Strip --- */}
-      <div className="overflow-x-auto">
-        <div className="flex min-w-max divide-x divide-border/60 overflow-hidden rounded-xl border border-border/60 bg-card/30">
-          {statStrip.map(({ label, value }) => (
-            <div key={label} className="flex flex-col items-center justify-center px-6 py-3 text-center">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
-              <p className="mt-0.5 text-sm font-bold text-foreground">{value}</p>
-            </div>
-          ))}
         </div>
       </div>
 
