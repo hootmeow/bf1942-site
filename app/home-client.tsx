@@ -3,11 +3,10 @@
 import { useReducer, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Activity, Users, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, Shield, MessageCircle } from "lucide-react";
+import { Activity, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { GlobalMetrics, GlobalMetricsSchema, ServerListSchema } from "@/lib/schemas";
@@ -134,8 +133,15 @@ export default function HomeClient() {
   if (loading) {
     return (
       <div className="space-y-8 pb-8">
-        {/* Skeleton Hero Banner */}
-        <Skeleton className="h-[280px] rounded-3xl sm:h-[240px]" />
+        {/* Skeleton Hero */}
+        <div className="py-8 sm:py-12">
+          <Skeleton className="h-3 w-40 mb-8" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-0">
+            <Skeleton className="h-24 sm:h-28 w-full" />
+            <Skeleton className="h-20 sm:h-24 w-full" />
+            <Skeleton className="h-20 sm:h-24 w-full" />
+          </div>
+        </div>
 
         {/* Skeleton Server Cards */}
         <div className="space-y-4">
@@ -182,107 +188,74 @@ export default function HomeClient() {
   const emptyServerCount = allServers.filter(s => s.current_state === "EMPTY").length;
   const offlineServerCount = allServers.filter(s => s.current_state === "OFFLINE").length;
   const totalServerCount = allServers.length;
-  const mostActiveServer = allServers.find(s => s.current_state === "ACTIVE" && s.current_player_count > 0);
+  const topActiveServers = allServers
+    .filter(s => s.current_state === "ACTIVE" && s.current_player_count > 0)
+    .slice(0, 3);
 
   return (
     <div className="space-y-6 pb-8 sm:space-y-8">
       {/* --- Hero --- */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 shadow-2xl">
-        {/* Background glows */}
-        <div className="absolute -right-24 -top-24 h-[360px] w-[360px] rounded-full bg-green-500/[0.07] blur-[100px] pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 h-[300px] w-[300px] rounded-full bg-blue-500/[0.07] blur-[90px] pointer-events-none" />
-        {/* Subtle grid texture */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+      <div className="relative pt-6 pb-8 sm:pt-8 sm:pb-10">
+        {/* Top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
-        <div className="relative z-10 px-5 py-8 sm:px-10 sm:py-12">
-          {/* LIVE badge */}
-          <div className="flex items-center gap-2.5 mb-7 animate-fade-in-up">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-            </span>
-            <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 font-mono text-[10px]">
-              SYSTEM ONLINE // MONITORING ACTIVE FRONTS
-            </Badge>
+        {/* LIVE monitor label */}
+        <div className="flex items-center gap-2.5 mb-8 sm:mb-10">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+          </span>
+          <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-muted-foreground uppercase">
+            Live Battlefield Monitor
+          </span>
+        </div>
+
+        {/* Three stat columns */}
+        <div className="grid grid-cols-1 sm:grid-cols-3">
+          {/* Right Now */}
+          <div className="sm:pr-10 pb-7 sm:pb-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-3">Right Now</p>
+            <div className="text-7xl sm:text-8xl font-black tabular-nums text-foreground leading-none tracking-tight">
+              <AnimatedCounter value={data.current_active_players} duration={1500} />
+            </div>
+            <p className="text-lg sm:text-xl text-muted-foreground mt-3 font-light">Soldiers Deployed</p>
           </div>
 
-          {/* Split layout */}
-          <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-12">
-            {/* Left: main counter */}
-            <div className="lg:flex-1 animate-fade-in-up stagger-1">
-              <div className="text-6xl sm:text-7xl lg:text-8xl font-black tabular-nums text-white tracking-tight leading-none">
-                <AnimatedCounter value={data.current_active_players} duration={1500} />
-              </div>
-              <p className="text-xl sm:text-2xl font-light text-slate-300 mt-2">Soldiers Deployed</p>
-              <p className="text-sm text-slate-500 mt-2 max-w-sm">
-                Live battlefield telemetry from {activeServerCount} active server{activeServerCount !== 1 ? "s" : ""} worldwide.
-              </p>
+          {/* This Week */}
+          <div className="sm:px-10 sm:border-l sm:border-border/40 border-t border-border/40 sm:border-t-0 py-7 sm:py-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-3">This Week</p>
+            <div className="text-5xl sm:text-6xl font-black tabular-nums text-foreground leading-none tracking-tight">
+              {data.active_players_7d.toLocaleString()}
             </div>
+            <div className={cn("flex items-center gap-1.5 mt-3 text-sm font-semibold",
+              data.active_players_7d_change_pct >= 0 ? "text-emerald-500" : "text-red-400"
+            )}>
+              {data.active_players_7d_change_pct >= 0
+                ? <TrendingUp className="h-4 w-4 shrink-0" />
+                : <TrendingDown className="h-4 w-4 shrink-0" />}
+              {data.active_players_7d_change_pct >= 0 ? "+" : ""}{data.active_players_7d_change_pct.toFixed(0)}% vs prior week
+            </div>
+          </div>
 
-            {/* Right: 2×2 metric cards */}
-            <div className="grid grid-cols-2 gap-3 lg:w-[420px] shrink-0 animate-fade-in-up stagger-2">
-              {/* This Week */}
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">This Week</p>
-                  <div className="rounded-md bg-emerald-500/20 p-1 text-emerald-400">
-                    <TrendingUp className="h-3 w-3" />
-                  </div>
-                </div>
-                <p className="text-2xl sm:text-3xl font-bold tabular-nums text-white mt-1">
-                  {data.active_players_7d.toLocaleString()}
-                </p>
-                <p className={cn("text-[11px] font-semibold", data.active_players_7d_change_pct >= 0 ? "text-emerald-400" : "text-red-400")}>
-                  {data.active_players_7d_change_pct >= 0 ? "↑" : "↓"} {Math.abs(data.active_players_7d_change_pct).toFixed(0)}% vs prior week
-                </p>
-              </div>
-
-              {/* Last 24h */}
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Last 24h</p>
-                  <div className="rounded-md bg-blue-500/20 p-1 text-blue-400">
-                    <Activity className="h-3 w-3" />
-                  </div>
-                </div>
-                <p className="text-2xl sm:text-3xl font-bold tabular-nums text-white mt-1">
-                  {data.active_players_24h.toLocaleString()}
-                </p>
-                <p className={cn("text-[11px] font-semibold", data.active_players_24h_change_pct >= 0 ? "text-emerald-400" : "text-red-400")}>
-                  {data.active_players_24h_change_pct >= 0 ? "↑" : "↓"} {Math.abs(data.active_players_24h_change_pct).toFixed(0)}% vs yesterday
-                </p>
-              </div>
-
-              {/* Servers Online */}
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Servers Online</p>
-                  <div className="rounded-md bg-amber-500/20 p-1 text-amber-400">
-                    <ServerIcon className="h-3 w-3" />
-                  </div>
-                </div>
-                <p className="text-2xl sm:text-3xl font-bold tabular-nums text-white mt-1">{activeServerCount}</p>
-                <p className="text-[11px] text-slate-500">
-                  {emptyServerCount} empty · {offlineServerCount} offline
-                </p>
-              </div>
-
-              {/* Rounds Logged */}
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-4 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Rounds Logged</p>
-                  <div className="rounded-md bg-violet-500/20 p-1 text-violet-400">
-                    <Shield className="h-3 w-3" />
-                  </div>
-                </div>
-                <p className="text-2xl sm:text-3xl font-bold tabular-nums text-white mt-1">
-                  <AnimatedCounter value={data.total_rounds_processed} duration={1200} />
-                </p>
-                <p className="text-[11px] text-slate-500">all-time battle records</p>
-              </div>
+          {/* Last 24h */}
+          <div className="sm:pl-10 sm:border-l sm:border-border/40 border-t border-border/40 sm:border-t-0 pt-7 sm:pt-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-3">Last 24 Hours</p>
+            <div className="text-5xl sm:text-6xl font-black tabular-nums text-foreground leading-none tracking-tight">
+              {data.active_players_24h.toLocaleString()}
+            </div>
+            <div className={cn("flex items-center gap-1.5 mt-3 text-sm font-semibold",
+              data.active_players_24h_change_pct >= 0 ? "text-emerald-500" : "text-red-400"
+            )}>
+              {data.active_players_24h_change_pct >= 0
+                ? <TrendingUp className="h-4 w-4 shrink-0" />
+                : <TrendingDown className="h-4 w-4 shrink-0" />}
+              {data.active_players_24h_change_pct >= 0 ? "+" : ""}{data.active_players_24h_change_pct.toFixed(0)}% vs yesterday
             </div>
           </div>
         </div>
+
+        {/* Bottom separator */}
+        <div className="mt-8 sm:mt-10 h-px bg-gradient-to-r from-border/70 via-border/30 to-transparent" />
       </div>
 
       {/* --- Top Active Servers Section --- */}
@@ -373,66 +346,86 @@ export default function HomeClient() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4">
-            {/* Proportional status bar */}
+          <CardContent className="p-4 space-y-4">
+            {/* Proportional status bar — green / amber / red */}
             {totalServerCount > 0 && (
-              <div className="mb-5">
-                <div className="h-2 rounded-full overflow-hidden flex gap-0.5">
+              <div>
+                <div className="h-2.5 rounded-full overflow-hidden flex">
                   {activeServerCount > 0 && (
-                    <div className="bg-green-500 rounded-l-full" style={{ width: `${(activeServerCount / totalServerCount) * 100}%` }} />
+                    <div className="bg-green-500 transition-all" style={{ width: `${(activeServerCount / totalServerCount) * 100}%` }} />
                   )}
                   {emptyServerCount > 0 && (
-                    <div className="bg-muted-foreground/25" style={{ width: `${(emptyServerCount / totalServerCount) * 100}%` }} />
+                    <div className="bg-amber-500/60 transition-all" style={{ width: `${(emptyServerCount / totalServerCount) * 100}%` }} />
                   )}
                   {offlineServerCount > 0 && (
-                    <div className="bg-red-500/40 rounded-r-full" style={{ width: `${(offlineServerCount / totalServerCount) * 100}%` }} />
+                    <div className="bg-red-500/50 transition-all" style={{ width: `${(offlineServerCount / totalServerCount) * 100}%` }} />
                   )}
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5">{totalServerCount} total servers tracked</p>
+                <div className="flex justify-between mt-1.5 text-[10px] font-medium">
+                  <span className="text-green-500">{activeServerCount} active</span>
+                  <span className="text-amber-500/80">{emptyServerCount} empty</span>
+                  <span className="text-red-400/70">{offlineServerCount} offline</span>
+                </div>
               </div>
             )}
 
             {/* Three-count breakdown */}
-            <div className="grid grid-cols-3 gap-2 mb-5">
-              <div className="text-center py-2.5 px-1 rounded-lg bg-green-500/10 border border-green-500/20">
-                <p className="text-2xl font-bold text-green-500 tabular-nums">{activeServerCount}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Active</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center py-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <p className="text-2xl font-bold text-green-500 tabular-nums leading-none">{activeServerCount}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1.5">Active</p>
               </div>
-              <div className="text-center py-2.5 px-1 rounded-lg bg-muted/30 border border-border/50">
-                <p className="text-2xl font-bold text-foreground tabular-nums">{emptyServerCount}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Empty</p>
+              <div className="text-center py-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <p className="text-2xl font-bold text-amber-500 tabular-nums leading-none">{emptyServerCount}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1.5">Empty</p>
               </div>
-              <div className="text-center py-2.5 px-1 rounded-lg bg-red-500/10 border border-red-500/20">
-                <p className="text-2xl font-bold text-red-500/70 tabular-nums">{offlineServerCount}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Offline</p>
+              <div className="text-center py-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="text-2xl font-bold text-red-500/70 tabular-nums leading-none">{offlineServerCount}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1.5">Offline</p>
               </div>
             </div>
 
-            {/* Busiest server spotlight */}
-            {mostActiveServer && (
-              <div className="rounded-lg border border-border/50 bg-muted/20 p-3 mb-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Busiest Server</p>
-                <Link href={`/servers/${mostActiveServer.server_id}`} className="group block">
-                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">
-                    {mostActiveServer.current_server_name ?? "Unknown"}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="relative flex h-1.5 w-1.5 shrink-0">
-                      <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75" />
-                      <span className="relative rounded-full h-1.5 w-1.5 bg-green-500" />
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      {mostActiveServer.current_player_count} / {mostActiveServer.current_max_players} players
-                      {mostActiveServer.current_map && (
-                        <span className="text-muted-foreground/60"> · {mostActiveServer.current_map.split("/").pop()?.replace(/_/g, " ")}</span>
-                      )}
-                    </p>
-                  </div>
-                </Link>
+            {/* Top 3 active servers */}
+            {topActiveServers.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground pt-1">Active Now</p>
+                {topActiveServers.map((server) => {
+                  const fillPct = server.current_max_players > 0
+                    ? Math.round((server.current_player_count / server.current_max_players) * 100)
+                    : 0;
+                  return (
+                    <Link key={server.server_id} href={`/servers/${server.server_id}`} className="group block">
+                      <div className="rounded-lg border border-border/50 bg-muted/10 hover:bg-muted/30 hover:border-primary/30 transition-all p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug truncate">
+                            {server.current_server_name ?? "Unknown"}
+                          </p>
+                          <span className="text-xs font-bold tabular-nums text-foreground shrink-0">
+                            {server.current_player_count}<span className="text-muted-foreground font-normal">/{server.current_max_players}</span>
+                          </span>
+                        </div>
+                        <div className="h-1 rounded-full bg-border/40 overflow-hidden mb-2">
+                          <div
+                            className={cn(
+                              "h-full rounded-full",
+                              fillPct >= 70 ? "bg-green-500" : fillPct >= 40 ? "bg-emerald-500/70" : "bg-primary/50"
+                            )}
+                            style={{ width: `${fillPct}%` }}
+                          />
+                        </div>
+                        {server.current_map && (
+                          <p className="text-[10px] text-muted-foreground/60 truncate">
+                            {server.current_map.split("/").pop()?.replace(/_/g, " ")}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
 
-            <Button asChild variant="ghost" size="sm" className="w-full text-xs text-muted-foreground h-8">
+            <Button asChild variant="ghost" size="sm" className="w-full text-xs text-muted-foreground h-8 !mt-2">
               <Link href="/servers">
                 Browse all servers <ArrowRight className="ml-1.5 h-3 w-3" />
               </Link>
@@ -448,32 +441,6 @@ export default function HomeClient() {
         </div>
       </div>
 
-      {/* --- Community Bar --- */}
-      <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2 text-primary shrink-0">
-            <Shield className="h-4 w-4" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">Join the Community</p>
-            <p className="text-xs text-muted-foreground">Find clans, Discord servers, and organised events keeping BF1942 alive.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/community" className="flex items-center gap-1.5">
-              <MessageCircle className="h-3.5 w-3.5" />
-              Communities
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/orgs" className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5" />
-              Clans &amp; Orgs
-            </Link>
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
