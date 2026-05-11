@@ -150,7 +150,7 @@ export function PlayerRivals({ playerId }: { playerId: number }) {
                     className="flex items-center gap-3 rounded-lg border border-border/40 bg-muted/10 px-3 py-2 hover:border-border/60 hover:bg-muted/20 transition-colors"
                   >
                     <span className="text-xs font-bold text-muted-foreground w-4">{i + 1}</span>
-                    <PlayerFlag countryCode={n.iso_country_code ?? undefined} size="sm" />
+                    <PlayerFlag isoCode={n.iso_country_code} className="h-4" />
                     <div className="flex-1 min-w-0">
                       <Link
                         href={`/player/${encodeURIComponent(n.name)}`}
@@ -186,7 +186,7 @@ export function PlayerRivals({ playerId }: { playerId: number }) {
                     className="flex items-center gap-3 rounded-lg border border-border/40 bg-muted/10 px-3 py-2 hover:border-border/60 hover:bg-muted/20 transition-colors"
                   >
                     <span className="text-xs font-bold text-muted-foreground w-4">{i + 1}</span>
-                    <PlayerFlag countryCode={a.iso_country_code ?? undefined} size="sm" />
+                    <PlayerFlag isoCode={a.iso_country_code} className="h-4" />
                     <div className="flex-1 min-w-0">
                       <Link
                         href={`/player/${encodeURIComponent(a.name)}`}
