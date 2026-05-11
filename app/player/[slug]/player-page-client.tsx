@@ -804,81 +804,23 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
       </Card>
       </div>
 
-      {/* Velocity + Ping Sensitivity side by side */}
-      {(velocity?.data_available || player_info.player_id) && (
+      {/* Achievements */}
+      {profile.achievements && profile.achievements.length > 0 && (
+        <AchievementsList achievements={profile.achievements} />
+      )}
+
+      {/* Velocity + Ping Sensitivity — below achievements */}
+      {player_info.player_id && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {velocity && <PlayerVelocityCard playerId={player_info.player_id} />}
           <PlayerPingSensitivity playerId={player_info.player_id} />
         </div>
       )}
 
-      {/* Achievements */}
-      {profile.achievements && (
-        <div className="mb-6">
-          <AchievementsList achievements={profile.achievements} />
-        </div>
-      )}
-
-      {/* Favorite Maps */}
-      {player_info.favorite_maps && player_info.favorite_maps.length > 0 && (
-        <Card className="border-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle as="h2" className="text-base flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-amber-500" />
-              Favorite Maps
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {player_info.favorite_maps.map((mapName, i) => (
-                <span key={i} className="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-500 ring-1 ring-inset ring-amber-500/20">
-                  {mapName}
-                </span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Gallery */}
-      {player_info.gallery_urls && player_info.gallery_urls.length > 0 && (
-        <>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-pink-500/10">
-              <GalleryIcon className="h-5 w-5 text-pink-500" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">Gallery</h2>
-              <p className="text-sm text-muted-foreground">Screenshots and memories</p>
-            </div>
-          </div>
-          <ProfileGallery urls={player_info.gallery_urls} />
-        </>
-      )}
-
-      {/* War Stories */}
-      {profile.war_stories && profile.war_stories.length > 0 && (
-        <>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10">
-              <BookOpen className="h-5 w-5 text-amber-500" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">War Stories</h2>
-              <p className="text-sm text-muted-foreground">Memorable moments from the battlefield</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {profile.war_stories.map((story) => (
-              <WarStoryCard key={story.story_id} story={story} isOwner={isOwner} />
-            ))}
-          </div>
-        </>
-      )}
-
       {/* Activity Section Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-emerald-500/10">
+        <div className="w-1 h-10 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-500/20 flex-shrink-0" />
+        <div className="p-2 rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/20">
           <TrendingUp className="h-5 w-5 text-emerald-500" />
         </div>
         <div>
@@ -926,28 +868,35 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </Card>
       </div>
 
-      {/* Performance Over Time */}
-      {timeseriesData.length > 0 && (
-        <Card className="border-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle as="h2" className="text-base flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-purple-500" />
-              Performance Over Time
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PlayerTimeseriesChart
-              data={timeseriesData}
-              timespan={timeseriesSpan}
-              onTimespanChange={setTimeseriesSpan}
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* Performance Over Time + Rivals & Allies */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {timeseriesData.length > 0 ? (
+          <Card className="lg:col-span-2 border-border/60">
+            <CardHeader className="pb-2 border-b border-border/40 bg-gradient-to-r from-purple-500/5 via-transparent to-transparent">
+              <CardTitle as="h2" className="text-base flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-purple-500" />
+                Performance Over Time
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-3">
+              <PlayerTimeseriesChart
+                data={timeseriesData}
+                timespan={timeseriesSpan}
+                onTimespanChange={setTimeseriesSpan}
+                compact
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="lg:col-span-2" />
+        )}
+        <PlayerRivals playerId={player_info.player_id} />
+      </div>
 
       {/* Playstyle Section Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-purple-500/10">
+        <div className="w-1 h-10 rounded-full bg-gradient-to-b from-purple-500 to-purple-500/20 flex-shrink-0" />
+        <div className="p-2 rounded-lg bg-purple-500/10 ring-1 ring-purple-500/20">
           <Map className="h-5 w-5 text-purple-500" />
         </div>
         <div>
@@ -1052,7 +1001,8 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
       {mapPerformance && mapPerformance.length > 0 && (
         <>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
+            <div className="w-1 h-10 rounded-full bg-gradient-to-b from-primary to-primary/20 flex-shrink-0" />
+            <div className="p-2 rounded-lg bg-primary/10 ring-1 ring-primary/20">
               <Map className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -1067,7 +1017,8 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
       {/* Server Rankings Section */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-amber-500/10">
+        <div className="w-1 h-10 rounded-full bg-gradient-to-b from-amber-500 to-amber-500/20 flex-shrink-0" />
+        <div className="p-2 rounded-lg bg-amber-500/10 ring-1 ring-amber-500/20">
           <Trophy className="h-5 w-5 text-amber-500" />
         </div>
         <div>
@@ -1080,7 +1031,8 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
       {/* Social & History Section Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-blue-500/10">
+        <div className="w-1 h-10 rounded-full bg-gradient-to-b from-blue-500 to-blue-500/20 flex-shrink-0" />
+        <div className="p-2 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/20">
           <Users className="h-5 w-5 text-blue-500" />
         </div>
         <div>
@@ -1119,9 +1071,6 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           )}
         </div>
       </div>
-
-      {/* Rivals & Allies */}
-      <PlayerRivals playerId={player_info.player_id} />
 
       {/* Teammate Galaxy + Combat DNA side by side */}
       {(advancedProfile?.related_players?.length || (advancedProfile?.skill_rating?.breakdown && lifetime_stats)) && (
@@ -1196,6 +1145,54 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
       {/* Full Match History */}
       <PlayerMatchHistory playerId={player_info.player_id} />
+
+      {/* Profile Content */}
+      {(profile.war_stories?.length || player_info.gallery_urls?.length || player_info.favorite_maps?.length) ? (
+        <>
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-10 rounded-full bg-gradient-to-b from-pink-500 to-pink-500/20 flex-shrink-0" />
+            <div className="p-2 rounded-lg bg-pink-500/10 ring-1 ring-pink-500/20">
+              <BookOpen className="h-5 w-5 text-pink-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">Player Profile</h2>
+              <p className="text-sm text-muted-foreground">Stories, screenshots, and personal touches</p>
+            </div>
+          </div>
+
+          {profile.war_stories && profile.war_stories.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {profile.war_stories.map((story) => (
+                <WarStoryCard key={story.story_id} story={story} isOwner={isOwner} />
+              ))}
+            </div>
+          )}
+
+          {player_info.gallery_urls && player_info.gallery_urls.length > 0 && (
+            <ProfileGallery urls={player_info.gallery_urls} />
+          )}
+
+          {player_info.favorite_maps && player_info.favorite_maps.length > 0 && (
+            <Card className="border-border/60">
+              <CardHeader className="pb-2">
+                <CardTitle as="h2" className="text-base flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-amber-500" />
+                  Favorite Maps
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {player_info.favorite_maps.map((mapName, i) => (
+                    <span key={i} className="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-500 ring-1 ring-inset ring-amber-500/20">
+                      {mapName}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : null}
     </div>
   );
 }

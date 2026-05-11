@@ -1038,11 +1038,13 @@ interface TimeseriesPoint {
 export const PlayerTimeseriesChart = React.memo(function PlayerTimeseriesChart({
   data,
   timespan,
-  onTimespanChange
+  onTimespanChange,
+  compact = false,
 }: {
   data: TimeseriesPoint[];
   timespan: string;
   onTimespanChange: (t: string) => void;
+  compact?: boolean;
 }) {
   if (!data || data.length === 0) {
     return <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">No timeseries data available.</div>;
@@ -1071,7 +1073,7 @@ export const PlayerTimeseriesChart = React.memo(function PlayerTimeseriesChart({
           </button>
         ))}
       </div>
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height={compact ? 120 : 240}>
         <ComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorKdr" x1="0" y1="0" x2="0" y2="1">
