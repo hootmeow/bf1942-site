@@ -33,6 +33,7 @@ import { ServerRetention } from "@/components/server-retention";
 import { ServerHealth } from "@/components/server-health";
 import { ServerRecords } from "@/components/server-records";
 import { ServerFame } from "@/components/server-fame";
+import { ServerMigration } from "@/components/server-migration";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Info, Monitor, Shield, Package, Bookmark, ChevronRight, Copy, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -857,6 +858,13 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
       )}
 
       <ServerFame slug={slug} />
+
+      {/* Player Migration — where players go after leaving */}
+      {server_info?.server_id && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ServerMigration serverId={server_info.server_id} slug={slug} />
+        </div>
+      )}
 
       {/* Advanced Server Info */}
       <Accordion type="single" collapsible>

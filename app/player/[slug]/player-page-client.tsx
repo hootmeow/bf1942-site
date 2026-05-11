@@ -161,6 +161,7 @@ import { RankHistoryList, RankHistoryItem } from "@/components/rank-history-list
 import { RecentRoundsList } from "@/components/recent-rounds-list";
 import { TeammateGalaxy } from "@/components/teammate-galaxy";
 import { PlayerDnaRadar } from "@/components/player-dna-radar";
+import { PlayerRivals } from "@/components/player-rivals";
 
 interface AdvancedProfileResponse {
   ok: boolean;
@@ -1098,6 +1099,9 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           )}
         </div>
       </div>
+
+      {/* Rivals & Allies */}
+      <PlayerRivals playerId={player_info.player_id} />
 
       {/* Teammate Galaxy + Combat DNA side by side */}
       {(advancedProfile?.related_players?.length || (advancedProfile?.skill_rating?.breakdown && lifetime_stats)) && (
