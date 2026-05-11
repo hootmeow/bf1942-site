@@ -162,6 +162,8 @@ import { RecentRoundsList } from "@/components/recent-rounds-list";
 import { TeammateGalaxy } from "@/components/teammate-galaxy";
 import { PlayerDnaRadar } from "@/components/player-dna-radar";
 import { PlayerRivals } from "@/components/player-rivals";
+import { PlayerVelocityCard, VelocityBadge, type VelocityData } from "@/components/player-velocity";
+import { PlayerPingSensitivity } from "@/components/player-ping-sensitivity";
 
 interface AdvancedProfileResponse {
   ok: boolean;
@@ -280,6 +282,7 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
   const [advancedProfile, setAdvancedProfile] = useState<AdvancedProfileResponse | null>(null);
   const [rankHistory, setRankHistory] = useState<RankHistoryItem[] | null>(null);
   const [mapPerformance, setMapPerformance] = useState<MapPerformanceStat[] | null>(null);
+  const [velocity, setVelocity] = useState<VelocityData | null>(null);
   const [streaks, setStreaks] = useState<{
     win_streak: { current: number; best: number; best_ended: string | null };
     kdr_streak: { current: number; best: number; best_ended: string | null };
@@ -309,6 +312,12 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
       if (profileData?.ok) {
         setProfile(profileData);
         trackEvent("player_view", { player_name: playerName! });
+        // Fetch player_id-based endpoints now that we have the id
+        const pid = profileData.player_info?.player_id;
+        if (pid) {
+          fetch(`/api/v1/players/${pid}/velocity`).then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.ok) setVelocity(d); }).catch(() => {});
+        }
       } else {
         setError("Failed to load player profile.");
       }
@@ -678,7 +687,10 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
               <div className="text-3xl font-bold tabular-nums text-primary">
                 {lifetime_stats?.overall_kdr?.toFixed(2) ?? '0.00'}
               </div>
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">K/D Ratio</div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1 flex items-center justify-center gap-1.5">
+                K/D Ratio
+                {velocity && <VelocityBadge data={velocity} />}
+              </div>
             </div>
             <div className="p-4 text-center">
               <div className="text-3xl font-bold tabular-nums text-amber-500">
@@ -791,6 +803,14 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
         </CardContent>
       </Card>
       </div>
+
+      {/* Velocity + Ping Sensitivity side by side */}
+      {(velocity?.data_available || player_info.player_id) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {velocity && <PlayerVelocityCard playerId={player_info.player_id} />}
+          <PlayerPingSensitivity playerId={player_info.player_id} />
+        </div>
+      )}
 
       {/* Achievements */}
       {profile.achievements && (
