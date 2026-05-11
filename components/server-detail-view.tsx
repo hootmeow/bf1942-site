@@ -862,7 +862,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
       {/* Player Migration — where players go after leaving */}
       {server_info?.server_id && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ServerMigration serverId={server_info.server_id} slug={slug} />
+          <ServerMigration serverId={server_info.server_id} />
         </div>
       )}
 

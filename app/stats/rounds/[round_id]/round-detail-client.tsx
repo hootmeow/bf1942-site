@@ -15,7 +15,7 @@ import dynamic from "next/dynamic";
 import { RoundTimelineChart } from "@/components/charts";
 import { useBattleReplayState } from "@/components/battle-replay";
 import { RoundMomentum } from "@/components/round-momentum";
-import { RoundReportCard } from "@/components/round-report-card";
+import { RoundReportCard, type ReportCardData } from "@/components/round-report-card";
 
 const BattleReplayCard = dynamic(
   () => import("@/components/battle-replay").then(m => ({ default: m.BattleReplayCard })),
@@ -82,37 +82,44 @@ export default function RoundDetailClient() {
     const searchParams = useSearchParams();
     const roundId = params.round_id as string;
 
-    // Report card state
+    // Report card state — fetch both player lookup + card data in one shot
     const [cardPlayerName, setCardPlayerName] = useState(searchParams.get("player") ?? "");
-    const [cardPlayerId, setCardPlayerId] = useState<number | null>(null);
+    const [cardData, setCardData] = useState<ReportCardData | null>(null);
     const [cardLookupLoading, setCardLookupLoading] = useState(false);
     const [cardLookupError, setCardLookupError] = useState<string | null>(null);
 
-    // Auto-resolve player from URL param on load
     useEffect(() => {
         const urlPlayer = searchParams.get("player");
-        if (urlPlayer && urlPlayer.trim()) {
-            resolvePlayerName(urlPlayer.trim());
-        }
+        if (urlPlayer?.trim()) fetchReportCard(urlPlayer.trim());
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    async function resolvePlayerName(name: string) {
+    async function fetchReportCard(name: string) {
         if (!name.trim()) return;
         setCardLookupLoading(true);
         setCardLookupError(null);
-        setCardPlayerId(null);
+        setCardData(null);
         try {
-            const res = await fetch(`/api/v1/players/search/profile?name=${encodeURIComponent(name.trim())}`);
-            const d = await res.json();
-            if (d.ok && d.player_info?.player_id) {
-                setCardPlayerId(d.player_info.player_id);
-                setCardPlayerName(name.trim());
-            } else {
-                setCardLookupError("Player not found.");
+            // Step 1: resolve player_id
+            const profileRes = await fetch(`/api/v1/players/search/profile?name=${encodeURIComponent(name.trim())}`);
+            const profileData = await profileRes.json();
+            if (!profileData.ok || !profileData.player_info?.player_id) {
+                setCardLookupError("Player not found. Check your in-game name spelling.");
+                return;
             }
+            const playerId = profileData.player_info.player_id;
+
+            // Step 2: fetch card for this player + round
+            const cardRes = await fetch(`/api/v1/players/${playerId}/rounds/${roundId}/card`);
+            const card = await cardRes.json();
+            if (!card.ok) {
+                setCardLookupError(`${name} wasn't found in this round's records.`);
+                return;
+            }
+            setCardData(card);
+            setCardPlayerName(name.trim());
         } catch {
-            setCardLookupError("Failed to look up player.");
+            setCardLookupError("Something went wrong. Please try again.");
         } finally {
             setCardLookupLoading(false);
         }
@@ -421,7 +428,7 @@ export default function RoundDetailClient() {
                 </CardHeader>
                 <CardContent>
                     <form
-                        onSubmit={(e) => { e.preventDefault(); resolvePlayerName(cardPlayerName); }}
+                        onSubmit={(e) => { e.preventDefault(); fetchReportCard(cardPlayerName); }}
                         className="flex gap-2 mb-4"
                     >
                         <Input
@@ -437,12 +444,8 @@ export default function RoundDetailClient() {
                     {cardLookupError && (
                         <p className="text-xs text-red-500 mb-3">{cardLookupError}</p>
                     )}
-                    {cardPlayerId && (
-                        <RoundReportCard
-                            playerId={cardPlayerId}
-                            roundId={roundId}
-                            playerName={cardPlayerName}
-                        />
+                    {cardData && (
+                        <RoundReportCard data={cardData} roundId={roundId} />
                     )}
                 </CardContent>
             </Card>
