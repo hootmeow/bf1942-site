@@ -563,26 +563,29 @@ function SearchContent() {
     return (
         <div className="space-y-6">
             {/* Hero Header */}
-            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
-                {/* Background blur orbs */}
-                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
-                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-purple-500/10 blur-[70px]" />
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-zinc-950 via-neutral-950 to-black p-6 sm:p-8 shadow-2xl">
+                {/* Amber rim light */}
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.15),transparent_65%)]" />
+                {/* Soft white glow */}
+                <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_65%)]" />
+                {/* Film grain */}
+                <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)", backgroundSize: "3px 3px" }} />
 
                 <div className="relative z-10">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
-                        <div className="rounded-xl bg-primary/20 p-3">
-                            <Search className="h-8 w-8 text-primary" />
+                        <div className="rounded-xl bg-amber-500/20 p-3">
+                            <Search className="h-8 w-8 text-amber-400" />
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                                     Search & Browse
                                 </h1>
-                                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
+                                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
                                     Explore
                                 </Badge>
                             </div>
-                            <p className="text-sm text-slate-400 mt-1">
+                            <p className="text-sm text-zinc-400 mt-1">
                                 Find players, browse round history, and compare stats side-by-side
                             </p>
                         </div>

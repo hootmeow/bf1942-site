@@ -316,10 +316,13 @@ export default function ChallengesClient() {
   return (
     <div className="space-y-8">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
-        {/* Background blur orbs */}
-        <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
-        <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-blue-500/10 blur-[70px]" />
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-zinc-950 via-neutral-950 to-black p-6 sm:p-8 shadow-2xl">
+        {/* Amber rim light */}
+        <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.15),transparent_65%)]" />
+        {/* Soft white glow */}
+        <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_65%)]" />
+        {/* Film grain */}
+        <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)", backgroundSize: "3px 3px" }} />
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 animate-fade-in-up">
@@ -330,7 +333,7 @@ export default function ChallengesClient() {
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                 Global Challenges
               </h1>
-              <p className="text-sm text-slate-400 mt-0.5">
+              <p className="text-sm text-zinc-400 mt-0.5">
                 Work together to complete community objectives. Progress updates after each round.
               </p>
             </div>
@@ -340,11 +343,11 @@ export default function ChallengesClient() {
           {activeChallenges.length > 0 && (
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fade-in-up stagger-1">
               <div className="flex items-center gap-2 sm:gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-3 py-3 sm:px-4 card-hover">
-                <div className="rounded-lg bg-blue-500/20 p-2 text-blue-400">
+                <div className="rounded-lg bg-amber-500/20 p-2 text-amber-400">
                   <Target className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-slate-500">Active</p>
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-zinc-500">Active</p>
                   <p className="font-mono text-lg sm:text-xl font-bold text-white">
                     <AnimatedCounter value={activeChallenges.length} duration={800} />
                   </p>
@@ -355,7 +358,7 @@ export default function ChallengesClient() {
                   <Trophy className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-slate-500">Completed</p>
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-zinc-500">Completed</p>
                   <p className="font-mono text-lg sm:text-xl font-bold text-white">
                     <AnimatedCounter value={totalCompleted} duration={800} />
                   </p>
@@ -366,18 +369,18 @@ export default function ChallengesClient() {
                   <Flame className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-slate-500">Avg Progress</p>
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-zinc-500">Avg Progress</p>
                   <p className="font-mono text-lg sm:text-xl font-bold text-white">
                     <AnimatedCounter value={totalProgress} duration={1000} suffix="%" />
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-3 py-3 sm:px-4 card-hover">
-                <div className="rounded-lg bg-purple-500/20 p-2 text-purple-400">
+                <div className="rounded-lg bg-zinc-500/20 p-2 text-zinc-400">
                   <CalendarDays className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-slate-500">This Week</p>
+                  <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-zinc-500">This Week</p>
                   <p className="font-mono text-lg sm:text-xl font-bold text-white">
                     <AnimatedCounter value={weeklyChallenges.length} duration={800} />
                   </p>

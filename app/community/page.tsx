@@ -116,23 +116,26 @@ export default function CommunityPage() {
     <div className="space-y-10 pb-12">
 
       {/* HERO */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 px-6 py-14 shadow-2xl sm:px-12 md:py-20">
-        <div className="absolute -right-24 -top-24 h-[480px] w-[480px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 h-[380px] w-[380px] rounded-full bg-green-500/10 blur-[100px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[600px] rounded-full bg-primary/5 blur-[80px] pointer-events-none" />
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-zinc-950 via-neutral-950 to-black px-6 py-14 shadow-2xl sm:px-12 md:py-20">
+        {/* Amber rim light */}
+        <div className="absolute -right-24 -top-24 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.13),transparent_65%)] pointer-events-none" />
+        {/* Soft white glow */}
+        <div className="absolute -bottom-24 -left-24 h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.03),transparent_65%)] pointer-events-none" />
+        {/* Film grain */}
+        <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)", backgroundSize: "3px 3px" }} />
 
         <div className="relative z-10 max-w-3xl">
-          <Badge variant="outline" className="mb-4 border-blue-500/30 bg-blue-500/10 text-blue-400 uppercase tracking-widest text-[10px]">
+          <Badge variant="outline" className="mb-4 border-amber-500/30 bg-amber-500/10 text-amber-400 uppercase tracking-widest text-[10px]">
             Allied Networks
           </Badge>
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             Community
           </h1>
-          <p className="mt-4 text-base text-slate-400 max-w-2xl leading-relaxed">
+          <p className="mt-4 text-base text-zinc-400 max-w-2xl leading-relaxed">
             Connect with squads, organizers, and creators keeping Battlefield 1942 alive since 2002.
             Find your next clan, Discord server, or community event.
           </p>
-          <div className="mt-6 flex items-center gap-6 text-sm text-slate-500">
+          <div className="mt-6 flex items-center gap-6 text-sm text-zinc-500">
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
               {communities.filter(c => c.types.includes("Active")).length} Active Communities
