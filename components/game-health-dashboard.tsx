@@ -304,7 +304,7 @@ const MAP_COLORS: [string, string][] = [
   ["#8b5cf6", "#a78bfa"], // violet
   ["#ec4899", "#f472b6"], // pink
   ["#10b981", "#34d399"], // emerald
-  ["#f59e0b", "#fbbf24"], // amber
+  ["#65a30d", "#84cc16"], // olive
   ["#ef4444", "#f87171"], // red
   ["#6366f1", "#818cf8"], // indigo
   ["#14b8a6", "#2dd4bf"], // teal
@@ -599,8 +599,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           title="Active Servers Today"
           value={stats.serversToday}
           icon={Server}
-          iconColor="text-amber-400"
-          iconBg="bg-amber-500/20"
+          iconColor="text-lime-400"
+          iconBg="bg-lime-500/20"
           changePct={stats.serversPct}
         />
         <MetricCard
@@ -841,7 +841,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         <Card className="border-border/60 bg-card/40">
           <CardHeader>
             <CardTitle as="h2" className="flex items-center gap-2">
-              <Server className="h-5 w-5 text-amber-400" />
+              <Server className="h-5 w-5 text-lime-400" />
               Active Servers ({period} Days)
             </CardTitle>
           </CardHeader>
@@ -1546,7 +1546,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         <Card className="border-border/60 bg-card/40">
           <CardHeader>
             <CardTitle as="h2" className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-amber-400" />
+              <Zap className="h-5 w-5 text-lime-400" />
               Daily Combat Activity ({period} Days)
             </CardTitle>
           </CardHeader>
@@ -1573,7 +1573,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               </ResponsiveContainer>
             </div>
             <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-amber-400" />Kills</div>
+              <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-lime-500" />Kills</div>
               <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-red-500" />Deaths</div>
               <div className="flex items-center gap-1.5"><div className="h-0.5 w-4 bg-emerald-400" />K/D Ratio (right axis)</div>
             </div>

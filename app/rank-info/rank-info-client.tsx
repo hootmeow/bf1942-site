@@ -250,23 +250,23 @@ export default function RankInfoClient() {
     return (
         <div className="space-y-8">
             {/* Hero Header */}
-            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl">
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] p-6 sm:p-8 shadow-2xl">
                 {/* Background blur orbs */}
-                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-amber-500/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-lime-500/10 blur-[80px]" />
                 <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-primary/10 blur-[70px]" />
 
                 <div className="relative z-10">
                     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in-up">
-                            <div className="rounded-xl bg-amber-500/20 p-3">
-                                <Trophy className="h-8 w-8 text-amber-400" />
+                            <div className="rounded-xl bg-lime-500/20 p-3">
+                                <Trophy className="h-8 w-8 text-lime-400" />
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 flex-wrap mb-1">
                                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                                         Leaderboards
                                     </h1>
-                                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                                    <Badge className="bg-lime-500/20 text-lime-400 border-lime-500/30 text-xs">
                                         Top 100
                                     </Badge>
                                 </div>

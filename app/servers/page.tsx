@@ -58,11 +58,11 @@ export default async function ServersPage() {
   return (
     <div className="space-y-6">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-zinc-950 via-neutral-950 to-black p-6 sm:p-8 shadow-2xl">
-        {/* Amber rim light */}
-        <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.15),transparent_65%)]" />
-        {/* Soft white glow */}
-        <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_65%)]" />
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] p-6 sm:p-8 shadow-2xl">
+        {/* Olive rim light */}
+        <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.18),transparent_65%)]" />
+        {/* Soft olive glow */}
+        <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.06),transparent_65%)]" />
         {/* Film grain */}
         <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)", backgroundSize: "3px 3px" }} />
 
@@ -89,7 +89,7 @@ export default async function ServersPage() {
               </p>
             </div>
             <Link href="/map">
-              <Button variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300">
+              <Button variant="outline" className="border-lime-500/30 bg-lime-500/10 text-lime-400 hover:bg-lime-500/20 hover:text-lime-300">
                 <MapIcon className="h-4 w-4 mr-2" />
                 View Map
               </Button>

@@ -13,9 +13,9 @@ export default function RankSystemPage() {
     return (
         <div className="space-y-8">
             {/* Hero Header */}
-            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-zinc-950 via-neutral-950 to-black p-6 sm:p-8 shadow-2xl">
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] p-6 sm:p-8 shadow-2xl">
                 {/* Amber rim light */}
-                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.15),transparent_65%)]" />
+                <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.18),transparent_65%)]" />
                 {/* Soft white glow */}
                 <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_65%)]" />
                 {/* Film grain */}
@@ -31,7 +31,7 @@ export default function RankSystemPage() {
                                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                                     Ranking System
                                 </h1>
-                                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                                <Badge className="bg-lime-500/20 text-lime-400 border-lime-500/30 text-xs">
                                     RP Rating
                                 </Badge>
                             </div>

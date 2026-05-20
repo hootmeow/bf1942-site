@@ -72,7 +72,7 @@ export default function TosPrivacyPage() {
     return (
         <div className="max-w-5xl mx-auto">
             {/* Hero Header */}
-            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 px-8 py-12 mb-10">
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] px-8 py-12 mb-10">
                 <div className="absolute -right-20 -top-20 h-[300px] w-[300px] rounded-full bg-primary/10 blur-[100px]" />
                 <div className="absolute -bottom-10 -left-10 h-[200px] w-[200px] rounded-full bg-blue-500/10 blur-[80px]" />
 

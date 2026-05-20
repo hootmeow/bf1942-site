@@ -92,7 +92,7 @@ export default function WikiPage() {
     return (
         <div className="space-y-12 pb-12">
             {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-zinc-950 via-neutral-950 to-black px-6 py-16 shadow-2xl sm:px-12 md:py-24">
+            <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] px-6 py-16 shadow-2xl sm:px-12 md:py-24">
                 {/* Amber rim light */}
                 <div className="absolute -right-20 -top-20 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.13),transparent_65%)] pointer-events-none" />
                 {/* Soft white glow */}

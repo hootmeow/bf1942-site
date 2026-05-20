@@ -204,12 +204,12 @@ export default function HomeClient() {
            HERO — "Frontline"  (matches site: near-black + amber accent)
          ============================================================ */}
       <section className="relative overflow-hidden rounded-2xl border border-border/60 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]">
-        {/* Base — neutral near-black matching site bg */}
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-neutral-950 to-black" />
-        {/* Warm amber rim light — matches site's active-server accent */}
-        <div className="absolute -right-32 -bottom-40 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.14),transparent_65%)] pointer-events-none" />
-        {/* Soft primary glow top-left */}
-        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_65%)] pointer-events-none" />
+        {/* Base — deep military dark with olive undertone */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04]" />
+        {/* Army olive rim light */}
+        <div className="absolute -right-32 -bottom-40 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.18),transparent_65%)] pointer-events-none" />
+        {/* Secondary olive glow top-left */}
+        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.07),transparent_65%)] pointer-events-none" />
 
         {/* Topographic contour lines — SVG */}
         <svg
@@ -220,9 +220,9 @@ export default function HomeClient() {
         >
           <defs>
             <linearGradient id="topoFade" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="rgba(255,255,255,0.0)" />
-              <stop offset="0.4" stopColor="rgba(255,255,255,0.10)" />
-              <stop offset="1" stopColor="rgba(255,255,255,0.0)" />
+              <stop offset="0" stopColor="rgba(101,163,13,0.0)" />
+              <stop offset="0.4" stopColor="rgba(101,163,13,0.14)" />
+              <stop offset="1" stopColor="rgba(101,163,13,0.0)" />
             </linearGradient>
           </defs>
           {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
@@ -248,22 +248,22 @@ export default function HomeClient() {
           })}
         </svg>
 
-        {/* Diagonal stencil stripe — subtle, like painted insignia */}
+        {/* Diagonal stencil stripe — camouflage grid pattern */}
         <div
-          className="absolute right-0 top-0 bottom-0 w-1/3 opacity-[0.04] pointer-events-none mix-blend-screen"
+          className="absolute right-0 top-0 bottom-0 w-1/3 opacity-[0.06] pointer-events-none mix-blend-screen"
           style={{
-            backgroundImage: "repeating-linear-gradient(135deg, rgba(255,240,200,0.7) 0 2px, transparent 2px 14px)",
+            backgroundImage: "repeating-linear-gradient(135deg, rgba(180,220,80,0.7) 0 2px, transparent 2px 14px)",
             maskImage: "linear-gradient(to left, black, transparent)",
             WebkitMaskImage: "linear-gradient(to left, black, transparent)",
           }}
         />
 
-        {/* Drifting embers — atmosphere */}
+        {/* Drifting tracer particles — atmosphere */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[15, 32, 48, 64, 78, 88].map((x, i) => (
             <span
               key={i}
-              className="absolute bottom-0 h-1 w-1 rounded-full bg-amber-300/40 blur-[1px] animate-ember"
+              className="absolute bottom-0 h-1 w-1 rounded-full bg-lime-400/35 blur-[1px] animate-ember"
               style={{
                 left: `${x}%`,
                 animationDelay: `${i * 1.7}s`,
@@ -287,11 +287,11 @@ export default function HomeClient() {
         <div className="relative z-10 px-5 py-9 sm:px-10 sm:py-14 lg:px-14">
           {/* Tagline */}
           <div className="flex items-center gap-3 mb-7">
-            <div className="h-px w-8 bg-gradient-to-r from-transparent to-amber-400/50" />
-            <span className="text-[10px] font-semibold tracking-[0.32em] uppercase text-amber-200/70">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-lime-500/50" />
+            <span className="text-[10px] font-semibold tracking-[0.32em] uppercase text-lime-300/70">
               Battlefield 1942 · Online Now
             </span>
-            <div className="h-px flex-1 bg-gradient-to-r from-amber-400/30 to-transparent" />
+            <div className="h-px flex-1 bg-gradient-to-r from-lime-500/30 to-transparent" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 lg:gap-14 items-end">
@@ -301,7 +301,7 @@ export default function HomeClient() {
                 <AnimatedCounter value={data.current_active_players} duration={1500} />
               </div>
               <h1 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-stone-200">
-                Players in combat <span className="text-amber-300/90">right now</span>
+                Players in combat <span className="text-lime-300/90">right now</span>
               </h1>
               {/* Compact server status pills — replaces the wordy "Live telemetry from..." */}
               <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -394,13 +394,13 @@ export default function HomeClient() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card className="lg:col-span-2 border-border/60 overflow-hidden relative">
           {/* Subtle ambient backdrop */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(245,158,11,0.05),transparent_60%)] pointer-events-none" />
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(101,163,13,0.07),transparent_60%)] pointer-events-none" />
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-lime-500/25 to-transparent pointer-events-none" />
 
           <CardHeader className="pb-3 border-b border-border/40 relative">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-md bg-amber-500/10 p-1.5 text-amber-400 ring-1 ring-amber-500/20">
+                <div className="rounded-md bg-lime-500/10 p-1.5 text-lime-400 ring-1 ring-lime-500/20">
                   <Activity className="h-4 w-4" />
                 </div>
                 <div>
@@ -419,7 +419,7 @@ export default function HomeClient() {
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-4">
                 <ChartStatBadge label="Now" value={data.current_active_players.toLocaleString()} accent="emerald" />
                 <ChartStatBadge label="24h Avg" value={chartStats.avg.toLocaleString()} accent="stone" />
-                <ChartStatBadge label="24h Peak" value={chartStats.peak.toLocaleString()} accent="amber" />
+                <ChartStatBadge label="24h Peak" value={chartStats.peak.toLocaleString()} accent="olive" />
               </div>
             )}
           </CardHeader>
@@ -435,7 +435,7 @@ export default function HomeClient() {
         <Card className="border-border/60 overflow-hidden">
           <CardHeader className="pb-2 border-b border-border/40">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="rounded-md bg-amber-500/10 p-1.5 text-amber-500 ring-1 ring-amber-500/20">
+              <div className="rounded-md bg-lime-500/10 p-1.5 text-lime-500 ring-1 ring-lime-500/20">
                 <Clock className="h-4 w-4" />
               </div>
               <div>
@@ -486,7 +486,7 @@ function DogTag({
   return (
     <div className="relative rounded-lg border border-stone-700/40 bg-gradient-to-br from-stone-900/80 to-stone-950/60 backdrop-blur-sm p-4 overflow-hidden">
       {/* Edge accent */}
-      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r bg-gradient-to-b from-amber-500/70 via-amber-600/30 to-transparent" />
+      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r bg-gradient-to-b from-lime-500/70 via-lime-600/30 to-transparent" />
       <div className="pl-2">
         <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-stone-400">{label}</p>
         <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
@@ -513,7 +513,7 @@ function DogTag({
 const accentMap = {
   emerald: { text: "text-emerald-400", border: "border-emerald-500/20" },
   blue:    { text: "text-blue-400",    border: "border-blue-500/20" },
-  amber:   { text: "text-amber-400",   border: "border-amber-500/20" },
+  olive:   { text: "text-lime-400",    border: "border-lime-500/20" },
   stone:   { text: "text-stone-200",   border: "border-stone-600/30" },
 } as const;
 
@@ -548,12 +548,12 @@ function PeakHours({ data }: { data: HourlyData }) {
     return `${display}${suffix}`;
   };
 
-  // Color-encode bars by intensity: cool muted → warm amber as activity rises
+  // Color-encode bars by intensity: muted olive → bright lime as activity rises
   const getBarColor = (v: number) => {
     const t = max > 0 ? v / max : 0;
-    if (t >= 0.85) return "from-amber-500 to-amber-300";
-    if (t >= 0.65) return "from-amber-600/90 to-amber-400/90";
-    if (t >= 0.45) return "from-amber-700/70 to-amber-500/70";
+    if (t >= 0.85) return "from-lime-500 to-lime-300";
+    if (t >= 0.65) return "from-lime-600/90 to-lime-400/90";
+    if (t >= 0.45) return "from-lime-700/70 to-lime-500/70";
     if (t >= 0.25) return "from-stone-600 to-stone-500";
     return "from-stone-700 to-stone-600";
   };
@@ -584,9 +584,9 @@ function PeakHours({ data }: { data: HourlyData }) {
           </p>
           <p className="text-[10px] text-muted-foreground tabular-nums">{formatHour(currentHour)} hour</p>
         </div>
-        <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-2.5">
+        <div className="rounded-lg border border-lime-500/25 bg-lime-500/5 p-2.5">
           <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Peak Hour</p>
-          <p className="mt-0.5 text-lg font-bold tabular-nums text-amber-400 leading-tight">
+          <p className="mt-0.5 text-lg font-bold tabular-nums text-lime-400 leading-tight">
             {max.toLocaleString()}
           </p>
           <p className="text-[10px] text-muted-foreground tabular-nums">{formatHour(peakHour)}–{formatHour((peakHour + 1) % 24)}</p>
@@ -614,12 +614,12 @@ function PeakHours({ data }: { data: HourlyData }) {
         >
           <defs>
             <linearGradient id="peakAreaFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="rgba(245,158,11,0.18)" />
-              <stop offset="1" stopColor="rgba(245,158,11,0)" />
+              <stop offset="0" stopColor="rgba(101,163,13,0.22)" />
+              <stop offset="1" stopColor="rgba(101,163,13,0)" />
             </linearGradient>
           </defs>
           <path d={areaPath} fill="url(#peakAreaFill)" />
-          <path d={linePath} fill="none" stroke="rgba(245,158,11,0.45)" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
+          <path d={linePath} fill="none" stroke="rgba(101,163,13,0.50)" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
         </svg>
 
         {/* Bars */}
@@ -635,7 +635,7 @@ function PeakHours({ data }: { data: HourlyData }) {
                   className={cn(
                     "w-full rounded-[2px] bg-gradient-to-t transition-all",
                     colorClasses,
-                    isPeak && "shadow-[0_0_10px_rgba(245,158,11,0.6)] ring-1 ring-amber-300/40",
+                    isPeak && "shadow-[0_0_10px_rgba(101,163,13,0.65)] ring-1 ring-lime-400/40",
                     isCurrent && !isPeak && "ring-1 ring-emerald-400/70 shadow-[0_0_8px_rgba(52,211,153,0.4)]"
                   )}
                   style={{ height: `${Math.max(pct, 6)}%`, minHeight: "4px" }}
@@ -673,7 +673,7 @@ function PeakHours({ data }: { data: HourlyData }) {
           </div>
           <div className="text-right shrink-0">
             <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Avg</p>
-            <p className="text-base font-semibold text-amber-400 tabular-nums">
+            <p className="text-base font-semibold text-lime-400 tabular-nums">
               {bestWindowAvg.toLocaleString()}
             </p>
           </div>

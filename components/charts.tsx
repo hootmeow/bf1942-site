@@ -440,7 +440,7 @@ export const ServerMapsPieChart = React.memo(function ServerMapsPieChart({ mapDa
   const gradientColors = [
     ["#8b5cf6", "#c084fc"], // Purple
     ["#06b6d4", "#67e8f9"], // Cyan
-    ["#f59e0b", "#fcd34d"], // Amber
+    ["#65a30d", "#84cc16"], // Olive
     ["#ec4899", "#f9a8d4"], // Pink
     ["#10b981", "#6ee7b7"], // Emerald
     ["#6366f1", "#a5b4fc"], // Indigo
@@ -689,7 +689,7 @@ export const PlayerTopMapsChart = React.memo(function PlayerTopMapsChart({ data 
   const mapColors = [
     ["#8b5cf6", "#a78bfa"],
     ["#06b6d4", "#22d3ee"],
-    ["#f59e0b", "#fbbf24"],
+    ["#65a30d", "#84cc16"],
     ["#ec4899", "#f472b6"],
     ["#10b981", "#34d399"],
   ];
@@ -1143,11 +1143,11 @@ export const PlayerTimeseriesChart = React.memo(function PlayerTimeseriesChart({
             type="monotone"
             dataKey="kpm"
             name="kpm"
-            stroke="#f59e0b"
+            stroke="#84cc16"
             strokeWidth={2}
             strokeDasharray="5 5"
             dot={false}
-            activeDot={{ r: 4, fill: "#f59e0b", stroke: "#fff", strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: "#84cc16", stroke: "#fff", strokeWidth: 2 }}
             connectNulls
           />
         </ComposedChart>

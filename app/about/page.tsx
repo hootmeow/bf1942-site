@@ -110,7 +110,7 @@ export default function AboutPage() {
       />
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 sm:p-8 shadow-2xl mb-10">
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] p-6 sm:p-8 shadow-2xl mb-10">
         {/* Background blur orbs */}
         <div className="pointer-events-none absolute -top-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
         <div className="pointer-events-none absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-emerald-500/10 blur-[70px]" />

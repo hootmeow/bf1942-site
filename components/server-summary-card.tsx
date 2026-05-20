@@ -49,10 +49,10 @@ function getPlayerTier(count: number, max: number) {
     };
     if (count >= 20) return {
         label: "active",
-        barClass: "bg-gradient-to-r from-amber-500 to-yellow-400",
-        glowClass: "shadow-[0_0_8px_rgba(245,158,11,0.4)]",
-        countClass: "text-amber-400 font-semibold",
-        borderClass: "border-l-amber-500",
+        barClass: "bg-gradient-to-r from-lime-600 to-lime-400",
+        glowClass: "shadow-[0_0_8px_rgba(101,163,13,0.45)]",
+        countClass: "text-lime-400 font-semibold",
+        borderClass: "border-l-lime-500",
         pulse: true,
     };
     if (count >= 5) return {
@@ -137,7 +137,7 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                         <div
                             className={cn(
                                 "absolute top-1/2 -translate-y-1/2 h-4 rounded-full blur-md animate-pulse",
-                                tier.label === "packed" ? "bg-green-500/40" : "bg-amber-500/35"
+                                tier.label === "packed" ? "bg-green-500/40" : "bg-lime-500/35"
                             )}
                             style={{ width: `${fillPercent}%` }}
                         />
