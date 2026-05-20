@@ -528,9 +528,9 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   return (
     <div className="space-y-6">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 px-6 py-10 shadow-2xl sm:px-12 sm:py-14">
-        <div className="absolute -right-20 -top-20 h-[500px] w-[500px] rounded-full bg-green-500/10 blur-[120px]" />
-        <div className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full bg-blue-500/10 blur-[100px]" />
+      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] px-6 py-10 shadow-2xl sm:px-12 sm:py-14">
+        <div className="absolute -right-20 -top-20 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.16),transparent_65%)]" />
+        <div className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.08),transparent_65%)]" />
 
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-4">
@@ -549,7 +549,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             Game Health
           </h1>
-          <p className="mt-2 max-w-[500px] text-lg text-slate-400">
+          <p className="mt-2 max-w-[500px] text-lg text-stone-400">
             Population trends, server activity, and game mode analytics.
           </p>
 
@@ -563,8 +563,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 className={[
                   "px-4 py-1.5 rounded-full text-sm font-semibold border transition-all",
                   period === days
-                    ? "bg-green-500/20 border-green-500/50 text-green-400"
-                    : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20 hover:text-white",
+                    ? "bg-lime-500/20 border-lime-500/50 text-lime-400"
+                    : "bg-white/5 border-white/10 text-stone-400 hover:border-white/20 hover:text-white",
                   loading ? "opacity-50 cursor-not-allowed" : "",
                 ].join(" ")}
               >
@@ -584,8 +584,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           title="Players Online Now"
           value={globalMetrics?.current_active_players ?? 0}
           icon={Users}
-          iconColor="text-blue-400"
-          iconBg="bg-blue-500/20"
+          iconColor="text-lime-400"
+          iconBg="bg-lime-500/20"
         />
         <MetricCard
           title="Unique Players (7d)"
