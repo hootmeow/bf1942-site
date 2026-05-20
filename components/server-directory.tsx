@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { ArrowUp, ArrowDown, Trophy, Users } from "lucide-react";
+import { ArrowUp, ArrowDown, Trophy, Users, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -55,18 +56,20 @@ function getPlayerTier(count: number) {
     label: "empty", barClass: "bg-transparent", countClass: "text-foreground", pulse: false,
   };
   if (count >= 40) return {
-    label: "packed", barClass: "bg-gradient-to-r from-green-500 to-emerald-400", countClass: "text-green-500 font-semibold", pulse: true,
+    label: "packed", barClass: "bg-gradient-to-r from-lime-500 via-yellow-400 to-amber-300", countClass: "text-yellow-400 font-semibold", pulse: true,
   };
   if (count >= 20) return {
-    label: "active", barClass: "bg-gradient-to-r from-amber-500 to-yellow-400", countClass: "text-amber-400 font-semibold", pulse: true,
+    label: "active", barClass: "bg-gradient-to-r from-lime-700 to-lime-400", countClass: "text-lime-400 font-semibold", pulse: true,
   };
   if (count >= 5) return {
-    label: "warming", barClass: "bg-primary/70", countClass: "text-foreground font-semibold", pulse: false,
+    label: "warming", barClass: "bg-gradient-to-r from-primary/50 to-primary/70", countClass: "text-foreground font-semibold", pulse: false,
   };
   return {
-    label: "low", barClass: "bg-primary/40", countClass: "text-foreground font-semibold", pulse: false,
+    label: "low", barClass: "bg-primary/25", countClass: "text-foreground font-semibold", pulse: false,
   };
 }
+
+type StatusFilter = "ALL" | "ACTIVE" | "EMPTY" | "OFFLINE";
 
 export function ServerDirectory({ initialServers }: { initialServers: Server[] }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,6 +78,8 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
     direction: "asc",
   });
   const [activityRanks, setActivityRanks] = useState<Record<number, { rank: number; activity_hours_7d: number }>>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
   // Fetch Activity Rankings
   useEffect(() => {
@@ -99,7 +104,15 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
   }, []);
 
   const sortedServers = useMemo(() => {
-    let sortableServers = [...initialServers];
+    const q = searchQuery.trim().toLowerCase();
+    let sortableServers = initialServers.filter(s => {
+      if (statusFilter !== "ALL" && s.current_state !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        (s.current_server_name || "").toLowerCase().includes(q) ||
+        (s.current_map || "").toLowerCase().includes(q)
+      );
+    });
 
     // Default sort logic if 'status' is selected
     const sortOrder = { ACTIVE: 1, EMPTY: 2, OFFLINE: 3 };
@@ -151,7 +164,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
     });
 
     return sortableServers;
-  }, [initialServers, sortConfig, activityRanks]);
+  }, [initialServers, sortConfig, activityRanks, searchQuery, statusFilter]);
 
   // Pagination logic
   const totalPages = Math.ceil(sortedServers.length / ITEMS_PER_PAGE);
@@ -162,6 +175,16 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
 
   const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilter = (status: StatusFilter) => {
+    setStatusFilter(status);
+    setCurrentPage(1);
+  };
 
   const requestSort = (key: SortKey) => {
     let direction: SortDirection = "asc";
@@ -213,11 +236,22 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
     return { active, totalPlayers, total: initialServers.length };
   }, [initialServers]);
 
+  const STATUS_FILTERS: { label: string; value: StatusFilter; dot?: string }[] = [
+    { label: "All", value: "ALL" },
+    { label: "Active", value: "ACTIVE", dot: "bg-green-500" },
+    { label: "Empty", value: "EMPTY", dot: "bg-muted-foreground" },
+    { label: "Offline", value: "OFFLINE", dot: "bg-red-500" },
+  ];
+
+  const isFiltered = searchQuery.trim() !== "" || statusFilter !== "ALL";
+  const resultCount = sortedServers.length;
+
   return (
     <Card className="border-border/60 overflow-hidden">
-      {/* Stats Header */}
-      <CardHeader className="border-b border-border/40 bg-muted/20 py-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+      {/* Search + Filter Header */}
+      <CardHeader className="border-b border-border/40 bg-muted/20 py-4 space-y-3">
+        {/* Top row: stat summary */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             {stats.totalPlayers} players on {stats.active} active servers
@@ -232,6 +266,52 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
               <span className="text-muted-foreground">{stats.total - stats.active} Inactive</span>
             </div>
           </div>
+        </div>
+
+        {/* Search input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Search by server name or map…"
+            value={searchQuery}
+            onChange={e => handleSearch(e.target.value)}
+            className="pl-9 pr-9 bg-background/60 border-border/60 focus-visible:ring-primary/40 h-9 text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => handleSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Status filter chips + result count */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {STATUS_FILTERS.map(f => (
+              <button
+                key={f.value}
+                onClick={() => handleStatusFilter(f.value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-all duration-150",
+                  statusFilter === f.value
+                    ? "bg-primary/15 text-primary border-primary/40"
+                    : "bg-transparent text-muted-foreground border-border/50 hover:border-border hover:text-foreground"
+                )}
+              >
+                {f.dot && <span className={cn("w-1.5 h-1.5 rounded-full", f.dot)} />}
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {isFiltered && (
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {resultCount === 0 ? "No results" : `${resultCount} of ${stats.total} servers`}
+            </span>
+          )}
         </div>
       </CardHeader>
 
@@ -278,6 +358,21 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
               </TableRow>
             </TableHeader>
           <TableBody>
+            {paginatedServers.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="py-16 text-center">
+                  <Search className="h-8 w-8 mx-auto mb-3 text-muted-foreground/40" />
+                  <p className="text-sm font-medium text-muted-foreground">No servers match your search</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Try a different name, map, or status filter</p>
+                  <button
+                    onClick={() => { handleSearch(""); handleStatusFilter("ALL"); }}
+                    className="mt-3 text-xs text-primary hover:underline"
+                  >
+                    Clear filters
+                  </button>
+                </TableCell>
+              </TableRow>
+            )}
             {paginatedServers.map((server, index) => {
               const rankData = activityRanks[server.server_id];
               const statusStyles = getStatusStyles(server.current_state);
@@ -308,7 +403,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
                         <div className={cn(
                           "flex items-center justify-center w-5 h-5 sm:w-7 sm:h-7 rounded-md text-[10px] sm:text-xs font-bold",
                           rankData.rank <= 3
-                            ? "bg-amber-500/20 text-amber-500 ring-1 ring-amber-500/30"
+                            ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/30"
                             : rankData.rank <= 10
                             ? "bg-primary/10 text-primary ring-1 ring-primary/20"
                             : "bg-muted/50 text-muted-foreground"
@@ -367,7 +462,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
                             <div
                               className={cn(
                                 "absolute top-1/2 -translate-y-1/2 h-3 sm:h-4 rounded-full blur-md animate-pulse",
-                                tier.label === "packed" ? "bg-green-500/40" : "bg-amber-500/35"
+                                tier.label === "packed" ? "bg-yellow-400/35" : "bg-lime-500/30"
                               )}
                               style={{ width: `${fillPercent}%` }}
                             />
@@ -387,7 +482,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
       {totalPages > 1 && (
         <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 border-t border-border/40 bg-muted/10 py-3 sm:py-4">
           <span className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
-            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, sortedServers.length)} of {sortedServers.length} servers
+            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, sortedServers.length)} of {sortedServers.length}{isFiltered ? ` matched` : ""} servers
           </span>
           <div className="flex gap-2">
             <Button
