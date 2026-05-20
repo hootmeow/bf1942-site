@@ -201,7 +201,7 @@ export default function HomeClient() {
   return (
     <div className="space-y-6 pb-8 sm:space-y-8">
       {/* ============================================================
-           HERO — "Frontline"  (matches site: near-black + amber accent)
+           HERO — "Frontline"  (military olive + gold accent)
          ============================================================ */}
       <section className="relative overflow-hidden rounded-2xl border border-border/60 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]">
         {/* Base — deep military dark with olive undertone */}
@@ -486,7 +486,7 @@ function DogTag({
   return (
     <div className="relative rounded-lg border border-stone-700/40 bg-gradient-to-br from-stone-900/80 to-stone-950/60 backdrop-blur-sm p-4 overflow-hidden">
       {/* Edge accent */}
-      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r bg-gradient-to-b from-lime-500/70 via-lime-600/30 to-transparent" />
+      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r bg-gradient-to-b from-yellow-400/80 via-yellow-600/30 to-transparent" />
       <div className="pl-2">
         <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-stone-400">{label}</p>
         <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
@@ -513,7 +513,7 @@ function DogTag({
 const accentMap = {
   emerald: { text: "text-emerald-400", border: "border-emerald-500/20" },
   blue:    { text: "text-blue-400",    border: "border-blue-500/20" },
-  olive:   { text: "text-lime-400",    border: "border-lime-500/20" },
+  olive:   { text: "text-yellow-400",  border: "border-yellow-500/25" },
   stone:   { text: "text-stone-200",   border: "border-stone-600/30" },
 } as const;
 
@@ -548,13 +548,13 @@ function PeakHours({ data }: { data: HourlyData }) {
     return `${display}${suffix}`;
   };
 
-  // Color-encode bars by intensity: muted olive → bright lime as activity rises
+  // Color-encode bars by intensity: stone → olive → lime → gold at peak
   const getBarColor = (v: number) => {
     const t = max > 0 ? v / max : 0;
-    if (t >= 0.85) return "from-lime-500 to-lime-300";
-    if (t >= 0.65) return "from-lime-600/90 to-lime-400/90";
-    if (t >= 0.45) return "from-lime-700/70 to-lime-500/70";
-    if (t >= 0.25) return "from-stone-600 to-stone-500";
+    if (t >= 0.85) return "from-yellow-500 to-amber-300";
+    if (t >= 0.65) return "from-lime-400 to-yellow-400";
+    if (t >= 0.45) return "from-lime-600 to-lime-400";
+    if (t >= 0.25) return "from-stone-600 to-lime-800";
     return "from-stone-700 to-stone-600";
   };
 
@@ -584,9 +584,9 @@ function PeakHours({ data }: { data: HourlyData }) {
           </p>
           <p className="text-[10px] text-muted-foreground tabular-nums">{formatHour(currentHour)} hour</p>
         </div>
-        <div className="rounded-lg border border-lime-500/25 bg-lime-500/5 p-2.5">
+        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-2.5">
           <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Peak Hour</p>
-          <p className="mt-0.5 text-lg font-bold tabular-nums text-lime-400 leading-tight">
+          <p className="mt-0.5 text-lg font-bold tabular-nums text-yellow-400 leading-tight">
             {max.toLocaleString()}
           </p>
           <p className="text-[10px] text-muted-foreground tabular-nums">{formatHour(peakHour)}–{formatHour((peakHour + 1) % 24)}</p>
@@ -614,12 +614,13 @@ function PeakHours({ data }: { data: HourlyData }) {
         >
           <defs>
             <linearGradient id="peakAreaFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="rgba(101,163,13,0.22)" />
+              <stop offset="0" stopColor="rgba(234,179,8,0.25)" />
+              <stop offset="0.5" stopColor="rgba(101,163,13,0.12)" />
               <stop offset="1" stopColor="rgba(101,163,13,0)" />
             </linearGradient>
           </defs>
           <path d={areaPath} fill="url(#peakAreaFill)" />
-          <path d={linePath} fill="none" stroke="rgba(101,163,13,0.50)" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
+          <path d={linePath} fill="none" stroke="rgba(163,230,53,0.55)" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
         </svg>
 
         {/* Bars */}
@@ -635,7 +636,7 @@ function PeakHours({ data }: { data: HourlyData }) {
                   className={cn(
                     "w-full rounded-[2px] bg-gradient-to-t transition-all",
                     colorClasses,
-                    isPeak && "shadow-[0_0_10px_rgba(101,163,13,0.65)] ring-1 ring-lime-400/40",
+                    isPeak && "shadow-[0_0_12px_rgba(234,179,8,0.7)] ring-1 ring-yellow-400/50",
                     isCurrent && !isPeak && "ring-1 ring-emerald-400/70 shadow-[0_0_8px_rgba(52,211,153,0.4)]"
                   )}
                   style={{ height: `${Math.max(pct, 6)}%`, minHeight: "4px" }}
@@ -673,7 +674,7 @@ function PeakHours({ data }: { data: HourlyData }) {
           </div>
           <div className="text-right shrink-0">
             <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Avg</p>
-            <p className="text-base font-semibold text-lime-400 tabular-nums">
+            <p className="text-base font-semibold text-yellow-400 tabular-nums">
               {bestWindowAvg.toLocaleString()}
             </p>
           </div>

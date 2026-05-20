@@ -136,14 +136,14 @@ function ActivityAreaChart({
         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.5} />
-              <stop offset="50%" stopColor={color} stopOpacity={0.15} />
+              <stop offset="0%" stopColor="#eab308" stopOpacity={0.45} />
+              <stop offset="40%" stopColor={color} stopOpacity={0.2} />
               <stop offset="100%" stopColor={color} stopOpacity={0} />
             </linearGradient>
             <linearGradient id={`${gradientId}-stroke`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor={color} stopOpacity={0.6} />
-              <stop offset="50%" stopColor={color} stopOpacity={1} />
-              <stop offset="100%" stopColor={color} stopOpacity={0.6} />
+              <stop offset="0%" stopColor={color} stopOpacity={0.7} />
+              <stop offset="50%" stopColor="#a3e635" stopOpacity={1} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.7} />
             </linearGradient>
             <filter id={`${gradientId}-glow`}>
               <feGaussianBlur stdDeviation="3" result="coloredBlur" />

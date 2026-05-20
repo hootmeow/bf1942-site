@@ -299,17 +299,17 @@ function getGamemodeColor(
 }
 
 const MAP_COLORS: [string, string][] = [
+  ["#65a30d", "#a3e635"], // olive → lime
+  ["#eab308", "#fde047"], // gold
   ["#06b6d4", "#22d3ee"], // cyan
-  ["#3b82f6", "#60a5fa"], // blue
   ["#8b5cf6", "#a78bfa"], // violet
-  ["#ec4899", "#f472b6"], // pink
   ["#10b981", "#34d399"], // emerald
-  ["#65a30d", "#84cc16"], // olive
-  ["#ef4444", "#f87171"], // red
-  ["#6366f1", "#818cf8"], // indigo
-  ["#14b8a6", "#2dd4bf"], // teal
   ["#f97316", "#fb923c"], // orange
-  ["#84cc16", "#a3e635"], // lime
+  ["#3b82f6", "#60a5fa"], // blue
+  ["#ec4899", "#f472b6"], // pink
+  ["#14b8a6", "#2dd4bf"], // teal
+  ["#ef4444", "#f87171"], // red
+  ["#84cc16", "#bef264"], // lime bright
   ["#d946ef", "#e879f9"], // fuchsia
 ];
 
@@ -1566,7 +1566,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     }}
                     labelFormatter={formatDay}
                   />
-                  <Bar yAxisId="left" dataKey="total_kills" name="Kills" fill="#f59e0b" radius={[3, 3, 0, 0]} maxBarSize={14} />
+                  <Bar yAxisId="left" dataKey="total_kills" name="Kills" fill="#84cc16" radius={[3, 3, 0, 0]} maxBarSize={14} />
                   <Bar yAxisId="left" dataKey="total_deaths" name="Deaths" fill="#ef4444" radius={[3, 3, 0, 0]} maxBarSize={14} />
                   <Line yAxisId="right" type="monotone" dataKey="kd_ratio" name="K/D Ratio" stroke="#10b981" strokeWidth={2} dot={false} />
                 </ComposedChart>

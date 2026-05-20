@@ -41,15 +41,15 @@ function getPlayerTier(count: number, max: number) {
     };
     if (count >= 40) return {
         label: "packed",
-        barClass: "bg-gradient-to-r from-green-500 to-emerald-400",
-        glowClass: "shadow-[0_0_10px_rgba(34,197,94,0.5)]",
-        countClass: "text-green-500 font-semibold",
-        borderClass: "border-l-green-500",
+        barClass: "bg-gradient-to-r from-lime-500 via-yellow-400 to-amber-300",
+        glowClass: "shadow-[0_0_12px_rgba(234,179,8,0.55)]",
+        countClass: "text-yellow-400 font-semibold",
+        borderClass: "border-l-yellow-400",
         pulse: true,
     };
     if (count >= 20) return {
         label: "active",
-        barClass: "bg-gradient-to-r from-lime-600 to-lime-400",
+        barClass: "bg-gradient-to-r from-lime-700 to-lime-400",
         glowClass: "shadow-[0_0_8px_rgba(101,163,13,0.45)]",
         countClass: "text-lime-400 font-semibold",
         borderClass: "border-l-lime-500",
@@ -57,7 +57,7 @@ function getPlayerTier(count: number, max: number) {
     };
     if (count >= 5) return {
         label: "warming",
-        barClass: "bg-primary/70",
+        barClass: "bg-gradient-to-r from-primary/50 to-primary/70",
         glowClass: "",
         countClass: "text-foreground font-semibold",
         borderClass: "border-l-primary/60",
@@ -65,10 +65,10 @@ function getPlayerTier(count: number, max: number) {
     };
     return {
         label: "low",
-        barClass: "bg-primary/40",
+        barClass: "bg-primary/25",
         glowClass: "",
         countClass: "text-foreground font-semibold",
-        borderClass: "border-l-primary/30",
+        borderClass: "border-l-primary/20",
         pulse: false,
     };
 }
@@ -137,7 +137,7 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                         <div
                             className={cn(
                                 "absolute top-1/2 -translate-y-1/2 h-4 rounded-full blur-md animate-pulse",
-                                tier.label === "packed" ? "bg-green-500/40" : "bg-lime-500/35"
+                                tier.label === "packed" ? "bg-yellow-400/35" : "bg-lime-500/30"
                             )}
                             style={{ width: `${fillPercent}%` }}
                         />
