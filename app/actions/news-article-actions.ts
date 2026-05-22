@@ -91,7 +91,7 @@ export async function createDbArticle(data: {
         [slugified, data.title, data.category, data.excerpt, data.content, data.is_published, user.id]
     )
 
-    await logAdminAction(user.id, "create_article", "news_article", String(res.rows[0].article_id), { slug: slugified, title: data.title })
+    await logAdminAction(user.id ?? "", "create_article", "news_article", String(res.rows[0].article_id), { slug: slugified, title: data.title })
 
     revalidatePath("/news")
     revalidatePath(`/news/${slugified}`)
@@ -123,7 +123,7 @@ export async function updateDbArticle(
         [slugified, data.title, data.category, data.excerpt, data.content, data.is_published, articleId]
     )
 
-    await logAdminAction(user.id, "update_article", "news_article", String(articleId), { slug: slugified })
+    await logAdminAction(user.id ?? "", "update_article", "news_article", String(articleId), { slug: slugified })
 
     revalidatePath("/news")
     revalidatePath(`/news/${slugified}`)
@@ -137,7 +137,7 @@ export async function deleteDbArticle(articleId: number) {
 
     await pool.query(`DELETE FROM news_articles WHERE article_id = $1`, [articleId])
 
-    await logAdminAction(user.id, "delete_article", "news_article", String(articleId))
+    await logAdminAction(user.id ?? "", "delete_article", "news_article", String(articleId))
 
     revalidatePath("/news")
     revalidatePath("/admin/news")

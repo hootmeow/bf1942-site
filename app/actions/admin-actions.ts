@@ -68,7 +68,7 @@ export async function denyClaim(claimId: string) { // Changed to string (UUID)
     const user = await checkAdmin()
 
     await pool.query(`UPDATE claim_requests SET status = 'REJECTED', updated_at = NOW() WHERE claim_id = $1`, [claimId])
-    await logAdminAction(user.id, "deny_claim", "claim", claimId)
+    await logAdminAction(user.id ?? "", "deny_claim", "claim", claimId)
     revalidatePath("/admin/claims")
 }
 
@@ -166,7 +166,7 @@ export async function deleteChallenge(challengeId: number) {
         "UPDATE challenges SET is_active = FALSE WHERE challenge_id = $1",
         [challengeId]
     )
-    await logAdminAction(user.id, "delete_challenge", "challenge", String(challengeId))
+    await logAdminAction(user.id ?? "", "delete_challenge", "challenge", String(challengeId))
     revalidatePath("/admin/challenges")
     revalidatePath("/challenges")
     return { ok: true }
@@ -197,7 +197,7 @@ export async function updateChallenge(
             challengeId,
         ]
     )
-    await logAdminAction(user.id, "update_challenge", "challenge", String(challengeId), { title: data.title })
+    await logAdminAction(user.id ?? "", "update_challenge", "challenge", String(challengeId), { title: data.title })
     revalidatePath("/admin/challenges")
     revalidatePath("/challenges")
     return { ok: true }

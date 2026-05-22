@@ -26,7 +26,7 @@ export async function setEventVisibility(eventId: number, isHidden: boolean) {
         [isHidden, eventId]
     )
 
-    await logAdminAction(user.id, isHidden ? "hide_event" : "unhide_event", "event", String(eventId))
+    await logAdminAction(user.id ?? "", isHidden ? "hide_event" : "unhide_event", "event", String(eventId))
     revalidatePath("/admin/events")
     revalidatePath("/events")
     return { ok: true }
@@ -40,7 +40,7 @@ export async function setOrgVisibility(orgId: number, isHidden: boolean) {
         [isHidden, orgId]
     )
 
-    await logAdminAction(user.id, isHidden ? "hide_org" : "unhide_org", "organization", String(orgId))
+    await logAdminAction(user.id ?? "", isHidden ? "hide_org" : "unhide_org", "organization", String(orgId))
     revalidatePath("/admin/orgs")
     revalidatePath("/orgs")
     return { ok: true }
