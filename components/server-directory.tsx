@@ -105,19 +105,25 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
   }, []);
 
   const uniqueGametypes = useMemo(() =>
-    [...new Set(initialServers.map(s => s.current_gametype).filter(Boolean) as string[])].sort()
+    [...new Set(
+      initialServers
+        .map(s => s.current_gametype?.toLowerCase())
+        .filter((g): g is string => Boolean(g))
+    )].sort()
   , [initialServers]);
 
   const sortedServers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     let sortableServers = initialServers.filter(s => {
       if (statusFilter !== "ALL" && s.current_state !== statusFilter) return false;
-      if (gametypeFilter !== "ALL" && s.current_gametype !== gametypeFilter) return false;
+      if (gametypeFilter !== "ALL" && (s.current_gametype?.toLowerCase() ?? "") !== gametypeFilter) return false;
       if (!q) return true;
+      const ipFull = `${s.ip}:${s.current_game_port}`;
       return (
         (s.current_server_name || "").toLowerCase().includes(q) ||
         (s.current_map || "").toLowerCase().includes(q) ||
-        s.ip.includes(q)
+        s.ip.includes(q) ||
+        ipFull.includes(q)
       );
     });
 
