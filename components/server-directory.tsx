@@ -80,6 +80,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
   const [activityRanks, setActivityRanks] = useState<Record<number, { rank: number; activity_hours_7d: number }>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [gametypeFilter, setGametypeFilter] = useState<string>("ALL");
 
   // Fetch Activity Rankings
   useEffect(() => {
@@ -103,14 +104,20 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
     fetchRankings();
   }, []);
 
+  const uniqueGametypes = useMemo(() =>
+    [...new Set(initialServers.map(s => s.current_gametype).filter(Boolean) as string[])].sort()
+  , [initialServers]);
+
   const sortedServers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     let sortableServers = initialServers.filter(s => {
       if (statusFilter !== "ALL" && s.current_state !== statusFilter) return false;
+      if (gametypeFilter !== "ALL" && s.current_gametype !== gametypeFilter) return false;
       if (!q) return true;
       return (
         (s.current_server_name || "").toLowerCase().includes(q) ||
-        (s.current_map || "").toLowerCase().includes(q)
+        (s.current_map || "").toLowerCase().includes(q) ||
+        s.ip.includes(q)
       );
     });
 
@@ -164,7 +171,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
     });
 
     return sortableServers;
-  }, [initialServers, sortConfig, activityRanks, searchQuery, statusFilter]);
+  }, [initialServers, sortConfig, activityRanks, searchQuery, statusFilter, gametypeFilter]);
 
   // Pagination logic
   const totalPages = Math.ceil(sortedServers.length / ITEMS_PER_PAGE);
@@ -183,6 +190,11 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
 
   const handleStatusFilter = (status: StatusFilter) => {
     setStatusFilter(status);
+    setCurrentPage(1);
+  };
+
+  const handleGametypeFilter = (gametype: string) => {
+    setGametypeFilter(gametype);
     setCurrentPage(1);
   };
 
@@ -243,7 +255,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
     { label: "Offline", value: "OFFLINE", dot: "bg-red-500" },
   ];
 
-  const isFiltered = searchQuery.trim() !== "" || statusFilter !== "ALL";
+  const isFiltered = searchQuery.trim() !== "" || statusFilter !== "ALL" || gametypeFilter !== "ALL";
   const resultCount = sortedServers.length;
 
   return (
@@ -272,7 +284,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Search by server name or map…"
+            placeholder="Search by server name, map, or IP…"
             value={searchQuery}
             onChange={e => handleSearch(e.target.value)}
             className="pl-9 pr-9 bg-background/60 border-border/60 focus-visible:ring-primary/40 h-9 text-sm"
@@ -313,6 +325,38 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
             </span>
           )}
         </div>
+
+        {/* Gametype filter chips */}
+        {uniqueGametypes.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-muted-foreground mr-1">Mode:</span>
+            <button
+              onClick={() => handleGametypeFilter("ALL")}
+              className={cn(
+                "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border transition-all duration-150",
+                gametypeFilter === "ALL"
+                  ? "bg-primary/15 text-primary border-primary/40"
+                  : "bg-transparent text-muted-foreground border-border/50 hover:border-border hover:text-foreground"
+              )}
+            >
+              All
+            </button>
+            {uniqueGametypes.map(gt => (
+              <button
+                key={gt}
+                onClick={() => handleGametypeFilter(gt)}
+                className={cn(
+                  "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border uppercase tracking-wide transition-all duration-150",
+                  gametypeFilter === gt
+                    ? "bg-primary/15 text-primary border-primary/40"
+                    : "bg-transparent text-muted-foreground border-border/50 hover:border-border hover:text-foreground"
+                )}
+              >
+                {gt}
+              </button>
+            ))}
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="p-0">
@@ -363,9 +407,9 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
                 <TableCell colSpan={7} className="py-16 text-center">
                   <Search className="h-8 w-8 mx-auto mb-3 text-muted-foreground/40" />
                   <p className="text-sm font-medium text-muted-foreground">No servers match your search</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Try a different name, map, or status filter</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Try a different name, map, IP, or filter</p>
                   <button
-                    onClick={() => { handleSearch(""); handleStatusFilter("ALL"); }}
+                    onClick={() => { handleSearch(""); handleStatusFilter("ALL"); handleGametypeFilter("ALL"); }}
                     className="mt-3 text-xs text-primary hover:underline"
                   >
                     Clear filters
