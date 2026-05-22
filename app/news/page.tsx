@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Newspaper, Calendar, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { articles } from "@/lib/articles";
+import { getDbArticles } from "@/app/actions/news-article-actions";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -56,7 +57,10 @@ interface NewsItem {
 }
 
 export default async function NewsPage() {
-  const digests = await fetchDigests();
+  const [digests, dbArticlesResult] = await Promise.all([
+    fetchDigests(),
+    getDbArticles(false),
+  ]);
 
   // Convert static articles to NewsItem
   const staticItems: NewsItem[] = articles.map((a) => ({
@@ -84,8 +88,18 @@ export default async function NewsPage() {
     };
   });
 
+  // Convert DB articles to NewsItem
+  const dbItems: NewsItem[] = (dbArticlesResult.ok ? dbArticlesResult.articles : []).map((a: any) => ({
+    slug: a.slug,
+    title: a.title,
+    category: a.category,
+    date: new Date(a.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+    excerpt: a.excerpt,
+    href: `/news/${a.slug}`,
+  }));
+
   // Merge and sort by date descending
-  const allItems = [...staticItems, ...digestItems].sort(
+  const allItems = [...staticItems, ...dbItems, ...digestItems].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 

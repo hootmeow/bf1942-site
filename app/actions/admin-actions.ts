@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { isUserAdmin } from "@/lib/admin-auth"
+import { logAdminAction } from "./audit-log-actions"
 
 async function checkAdmin() {
     const session = await auth()
@@ -54,15 +55,20 @@ export async function approveClaim(claimId: string) { // Changed to string (UUID
         client.release()
     }
 
+    const admin = await auth()
+    if (admin?.user?.id) {
+        await logAdminAction(admin.user.id, "approve_claim", "claim", claimId)
+    }
     revalidatePath("/admin/claims")
     // Revalidate the player page effectively? We don't have the player name here easily unless we fetch it.
     // Ideally we should revalidate the player page but we can leave it for now.
 }
 
 export async function denyClaim(claimId: string) { // Changed to string (UUID)
-    await checkAdmin()
+    const user = await checkAdmin()
 
     await pool.query(`UPDATE claim_requests SET status = 'REJECTED', updated_at = NOW() WHERE claim_id = $1`, [claimId])
+    await logAdminAction(user.id, "deny_claim", "claim", claimId)
     revalidatePath("/admin/claims")
 }
 
@@ -154,12 +160,44 @@ export async function createChallenge(data: {
 }
 
 export async function deleteChallenge(challengeId: number) {
-    await checkAdmin()
+    const user = await checkAdmin()
 
     await pool.query(
         "UPDATE challenges SET is_active = FALSE WHERE challenge_id = $1",
         [challengeId]
     )
+    await logAdminAction(user.id, "delete_challenge", "challenge", String(challengeId))
+    revalidatePath("/admin/challenges")
+    revalidatePath("/challenges")
+    return { ok: true }
+}
+
+export async function updateChallenge(
+    challengeId: number,
+    data: {
+        title: string
+        description?: string
+        target_value: number
+        end_time: string
+        icon?: string
+    }
+) {
+    const user = await checkAdmin()
+
+    await pool.query(
+        `UPDATE challenges
+         SET title = $1, description = $2, target_value = $3, end_time = $4, icon = $5
+         WHERE challenge_id = $6`,
+        [
+            data.title,
+            data.description || null,
+            data.target_value,
+            data.end_time,
+            data.icon || null,
+            challengeId,
+        ]
+    )
+    await logAdminAction(user.id, "update_challenge", "challenge", String(challengeId), { title: data.title })
     revalidatePath("/admin/challenges")
     revalidatePath("/challenges")
     return { ok: true }

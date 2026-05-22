@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, Trash2, Target, Plus, History } from "lucide-react"
-import { createChallenge, deleteChallenge } from "@/app/actions/admin-actions"
+import { Loader2, Trash2, Target, Plus, History, Pencil, X, Check } from "lucide-react"
+import { createChallenge, deleteChallenge, updateChallenge } from "@/app/actions/admin-actions"
 import { useToast } from "@/components/ui/toast-simple"
 
 interface ChallengeRow {
@@ -67,6 +67,15 @@ export default function AdminChallengesPage() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const { toast } = useToast()
+
+  // Edit state
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editTitle, setEditTitle] = useState("")
+  const [editDesc, setEditDesc] = useState("")
+  const [editTarget, setEditTarget] = useState("")
+  const [editEndTime, setEditEndTime] = useState("")
+  const [editIcon, setEditIcon] = useState("")
+  const [editSaving, setEditSaving] = useState(false)
 
   // Form state
   const [title, setTitle] = useState("")
@@ -140,6 +149,42 @@ export default function AdminChallengesPage() {
       }
     } catch (err) {
       toast({ title: "Error", description: String(err), variant: "destructive" })
+    }
+  }
+
+  function startEdit(ch: ChallengeRow) {
+    setEditingId(ch.challenge_id)
+    setEditTitle(ch.title)
+    setEditDesc(ch.description ?? "")
+    setEditTarget(String(ch.target_value))
+    setEditEndTime(new Date(ch.end_time).toISOString().slice(0, 16))
+    setEditIcon(ch.template_key ?? "")
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+  }
+
+  async function handleSaveEdit(challengeId: number) {
+    if (!editTitle || !editTarget || !editEndTime) return
+    setEditSaving(true)
+    try {
+      const res = await updateChallenge(challengeId, {
+        title: editTitle,
+        description: editDesc || undefined,
+        target_value: parseInt(editTarget),
+        end_time: new Date(editEndTime).toISOString(),
+        icon: editIcon || undefined,
+      })
+      if (res.ok) {
+        toast({ title: "Challenge updated", variant: "success" })
+        setEditingId(null)
+        fetchData()
+      }
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" })
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -233,6 +278,64 @@ export default function AdminChallengesPage() {
               </TableHeader>
               <TableBody>
                 {challenges.map(ch => (
+                  editingId === ch.challenge_id ? (
+                    <TableRow key={ch.challenge_id} className="bg-muted/30">
+                      <TableCell className="font-mono text-xs">{ch.challenge_id}</TableCell>
+                      <TableCell colSpan={5}>
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 py-1">
+                          <Input
+                            value={editTitle}
+                            onChange={e => setEditTitle(e.target.value)}
+                            placeholder="Title"
+                            className="h-8 text-xs"
+                          />
+                          <Input
+                            value={editDesc}
+                            onChange={e => setEditDesc(e.target.value)}
+                            placeholder="Description"
+                            className="h-8 text-xs"
+                          />
+                          <Input
+                            type="number"
+                            value={editTarget}
+                            onChange={e => setEditTarget(e.target.value)}
+                            placeholder="Target"
+                            className="h-8 text-xs"
+                          />
+                          <Input
+                            type="datetime-local"
+                            value={editEndTime}
+                            onChange={e => setEditEndTime(e.target.value)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {ch.calculation_mode || "incremental"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-green-500 hover:text-green-400"
+                            onClick={() => handleSaveEdit(ch.challenge_id)}
+                            disabled={editSaving}
+                          >
+                            {editSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={cancelEdit}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
                   <TableRow key={ch.challenge_id}>
                     <TableCell className="font-mono text-xs">{ch.challenge_id}</TableCell>
                     <TableCell className="font-medium">{ch.title}</TableCell>
@@ -260,16 +363,27 @@ export default function AdminChallengesPage() {
                       {ch.calculation_mode || "incremental"}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(ch.challenge_id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => startEdit(ch)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(ch.challenge_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
+                  )
                 ))}
               </TableBody>
             </Table>
