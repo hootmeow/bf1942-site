@@ -60,10 +60,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { server_id, current_server_name, current_map, current_player_count, current_max_players } = data.server_info;
 
-  // Attempt to fetch rank
+  // Attempt to fetch rank (used in description only — not in title to keep bookmarks clean)
   const rank = await getGlobalRank(server_id);
-  const rankStr = rank ? `(Rank #${rank})` : "";
-  const title = rank ? `${rankStr} ${current_server_name}` : `${current_server_name}`;
+  const title = current_server_name || "Server Details";
 
   return {
     title: title,
