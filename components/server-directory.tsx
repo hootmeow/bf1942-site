@@ -392,7 +392,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
                   </Button>
                 </TableHead>
                 <TableHead className="hidden md:table-cell w-[160px]">Address</TableHead>
-                <TableHead className="w-[80px] sm:w-auto">
+                <TableHead className="hidden sm:table-cell w-[80px] sm:w-auto">
                   <Button variant="ghost" size="sm" onClick={() => requestSort("map")} className="-ml-3 hover:bg-transparent hover:text-primary text-xs sm:text-sm">
                     Map {getSortIcon("map")}
                   </Button>
@@ -473,7 +473,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
                       <ServerFlag ip={server.ip} className="flex-shrink-0 w-4 h-3 sm:w-auto sm:h-auto" />
                       <Link
                         href={`/servers/${server.server_id}`}
-                        className="hover:text-primary hover:underline underline-offset-2 truncate max-w-[80px] sm:max-w-[200px] md:max-w-[300px] block transition-colors text-xs sm:text-sm"
+                        className="hover:text-primary hover:underline underline-offset-2 truncate max-w-[140px] sm:max-w-[200px] md:max-w-[300px] block transition-colors text-xs sm:text-sm"
                         title={server.current_server_name || ""}
                       >
                         {server.current_server_name || "Unknown"}
@@ -483,7 +483,7 @@ export function ServerDirectory({ initialServers }: { initialServers: Server[] }
                   <TableCell className="hidden md:table-cell text-muted-foreground text-xs font-mono py-2 sm:py-3 px-1 sm:px-3">
                     {server.ip}:{server.current_game_port}
                   </TableCell>
-                  <TableCell className="truncate max-w-[60px] sm:max-w-[150px] py-2 sm:py-3 text-muted-foreground text-xs sm:text-sm px-1 sm:px-3">
+                  <TableCell className="hidden sm:table-cell truncate max-w-[150px] py-2 sm:py-3 text-muted-foreground text-xs sm:text-sm px-1 sm:px-3">
                     {server.current_map || "N/A"}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell py-2 sm:py-3 text-muted-foreground uppercase text-xs px-1 sm:px-3">

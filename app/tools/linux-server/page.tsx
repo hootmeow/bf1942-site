@@ -282,20 +282,59 @@ sudo ./ubu_24.0.3_bfsmd_setup.sh tdm`}
       {/* ── PORT CONFIGURATION ──────────────────────────────────────────── */}
       <section>
         <SectionLabel>// Port Allocation</SectionLabel>
-        <p className="mb-5 text-sm text-muted-foreground">
-          Each instance gets automatically calculated ports derived from its name hash — preventing conflicts across unlimited instances.
-        </p>
+
+        {/* How it works */}
+        <div className="mb-6 rounded-xl border border-[#1e2a14] bg-[#070b05] overflow-hidden">
+          <div className="bg-[#0d1208] px-5 py-3 border-b border-[#1e2a14]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#4a6030]">How Port Assignment Works</p>
+          </div>
+          <div className="p-5 space-y-4">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              When you run the installer with an instance name (e.g. <code className="rounded bg-muted px-1 font-mono text-xs">server1</code>),
+              the script calculates a deterministic offset from that name using a CRC-32 checksum,
+              then adds it to three base ports. The same name always produces the same ports — on any machine.
+            </p>
+            <TerminalBlock title="bash · port formula">
+              {`# The script computes this internally:
+offset = cksum("server1") % 100      # → a value 0–99
+
+game_port = 14567 + offset            # UDP  — players connect here
+query_port = 23000 + offset           # UDP  — server browser / ping
+mgmt_port  = 14667 + offset           # TCP  — BFRM management`}
+            </TerminalBlock>
+            <div className="grid gap-3 sm:grid-cols-3 text-xs">
+              {[
+                { label: "Game Port", proto: "UDP", range: "14567–14666", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/5" },
+                { label: "Query Port", proto: "UDP", range: "23000–23099", color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/5" },
+                { label: "Mgmt Port", proto: "TCP", range: "14667–14766", color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-500/5" },
+              ].map(({ label, proto, range, color, border, bg }) => (
+                <div key={label} className={`rounded-lg border ${border} ${bg} px-4 py-3`}>
+                  <p className="font-semibold text-foreground">{label}</p>
+                  <p className={`font-mono mt-1 ${color}`}>{range}</p>
+                  <p className="text-muted-foreground mt-0.5">{proto} · offset 0–99</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">Conflict detection:</span> If two instance names hash to the same offset,
+              the installer detects the port collision and tells you to pick a different name.
+              Up to 100 unique port sets are possible from the base configuration.
+            </p>
+          </div>
+        </div>
+
+        {/* Example table */}
         <div className="overflow-hidden rounded-xl border border-[#1e2a14]">
           <div className="bg-[#0d1208] px-5 py-3 border-b border-[#1e2a14]">
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#4a6030]">Comms Allocation · Example Instances</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#4a6030]">Example Assignments</p>
           </div>
           <Table>
             <TableHeader>
               <TableRow className="border-[#1e2a14] hover:bg-transparent">
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Instance</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Instance Name</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Game (UDP)</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Query (UDP)</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Management (TCP)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold hidden sm:table-cell">Query (UDP)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Mgmt (TCP)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -303,7 +342,7 @@ sudo ./ubu_24.0.3_bfsmd_setup.sh tdm`}
                 <TableRow key={item.instance} className="border-[#1e2a14] hover:bg-amber-500/3">
                   <TableCell className="font-mono text-sm font-bold text-amber-400">{item.instance}</TableCell>
                   <TableCell className="font-mono text-sm text-emerald-400/80">{item.game}</TableCell>
-                  <TableCell className="font-mono text-sm text-emerald-400/80">{item.query}</TableCell>
+                  <TableCell className="font-mono text-sm text-emerald-400/80 hidden sm:table-cell">{item.query}</TableCell>
                   <TableCell className="font-mono text-sm text-blue-400/80">{item.mgmt}</TableCell>
                 </TableRow>
               ))}
@@ -312,7 +351,7 @@ sudo ./ubu_24.0.3_bfsmd_setup.sh tdm`}
         </div>
         <p className="mt-3 text-xs text-muted-foreground font-mono">
           $ ./bf1942_manager.sh ports{" "}
-          <span className="text-muted-foreground/50">— view your actual port assignments</span>
+          <span className="text-muted-foreground/50">— show actual assigned ports for all instances</span>
         </p>
       </section>
 

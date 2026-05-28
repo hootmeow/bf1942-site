@@ -140,10 +140,10 @@ function StatCard({ title, value, icon, copyable, children }: StatCardProps) {
           )} />
           {copied ? <Check className="h-4 w-4 relative z-10" /> : <Icon className="h-4 w-4 relative z-10" />}
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h3 className="text-xs font-medium text-muted-foreground group-hover/stat:text-muted-foreground/80 transition-colors">{title}</h3>
           <div className={cn(
-            "text-base font-semibold transition-colors duration-300",
+            "text-sm sm:text-base font-semibold transition-colors duration-300 truncate",
             copied ? "text-green-500" : "text-foreground group-hover/stat:text-primary"
           )}>
             {copied ? "Copied!" : value}
@@ -203,7 +203,7 @@ function TimerRingCard({ remainSeconds, totalSeconds }: { remainSeconds: number;
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-xs font-medium text-muted-foreground group-hover/stat:text-muted-foreground/80 transition-colors">Time Remaining</h3>
-          <div className="text-base font-semibold font-mono text-foreground group-hover/stat:text-primary transition-colors duration-300">{displayTime}</div>
+          <div className="text-sm sm:text-base font-semibold font-mono text-foreground group-hover/stat:text-primary transition-colors duration-300">{displayTime}</div>
         </div>
       </div>
     </div>
@@ -382,9 +382,9 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground flex items-center gap-3">
-          <ServerFlag ip={server_info.ip} className="h-6 w-auto shadow-md" />
-          {server_info.current_server_name || "Server Details"}
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight text-foreground flex flex-wrap items-center gap-2">
+          <ServerFlag ip={server_info.ip} className="h-5 w-auto shadow-md shrink-0" />
+          <span>{server_info.current_server_name || "Server Details"}</span>
         </h1>
 
         {/* Status band */}
@@ -589,7 +589,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
             Server Details
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4 pt-6">
+        <CardContent className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 pt-6">
           <StatCard title="Address" value={`${server_info.ip}:${server_info.current_game_port}`} icon={Server} copyable={true} />
           <StatCard
             title="Players"

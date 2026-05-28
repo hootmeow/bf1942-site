@@ -241,7 +241,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
       </div>
 
       {/* --- NAVIGATION SECTION (from previous step, handles submenus) --- */}
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="flex-1 overflow-y-auto space-y-1 px-3">
         <TooltipProvider delayDuration={0}>
           {navItems.map((item, idx) => {
             // Divider separator
