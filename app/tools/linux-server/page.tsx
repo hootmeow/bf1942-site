@@ -1,234 +1,232 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Github, AlertTriangle, Terminal, ShieldCheck, Server, Settings, Monitor, Download, Cpu, Network, Lock, Wrench } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Github, AlertTriangle, ShieldCheck, Server, Settings, Monitor,
+  Download, Cpu, Network, Lock, Wrench, Terminal, Radio, Activity,
+  ChevronRight, Archive, Copy,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Linux BF1942 Server",
   description: "Automated setup for running Battlefield 1942 Dedicated Servers on modern 64-bit Linux systems with multi-instance support, smart IP detection, and comprehensive management tools.",
 };
 
-const CodeBlock = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <pre className="mt-2 overflow-x-auto rounded-md bg-slate-900 p-4 font-mono text-sm text-slate-100">
-      <code>{children}</code>
-    </pre>
-  );
-};
+// ── Data ───────────────────────────────────────────────────────────────────
 
 const distributions = [
-  { distro: "Ubuntu 24.04 LTS", script: "installers/ubuntu/ubu_24.0.3_bfsmd_setup.sh", notes: "Uses libcurl4t64:i386 (auto-detected)." },
-  { distro: "Ubuntu 22.04 LTS", script: "installers/ubuntu/ubu_22.04_bfsmd_setup.sh", notes: "Uses libcurl4:i386." },
+  { distro: "Ubuntu 24.04 LTS",              script: "installers/ubuntu/ubu_24.0.3_bfsmd_setup.sh",   notes: "Uses libcurl4t64:i386 (auto-detected)." },
+  { distro: "Ubuntu 22.04 LTS",              script: "installers/ubuntu/ubu_22.04_bfsmd_setup.sh",    notes: "Uses libcurl4:i386." },
   { distro: "Debian 12 (Bookworm) / 13 (Trixie)", script: "installers/debian/deb_12_bfsmd_setup.sh", notes: "Auto-detects libcurl4 vs libcurl4t64 at runtime." },
-  { distro: "Fedora 40 / 41", script: "installers/fedora/fed_40_bfsmd_setup.sh", notes: "dnf + .i686 packages, firewalld, SELinux (restorecon), zlib-ng auto-detection." },
-  { distro: "RHEL 9", script: "installers/rhel/rhel_9_bfsmd_setup.sh", notes: "Same as Fedora + automatically enables EPEL and CRB repos." },
-  { distro: "CentOS Stream 9", script: "installers/centos/centos_stream9_bfsmd_setup.sh", notes: "Same as RHEL 9." },
+  { distro: "Fedora 40 / 41",               script: "installers/fedora/fed_40_bfsmd_setup.sh",        notes: "dnf + .i686 packages, firewalld, SELinux, zlib-ng auto-detection." },
+  { distro: "RHEL 9",                        script: "installers/rhel/rhel_9_bfsmd_setup.sh",          notes: "Same as Fedora + auto-enables EPEL and CRB repos." },
+  { distro: "CentOS Stream 9",               script: "installers/centos/centos_stream9_bfsmd_setup.sh", notes: "Same as RHEL 9." },
 ];
 
 const portExamples = [
-  { instance: "server1", game: "14600 (UDP)", query: "23033 (UDP)", mgmt: "14700 (TCP)" },
-  { instance: "server2", game: "14605 (UDP)", query: "23038 (UDP)", mgmt: "14705 (TCP)" },
-  { instance: "conquest", game: "14620 (UDP)", query: "23053 (UDP)", mgmt: "14720 (TCP)" },
-  { instance: "tdm", game: "14589 (UDP)", query: "23022 (UDP)", mgmt: "14689 (TCP)" },
+  { instance: "server1",  game: "14600", query: "23033", mgmt: "14700" },
+  { instance: "server2",  game: "14605", query: "23038", mgmt: "14705" },
+  { instance: "conquest", game: "14620", query: "23053", mgmt: "14720" },
+  { instance: "tdm",      game: "14589", query: "23022", mgmt: "14689" },
+];
+
+const features = [
+  { icon: Settings,    label: "Single-Script Setup",   desc: "One unified script handles everything — standalone or BFSMD modes." },
+  { icon: Cpu,         label: "Multi-Instance Support", desc: "Run unlimited servers on one machine with automatic port allocation." },
+  { icon: Network,     label: "Smart Configuration",   desc: "Interactive IP detection, port conflict prevention, resource validation." },
+  { icon: ShieldCheck, label: "Secure Runtime",        desc: "Runs entirely under a dedicated service account (bf1942_user)." },
+  { icon: Server,      label: "Modern Compatibility",  desc: "Handles legacy 32-bit dependency resolution across all supported distros." },
+  { icon: Monitor,     label: "Management Tools",      desc: "Comprehensive CLI for monitoring and managing all instances." },
+  { icon: Wrench,      label: "Performance Optimized", desc: "CPU affinity, memory limits, and I/O tuning automatically configured." },
+  { icon: Terminal,    label: "Systemd Integration",   desc: "Standard systemctl commands with auto-start on boot." },
 ];
 
 const howToJsonLd = {
   "@context": "https://schema.org",
   "@type": "HowTo",
-  "name": "How to Install a BF1942 Linux Server",
-  "description": "Automated setup for running Battlefield 1942 Dedicated Servers on modern 64-bit Linux systems with multi-instance support.",
-  "step": [
-    {
-      "@type": "HowToStep",
-      "name": "Download the Scripts",
-      "text": "Download the setup script and management tool using wget.",
-      "url": "https://www.bf1942.online/tools/linux-server#installation"
-    },
-    {
-      "@type": "HowToStep",
-      "name": "Make Executable",
-      "text": "Make the scripts executable with chmod +x.",
-      "url": "https://www.bf1942.online/tools/linux-server#installation"
-    },
-    {
-      "@type": "HowToStep",
-      "name": "Run the Setup",
-      "text": "Run the setup script with sudo privileges and follow the interactive prompts.",
-      "url": "https://www.bf1942.online/tools/linux-server#installation"
-    },
-    {
-      "@type": "HowToStep",
-      "name": "Configure via BFRM",
-      "text": "Connect to the server using BF Remote Manager to configure settings, maps, and admin accounts.",
-      "url": "https://www.bf1942.online/tools/linux-server#bfsmd-setup"
-    }
-  ]
+  name: "How to Install a BF1942 Linux Server",
+  description: "Automated setup for running Battlefield 1942 Dedicated Servers on modern 64-bit Linux systems with multi-instance support.",
+  step: [
+    { "@type": "HowToStep", name: "Download the Scripts",  text: "Download the setup script and management tool using wget.", url: "https://www.bf1942.online/tools/linux-server#installation" },
+    { "@type": "HowToStep", name: "Make Executable",       text: "Make the scripts executable with chmod +x.",              url: "https://www.bf1942.online/tools/linux-server#installation" },
+    { "@type": "HowToStep", name: "Run the Setup",         text: "Run the setup script with sudo and follow the prompts.",   url: "https://www.bf1942.online/tools/linux-server#installation" },
+    { "@type": "HowToStep", name: "Configure via BFRM",    text: "Connect with BF Remote Manager to configure settings.",    url: "https://www.bf1942.online/tools/linux-server#bfsmd-setup" },
+  ],
 };
+
+// ── Sub-components ─────────────────────────────────────────────────────────
+
+function TerminalBlock({ title = "bash", children }: { title?: string; children: React.ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-[#1e2a14] shadow-2xl shadow-black/50">
+      <div className="flex items-center gap-3 bg-[#0d1208] px-4 py-2.5 border-b border-[#1e2a14]">
+        <div className="flex gap-1.5">
+          <span className="h-3 w-3 rounded-full bg-[#ff5f57] shadow-sm" />
+          <span className="h-3 w-3 rounded-full bg-[#febc2e] shadow-sm" />
+          <span className="h-3 w-3 rounded-full bg-[#28c840] shadow-sm" />
+        </div>
+        <span className="ml-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#4a6030]">{title}</span>
+      </div>
+      <pre className="overflow-x-auto bg-[#040704] p-5 font-mono text-sm leading-relaxed text-emerald-300">
+        <code>{children}</code>
+      </pre>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-4 mb-8">
+      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-amber-500">{children}</span>
+      <div className="flex-1 h-px bg-gradient-to-r from-amber-500/40 via-amber-500/10 to-transparent" />
+    </div>
+  );
+}
+
+function StepCard({ number, title, badge, children }: { number: string; title: string; badge?: string; children: React.ReactNode }) {
+  return (
+    <div className="relative flex gap-5 rounded-xl border border-[#1e2a14] bg-[#070b05] p-5 overflow-hidden">
+      <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-amber-500/60 via-amber-500/20 to-transparent" />
+      <div className="shrink-0 flex items-start pt-0.5">
+        <span className="font-mono text-4xl font-black leading-none text-amber-500/20 select-none">{number}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-3 mb-3">
+          <h3 className="text-base font-bold text-foreground">{title}</h3>
+          {badge && (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+              {badge}
+            </span>
+          )}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function TroubleshootCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-[#1e2a14] bg-[#070b05] overflow-hidden">
+      <div className="flex items-center gap-3 px-5 py-3 border-b border-[#1e2a14] bg-[#0a0f06]">
+        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+        <h4 className="font-mono text-sm font-semibold text-foreground">{title}</h4>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────
 
 export default function LinuxServerPage() {
   return (
-    <div className="space-y-6">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
-      />
+    <div className="space-y-12 pb-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }} />
 
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          Battlefield 1942 Linux Dedicated Server
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Enhanced Multi-Instance Setup with Secure Runtime
-        </p>
-        <Button asChild size="lg" className="mt-6">
-          <Link
-            href="https://github.com/hootmeow/bf1942-linux"
-            target="_blank"
-            rel="noreferrer"
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      <div
+        className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
+        style={{
+          background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)",
+        }}
+      >
+        {/* Grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(#6b8c3a 1px, transparent 1px), linear-gradient(90deg, #6b8c3a 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        {/* Glow blobs */}
+        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-amber-500/5 blur-[100px] pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/8 blur-[80px] pointer-events-none" />
+
+        <div className="relative z-10 px-8 py-14 sm:px-14 sm:py-20">
+          <Badge
+            variant="outline"
+            className="mb-5 border-amber-500/30 bg-amber-500/10 text-amber-400 uppercase tracking-[0.2em] text-[10px] font-bold"
           >
-            <Github className="mr-2 h-4 w-4" />
-            View on GitHub
-          </Link>
-        </Button>
+            Deployment Tool
+          </Badge>
+
+          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl leading-tight">
+            BF1942 Linux<br />
+            <span className="text-primary">Dedicated Server</span>
+          </h1>
+
+          <p className="mt-4 max-w-xl text-slate-400 leading-relaxed">
+            Automated setup for running BF1942 servers on modern 64-bit Linux. Handles dependency
+            resolution, user creation, systemd services, and firewall config in a single interactive script.
+          </p>
+
+          {/* Status pills */}
+          <div className="mt-6 flex flex-wrap gap-4 text-xs font-mono">
+            {[
+              { dot: "bg-emerald-500", label: "6 Distros Supported" },
+              { dot: "bg-emerald-500", label: "Multi-Instance Ready" },
+              { dot: "bg-amber-500",   label: "BFSMD + Standalone" },
+              { dot: "bg-blue-400",    label: "MIT Licensed" },
+            ].map(({ dot, label }) => (
+              <span key={label} className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-slate-300">
+                <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                {label}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-8">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
+              <Link href="https://github.com/hootmeow/bf1942-linux" target="_blank" rel="noreferrer">
+                <Github className="mr-2 h-4 w-4" />
+                View on GitHub
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content Card */}
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle as="h2">Automated Setup Script</CardTitle>
-          <CardDescription>
-            Automated setup for running Battlefield 1942 dedicated servers on modern 64-bit Linux using a dedicated,
-            non-privileged account. Handles all dependency resolution (including legacy 32-bit libraries), user creation,
-            systemd service setup, and firewall configuration in a single interactive script across Ubuntu, Debian,
-            Fedora, RHEL, and CentOS.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-10">
+      {/* ── CAPABILITIES ────────────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// Capabilities</SectionLabel>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map(({ icon: Icon, label, desc }) => (
+            <li
+              key={label}
+              className="group flex gap-3 rounded-xl border border-[#1e2a14] bg-[#070b05] p-4 transition-colors hover:border-amber-500/30 hover:bg-[#0a0f06]"
+            >
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 transition-colors group-hover:bg-amber-500/15">
+                <Icon className="h-4 w-4 text-amber-400" />
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-foreground">{label}</span>
+                <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">{desc}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-          {/* Features Section */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-              <Terminal className="h-5 w-5 text-primary" /> Features
-            </h2>
-            <ul className="grid gap-3 sm:grid-cols-2">
-              <li className="flex gap-3 rounded-md border border-border/60 p-3">
-                <Settings className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <span className="font-medium text-foreground">Single-Script Setup</span>
-                  <p className="text-sm text-muted-foreground">One unified script handles everything - standalone or BFSMD modes.</p>
-                </div>
-              </li>
-              <li className="flex gap-3 rounded-md border border-border/60 p-3">
-                <Cpu className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <span className="font-medium text-foreground">Multi-Instance Support</span>
-                  <p className="text-sm text-muted-foreground">Run unlimited servers on one machine with automatic port allocation.</p>
-                </div>
-              </li>
-              <li className="flex gap-3 rounded-md border border-border/60 p-3">
-                <Network className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <span className="font-medium text-foreground">Smart Configuration</span>
-                  <p className="text-sm text-muted-foreground">Interactive IP detection, port conflict prevention, resource validation.</p>
-                </div>
-              </li>
-              <li className="flex gap-3 rounded-md border border-border/60 p-3">
-                <ShieldCheck className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <span className="font-medium text-foreground">Secure Runtime</span>
-                  <p className="text-sm text-muted-foreground">Runs entirely under a dedicated service account (bf1942_user).</p>
-                </div>
-              </li>
-              <li className="flex gap-3 rounded-md border border-border/60 p-3">
-                <Server className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <span className="font-medium text-foreground">Modern Compatibility</span>
-                  <p className="text-sm text-muted-foreground">Handles legacy 32-bit dependency resolution across all supported distributions automatically.</p>
-                </div>
-              </li>
-              <li className="flex gap-3 rounded-md border border-border/60 p-3">
-                <Monitor className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <span className="font-medium text-foreground">Management Tools</span>
-                  <p className="text-sm text-muted-foreground">Comprehensive CLI tool for monitoring and managing all instances.</p>
-                </div>
-              </li>
-              <li className="flex gap-3 rounded-md border border-border/60 p-3">
-                <Wrench className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <span className="font-medium text-foreground">Performance Optimized</span>
-                  <p className="text-sm text-muted-foreground">CPU affinity, memory limits, I/O tuning automatically configured.</p>
-                </div>
-              </li>
-              <li className="flex gap-3 rounded-md border border-border/60 p-3">
-                <Terminal className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <span className="font-medium text-foreground">Systemd Integration</span>
-                  <p className="text-sm text-muted-foreground">Managed via standard systemctl commands with auto-start on boot.</p>
-                </div>
-              </li>
-            </ul>
-          </section>
+      {/* ── QUICK START ─────────────────────────────────────────────────── */}
+      <section id="installation">
+        <SectionLabel>// Deployment Sequence</SectionLabel>
 
-          {/* Port Configuration */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              ⚙️ Port Configuration
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Each instance gets automatically calculated ports based on its name. This prevents conflicts and makes
-              managing multiple servers straightforward.
-            </p>
-            <div className="overflow-hidden rounded-md border border-border/60">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Instance Name</TableHead>
-                    <TableHead>Game Port</TableHead>
-                    <TableHead>Query Port</TableHead>
-                    <TableHead>Management Port</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {portExamples.map((item) => (
-                    <TableRow key={item.instance}>
-                      <TableCell className="font-mono text-sm font-medium">{item.instance}</TableCell>
-                      <TableCell className="font-mono text-sm text-muted-foreground">{item.game}</TableCell>
-                      <TableCell className="font-mono text-sm text-muted-foreground">{item.query}</TableCell>
-                      <TableCell className="font-mono text-sm text-muted-foreground">{item.mgmt}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              View your actual ports with: <code className="rounded bg-muted px-1 py-0.5">./bf1942_manager.sh ports</code>
-            </p>
-          </section>
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+          <p className="text-sm text-amber-200/80">
+            <span className="font-semibold text-amber-400">Prerequisite:</span>{" "}
+            Commands must be run by a user with <code className="rounded bg-amber-500/10 px-1 py-0.5 font-mono text-xs text-amber-300">sudo</code> privileges.
+          </p>
+        </div>
 
-          {/* Installation Section */}
-          <section id="installation" className="space-y-6">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              🚀 Quick Start (Ubuntu 24.04 LTS)
-            </h2>
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Prerequisite</AlertTitle>
-              <AlertDescription>
-                Commands must be run by a user with <strong>sudo</strong> privileges.
-              </AlertDescription>
-            </Alert>
-
-            <div className="space-y-6">
-              {/* Step 1: Download */}
-              <div className="rounded-lg border border-border/60 bg-card/50 p-4">
-                <h3 className="mb-2 text-lg font-semibold">1️⃣ Download Scripts</h3>
-                <CodeBlock>
-                  {`# Download main setup script (example: Ubuntu 24.04)
+        <div className="space-y-4">
+          <StepCard number="01" title="Download Scripts">
+            <TerminalBlock title="bash · download">
+              {`# Download main setup script (example: Ubuntu 24.04)
 wget https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/installers/ubuntu/ubu_24.0.3_bfsmd_setup.sh
 
 # Download management tool (same file for all distros)
@@ -236,290 +234,321 @@ wget https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/bf1942_manager
 
 # Make executable
 chmod +x ubu_24.0.3_bfsmd_setup.sh bf1942_manager.sh`}
-                </CodeBlock>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Replace <code className="rounded bg-muted px-1 py-0.5">ubu_24.0.3_bfsmd_setup.sh</code> with your distro's script name from the table below. <code className="rounded bg-muted px-1 py-0.5">bf1942_manager.sh</code> is the same for all distros.
-                </p>
-              </div>
+            </TerminalBlock>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Replace the script name with your distro's version from the{" "}
+              <a href="#distributions" className="text-primary hover:underline">Supported Distributions</a> table below.{" "}
+              <code className="rounded bg-muted px-1 font-mono">bf1942_manager.sh</code> is shared across all distros.
+            </p>
+          </StepCard>
 
-              {/* Step 2: Install */}
-              <div className="rounded-lg border border-border/60 bg-card/50 p-4">
-                <h3 className="mb-2 text-lg font-semibold flex items-center gap-2">
-                  2️⃣ Install Your First Server
-                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs text-primary">BFSMD Recommended</span>
-                </h3>
-                <CodeBlock>sudo ./ubu_24.0.3_bfsmd_setup.sh</CodeBlock>
-                <p className="mt-4 text-sm text-muted-foreground">
-                  <strong>Interactive Setup Prompts:</strong>
-                </p>
-                <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                  <li><strong>Installation mode</strong> — choose Standalone (no remote management) or BFSMD (full GUI management via BFRM)</li>
-                  <li><strong>Instance name</strong> <em>(BFSMD only)</em> — a unique name like <code className="rounded bg-muted px-1 py-0.5">server1</code>, <code className="rounded bg-muted px-1 py-0.5">conquest</code>, <code className="rounded bg-muted px-1 py-0.5">tdm</code></li>
-                  <li><strong>IP address</strong> — auto-detected; choose local, public, or enter custom</li>
-                  <li><strong>BFSMD version</strong> <em>(BFSMD only)</em> — v2.0 (recommended) or v2.01 (fixes admin/PunkBuster bugs)</li>
-                  <li><strong>Firewall rules</strong> — optional, interactive security level selection</li>
-                </ul>
-              </div>
+          <StepCard number="02" title="Run the Installer" badge="BFSMD Recommended">
+            <TerminalBlock title="bash · install">sudo ./ubu_24.0.3_bfsmd_setup.sh</TerminalBlock>
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-amber-500/80">Interactive Prompts</p>
+              <ul className="space-y-2">
+                {[
+                  ["Installation mode", "Standalone (no remote management) or BFSMD (full GUI via BFRM)"],
+                  ["Instance name", "(BFSMD only) — unique name like server1, conquest, tdm"],
+                  ["IP address", "Auto-detected; choose local, public, or enter custom"],
+                  ["BFSMD version", "(BFSMD only) — v2.0 recommended, or v2.01 for admin/PunkBuster fixes"],
+                  ["Firewall rules", "Optional, interactive security level selection"],
+                ].map(([key, val]) => (
+                  <li key={key} className="flex gap-2 text-xs">
+                    <ChevronRight className="h-3 w-3 mt-0.5 shrink-0 text-amber-500/60" />
+                    <span>
+                      <span className="font-semibold text-foreground">{key}</span>
+                      <span className="text-muted-foreground"> — {val}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </StepCard>
 
-              {/* Step 3: Additional Instances */}
-              <div className="rounded-lg border border-border/60 bg-card/50 p-4">
-                <h3 className="mb-2 text-lg font-semibold">3️⃣ Create Additional Instances (Optional)</h3>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  Add more servers by passing an instance name. Each gets unique ports automatically.
-                </p>
-                <CodeBlock>
-                  {`sudo ./ubu_24.0.3_bfsmd_setup.sh server2
+          <StepCard number="03" title="Add More Instances" badge="Optional">
+            <p className="mb-3 text-xs text-muted-foreground">
+              Pass an instance name as an argument. Each instance automatically gets unique ports, its own systemd service, and dedicated CPU cores when available.
+            </p>
+            <TerminalBlock title="bash · multi-instance">
+              {`sudo ./ubu_24.0.3_bfsmd_setup.sh server2
 sudo ./ubu_24.0.3_bfsmd_setup.sh conquest
 sudo ./ubu_24.0.3_bfsmd_setup.sh tdm`}
-                </CodeBlock>
-              </div>
-            </div>
-          </section>
+            </TerminalBlock>
+          </StepCard>
+        </div>
+      </section>
 
-          {/* Management Commands */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              🛠️ Management Commands
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Use the <code className="rounded bg-muted px-1 py-0.5">bf1942_manager.sh</code> tool to manage all your server instances.
-            </p>
-            <CodeBlock>
-              {`# View all instances
-./bf1942_manager.sh list
+      {/* ── PORT CONFIGURATION ──────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// Port Allocation</SectionLabel>
+        <p className="mb-5 text-sm text-muted-foreground">
+          Each instance gets automatically calculated ports derived from its name hash — preventing conflicts across unlimited instances.
+        </p>
+        <div className="overflow-hidden rounded-xl border border-[#1e2a14]">
+          <div className="bg-[#0d1208] px-5 py-3 border-b border-[#1e2a14]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#4a6030]">Comms Allocation · Example Instances</p>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-[#1e2a14] hover:bg-transparent">
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Instance</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Game (UDP)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Query (UDP)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Management (TCP)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {portExamples.map((item) => (
+                <TableRow key={item.instance} className="border-[#1e2a14] hover:bg-amber-500/3">
+                  <TableCell className="font-mono text-sm font-bold text-amber-400">{item.instance}</TableCell>
+                  <TableCell className="font-mono text-sm text-emerald-400/80">{item.game}</TableCell>
+                  <TableCell className="font-mono text-sm text-emerald-400/80">{item.query}</TableCell>
+                  <TableCell className="font-mono text-sm text-blue-400/80">{item.mgmt}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground font-mono">
+          $ ./bf1942_manager.sh ports{" "}
+          <span className="text-muted-foreground/50">— view your actual port assignments</span>
+        </p>
+      </section>
 
-# Check port assignments
-./bf1942_manager.sh ports
+      {/* ── MANAGEMENT COMMANDS ─────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// Management Commands</SectionLabel>
+        <p className="mb-5 text-sm text-muted-foreground">
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">bf1942_manager.sh</code> lives at the repo root and manages all instances regardless of which distro installed them.
+        </p>
+        <div className="space-y-4">
+          <TerminalBlock title="bf1942_manager.sh · reference">
+            {`./bf1942_manager.sh list                  # All instances and their status
+./bf1942_manager.sh ports                 # Port assignments for all instances
+./bf1942_manager.sh status server1        # Detailed status of one instance
+./bf1942_manager.sh config server1        # Show config file paths
+./bf1942_manager.sh health                # Health check all instances
+./bf1942_manager.sh security              # Security audit (passwords, ownership, firewall)
+./bf1942_manager.sh logs server1          # Live log tail (Ctrl+C to exit)
 
-# View detailed status
-./bf1942_manager.sh status server1
-
-# Show configuration paths
-./bf1942_manager.sh config server1
-
-# Health check all instances
-./bf1942_manager.sh health
-
-# Security audit
-./bf1942_manager.sh security
-
-# Service control (requires sudo)
 sudo ./bf1942_manager.sh start server1
 sudo ./bf1942_manager.sh stop server1
 sudo ./bf1942_manager.sh restart server1
-
-# View live logs
-./bf1942_manager.sh logs server1
-
-# Remove instance (with confirmation)
-sudo ./bf1942_manager.sh remove server2`}
-            </CodeBlock>
-            <p className="text-sm text-muted-foreground mt-4">
-              <strong>Direct Systemd Commands:</strong>
-            </p>
-            <CodeBlock>
-              {`# BFSMD instance
+sudo ./bf1942_manager.sh start-all
+sudo ./bf1942_manager.sh stop-all
+sudo ./bf1942_manager.sh remove server2   # Removes instance (asks for confirmation)`}
+          </TerminalBlock>
+          <TerminalBlock title="systemd · direct commands">
+            {`# BFSMD instance
 sudo systemctl status bfsmd-server1.service
 sudo systemctl restart bfsmd-server1.service
 journalctl -u bfsmd-server1.service -f
 
 # Standalone server
 sudo systemctl status bf1942.service`}
-            </CodeBlock>
-          </section>
+          </TerminalBlock>
+        </div>
+      </section>
 
-          {/* BFSMD Setup Guide */}
-          <section id="bfsmd-setup" className="space-y-8 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              🎮 Connect to BFRM (BFSMD Mode)
-            </h2>
+      {/* ── BFRM SETUP ──────────────────────────────────────────────────── */}
+      <section id="bfsmd-setup">
+        <SectionLabel>// Connect to BFRM</SectionLabel>
 
-            {/* Default Credentials */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Default Credentials</h3>
-              <div className="rounded-md bg-muted p-3">
-                <p className="text-sm font-mono">Username: <span className="text-foreground font-bold">bf1942</span></p>
-                <p className="text-sm font-mono">Password: <span className="text-foreground font-bold">battlefield</span></p>
-              </div>
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Critical Security Warning</AlertTitle>
-                <AlertDescription>
-                  Change the default password immediately via BFRM after first login!
-                </AlertDescription>
-              </Alert>
+        {/* Credentials */}
+        <div className="mb-8 overflow-hidden rounded-xl border border-[#1e2a14]">
+          <div className="flex items-center justify-between bg-[#0d1208] px-5 py-3 border-b border-[#1e2a14]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#4a6030]">Default Credentials</p>
+            <span className="rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
+              Change Immediately
+            </span>
+          </div>
+          <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-[#1e2a14]">
+            <div className="px-6 py-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Username</p>
+              <code className="font-mono text-lg font-bold text-amber-400">bf1942</code>
             </div>
-
-            {/* Connection Steps */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Connection Steps</h3>
-              <ol className="list-decimal pl-5 text-sm text-muted-foreground space-y-2">
-                <li>Open <strong>BFRM client</strong> (Windows)</li>
-                <li>Connect to <code className="rounded bg-muted px-1 py-0.5">your-server-ip:management-port</code></li>
-                <li>Login with default credentials</li>
-                <li><strong>Change password immediately</strong> (Admin tab)</li>
-              </ol>
-              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
-                <img
-                  src="/images/server/bfsmd_password.png"
-                  alt="BFSMD Login Screen"
-                  className="w-full max-w-2xl bg-black"
-                />
-              </div>
+            <div className="px-6 py-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Password</p>
+              <code className="font-mono text-lg font-bold text-amber-400">battlefield</code>
             </div>
-
-            {/* Set Server IP */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Set Server IP</h3>
-              <p className="text-sm text-muted-foreground">
-                Navigate to IP settings and set your server's IP address explicitly.
-              </p>
-              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
-                <img
-                  src="/images/server/bfsmd_ip_addr.png"
-                  alt="Set Server IP Address"
-                  className="w-full max-w-2xl bg-black"
-                />
-              </div>
-            </div>
-
-            {/* Secure Remote Console */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Secure Remote Console & Admin</h3>
-              <p className="text-sm text-muted-foreground">
-                Change default remote console password and create secure admin accounts.
-              </p>
-              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
-                <img
-                  src="/images/server/bfsmd_remoteconsole.png"
-                  alt="Remote Console Security"
-                  className="w-full max-w-2xl bg-black"
-                />
-              </div>
-            </div>
-
-            {/* Set Default Map */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Set Default Map</h3>
-              <p className="text-sm text-muted-foreground">
-                Add at least one map to the rotation before starting the server.
-              </p>
-              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
-                <img
-                  src="/images/server/bfsmd_setmap.png"
-                  alt="Set Default Map"
-                  className="w-full max-w-2xl bg-black"
-                />
-              </div>
-            </div>
-
-            {/* Admin Passwords */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Update Admin Passwords</h3>
-              <p className="text-sm text-muted-foreground">
-                Create secure admin accounts and disable defaults.
-              </p>
-              <div className="overflow-hidden rounded-lg border border-border/60 shadow-sm">
-                <img
-                  src="/images/server/bfsmd_adminpassword.png"
-                  alt="Set Admin Users"
-                  className="w-full max-w-2xl bg-black"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Firewall Configuration */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-              <Lock className="h-5 w-5 text-primary" /> Firewall Configuration
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              During installation, firewall rules are configured automatically — UFW on Debian/Ubuntu, firewalld on Fedora/RHEL/CentOS. For the management port, choose a security level:
+          </div>
+          <div className="flex items-center gap-3 border-t border-[#1e2a14] bg-red-950/20 px-5 py-3">
+            <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+            <p className="text-xs text-red-300/80">
+              Change the default password <strong>immediately</strong> via the Admin tab in BFRM after first login.
             </p>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground">Option 1: Open to All</h4>
-                <p className="text-xs text-muted-foreground mt-1">Easiest setup</p>
-                <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                  <li>Anyone can attempt connection</li>
-                  <li>Still requires password</li>
-                  <li>Good for testing or behind other firewall</li>
-                </ul>
-              </div>
-              <div className="rounded-lg border border-primary/50 bg-primary/5 p-4">
-                <h4 className="font-semibold text-foreground">Option 2: Restrict to IP</h4>
-                <p className="text-xs text-primary mt-1">Recommended</p>
-                <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                  <li>Only specified IP can connect</li>
-                  <li>Firewall + password protection</li>
-                  <li>Good for static admin IP</li>
-                </ul>
-              </div>
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground">Option 3: SSH Tunnel</h4>
-                <p className="text-xs text-muted-foreground mt-1">Most secure</p>
-                <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                  <li>No direct internet access</li>
-                  <li>All traffic encrypted via SSH</li>
-                  <li>Good for maximum security</li>
-                </ul>
-              </div>
+          </div>
+        </div>
+
+        {/* Connection steps */}
+        <div className="mb-8">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Connection Steps</h3>
+          <ol className="space-y-3">
+            {[
+              ["Open BFRM client", "on your Windows machine"],
+              ["Connect to", "your-server-ip:management-port"],
+              ["Login", "with default credentials above"],
+              ["Change password immediately", "Admin tab → Change Password"],
+            ].map(([action, detail], i) => (
+              <li key={i} className="flex items-start gap-4">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 font-mono text-xs font-bold text-amber-400">
+                  {i + 1}
+                </span>
+                <span className="text-sm pt-0.5">
+                  <span className="font-semibold text-foreground">{action}</span>{" "}
+                  <span className="text-muted-foreground">{detail}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* Screenshots */}
+        {[
+          { src: "/images/server/bfsmd_password.png",     alt: "BFSMD Login Screen",       title: "01 · Login",                desc: "Connect with default credentials, then change them immediately." },
+          { src: "/images/server/bfsmd_ip_addr.png",      alt: "Set Server IP Address",    title: "02 · Set Server IP",        desc: "Navigate to IP settings and set your server's IP address explicitly." },
+          { src: "/images/server/bfsmd_remoteconsole.png",alt: "Remote Console Security",  title: "03 · Secure Remote Console",desc: "Change default remote console password and create secure admin accounts." },
+          { src: "/images/server/bfsmd_setmap.png",       alt: "Set Default Map",          title: "04 · Set Default Map",      desc: "Add at least one map to the rotation before starting the server." },
+          { src: "/images/server/bfsmd_adminpassword.png",alt: "Set Admin Users",          title: "05 · Update Admin Passwords",desc: "Create secure admin accounts and disable the default bf1942 account." },
+        ].map(({ src, alt, title, desc }) => (
+          <div key={title} className="mb-6 overflow-hidden rounded-xl border border-[#1e2a14]">
+            <div className="bg-[#0d1208] px-5 py-3 border-b border-[#1e2a14]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-500/80">{title}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
             </div>
-            <div className="rounded-lg border border-border/60 bg-card/50 p-4">
-              <h4 className="font-semibold text-foreground mb-2">SSH Tunnel Example</h4>
-              <CodeBlock>
-                {`# On your local machine
+            <div className="bg-black">
+              <img src={src} alt={alt} className="w-full max-w-2xl" />
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* ── FIREWALL ────────────────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// Firewall Configuration</SectionLabel>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Firewall rules are configured during installation — UFW on Debian/Ubuntu, firewalld on Fedora/RHEL/CentOS.
+          For the management port, choose a security posture:
+        </p>
+        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+          {[
+            {
+              label:   "Open to All",
+              tier:    "LOW",
+              color:   "text-slate-400",
+              border:  "border-[#1e2a14]",
+              bg:      "bg-[#070b05]",
+              tierBg:  "bg-slate-500/10 text-slate-400 border-slate-500/30",
+              points:  ["Anyone can attempt connection", "Still requires password", "Good for testing or behind another firewall"],
+            },
+            {
+              label:   "Restrict to IP",
+              tier:    "RECOMMENDED",
+              color:   "text-amber-400",
+              border:  "border-amber-500/30",
+              bg:      "bg-amber-500/5",
+              tierBg:  "bg-amber-500/10 text-amber-400 border-amber-500/30",
+              points:  ["Only your specified IP can connect", "Firewall + password protection", "Best for static admin IP"],
+            },
+            {
+              label:   "SSH Tunnel",
+              tier:    "MAX SECURITY",
+              color:   "text-blue-400",
+              border:  "border-blue-500/20",
+              bg:      "bg-blue-500/5",
+              tierBg:  "bg-blue-500/10 text-blue-400 border-blue-500/30",
+              points:  ["No direct internet exposure", "All traffic encrypted via SSH", "Port not opened in firewall at all"],
+            },
+          ].map(({ label, tier, color, border, bg, tierBg, points }) => (
+            <div key={label} className={`rounded-xl border ${border} ${bg} p-5`}>
+              <div className="flex items-start justify-between gap-2 mb-4">
+                <h4 className={`font-bold text-sm ${color}`}>{label}</h4>
+                <span className={`rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${tierBg}`}>
+                  {tier}
+                </span>
+              </div>
+              <ul className="space-y-2">
+                {points.map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <span className={`mt-1.5 h-1 w-1 rounded-full shrink-0 ${color.replace("text-", "bg-")}`} />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <TerminalBlock title="ssh · tunnel example">
+          {`# On your local machine:
 ssh -L 14700:localhost:14700 user@your-server-ip
 
-# Then connect BFRM to localhost:14700`}
-              </CodeBlock>
-            </div>
-          </section>
+# Then point BFRM at localhost:14700`}
+        </TerminalBlock>
+      </section>
 
-          {/* Network Scenarios */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              🌐 Network Scenarios
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground">Home Server (Behind Router)</h4>
-                <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                  <li><strong>During Install:</strong> Choose Local IP (192.168.x.x)</li>
-                  <li><strong>Router Config:</strong> Forward Game + Query ports (UDP)</li>
-                  <li><strong>Players Connect To:</strong> Your public IP</li>
-                </ul>
+      {/* ── NETWORK SCENARIOS ───────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// Network Scenarios</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[
+            {
+              title:  "Home Server (Behind Router)",
+              icon:   Radio,
+              points: [
+                ["During Install", "Choose Local IP (192.168.x.x)"],
+                ["Router Config", "Forward Game + Query ports (UDP)"],
+                ["Players Connect To", "Your public IP"],
+              ],
+            },
+            {
+              title:  "Cloud / VPS (AWS, DigitalOcean…)",
+              icon:   Activity,
+              points: [
+                ["During Install", "Choose Local IP (10.x.x.x or private IP)"],
+                ["Cloud Firewall", "Allow Game + Query ports from 0.0.0.0/0"],
+                ["Players Connect To", "Instance's public IP"],
+              ],
+            },
+          ].map(({ title, icon: Icon, points }) => (
+            <div key={title} className="rounded-xl border border-[#1e2a14] bg-[#070b05] p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 border border-primary/20">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <h4 className="font-semibold text-sm text-foreground">{title}</h4>
               </div>
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground">Cloud Server (AWS, DigitalOcean, etc.)</h4>
-                <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                  <li><strong>During Install:</strong> Choose Local IP (10.x.x.x or private IP)</li>
-                  <li><strong>Cloud Firewall:</strong> Allow Game + Query from 0.0.0.0/0</li>
-                  <li><strong>Players Connect To:</strong> Instance's public IP</li>
-                </ul>
-              </div>
+              <ul className="space-y-2.5">
+                {points.map(([label, val]) => (
+                  <li key={label} className="flex gap-3 text-xs">
+                    <span className="font-semibold text-muted-foreground whitespace-nowrap">{label}:</span>
+                    <span className="text-foreground/80">{val}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </section>
+          ))}
+        </div>
+      </section>
 
-          {/* Troubleshooting */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              🔧 Troubleshooting
-            </h2>
-            <div className="space-y-4">
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground">"Internal error!" Messages</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  <strong>This is normal!</strong> BFSMD v2.0/v2.01 shows these continuously when reading /proc on modern kernels.
-                  The server functions perfectly despite these messages.
-                </p>
-                <CodeBlock>journalctl -u bfsmd-server1.service -f | grep -v "Internal error"</CodeBlock>
-              </div>
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground">Can't Connect to Server</h4>
-                <CodeBlock>
-                  {`# 1. Check service is running
+      {/* ── TROUBLESHOOTING ─────────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// Known Issues · Resolution Protocols</SectionLabel>
+        <div className="space-y-4">
+          <TroubleshootCard title='"Internal error!" in Logs'>
+            <p className="mb-3 text-sm text-muted-foreground">
+              <span className="font-semibold text-emerald-400">This is normal.</span>{" "}
+              BFSMD v2.0/v2.01 produces these continuously on modern kernels when reading <code className="font-mono text-xs">/proc</code>.
+              The server functions perfectly regardless.
+            </p>
+            <TerminalBlock title="filter logs">
+              journalctl -u bfsmd-server1.service -f | grep -v &quot;Internal error&quot;
+            </TerminalBlock>
+          </TroubleshootCard>
+
+          <TroubleshootCard title="Can't Connect to Server">
+            <TerminalBlock title="diagnostics">
+              {`# 1. Check service is running
 systemctl is-active bfsmd-server1.service
 
 # 2. Check firewall (Debian/Ubuntu)
@@ -527,195 +556,228 @@ sudo ufw status
 # Check firewall (Fedora/RHEL/CentOS)
 sudo firewall-cmd --list-ports
 
-# 3. Check ports are listening
+# 3. Verify ports are listening
 sudo ss -tulnp | grep 14567
 
-# 4. View logs
+# 4. View live logs
 ./bf1942_manager.sh logs server1`}
-                </CodeBlock>
-              </div>
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground">Port Conflict During Installation</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Try a different instance name — ports are derived from the name hash. Check existing assignments with{" "}
-                  <code className="rounded bg-muted px-1 py-0.5">./bf1942_manager.sh ports</code>.
-                </p>
-              </div>
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground">Can't Login to BFRM</h4>
-                <ol className="mt-2 list-decimal pl-5 text-sm text-muted-foreground space-y-1">
-                  <li>Confirm credentials: <code className="rounded bg-muted px-1 py-0.5">bf1942</code> / <code className="rounded bg-muted px-1 py-0.5">battlefield</code></li>
-                  <li>Confirm the management port: <code className="rounded bg-muted px-1 py-0.5">./bf1942_manager.sh ports</code></li>
-                  <li>Confirm firewall allows the connection from your IP</li>
-                  <li>Confirm the service is running: <code className="rounded bg-muted px-1 py-0.5">./bf1942_manager.sh status server1</code></li>
-                </ol>
-              </div>
-            </div>
-          </section>
+            </TerminalBlock>
+          </TroubleshootCard>
 
-          {/* Configuration Files */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              📁 Configuration Files
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground mb-2">Standalone Server</h4>
-                <CodeBlock>
-                  {`/home/bf1942_user/bf1942/mods/bf1942/settings/
+          <TroubleshootCard title="Port Conflict During Installation">
+            <p className="text-sm text-muted-foreground">
+              Try a different instance name — ports are derived from the name hash, so a new name generates a different port set.
+              Check existing assignments with{" "}
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">./bf1942_manager.sh ports</code>.
+            </p>
+          </TroubleshootCard>
+
+          <TroubleshootCard title="Can't Login to BFRM">
+            <ol className="space-y-2">
+              {[
+                <>Confirm credentials: <code className="font-mono text-xs text-amber-400">bf1942</code> / <code className="font-mono text-xs text-amber-400">battlefield</code></>,
+                <>Confirm management port: <code className="font-mono text-xs">./bf1942_manager.sh ports</code></>,
+                "Confirm firewall allows the connection from your IP",
+                <>Confirm service is running: <code className="font-mono text-xs">./bf1942_manager.sh status server1</code></>,
+              ].map((item, i) => (
+                <li key={i} className="flex gap-3 text-sm text-muted-foreground">
+                  <span className="font-mono text-[10px] text-amber-500/60 mt-1 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </TroubleshootCard>
+        </div>
+      </section>
+
+      {/* ── CONFIGURATION FILES ─────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// Configuration Files</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Standalone Server</p>
+            <TerminalBlock title="file tree">
+              {`/home/bf1942_user/bf1942/mods/bf1942/settings/
 ├── ServerSettings.con  # Game settings
 └── MapList.con         # Map rotation`}
-                </CodeBlock>
-              </div>
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground mb-2">BFSMD Instance</h4>
-                <CodeBlock>
-                  {`/home/bf1942_user/instances/<name>/mods/bf1942/settings/
+            </TerminalBlock>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">BFSMD Instance</p>
+            <TerminalBlock title="file tree">
+              {`/home/bf1942_user/instances/<name>/mods/bf1942/settings/
 ├── servermanager.con   # BFSMD settings
 ├── useraccess.con      # Admin accounts
 ├── ServerSettings.con  # Game settings
 └── MapList.con         # Map rotation`}
-                </CodeBlock>
-              </div>
-            </div>
-          </section>
+            </TerminalBlock>
+          </div>
+        </div>
+      </section>
 
-          {/* Advanced Usage */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              🛠️ Advanced Usage
-            </h2>
-            <div className="space-y-4">
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground mb-2">Instance Limits</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  The script warns if you exceed the recommended ceiling but won't block you:
-                </p>
-                <div className="overflow-hidden rounded-md border border-border/60">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>CPU Cores</TableHead>
-                        <TableHead>Recommended Max Instances</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow><TableCell>2</TableCell><TableCell>4</TableCell></TableRow>
-                      <TableRow><TableCell>4</TableCell><TableCell>8</TableCell></TableRow>
-                      <TableRow><TableCell>8</TableCell><TableCell>16</TableCell></TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
+      {/* ── ADVANCED USAGE ──────────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// Advanced Operations</SectionLabel>
+        <div className="space-y-4">
+          {/* Instance limits */}
+          <div className="overflow-hidden rounded-xl border border-[#1e2a14]">
+            <div className="bg-[#0d1208] px-5 py-3 border-b border-[#1e2a14]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#4a6030]">Instance Limits · Recommended Ceiling</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">The script warns if exceeded but won't block you.</p>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#1e2a14] hover:bg-transparent">
+                  <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">CPU Cores</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Recommended Max Instances</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[["2", "4"], ["4", "8"], ["8", "16"]].map(([cores, max]) => (
+                  <TableRow key={cores} className="border-[#1e2a14] hover:bg-amber-500/3">
+                    <TableCell className="font-mono text-sm font-bold text-amber-400">{cores}</TableCell>
+                    <TableCell className="font-mono text-sm text-foreground/80">{max}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <Archive className="h-3.5 w-3.5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Backup &amp; Restore</p>
               </div>
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground mb-2">Backup & Restore</h4>
-                <CodeBlock>
-                  {`# Backup settings
+              <TerminalBlock title="bash">
+                {`# Backup settings
 sudo tar -czf server1-backup-$(date +%F).tar.gz \\
   /home/bf1942_user/instances/server1/mods/bf1942/settings/
 
 # Restore
 sudo tar -xzf server1-backup-*.tar.gz -C /
 sudo systemctl restart bfsmd-server1.service`}
-                </CodeBlock>
-              </div>
-              <div className="rounded-lg border border-border/60 p-4">
-                <h4 className="font-semibold text-foreground mb-2">Clone Instance Settings</h4>
-                <CodeBlock>
-                  {`sudo cp -r /home/bf1942_user/instances/server1/mods/bf1942/settings/* \\
-           /home/bf1942_user/instances/server2/mods/bf1942/settings/
-# Update the port in ServerSettings.con, then restart server2`}
-                </CodeBlock>
-              </div>
+              </TerminalBlock>
             </div>
-          </section>
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <Copy className="h-3.5 w-3.5 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Clone Instance</p>
+              </div>
+              <TerminalBlock title="bash">
+                {`sudo cp -r \\
+  /home/bf1942_user/instances/server1/mods/bf1942/settings/* \\
+  /home/bf1942_user/instances/server2/mods/bf1942/settings/
 
-          {/* Downloads */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-              <Download className="h-5 w-5 text-primary" /> BFRM Downloads (Windows)
-            </h2>
-            <ul className="grid gap-3 sm:grid-cols-2">
-              <li>
-                <Button variant="outline" className="w-full justify-start h-auto py-4" asChild>
-                  <Link href="https://files.bf1942.online/server/tools/BFRemoteManager20final-patched.zip">
-                    <Download className="mr-2 h-4 w-4" />
-                    <div className="text-left">
-                      <div className="font-semibold">BFRM v2.0 (Final)</div>
-                      <div className="text-xs text-muted-foreground">Recommended</div>
-                    </div>
-                  </Link>
-                </Button>
-              </li>
-              <li>
-                <Button variant="outline" className="w-full justify-start h-auto py-4" asChild>
-                  <Link href="https://files.bf1942.online/server/tools/BFRemoteManager201-patched.zip">
-                    <Download className="mr-2 h-4 w-4" />
-                    <div className="text-left">
-                      <div className="font-semibold">BFRM v2.01 (Patched)</div>
-                      <div className="text-xs text-muted-foreground">Fixes admin bugs</div>
-                    </div>
-                  </Link>
-                </Button>
-              </li>
-            </ul>
-          </section>
-
-          {/* Supported Distributions */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              🧪 Supported Distributions
-            </h2>
-            <div className="overflow-hidden rounded-md border border-border/60">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Distribution</TableHead>
-                    <TableHead>Script</TableHead>
-                    <TableHead>Notes</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {distributions.map((distro) => (
-                    <TableRow key={distro.distro}>
-                      <TableCell className="font-medium text-foreground">
-                        {distro.distro}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{distro.script}</TableCell>
-                      <TableCell className="text-muted-foreground">{distro.notes}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+# Update port in ServerSettings.con, then:
+sudo systemctl restart bfsmd-server2.service`}
+              </TerminalBlock>
             </div>
-            <p className="text-sm text-muted-foreground">
-              All distributions are fully tested and supported. See the{" "}
-              <Link href="https://github.com/hootmeow/bf1942-linux" className="text-primary hover:underline" target="_blank" rel="noreferrer">GitHub repo</Link>{" "}
-              for the latest scripts.
-            </p>
-          </section>
+          </div>
+        </div>
+      </section>
 
-          {/* Patches */}
-          <section className="space-y-4 border-t border-border/60 pt-8">
-            <h3 className="text-lg font-medium">🛠️ Applying Patches</h3>
-            <p className="text-sm text-muted-foreground">
-              The <Link href="https://github.com/hootmeow/bf1942-linux/tree/main/patches" className="text-primary hover:underline">patches folder</Link> contains
-              Python scripts to improve various server bugs. See individual patch files for details and instructions.
-            </p>
-          </section>
+      {/* ── DOWNLOADS ───────────────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// BFRM Downloads · Windows Client</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[
+            {
+              href:    "https://files.bf1942.online/server/tools/BFRemoteManager20final-patched.zip",
+              name:    "BFRM v2.0 Final",
+              tag:     "Recommended",
+              tagCls:  "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+              desc:    "Stable release, suitable for most deployments.",
+            },
+            {
+              href:    "https://files.bf1942.online/server/tools/BFRemoteManager201-patched.zip",
+              name:    "BFRM v2.01 Patched",
+              tag:     "Bug Fixes",
+              tagCls:  "bg-blue-500/10 text-blue-400 border-blue-500/30",
+              desc:    "Fixes unauthorized admin access and PunkBuster bugs.",
+            },
+          ].map(({ href, name, tag, tagCls, desc }) => (
+            <Link
+              key={name}
+              href={href}
+              className="group flex items-center gap-4 rounded-xl border border-[#1e2a14] bg-[#070b05] p-5 transition-all hover:border-primary/40 hover:bg-[#0a0f06]"
+            >
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 transition-colors group-hover:bg-primary/20">
+                <Download className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-sm text-foreground">{name}</span>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${tagCls}`}>
+                    {tag}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">{desc}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          ))}
+        </div>
+      </section>
 
-          {/* License */}
-          <section className="border-t border-border/60 pt-6">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              📜 License
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Scripts released under the MIT License. All Battlefield 1942 game assets remain © Electronic Arts Inc.
-            </p>
-          </section>
+      {/* ── SUPPORTED DISTRIBUTIONS ─────────────────────────────────────── */}
+      <section id="distributions">
+        <SectionLabel>// Supported Distributions</SectionLabel>
+        <div className="overflow-hidden rounded-xl border border-[#1e2a14]">
+          <div className="bg-[#0d1208] px-5 py-3 border-b border-[#1e2a14] flex items-center justify-between">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#4a6030]">All distros fully tested and supported</p>
+            <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400">
+              6 / 6 Active
+            </span>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-[#1e2a14] hover:bg-transparent">
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Distribution</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Script</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold hidden md:table-cell">Notes</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {distributions.map((d) => (
+                <TableRow key={d.distro} className="border-[#1e2a14] hover:bg-amber-500/3">
+                  <TableCell className="font-semibold text-sm text-foreground">{d.distro}</TableCell>
+                  <TableCell className="font-mono text-xs text-primary/80">{d.script}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground hidden md:table-cell">{d.notes}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          See the{" "}
+          <Link href="https://github.com/hootmeow/bf1942-linux" className="text-primary hover:underline" target="_blank" rel="noreferrer">
+            GitHub repo
+          </Link>{" "}
+          for the latest scripts and update history.
+        </p>
+      </section>
 
-        </CardContent>
-      </Card>
+      {/* ── PATCHES + LICENSE ───────────────────────────────────────────── */}
+      <section className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1 rounded-xl border border-[#1e2a14] bg-[#070b05] p-5">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500/80">Applying Patches</p>
+          <p className="text-sm text-muted-foreground">
+            The{" "}
+            <Link href="https://github.com/hootmeow/bf1942-linux/tree/main/patches" className="text-primary hover:underline">
+              patches folder
+            </Link>{" "}
+            contains Python scripts to fix known server bugs. See each patch file for details and instructions.
+          </p>
+        </div>
+        <div className="flex-1 rounded-xl border border-[#1e2a14] bg-[#070b05] p-5">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500/80">License</p>
+          <p className="text-sm text-muted-foreground">
+            Scripts released under the <span className="text-foreground font-medium">MIT License</span>.
+            All Battlefield 1942 game assets remain © Electronic Arts Inc.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
