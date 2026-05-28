@@ -20,11 +20,12 @@ const CodeBlock = ({ children }: { children: React.ReactNode }) => {
 };
 
 const distributions = [
-  { distro: "Ubuntu 24.04 LTS", status: "✅ Tested", notes: "Primary tested platform." },
-  { distro: "Ubuntu 22.04 LTS", status: "📋 Planned", notes: "Minor package name adjustments may be needed." },
-  { distro: "Debian 12 (Bookworm)", status: "📋 Planned", notes: "Uses the same multiarch structure as Ubuntu." },
-  { distro: "Debian 11 (Bullseye)", status: "📋 Planned", notes: "Should work with adjustments." },
-  { distro: "Fedora / RHEL / CentOS", status: "📋 Planned", notes: "Requires converting apt commands to dnf/yum." },
+  { distro: "Ubuntu 24.04 LTS", script: "installers/ubuntu/ubu_24.0.3_bfsmd_setup.sh", notes: "Uses libcurl4t64:i386 (auto-detected)." },
+  { distro: "Ubuntu 22.04 LTS", script: "installers/ubuntu/ubu_22.04_bfsmd_setup.sh", notes: "Uses libcurl4:i386." },
+  { distro: "Debian 12 (Bookworm) / 13 (Trixie)", script: "installers/debian/deb_12_bfsmd_setup.sh", notes: "Auto-detects libcurl4 vs libcurl4t64 at runtime." },
+  { distro: "Fedora 40 / 41", script: "installers/fedora/fed_40_bfsmd_setup.sh", notes: "dnf + .i686 packages, firewalld, SELinux (restorecon), zlib-ng auto-detection." },
+  { distro: "RHEL 9", script: "installers/rhel/rhel_9_bfsmd_setup.sh", notes: "Same as Fedora + automatically enables EPEL and CRB repos." },
+  { distro: "CentOS Stream 9", script: "installers/centos/centos_stream9_bfsmd_setup.sh", notes: "Same as RHEL 9." },
 ];
 
 const portExamples = [
@@ -100,9 +101,10 @@ export default function LinuxServerPage() {
         <CardHeader>
           <CardTitle as="h2">Automated Setup Script</CardTitle>
           <CardDescription>
-            This solution installs the legacy 32-bit Battlefield 1942 dedicated server on modern 64-bit Linux systems
-            using a dedicated, non-privileged account. It handles dependency resolution, user creation, and server
-            installation in a single pass with support for running multiple server instances.
+            Automated setup for running Battlefield 1942 dedicated servers on modern 64-bit Linux using a dedicated,
+            non-privileged account. Handles all dependency resolution (including legacy 32-bit libraries), user creation,
+            systemd service setup, and firewall configuration in a single interactive script across Ubuntu, Debian,
+            Fedora, RHEL, and CentOS.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-10">
@@ -145,7 +147,7 @@ export default function LinuxServerPage() {
                 <Server className="h-5 w-5 shrink-0 text-primary" />
                 <div>
                   <span className="font-medium text-foreground">Modern Compatibility</span>
-                  <p className="text-sm text-muted-foreground">Automatically installs required i386 libraries on Ubuntu 24.04+ / Debian 12+.</p>
+                  <p className="text-sm text-muted-foreground">Handles legacy 32-bit dependency resolution across all supported distributions automatically.</p>
                 </div>
               </li>
               <li className="flex gap-3 rounded-md border border-border/60 p-3">
@@ -226,15 +228,18 @@ export default function LinuxServerPage() {
               <div className="rounded-lg border border-border/60 bg-card/50 p-4">
                 <h3 className="mb-2 text-lg font-semibold">1️⃣ Download Scripts</h3>
                 <CodeBlock>
-                  {`# Download main setup script
-wget https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/ubuntu/ubu_24.0.3_bfsmd_setup.sh
+                  {`# Download main setup script (example: Ubuntu 24.04)
+wget https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/installers/ubuntu/ubu_24.0.3_bfsmd_setup.sh
 
-# Download management tool
-wget https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/ubuntu/bf1942_manager.sh
+# Download management tool (same file for all distros)
+wget https://raw.githubusercontent.com/hootmeow/bf1942-linux/main/bf1942_manager.sh
 
 # Make executable
 chmod +x ubu_24.0.3_bfsmd_setup.sh bf1942_manager.sh`}
                 </CodeBlock>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Replace <code className="rounded bg-muted px-1 py-0.5">ubu_24.0.3_bfsmd_setup.sh</code> with your distro's script name from the table below. <code className="rounded bg-muted px-1 py-0.5">bf1942_manager.sh</code> is the same for all distros.
+                </p>
               </div>
 
               {/* Step 2: Install */}
@@ -248,10 +253,11 @@ chmod +x ubu_24.0.3_bfsmd_setup.sh bf1942_manager.sh`}
                   <strong>Interactive Setup Prompts:</strong>
                 </p>
                 <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                  <li>Choose installation mode (Standalone or BFSMD)</li>
-                  <li>Select IP address (auto-detected options provided)</li>
-                  <li>Choose BFSMD version (v2.0 recommended or v2.01 patched)</li>
-                  <li>Configure firewall rules (optional UFW configuration)</li>
+                  <li><strong>Installation mode</strong> — choose Standalone (no remote management) or BFSMD (full GUI management via BFRM)</li>
+                  <li><strong>Instance name</strong> <em>(BFSMD only)</em> — a unique name like <code className="rounded bg-muted px-1 py-0.5">server1</code>, <code className="rounded bg-muted px-1 py-0.5">conquest</code>, <code className="rounded bg-muted px-1 py-0.5">tdm</code></li>
+                  <li><strong>IP address</strong> — auto-detected; choose local, public, or enter custom</li>
+                  <li><strong>BFSMD version</strong> <em>(BFSMD only)</em> — v2.0 (recommended) or v2.01 (fixes admin/PunkBuster bugs)</li>
+                  <li><strong>Firewall rules</strong> — optional, interactive security level selection</li>
                 </ul>
               </div>
 
@@ -429,7 +435,7 @@ sudo systemctl status bf1942.service`}
               <Lock className="h-5 w-5 text-primary" /> Firewall Configuration
             </h2>
             <p className="text-sm text-muted-foreground">
-              During installation, you can configure UFW firewall rules. For the management port, choose a security level:
+              During installation, firewall rules are configured automatically — UFW on Debian/Ubuntu, firewalld on Fedora/RHEL/CentOS. For the management port, choose a security level:
             </p>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-lg border border-border/60 p-4">
@@ -516,8 +522,10 @@ ssh -L 14700:localhost:14700 user@your-server-ip
                   {`# 1. Check service is running
 systemctl is-active bfsmd-server1.service
 
-# 2. Check firewall
+# 2. Check firewall (Debian/Ubuntu)
 sudo ufw status
+# Check firewall (Fedora/RHEL/CentOS)
+sudo firewall-cmd --list-ports
 
 # 3. Check ports are listening
 sudo ss -tulnp | grep 14567
@@ -529,10 +537,18 @@ sudo ss -tulnp | grep 14567
               <div className="rounded-lg border border-border/60 p-4">
                 <h4 className="font-semibold text-foreground">Port Conflict During Installation</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  If you get "port already in use", try a different instance name (generates different ports),
-                  check existing assignments with <code className="rounded bg-muted px-1 py-0.5">./bf1942_manager.sh ports</code>,
-                  or remove the conflicting instance.
+                  Try a different instance name — ports are derived from the name hash. Check existing assignments with{" "}
+                  <code className="rounded bg-muted px-1 py-0.5">./bf1942_manager.sh ports</code>.
                 </p>
+              </div>
+              <div className="rounded-lg border border-border/60 p-4">
+                <h4 className="font-semibold text-foreground">Can't Login to BFRM</h4>
+                <ol className="mt-2 list-decimal pl-5 text-sm text-muted-foreground space-y-1">
+                  <li>Confirm credentials: <code className="rounded bg-muted px-1 py-0.5">bf1942</code> / <code className="rounded bg-muted px-1 py-0.5">battlefield</code></li>
+                  <li>Confirm the management port: <code className="rounded bg-muted px-1 py-0.5">./bf1942_manager.sh ports</code></li>
+                  <li>Confirm firewall allows the connection from your IP</li>
+                  <li>Confirm the service is running: <code className="rounded bg-muted px-1 py-0.5">./bf1942_manager.sh status server1</code></li>
+                </ol>
               </div>
             </div>
           </section>
@@ -559,6 +575,56 @@ sudo ss -tulnp | grep 14567
 ├── useraccess.con      # Admin accounts
 ├── ServerSettings.con  # Game settings
 └── MapList.con         # Map rotation`}
+                </CodeBlock>
+              </div>
+            </div>
+          </section>
+
+          {/* Advanced Usage */}
+          <section className="space-y-4 border-t border-border/60 pt-8">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
+              🛠️ Advanced Usage
+            </h2>
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border/60 p-4">
+                <h4 className="font-semibold text-foreground mb-2">Instance Limits</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  The script warns if you exceed the recommended ceiling but won't block you:
+                </p>
+                <div className="overflow-hidden rounded-md border border-border/60">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>CPU Cores</TableHead>
+                        <TableHead>Recommended Max Instances</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow><TableCell>2</TableCell><TableCell>4</TableCell></TableRow>
+                      <TableRow><TableCell>4</TableCell><TableCell>8</TableCell></TableRow>
+                      <TableRow><TableCell>8</TableCell><TableCell>16</TableCell></TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border/60 p-4">
+                <h4 className="font-semibold text-foreground mb-2">Backup & Restore</h4>
+                <CodeBlock>
+                  {`# Backup settings
+sudo tar -czf server1-backup-$(date +%F).tar.gz \\
+  /home/bf1942_user/instances/server1/mods/bf1942/settings/
+
+# Restore
+sudo tar -xzf server1-backup-*.tar.gz -C /
+sudo systemctl restart bfsmd-server1.service`}
+                </CodeBlock>
+              </div>
+              <div className="rounded-lg border border-border/60 p-4">
+                <h4 className="font-semibold text-foreground mb-2">Clone Instance Settings</h4>
+                <CodeBlock>
+                  {`sudo cp -r /home/bf1942_user/instances/server1/mods/bf1942/settings/* \\
+           /home/bf1942_user/instances/server2/mods/bf1942/settings/
+# Update the port in ServerSettings.con, then restart server2`}
                 </CodeBlock>
               </div>
             </div>
@@ -605,7 +671,7 @@ sudo ss -tulnp | grep 14567
                 <TableHeader>
                   <TableRow>
                     <TableHead>Distribution</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Script</TableHead>
                     <TableHead>Notes</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -615,7 +681,7 @@ sudo ss -tulnp | grep 14567
                       <TableCell className="font-medium text-foreground">
                         {distro.distro}
                       </TableCell>
-                      <TableCell>{distro.status}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{distro.script}</TableCell>
                       <TableCell className="text-muted-foreground">{distro.notes}</TableCell>
                     </TableRow>
                   ))}
@@ -623,7 +689,9 @@ sudo ss -tulnp | grep 14567
               </Table>
             </div>
             <p className="text-sm text-muted-foreground">
-              <strong>Maximum Recommended Instances:</strong> CPU Cores × 2 (e.g., 4 cores = 8 instances max)
+              All distributions are fully tested and supported. See the{" "}
+              <Link href="https://github.com/hootmeow/bf1942-linux" className="text-primary hover:underline" target="_blank" rel="noreferrer">GitHub repo</Link>{" "}
+              for the latest scripts.
             </p>
           </section>
 

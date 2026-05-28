@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(awk '{print $NF}')"
+      "Bash(awk '{print $NF}')",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
