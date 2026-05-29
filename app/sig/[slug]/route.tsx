@@ -4,15 +4,26 @@ import { getRandomBgDataUri } from '../bg-loader';
 
 export const runtime = 'nodejs';
 
+const FETCH_TIMEOUT_MS = 5000;
+
+function withTimeout(promise: Promise<Response>, ms: number): Promise<Response> {
+    return Promise.race([
+        promise,
+        new Promise<Response>((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), ms)
+        ),
+    ]);
+}
+
 export async function GET(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
     try {
         const params = await props.params;
         const { slug } = params;
 
-        let playerName = "Unknown";
-        let score = "0";
-        let globalRank = "# --";
-        let rank = "Private";
+        let playerName = 'Unknown';
+        let kdr = '--';
+        let globalRank = '# --';
+        let rank = 'Private';
 
         // Strip image extension so forum hotlinks work
         if (slug) {
@@ -21,22 +32,30 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
         }
 
         const envApiUrl = process.env.API_URL
-            ? process.env.API_URL.replace(/\/+$/, "")
-            : "http://127.0.0.1:8000/api/v1";
+            ? process.env.API_URL.replace(/\/+$/, '')
+            : 'http://127.0.0.1:8000/api/v1';
 
-        let debugStatus = "OK";
+        let debugStatus = 'OK';
         try {
             const [profileRes, advancedRes] = await Promise.all([
-                fetch(`${envApiUrl}/players/search/profile?name=${encodeURIComponent(playerName)}`, { next: { revalidate: 60 } }),
-                fetch(`${envApiUrl}/players/search/profile_advanced?name=${encodeURIComponent(playerName)}`, { next: { revalidate: 60 } })
+                withTimeout(
+                    fetch(`${envApiUrl}/players/search/profile?name=${encodeURIComponent(playerName)}`, { next: { revalidate: 60 } }),
+                    FETCH_TIMEOUT_MS
+                ),
+                withTimeout(
+                    fetch(`${envApiUrl}/players/search/profile_advanced?name=${encodeURIComponent(playerName)}`, { next: { revalidate: 60 } }),
+                    FETCH_TIMEOUT_MS
+                ),
             ]);
 
             if (profileRes.ok) {
                 const data = await profileRes.json();
                 if (data.ok && data.lifetime_stats) {
-                    score = data.lifetime_stats.total_score?.toLocaleString() || "0";
+                    const ls = data.lifetime_stats;
+                    const rawKdr = ls.overall_kdr;
+                    kdr = rawKdr != null ? Number(rawKdr).toFixed(2) : '--';
                 } else {
-                    debugStatus = "InvData";
+                    debugStatus = 'InvData';
                 }
             } else {
                 debugStatus = `Err${profileRes.status}`;
@@ -45,14 +64,14 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
             if (advancedRes.ok) {
                 const advData = await advancedRes.json();
                 if (advData.ok && advData.skill_rating) {
-                    if (advData.skill_rating.score) score = advData.skill_rating.score.toLocaleString();
                     if (advData.skill_rating.label) rank = advData.skill_rating.label;
                     if (advData.skill_rating.global_rank) globalRank = `# ${advData.skill_rating.global_rank}`;
                 }
             }
         } catch (e: any) {
-            debugStatus = e?.cause?.code === 'ECONNREFUSED' ? "ConnRefused" : "FetchFail";
-            console.error("[Sig] Fetch Exception:", e);
+            debugStatus = e?.message === 'timeout' ? 'Timeout' :
+                e?.cause?.code === 'ECONNREFUSED' ? 'ConnRefused' : 'FetchFail';
+            console.error('[Sig] Fetch Exception:', e);
         }
 
         const randomBg = getRandomBgDataUri();
@@ -95,7 +114,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                         zIndex: 1,
                     }} />
 
-                    {debugStatus !== "OK" && (
+                    {debugStatus !== 'OK' && (
                         <div style={{
                             display: 'flex',
                             position: 'absolute',
@@ -121,11 +140,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                         </div>
                     </div>
 
-                    {/* Right — score + global rank */}
+                    {/* Right — K/D + global rank */}
                     <div style={{ display: 'flex', gap: 20, alignItems: 'center', zIndex: 10, textShadow: '0 2px 4px #000, 0 0 10px #000' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ display: 'flex', fontSize: 10, color: '#fff', fontWeight: '600', opacity: 0.9 }}>SCORE</span>
-                            <span style={{ display: 'flex', fontSize: 18, fontWeight: 'bold' }}>{score}</span>
+                            <span style={{ display: 'flex', fontSize: 10, color: '#fff', fontWeight: '600', opacity: 0.9 }}>K/D RATIO</span>
+                            <span style={{ display: 'flex', fontSize: 18, fontWeight: 'bold' }}>{kdr}</span>
                         </div>
                         <div style={{ display: 'flex', width: 1, height: 30, background: 'rgba(255,255,255,0.6)' }} />
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -150,10 +169,14 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                     </div>
                 </div>
             ),
-            { width: 500, height: 120 }
+            {
+                width: 500,
+                height: 120,
+                headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' },
+            }
         );
     } catch (e: any) {
-        console.error("Signature Generation Fatal Error:", e);
+        console.error('Signature Generation Fatal Error:', e);
         return new Response(`Failed to generate signature: ${e.message}`, { status: 500 });
     }
 }

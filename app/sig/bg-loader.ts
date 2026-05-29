@@ -15,9 +15,13 @@ const BG_FILES = [
     'sig-back11.png',
 ];
 
-export function getRandomBgDataUri(): string {
-    const filename = BG_FILES[Math.floor(Math.random() * BG_FILES.length)];
+// Cache loaded at module init — avoids disk reads on every signature request
+const BG_CACHE: string[] = BG_FILES.map((filename) => {
     const imgPath = path.join(process.cwd(), 'public', 'images', 'forum', filename);
     const buffer = fs.readFileSync(imgPath);
     return `data:image/png;base64,${buffer.toString('base64')}`;
+});
+
+export function getRandomBgDataUri(): string {
+    return BG_CACHE[Math.floor(Math.random() * BG_CACHE.length)];
 }

@@ -4,6 +4,17 @@ import { getRandomBgDataUri } from '../../sig/bg-loader';
 
 export const runtime = 'nodejs';
 
+const FETCH_TIMEOUT_MS = 5000;
+
+function withTimeout(promise: Promise<Response>, ms: number): Promise<Response> {
+    return Promise.race([
+        promise,
+        new Promise<Response>((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), ms)
+        ),
+    ]);
+}
+
 function formatTimeRemaining(seconds: number | null | undefined): string {
     if (!seconds || seconds <= 0) return '';
     const m = Math.floor(seconds / 60);
@@ -31,10 +42,15 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
         let debugStatus = 'OK';
 
         try {
-            // Fetch server info and rankings in parallel
             const [serverRes, rankingsRes] = await Promise.all([
-                fetch(`${envApiUrl}/servers/search?search=${encodeURIComponent(serverId)}`, { next: { revalidate: 30 } }),
-                fetch(`${envApiUrl}/servers/rankings?limit=500`, { next: { revalidate: 300 } }),
+                withTimeout(
+                    fetch(`${envApiUrl}/servers/search?search=${encodeURIComponent(serverId)}`, { next: { revalidate: 30 } }),
+                    FETCH_TIMEOUT_MS
+                ),
+                withTimeout(
+                    fetch(`${envApiUrl}/servers/rankings?limit=500`, { next: { revalidate: 300 } }),
+                    FETCH_TIMEOUT_MS
+                ),
             ]);
 
             if (serverRes.ok) {
@@ -49,7 +65,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                     playerCount = String(s.current_player_count ?? 0);
                     maxPlayers = String(s.current_max_players ?? 0);
 
-                    // Format map name
                     const rawMap: string = s.current_map || '---';
                     mapName = rawMap
                         .split('/')
@@ -57,16 +72,13 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         .replace(/_/g, ' ')
                         .replace(/\b\w/g, (c: string) => c.toUpperCase());
 
-                    // Game mode — prefer ClickHouse gamemode, fall back to Postgres gametype
                     const rawMode: string = s.gamemode || s.current_gametype || '';
                     gameMode = rawMode
                         .replace(/_/g, ' ')
                         .replace(/\b\w/g, (c: string) => c.toUpperCase());
 
-                    // Time remaining from ClickHouse live data
                     timeRemaining = formatTimeRemaining(s.round_time_remain);
 
-                    // Look up rank from rankings list
                     if (rankingsRes.ok) {
                         const rankData = await rankingsRes.json();
                         if (rankData.ok && Array.isArray(rankData.rankings)) {
@@ -79,7 +91,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                 debugStatus = `Err${serverRes.status}`;
             }
         } catch (e: any) {
-            debugStatus = 'FetchFail';
+            debugStatus = e?.message === 'timeout' ? 'Timeout' : 'FetchFail';
             console.error('[ServerSig] Fetch Exception:', e);
         }
 
@@ -112,7 +124,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                             height: 120,
                         }}
                     />
-                    {/* Dark overlay — slightly transparent so background shows through */}
+                    {/* Dark overlay */}
                     <div style={{
                         position: 'absolute',
                         top: 0,
@@ -169,7 +181,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         ) : null}
                     </div>
 
-                    {/* Right — player count with label, mode, map, time */}
+                    {/* Right — player count, game mode, map, time */}
                     <div style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -179,21 +191,18 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         gap: 2,
                         maxWidth: 240,
                     }}>
-                        {/* PLAYERS: label above count */}
                         <div style={{ display: 'flex', fontSize: 9, color: 'rgba(255,255,255,0.55)', fontWeight: '600', letterSpacing: '0.08em' }}>
                             PLAYERS:
                         </div>
-                        {/* Player count */}
                         <div style={{ display: 'flex', fontSize: 32, fontWeight: 'bold', color: '#ea580c', lineHeight: 1, marginTop: -2 }}>
                             {playerCount}/{maxPlayers}
                         </div>
 
-                        {/* Map */}
+                        {/* Game mode + map on same line if both present */}
                         <span style={{ display: 'flex', fontSize: 11, color: '#cbd5e1', textAlign: 'right' }}>
-                            {mapName}
+                            {gameMode && mapName !== '---' ? `${gameMode} · ${mapName}` : mapName}
                         </span>
 
-                        {/* Time remaining */}
                         {timeRemaining ? (
                             <span style={{ display: 'flex', fontSize: 10, color: '#94a3b8' }}>
                                 {timeRemaining}
@@ -217,7 +226,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                     </div>
                 </div>
             ),
-            { width: 500, height: 120 }
+            {
+                width: 500,
+                height: 120,
+                headers: { 'Cache-Control': 'public, max-age=30, stale-while-revalidate=120' },
+            }
         );
     } catch (e: any) {
         console.error('Server Signature Fatal Error:', e);

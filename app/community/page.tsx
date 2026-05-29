@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { MessageCircle, Globe, Star, ExternalLink } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
+import { MessageCircle, Globe, Star, ExternalLink, Film, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Communities & Clans",
   description: "Join the active Battlefield 1942 community. Find clans, Discord servers, and groups keeping the game alive.",
 };
+
+// ── Data ───────────────────────────────────────────────────────────────────────
 
 const communities = [
   {
@@ -76,190 +76,278 @@ const communities = [
   },
 ];
 
-const typeColors: Record<string, { bg: string; text: string; border: string }> = {
-  'Active':          { bg: 'bg-green-500/10',  text: 'text-green-400',  border: 'border-green-500/30'  },
-  'Vanilla':         { bg: 'bg-blue-500/10',   text: 'text-blue-400',   border: 'border-blue-500/30'   },
-  'Vanilla & Modded':{ bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
-  'Modded':          { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
-  'Events':          { bg: 'bg-pink-500/10',   text: 'text-pink-400',   border: 'border-pink-500/30'   },
-  'Co-op':           { bg: 'bg-cyan-500/10',   text: 'text-cyan-400',   border: 'border-cyan-500/30'   },
-  'PvE':             { bg: 'bg-cyan-500/10',   text: 'text-cyan-400',   border: 'border-cyan-500/30'   },
-  '24/7':            { bg: 'bg-red-500/10',    text: 'text-red-400',    border: 'border-red-500/30'    },
-  'USA':             { bg: 'bg-slate-500/10',  text: 'text-slate-400',  border: 'border-slate-500/30'  },
-  'Desert Combat':   { bg: 'bg-amber-500/10',  text: 'text-amber-400',  border: 'border-amber-500/30'  },
-  'Mod-specific':    { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/30' },
-  'Racing':          { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/30' },
-  'Vehicles':        { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
+const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  "Active":           { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/25" },
+  "Vanilla":          { bg: "bg-blue-500/10",    text: "text-blue-400",    border: "border-blue-500/25"    },
+  "Vanilla & Modded": { bg: "bg-purple-500/10",  text: "text-purple-400",  border: "border-purple-500/25"  },
+  "Modded":           { bg: "bg-orange-500/10",  text: "text-orange-400",  border: "border-orange-500/25"  },
+  "Events":           { bg: "bg-pink-500/10",    text: "text-pink-400",    border: "border-pink-500/25"    },
+  "Co-op":            { bg: "bg-cyan-500/10",    text: "text-cyan-400",    border: "border-cyan-500/25"    },
+  "PvE":              { bg: "bg-cyan-500/10",    text: "text-cyan-400",    border: "border-cyan-500/25"    },
+  "24/7":             { bg: "bg-red-500/10",     text: "text-red-400",     border: "border-red-500/25"     },
+  "USA":              { bg: "bg-slate-500/10",   text: "text-slate-400",   border: "border-slate-500/25"   },
+  "Desert Combat":    { bg: "bg-amber-500/10",   text: "text-amber-400",   border: "border-amber-500/25"   },
+  "Mod-specific":     { bg: "bg-indigo-500/10",  text: "text-indigo-400",  border: "border-indigo-500/25"  },
+  "Racing":           { bg: "bg-yellow-500/10",  text: "text-yellow-400",  border: "border-yellow-500/25"  },
+  "Vehicles":         { bg: "bg-orange-500/10",  text: "text-orange-400",  border: "border-orange-500/25"  },
 };
 
 function getTypeStyle(type: string) {
-  return typeColors[type] || { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' };
+  return TYPE_COLORS[type] ?? { bg: "bg-primary/10", text: "text-primary", border: "border-primary/25" };
 }
 
-// First letter of community name as avatar
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-4 mb-6">
+      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-amber-500">{children}</span>
+      <div className="flex-1 h-px bg-gradient-to-r from-amber-500/40 via-amber-500/10 to-transparent" />
+    </div>
+  );
+}
+
 function Initials({ name, accent }: { name: string; accent: string }) {
+  const letter = name.replace(/[-\[( ]/g, "").charAt(0).toUpperCase();
   return (
     <div
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-black"
-      style={{ background: accent + "20", color: accent, border: `1px solid ${accent}30` }}
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-black text-lg select-none"
+      style={{
+        background: accent + "18",
+        color: accent,
+        border: `1px solid ${accent}35`,
+        boxShadow: `0 0 16px ${accent}12`,
+      }}
     >
-      {name.replace(/[-\[( ]/g, "").charAt(0).toUpperCase()}
+      {letter}
     </div>
   );
 }
 
-export default function CommunityPage() {
-  const featured = communities.filter((c) => c.featured);
-  const rest     = communities.filter((c) => !c.featured);
-
+function DiscordIcon() {
   return (
-    <div className="space-y-10 pb-12">
+    <svg role="img" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
+      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.5382-9.6739-3.5479-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z" />
+    </svg>
+  );
+}
 
-      {/* HERO */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] px-6 py-14 shadow-2xl sm:px-12 md:py-20">
-        {/* Amber rim light */}
-        <div className="absolute -right-24 -top-24 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.13),transparent_65%)] pointer-events-none" />
-        {/* Soft white glow */}
-        <div className="absolute -bottom-24 -left-24 h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.03),transparent_65%)] pointer-events-none" />
-        {/* Film grain */}
-        <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)", backgroundSize: "3px 3px" }} />
+// ── Community Card ─────────────────────────────────────────────────────────────
 
-        <div className="relative z-10 max-w-3xl">
-          <Badge variant="outline" className="mb-4 border-amber-500/30 bg-amber-500/10 text-amber-400 uppercase tracking-widest text-[10px]">
-            Allied Networks
-          </Badge>
-          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-            Community
-          </h1>
-          <p className="mt-4 text-base text-zinc-400 max-w-2xl leading-relaxed">
-            Connect with squads, organizers, and creators keeping Battlefield 1942 alive since 2002.
-            Find your next clan, Discord server, or community event.
-          </p>
-          <div className="mt-6 flex items-center gap-6 text-sm text-zinc-500">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-              {communities.filter(c => c.types.includes("Active")).length} Active Communities
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
-              {featured.length} Featured
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* FEATURED */}
-      {featured.length > 0 && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-            <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-            Featured Communities
-          </div>
-          <div className="grid gap-5 md:grid-cols-2">
-            {featured.map((community) => (
-              <CommunityCard key={community.title} community={community} />
-            ))}
-          </div>
-        </section>
+function CommunityCard({ community, large = false }: { community: typeof communities[0]; large?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "group relative flex flex-col overflow-hidden rounded-xl border bg-[#070b05]",
+        "transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/40",
+        community.featured
+          ? "border-[#2a3a1a] hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+          : "border-[#1e2a14] hover:border-[#2a3a1a]"
       )}
-
-      {/* REST */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-          <Globe className="h-3.5 w-3.5" />
-          All Communities
-        </div>
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {rest.map((community) => (
-            <CommunityCard key={community.title} community={community} />
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function CommunityCard({ community }: { community: typeof communities[0] }) {
-  return (
-    <div
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:border-border hover:shadow-xl hover:-translate-y-0.5"
-      style={{ "--accent": community.accent } as React.CSSProperties}
     >
-      {/* Accent top bar */}
+      {/* Accent top bar — thicker + animated on featured */}
       <div
-        className="h-0.5 w-full transition-all duration-300 group-hover:h-1"
-        style={{ background: `linear-gradient(90deg, ${community.accent}, transparent)` }}
+        className={cn(
+          "w-full transition-all duration-500",
+          community.featured ? "h-[3px] group-hover:h-1" : "h-[2px] group-hover:h-[3px]"
+        )}
+        style={{ background: `linear-gradient(90deg, ${community.accent}, ${community.accent}40, transparent)` }}
       />
 
-      {/* Content */}
-      <div className="flex flex-col flex-1 p-5">
-        {/* Title row */}
-        <div className="flex items-start gap-3 mb-3">
+      {/* Glow behind the card on hover */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse at top left, ${community.accent}06, transparent 60%)` }}
+      />
+
+      {/* Body */}
+      <div className="relative flex flex-1 flex-col p-5 gap-4">
+        {/* Header row */}
+        <div className="flex items-start gap-3">
           <Initials name={community.title} accent={community.accent} />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-foreground leading-tight truncate group-hover:text-primary transition-colors">
+            <div className="flex items-center gap-2 mb-1.5">
+              <h3 className="font-bold text-foreground leading-tight truncate transition-colors duration-200 group-hover:text-white">
                 {community.title}
               </h3>
               {community.featured && (
-                <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                <Star className="h-3.5 w-3.5 shrink-0 text-amber-400 fill-amber-400" />
               )}
             </div>
-            <div className="flex flex-wrap gap-1 mt-1.5">
+            {/* Type badges */}
+            <div className="flex flex-wrap gap-1">
               {community.types.map((type) => {
-                const style = getTypeStyle(type);
+                const s = getTypeStyle(type);
                 return (
-                  <Badge
+                  <span
                     key={type}
-                    variant="outline"
-                    className={cn("text-[10px] px-1.5 py-0", style.bg, style.text, style.border)}
+                    className={cn(
+                      "font-mono text-[9px] font-bold uppercase tracking-[0.12em] px-1.5 py-0.5 rounded border",
+                      s.bg, s.text, s.border
+                    )}
                   >
                     {type}
-                  </Badge>
+                  </span>
                 );
               })}
             </div>
           </div>
         </div>
 
-        <p className="text-sm leading-relaxed text-muted-foreground flex-1">
+        {/* Description */}
+        <p className={cn(
+          "text-sm leading-relaxed text-muted-foreground/80 flex-1 border-l-2 pl-3",
+        )}
+          style={{ borderColor: community.accent + "30" }}
+        >
           {community.description}
         </p>
       </div>
 
-      {/* Footer */}
+      {/* Footer links */}
       <div
-        className="border-t border-border/30 px-5 py-3 flex items-center gap-4"
-        style={{ background: community.accent + "08" }}
+        className="relative flex items-center gap-1 border-t px-5 py-3"
+        style={{
+          borderColor: community.accent + "15",
+          background: community.accent + "06",
+        }}
       >
         {community.website && (
           <a
             href={community.website}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs font-semibold transition-colors hover:text-primary"
-            style={{ color: community.accent }}
+            className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-all duration-150 hover:opacity-90"
+            style={{
+              color: community.accent,
+              borderColor: community.accent + "30",
+              background: community.accent + "10",
+            }}
           >
-            <Globe className="h-3.5 w-3.5" />
+            <Globe className="h-3 w-3" />
             Website
-            <ExternalLink className="h-3 w-3 opacity-60" />
+            <ExternalLink className="h-2.5 w-2.5 opacity-60" />
           </a>
         )}
         {community.discord && (
-          <>
-            {community.website && <span className="text-border/60 text-xs">·</span>}
-            <a
-              href={community.discord}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-indigo-400 transition-colors"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              Discord
-            </a>
-          </>
+          <a
+            href={community.discord}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-lg border border-[#5865F2]/25 bg-[#5865F2]/10 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#7289da] transition-all duration-150 hover:bg-[#5865F2]/15 hover:border-[#5865F2]/40"
+          >
+            <DiscordIcon />
+            Discord
+          </a>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
+
+export default function CommunityPage() {
+  const featured    = communities.filter((c) => c.featured);
+  const rest        = communities.filter((c) => !c.featured);
+  const activeCount = communities.filter((c) => c.types.includes("Active")).length;
+
+  return (
+    <div className="space-y-12 pb-12">
+
+      {/* ── HERO ──────────────────────────────────────────────────────── */}
+      <div
+        className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
+        style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)" }}
+      >
+        {/* Tactical grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{
+            backgroundImage: "linear-gradient(#6b8c3a 1px, transparent 1px), linear-gradient(90deg, #6b8c3a 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }}
+        />
+        {/* Amber glow */}
+        <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-amber-500/6 blur-[90px] pointer-events-none" />
+        {/* Green glow */}
+        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/5 blur-[70px] pointer-events-none" />
+
+        <div className="relative z-10 px-8 py-12 sm:px-12 sm:py-20">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400 mb-5">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Allied Networks
+              </span>
+              <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl leading-tight">
+                Community<br />
+                <span className="text-primary">& Clans</span>
+              </h1>
+              <p className="mt-4 text-slate-400 leading-relaxed max-w-lg">
+                Connect with squads, organizers, and creators keeping Battlefield 1942 alive since 2002.
+                Find your next clan, Discord server, or community event.
+              </p>
+            </div>
+
+            {/* Stat counters */}
+            <div className="flex gap-8 font-mono shrink-0">
+              <div className="text-center">
+                <p className="text-3xl font-black text-emerald-400 tabular-nums leading-none">{activeCount}</p>
+                <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/50">Active</p>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-black text-amber-400 tabular-nums leading-none">{featured.length}</p>
+                <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/50">Featured</p>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-black text-primary tabular-nums leading-none">{communities.length}</p>
+                <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/50">Total</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick-nav to sub-pages */}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/community/highlights"
+              className="group flex items-center gap-2 rounded-lg border border-[#2a3a1a] bg-[#0a0f06]/80 px-4 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground/70 transition-all hover:border-primary/40 hover:text-primary hover:bg-primary/5"
+            >
+              <Film className="h-3.5 w-3.5" />
+              Video Highlights
+            </Link>
+            <Link
+              href="/orgs"
+              className="group flex items-center gap-2 rounded-lg border border-[#2a3a1a] bg-[#0a0f06]/80 px-4 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground/70 transition-all hover:border-primary/40 hover:text-primary hover:bg-primary/5"
+            >
+              <Users className="h-3.5 w-3.5" />
+              Organizations
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── FEATURED ──────────────────────────────────────────────────── */}
+      {featured.length > 0 && (
+        <section>
+          <SectionLabel>// Featured Units</SectionLabel>
+          <div className="grid gap-5 md:grid-cols-2">
+            {featured.map((community) => (
+              <CommunityCard key={community.title} community={community} large />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── ALL COMMUNITIES ───────────────────────────────────────────── */}
+      <section>
+        <SectionLabel>// All Regiments</SectionLabel>
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {rest.map((community) => (
+            <CommunityCard key={community.title} community={community} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
