@@ -4,9 +4,7 @@ import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { OrgCard } from "@/components/org-card"
-import { Plus, Search, Users } from "lucide-react"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { Search, Users } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface Org {
@@ -24,7 +22,6 @@ export default function OrgsPage() {
   const [search, setSearch] = useState("")
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const { data: session } = useSession()
 
   useEffect(() => {
     async function fetchOrgs() {
@@ -51,24 +48,14 @@ export default function OrgsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Users className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Organizations</h1>
-            <p className="text-sm text-muted-foreground">Community-created groups and clans</p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Users className="h-5 w-5 text-primary" />
         </div>
-        {session?.user && (
-          <Link href="/orgs/create">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Organization
-            </Button>
-          </Link>
-        )}
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Organizations</h1>
+          <p className="text-sm text-muted-foreground">Community-created groups and clans</p>
+        </div>
       </div>
 
       <div className="relative">
@@ -91,7 +78,7 @@ export default function OrgsPage() {
         <div className="border border-dashed border-border/60 rounded-xl bg-card/30 py-12 text-center">
           <Users className="mx-auto h-10 w-10 opacity-40" />
           <p className="mt-3 font-medium text-muted-foreground">No organizations found</p>
-          <p className="text-sm mt-1 text-muted-foreground">Try a different search or create your own.</p>
+          <p className="text-sm mt-1 text-muted-foreground">Try a different search term.</p>
         </div>
       ) : (
         <>

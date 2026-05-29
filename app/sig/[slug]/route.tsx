@@ -15,6 +15,14 @@ function withTimeout(promise: Promise<Response>, ms: number): Promise<Response> 
     ]);
 }
 
+function formatPlaytime(seconds: number | null | undefined): string {
+    if (!seconds || seconds <= 0) return '';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (h >= 1) return `${h}h ${m}m`;
+    return `${m}m`;
+}
+
 export async function GET(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
     try {
         const params = await props.params;
@@ -22,11 +30,12 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
 
         let playerName = 'Unknown';
         let kdr = '--';
-        let winRate = '--';
         let globalRank = '# --';
         let rank = 'Private';
+        let playtime = '';
+        let totalScore = '';
+        let avgPing = '';
 
-        // Strip image extension so forum hotlinks work
         if (slug) {
             const rawSlug = Array.isArray(slug) ? slug.join('/') : slug;
             playerName = decodeURIComponent(rawSlug).replace(/\.(png|jpg|jpeg|gif)$/i, '');
@@ -54,7 +63,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                 if (data.ok && data.lifetime_stats) {
                     const ls = data.lifetime_stats;
                     kdr = ls.overall_kdr != null ? Number(ls.overall_kdr).toFixed(2) : '--';
-                    winRate = ls.win_rate != null ? `${Math.round(ls.win_rate)}%` : '--';
+                    playtime = formatPlaytime(ls.total_playtime_seconds);
+                    totalScore = ls.total_score != null ? Number(ls.total_score).toLocaleString() : '';
+                    avgPing = ls.average_ping != null ? `${Math.round(ls.average_ping)}ms` : '';
                 } else {
                     debugStatus = 'InvData';
                 }
@@ -74,6 +85,14 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                 e?.cause?.code === 'ECONNREFUSED' ? 'ConnRefused' : 'FetchFail';
             console.error('[Sig] Fetch Exception:', e);
         }
+
+        // Build the bottom info strip — only include fields that have data
+        const bottomParts = [
+            playtime ? `${playtime} played` : null,
+            totalScore ? `${totalScore} pts` : null,
+            avgPing ? `${avgPing} ping` : null,
+        ].filter(Boolean);
+        const bottomStrip = bottomParts.join('  ·  ');
 
         const randomBg = getRandomBgDataUri();
 
@@ -118,10 +137,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                     <div style={{
                         display: 'flex', flexDirection: 'column', zIndex: 10,
                         textShadow: '0 2px 4px #000, 0 0 10px #000',
+                        marginBottom: bottomStrip ? 22 : 0,
                     }}>
                         <div style={{
-                            display: 'flex', fontSize: 24, fontWeight: 'bold', marginTop: 4,
-                            whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 260,
+                            display: 'flex', fontSize: 24, fontWeight: 'bold',
+                            whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 270,
                         }}>
                             {playerName}
                         </div>
@@ -130,39 +150,40 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                         </div>
                     </div>
 
-                    {/* Right — K/D · Win Rate · Global Rank */}
+                    {/* Right — K/D | Global Rank */}
                     <div style={{
                         display: 'flex', alignItems: 'center', zIndex: 10,
-                        textShadow: '0 2px 4px #000, 0 0 10px #000', gap: 0,
+                        textShadow: '0 2px 4px #000, 0 0 10px #000',
+                        marginBottom: bottomStrip ? 22 : 0,
                     }}>
-                        {/* K/D */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', paddingRight: 14 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', paddingRight: 16 }}>
                             <span style={{ display: 'flex', fontSize: 9, color: '#fff', fontWeight: '600', opacity: 0.8, letterSpacing: '0.06em' }}>K/D RATIO</span>
-                            <span style={{ display: 'flex', fontSize: 20, fontWeight: 'bold' }}>{kdr}</span>
+                            <span style={{ display: 'flex', fontSize: 22, fontWeight: 'bold' }}>{kdr}</span>
                         </div>
-
-                        <div style={{ display: 'flex', width: 1, height: 32, background: 'rgba(255,255,255,0.5)' }} />
-
-                        {/* Win Rate */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingLeft: 14, paddingRight: 14 }}>
-                            <span style={{ display: 'flex', fontSize: 9, color: '#fff', fontWeight: '600', opacity: 0.8, letterSpacing: '0.06em' }}>WIN RATE</span>
-                            <span style={{ display: 'flex', fontSize: 20, fontWeight: 'bold', color: '#86efac' }}>{winRate}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', width: 1, height: 32, background: 'rgba(255,255,255,0.5)' }} />
-
-                        {/* Global Rank */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', paddingLeft: 14 }}>
+                        <div style={{ display: 'flex', width: 1, height: 34, background: 'rgba(255,255,255,0.5)' }} />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', paddingLeft: 16 }}>
                             <span style={{ display: 'flex', fontSize: 9, color: '#fff', fontWeight: '600', opacity: 0.8, letterSpacing: '0.06em' }}>GLOBAL RANK</span>
-                            <span style={{ display: 'flex', fontSize: 20, fontWeight: 'bold', color: '#ea580c' }}>{globalRank}</span>
+                            <span style={{ display: 'flex', fontSize: 22, fontWeight: 'bold', color: '#ea580c' }}>{globalRank}</span>
                         </div>
                     </div>
+
+                    {/* Bottom strip — playtime · score · ping */}
+                    {bottomStrip ? (
+                        <div style={{
+                            display: 'flex', position: 'absolute', bottom: 6, left: 24,
+                            fontSize: 9, color: 'rgba(255,255,255,0.55)', zIndex: 20,
+                            letterSpacing: '0.04em', fontFamily: 'monospace',
+                            textShadow: '0 1px 3px #000',
+                        }}>
+                            {bottomStrip}
+                        </div>
+                    ) : null}
 
                     {/* Watermark */}
                     <div style={{
                         display: 'flex', position: 'absolute', bottom: 4, right: 6,
-                        fontSize: 8, color: 'rgba(255,255,255,0.8)', zIndex: 20,
-                        letterSpacing: '0.5px', textShadow: '0 2px 4px #000, 0 0 10px #000',
+                        fontSize: 8, color: 'rgba(255,255,255,0.6)', zIndex: 20,
+                        letterSpacing: '0.5px', textShadow: '0 2px 4px #000',
                     }}>
                         bf1942.online
                     </div>
