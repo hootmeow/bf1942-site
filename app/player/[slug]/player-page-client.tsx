@@ -635,6 +635,50 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             </DialogContent>
           </Dialog>
 
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Shield className="h-4 w-4" />
+                Dog Tag
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Dog Tag</DialogTitle>
+                <DialogDescription>
+                  Your military dog tag — download it or share it anywhere.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="rounded-md border p-3 bg-zinc-950 overflow-hidden flex justify-center">
+                  <img
+                    src={`/dogtag/${encodeURIComponent(player_info.last_known_name)}`}
+                    alt="Dog Tag Preview"
+                    className="max-w-full h-auto rounded"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Direct Link</Label>
+                  <div className="flex gap-2">
+                    <Input readOnly value={`${window.location.origin}/dogtag/${encodeURIComponent(player_info.last_known_name)}.png`} />
+                    <Button size="icon" variant="outline" onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/dogtag/${encodeURIComponent(player_info.last_known_name)}.png`);
+                      toast({ title: "Copied!", variant: "success" });
+                    }}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full gap-2" asChild>
+                  <a href={`/dogtag/${encodeURIComponent(player_info.last_known_name)}.png`} download={`${player_info.last_known_name}-dogtag.png`}>
+                    <ImageIcon className="h-4 w-4" />
+                    Download PNG
+                  </a>
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
             <Share2 className="h-4 w-4" />
             Share Profile

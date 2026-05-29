@@ -22,6 +22,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
 
         let playerName = 'Unknown';
         let kdr = '--';
+        let winRate = '--';
         let globalRank = '# --';
         let rank = 'Private';
 
@@ -52,8 +53,8 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                 const data = await profileRes.json();
                 if (data.ok && data.lifetime_stats) {
                     const ls = data.lifetime_stats;
-                    const rawKdr = ls.overall_kdr;
-                    kdr = rawKdr != null ? Number(rawKdr).toFixed(2) : '--';
+                    kdr = ls.overall_kdr != null ? Number(ls.overall_kdr).toFixed(2) : '--';
+                    winRate = ls.win_rate != null ? `${Math.round(ls.win_rate)}%` : '--';
                 } else {
                     debugStatus = 'InvData';
                 }
@@ -92,78 +93,76 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
                     position: 'relative',
                     overflow: 'hidden',
                 }}>
-                    {/* Background image — width/height MUST be in style for Satori */}
+                    {/* Background image */}
                     <img
                         src={randomBg}
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: 500,
-                            height: 120,
-                        }}
+                        style={{ position: 'absolute', top: 0, left: 0, width: 500, height: 120 }}
                     />
-                    {/* Dark overlay — inset:0 not reliable in Satori, use explicit dimensions */}
+                    {/* Dark overlay */}
                     <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: 500,
-                        height: 120,
-                        background: 'linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.72) 100%)',
+                        position: 'absolute', top: 0, left: 0, width: 500, height: 120,
+                        background: 'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.75) 100%)',
                         zIndex: 1,
                     }} />
 
                     {debugStatus !== 'OK' && (
                         <div style={{
-                            display: 'flex',
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            background: 'red',
-                            color: 'white',
-                            fontSize: 10,
-                            padding: '2px 4px',
-                            zIndex: 50,
+                            display: 'flex', position: 'absolute', top: 0, right: 0,
+                            background: 'red', color: 'white', fontSize: 10, padding: '2px 4px', zIndex: 50,
                         }}>
                             {debugStatus}
                         </div>
                     )}
 
                     {/* Left — name + rank */}
-                    <div style={{ display: 'flex', flexDirection: 'column', zIndex: 10, textShadow: '0 2px 4px #000, 0 0 10px #000' }}>
-                        <div style={{ display: 'flex', fontSize: 24, fontWeight: 'bold', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 280 }}>
+                    <div style={{
+                        display: 'flex', flexDirection: 'column', zIndex: 10,
+                        textShadow: '0 2px 4px #000, 0 0 10px #000',
+                    }}>
+                        <div style={{
+                            display: 'flex', fontSize: 24, fontWeight: 'bold', marginTop: 4,
+                            whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 260,
+                        }}>
                             {playerName}
                         </div>
-                        <div style={{ display: 'flex', fontSize: 14, color: '#ea580c', marginTop: 2, fontWeight: '700' }}>
+                        <div style={{ display: 'flex', fontSize: 13, color: '#ea580c', marginTop: 3, fontWeight: '700' }}>
                             {rank.toUpperCase()}
                         </div>
                     </div>
 
-                    {/* Right — K/D + global rank */}
-                    <div style={{ display: 'flex', gap: 20, alignItems: 'center', zIndex: 10, textShadow: '0 2px 4px #000, 0 0 10px #000' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ display: 'flex', fontSize: 10, color: '#fff', fontWeight: '600', opacity: 0.9 }}>K/D RATIO</span>
-                            <span style={{ display: 'flex', fontSize: 18, fontWeight: 'bold' }}>{kdr}</span>
+                    {/* Right — K/D · Win Rate · Global Rank */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center', zIndex: 10,
+                        textShadow: '0 2px 4px #000, 0 0 10px #000', gap: 0,
+                    }}>
+                        {/* K/D */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', paddingRight: 14 }}>
+                            <span style={{ display: 'flex', fontSize: 9, color: '#fff', fontWeight: '600', opacity: 0.8, letterSpacing: '0.06em' }}>K/D RATIO</span>
+                            <span style={{ display: 'flex', fontSize: 20, fontWeight: 'bold' }}>{kdr}</span>
                         </div>
-                        <div style={{ display: 'flex', width: 1, height: 30, background: 'rgba(255,255,255,0.6)' }} />
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ display: 'flex', fontSize: 10, color: '#fff', fontWeight: '600', opacity: 0.9 }}>GLOBAL RANK</span>
-                            <span style={{ display: 'flex', fontSize: 24, fontWeight: 'bold', color: '#ea580c' }}>{globalRank}</span>
+
+                        <div style={{ display: 'flex', width: 1, height: 32, background: 'rgba(255,255,255,0.5)' }} />
+
+                        {/* Win Rate */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingLeft: 14, paddingRight: 14 }}>
+                            <span style={{ display: 'flex', fontSize: 9, color: '#fff', fontWeight: '600', opacity: 0.8, letterSpacing: '0.06em' }}>WIN RATE</span>
+                            <span style={{ display: 'flex', fontSize: 20, fontWeight: 'bold', color: '#86efac' }}>{winRate}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', width: 1, height: 32, background: 'rgba(255,255,255,0.5)' }} />
+
+                        {/* Global Rank */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', paddingLeft: 14 }}>
+                            <span style={{ display: 'flex', fontSize: 9, color: '#fff', fontWeight: '600', opacity: 0.8, letterSpacing: '0.06em' }}>GLOBAL RANK</span>
+                            <span style={{ display: 'flex', fontSize: 20, fontWeight: 'bold', color: '#ea580c' }}>{globalRank}</span>
                         </div>
                     </div>
 
                     {/* Watermark */}
                     <div style={{
-                        display: 'flex',
-                        position: 'absolute',
-                        bottom: 4,
-                        right: 6,
-                        fontSize: 8,
-                        color: 'rgba(255,255,255,0.8)',
-                        zIndex: 20,
-                        letterSpacing: '0.5px',
-                        textShadow: '0 2px 4px #000, 0 0 10px #000',
+                        display: 'flex', position: 'absolute', bottom: 4, right: 6,
+                        fontSize: 8, color: 'rgba(255,255,255,0.8)', zIndex: 20,
+                        letterSpacing: '0.5px', textShadow: '0 2px 4px #000, 0 0 10px #000',
                     }}>
                         bf1942.online
                     </div>

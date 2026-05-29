@@ -19,7 +19,7 @@ function formatTimeRemaining(seconds: number | null | undefined): string {
     if (!seconds || seconds <= 0) return '';
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')} left`;
+    return `${m}:${s.toString().padStart(2, '0')} remaining`;
 }
 
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -36,9 +36,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
         let mapName = '---';
         let playerCount = '0';
         let maxPlayers = '0';
-        let gameMode = '';
         let globalRank = '';
         let timeRemaining = '';
+        let tickets1: number | null = null;
+        let tickets2: number | null = null;
         let debugStatus = 'OK';
 
         try {
@@ -72,12 +73,13 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         .replace(/_/g, ' ')
                         .replace(/\b\w/g, (c: string) => c.toUpperCase());
 
-                    const rawMode: string = s.gamemode || s.current_gametype || '';
-                    gameMode = rawMode
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, (c: string) => c.toUpperCase());
-
                     timeRemaining = formatTimeRemaining(s.round_time_remain);
+
+                    // Live ticket counts — much more useful than the raw gametype string
+                    if (s.tickets1 != null && s.tickets2 != null) {
+                        tickets1 = Number(s.tickets1);
+                        tickets2 = Number(s.tickets2);
+                    }
 
                     if (rankingsRes.ok) {
                         const rankData = await rankingsRes.json();
@@ -97,6 +99,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 
         const randomBg = getRandomBgDataUri();
 
+        // Build ticket display string
+        const ticketsDisplay = (tickets1 != null && tickets2 != null && (tickets1 > 0 || tickets2 > 0))
+            ? `${tickets1} vs ${tickets2} tickets`
+            : '';
+
         return new ImageResponse(
             (
                 <div style={{
@@ -113,39 +120,22 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                     position: 'relative',
                     overflow: 'hidden',
                 }}>
-                    {/* Background image — width/height MUST be in style for Satori */}
+                    {/* Background image */}
                     <img
                         src={randomBg}
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: 500,
-                            height: 120,
-                        }}
+                        style={{ position: 'absolute', top: 0, left: 0, width: 500, height: 120 }}
                     />
                     {/* Dark overlay */}
                     <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: 500,
-                        height: 120,
+                        position: 'absolute', top: 0, left: 0, width: 500, height: 120,
                         background: 'linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.72) 100%)',
                         zIndex: 1,
                     }} />
 
                     {debugStatus !== 'OK' && (
                         <div style={{
-                            display: 'flex',
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            background: 'red',
-                            color: 'white',
-                            fontSize: 10,
-                            padding: '2px 4px',
-                            zIndex: 50,
+                            display: 'flex', position: 'absolute', top: 0, right: 0,
+                            background: 'red', color: 'white', fontSize: 10, padding: '2px 4px', zIndex: 50,
                         }}>
                             {debugStatus}
                         </div>
@@ -153,20 +143,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 
                     {/* Left — server name, IP:port, rank */}
                     <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        zIndex: 10,
+                        display: 'flex', flexDirection: 'column', zIndex: 10,
                         textShadow: '0 2px 4px #000, 0 0 10px #000',
-                        maxWidth: 210,
-                        gap: 4,
+                        maxWidth: 210, gap: 4,
                     }}>
-                        <div style={{
-                            display: 'flex',
-                            fontSize: 17,
-                            fontWeight: 'bold',
-                            color: '#ffffff',
-                            lineHeight: 1.2,
-                        }}>
+                        <div style={{ display: 'flex', fontSize: 17, fontWeight: 'bold', color: '#ffffff', lineHeight: 1.2 }}>
                             {serverName}
                         </div>
                         {ipDisplay ? (
@@ -181,28 +162,32 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                         ) : null}
                     </div>
 
-                    {/* Right — player count, game mode, map, time */}
+                    {/* Right — player count, map, tickets, time */}
                     <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-end',
-                        zIndex: 10,
-                        textShadow: '0 2px 4px #000, 0 0 10px #000',
-                        gap: 2,
-                        maxWidth: 240,
+                        display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
+                        zIndex: 10, textShadow: '0 2px 4px #000, 0 0 10px #000',
+                        gap: 2, maxWidth: 240,
                     }}>
                         <div style={{ display: 'flex', fontSize: 9, color: 'rgba(255,255,255,0.55)', fontWeight: '600', letterSpacing: '0.08em' }}>
-                            PLAYERS:
+                            PLAYERS
                         </div>
                         <div style={{ display: 'flex', fontSize: 32, fontWeight: 'bold', color: '#ea580c', lineHeight: 1, marginTop: -2 }}>
                             {playerCount}/{maxPlayers}
                         </div>
 
-                        {/* Game mode + map on same line if both present */}
+                        {/* Map */}
                         <span style={{ display: 'flex', fontSize: 11, color: '#cbd5e1', textAlign: 'right' }}>
-                            {gameMode && mapName !== '---' ? `${gameMode} · ${mapName}` : mapName}
+                            {mapName}
                         </span>
 
+                        {/* Tickets — replaces the broken gamemode field */}
+                        {ticketsDisplay ? (
+                            <span style={{ display: 'flex', fontSize: 10, color: '#86efac', textAlign: 'right' }}>
+                                {ticketsDisplay}
+                            </span>
+                        ) : null}
+
+                        {/* Time remaining */}
                         {timeRemaining ? (
                             <span style={{ display: 'flex', fontSize: 10, color: '#94a3b8' }}>
                                 {timeRemaining}
@@ -212,15 +197,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 
                     {/* Watermark */}
                     <div style={{
-                        display: 'flex',
-                        position: 'absolute',
-                        bottom: 4,
-                        right: 6,
-                        fontSize: 8,
-                        color: 'rgba(255,255,255,0.8)',
-                        zIndex: 20,
-                        letterSpacing: '0.5px',
-                        textShadow: '0 2px 4px #000, 0 0 10px #000',
+                        display: 'flex', position: 'absolute', bottom: 4, right: 6,
+                        fontSize: 8, color: 'rgba(255,255,255,0.8)', zIndex: 20,
+                        letterSpacing: '0.5px', textShadow: '0 2px 4px #000, 0 0 10px #000',
                     }}>
                         bf1942.online
                     </div>

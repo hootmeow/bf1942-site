@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Server } from "@/components/server-directory";
-import { Globe, Users, Trophy, Crosshair, Map as MapIcon } from "lucide-react";
+import { Globe, Users, Trophy, Crosshair, Map as MapIcon, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NewsItem {
     id: string;
-    type: "active_match" | "player_action" | "recent_event";
+    type: "active_match" | "player_action" | "bulletin";
     message: string;
     icon: React.ElementType;
 }
@@ -19,7 +19,6 @@ export function LiveTicker({ className }: { className?: string }) {
     useEffect(() => {
         async function fetchTickerData() {
             try {
-                // 1. Fetch Servers
                 const res = await fetch("/api/v1/servers");
                 if (!res.ok) throw new Error("Failed to fetch servers");
 
@@ -30,86 +29,106 @@ export function LiveTicker({ className }: { className?: string }) {
                     (s: Server) => s.current_state === "ACTIVE" && s.current_player_count > 0
                 );
 
-                let items: NewsItem[] = [];
+                const liveItems: NewsItem[] = [];
+                const bulletinItems: NewsItem[] = [];
 
-                // 2. Fetch details (scoreboard) for top 3 active servers to get player names
-                // We limit to 3 to avoid spamming the API
+                // ── LIVE PLAYER FEED ─────────────────────────────────────────
                 const topServers = activeServers.slice(0, 3);
                 const serverDetailsPromises = topServers.map(s =>
                     fetch(`/api/v1/servers/search?search=${s.server_id}`).then(r => r.json())
                 );
-
                 const serverDetails = await Promise.all(serverDetailsPromises);
 
-                // 3. Build News Items
                 topServers.forEach((server, index) => {
-                    // Note: We are prioritizing Player Names over Server Names per user request.
-
-                    // B. Player Highlights from scoreboard
                     const details = serverDetails[index];
                     if (details?.ok && details?.scoreboard && details.scoreboard.length > 0) {
                         const scoreboard = details.scoreboard;
-
-                        // Show Top Scorer
                         const topScorer = scoreboard[0];
                         if (topScorer) {
-                            items.push({
+                            liveItems.push({
                                 id: `leader-${server.server_id}`,
                                 type: "player_action",
-                                message: `${topScorer.player_name} [${topScorer.kills} K / ${topScorer.deaths} D]`, // Convert to K/D
-                                icon: Crosshair, // Unified Icon
+                                message: `${topScorer.player_name} [${topScorer.kills} K / ${topScorer.deaths} D]`,
+                                icon: Crosshair,
                             });
                         }
-
-                        // Show multiple random players (Increased from 1 to 3 active players)
                         if (scoreboard.length > 1) {
-                            // Get up to 3 random players (excluding top scorer)
-                            const otherPlayers = scoreboard.slice(1);
-                            const shuffled = otherPlayers.sort(() => 0.5 - Math.random());
-                            const selected = shuffled.slice(0, 3);
-
-                            selected.forEach((p: any) => {
-                                items.push({
+                            const others = scoreboard.slice(1).sort(() => 0.5 - Math.random()).slice(0, 3);
+                            others.forEach((p: any) => {
+                                liveItems.push({
                                     id: `active-${p.player_name}-${server.server_id}`,
                                     type: "player_action",
                                     message: `${p.player_name} [${p.kills} K / ${p.deaths} D]`,
-                                    icon: Crosshair, // Unified Icon
+                                    icon: Crosshair,
                                 });
                             });
                         }
                     } else {
-                        // Fallback if no scoreboard
-                        items.push({
+                        liveItems.push({
                             id: `server-${server.server_id}`,
                             type: "active_match",
                             message: `ACTIVE FRONT: ${server.current_map} on ${server.current_server_name}`,
-                            icon: Crosshair, // Unified Icon
+                            icon: Crosshair,
                         });
                     }
                 });
 
-
-                // Fallback
-                if (items.length === 0) {
-                    items.push({
-                        id: "system-idle-1",
-                        type: "recent_event",
-                        message: "LONG RANGE SCANNERS ACTIVE... MONITORING FREQUENCIES...",
-                        icon: Crosshair, // Unified Icon
-                    });
-                    items.push({
-                        id: "system-idle-2",
-                        type: "recent_event",
-                        message: "NO ACTIVE CONFLICTS DETECTED. STANDBY.",
-                        icon: Crosshair, // Unified Icon
+                // ── BULLETIN ITEMS ────────────────────────────────────────────
+                const totalPlayers = activeServers.reduce((sum, s) => sum + s.current_player_count, 0);
+                if (totalPlayers > 0) {
+                    bulletinItems.push({
+                        id: "bulletin-total",
+                        type: "bulletin",
+                        message: `${totalPlayers} SOLDIERS DEPLOYED ACROSS ${activeServers.length} ACTIVE FRONT${activeServers.length !== 1 ? "S" : ""}`,
+                        icon: Globe,
                     });
                 }
 
-                // Shuffle items slightly so it's not always Server -> Leader -> Random
-                // A simple deterministic sort or just interleave could work, but random is fun for a ticker
-                items = items.sort(() => Math.random() - 0.5);
+                if (activeServers.length > 0) {
+                    const biggest = activeServers.reduce((a, b) =>
+                        a.current_player_count > b.current_player_count ? a : b
+                    );
+                    bulletinItems.push({
+                        id: "bulletin-biggest",
+                        type: "bulletin",
+                        message: `MAJOR ENGAGEMENT: ${biggest.current_server_name} — ${biggest.current_player_count}/${biggest.current_max_players} TROOPS`,
+                        icon: Radio,
+                    });
+                }
 
-                setNews(items);
+                // Map highlights from top servers
+                topServers.forEach((server, i) => {
+                    const rawMap: string = server.current_map || "";
+                    const mapName = rawMap.split("/").pop()?.replace(/_/g, " ").toUpperCase() || "";
+                    if (mapName && mapName !== "---") {
+                        bulletinItems.push({
+                            id: `bulletin-map-${server.server_id}`,
+                            type: "bulletin",
+                            message: `THEATER: ${mapName} — ${server.current_player_count} COMBATANTS ENGAGED`,
+                            icon: MapIcon,
+                        });
+                    }
+                });
+
+                // ── INTERLEAVE: 2 live → 1 bulletin ─────────────────────────
+                let combined: NewsItem[] = [];
+                const live = liveItems.sort(() => Math.random() - 0.5);
+                const bull = bulletinItems;
+                let li = 0, bi = 0;
+                while (li < live.length || bi < bull.length) {
+                    if (li < live.length) combined.push(live[li++]);
+                    if (li < live.length) combined.push(live[li++]);
+                    if (bi < bull.length) combined.push(bull[bi++]);
+                }
+
+                if (combined.length === 0) {
+                    combined = [
+                        { id: "idle-1", type: "bulletin", message: "LONG RANGE SCANNERS ACTIVE... MONITORING FREQUENCIES...", icon: Radio },
+                        { id: "idle-2", type: "bulletin", message: "NO ACTIVE CONFLICTS DETECTED. STANDBY.", icon: Radio },
+                    ];
+                }
+
+                setNews(combined);
             } catch (e) {
                 console.error("Ticker fetch error", e);
             } finally {
@@ -118,19 +137,16 @@ export function LiveTicker({ className }: { className?: string }) {
         }
 
         fetchTickerData();
-        const interval = setInterval(fetchTickerData, 60000); // 60s poll
+        const interval = setInterval(fetchTickerData, 60000);
         return () => clearInterval(interval);
     }, []);
 
-    // Measure content width and compute a readable scroll duration (~50px/s)
     const scrollRef = useRef<HTMLDivElement>(null);
     const [duration, setDuration] = useState(120);
 
     useEffect(() => {
         if (scrollRef.current && news.length > 0) {
-            // The element is tripled, so one "copy" is 1/3 of scrollWidth
             const oneThirdWidth = scrollRef.current.scrollWidth / 3;
-            // Target ~50px per second for comfortable reading
             const computed = Math.max(oneThirdWidth / 50, 30);
             setDuration(computed);
         }
@@ -145,7 +161,7 @@ export function LiveTicker({ className }: { className?: string }) {
             "w-full bg-black/40 border-y border-white/5 backdrop-blur-sm overflow-hidden flex items-center relative z-40 h-8",
             className
         )}>
-            {/* Label: Smaller and more compact */}
+            {/* Label */}
             <div className="absolute left-0 top-0 bottom-0 z-50 flex items-center px-3 bg-background/95 border-r border-primary/20 text-primary font-bold text-[10px] uppercase tracking-widest shadow-sm">
                 Live Intel
             </div>
@@ -158,8 +174,18 @@ export function LiveTicker({ className }: { className?: string }) {
             >
                 {tripledNews.map((item, i) => (
                     <div key={`${item.id}-${i}`} className="flex items-center gap-2 text-xs font-mono">
-                        <item.icon className="w-3 h-3 text-primary/70" />
-                        <span className="text-muted-foreground/90 uppercase">{item.message}</span>
+                        <item.icon className={cn(
+                            "w-3 h-3",
+                            item.type === "bulletin" ? "text-amber-500/80" : "text-primary/70"
+                        )} />
+                        <span className={cn(
+                            "uppercase",
+                            item.type === "bulletin"
+                                ? "text-amber-400/80"
+                                : "text-muted-foreground/90"
+                        )}>
+                            {item.message}
+                        </span>
                         <span className="text-primary/20 mx-1">///</span>
                     </div>
                 ))}
