@@ -203,120 +203,45 @@ export default function HomeClient() {
       {/* ============================================================
            HERO — "Frontline"  (military olive + gold accent)
          ============================================================ */}
-      <section className="relative overflow-hidden rounded-2xl border border-border/60 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]">
-        {/* Base — deep military dark with olive undertone */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04]" />
-        {/* Army olive rim light */}
-        <div className="absolute -right-32 -bottom-40 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.18),transparent_65%)] pointer-events-none" />
-        {/* Secondary olive glow top-left */}
-        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.07),transparent_65%)] pointer-events-none" />
-
-        {/* Topographic contour lines — SVG */}
-        <svg
-          aria-hidden
-          className="absolute inset-0 h-full w-full pointer-events-none"
-          preserveAspectRatio="none"
-          viewBox="0 0 1200 500"
-        >
-          <defs>
-            <linearGradient id="topoFade" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="rgba(101,163,13,0.0)" />
-              <stop offset="0.4" stopColor="rgba(101,163,13,0.14)" />
-              <stop offset="1" stopColor="rgba(101,163,13,0.0)" />
-            </linearGradient>
-          </defs>
-          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
-            const baseY = 80 + i * 48;
-            const amp = 18 + (i % 3) * 6;
-            const phase = i * 0.6;
-            // Smooth hand-drawn-ish path
-            const pts = Array.from({ length: 13 }, (_, k) => {
-              const x = (k / 12) * 1200;
-              const y = baseY + Math.sin(k * 0.7 + phase) * amp + Math.cos(k * 0.3 + phase) * (amp * 0.4);
-              return `${k === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-            }).join(" ");
-            return (
-              <path
-                key={i}
-                d={pts}
-                fill="none"
-                stroke="url(#topoFade)"
-                strokeWidth={i % 4 === 0 ? 1.4 : 0.7}
-                opacity={0.5}
-              />
-            );
-          })}
-        </svg>
-
-        {/* Diagonal stencil stripe — camouflage grid pattern */}
-        <div
-          className="absolute right-0 top-0 bottom-0 w-1/3 opacity-[0.06] pointer-events-none mix-blend-screen"
-          style={{
-            backgroundImage: "repeating-linear-gradient(135deg, rgba(180,220,80,0.7) 0 2px, transparent 2px 14px)",
-            maskImage: "linear-gradient(to left, black, transparent)",
-            WebkitMaskImage: "linear-gradient(to left, black, transparent)",
-          }}
-        />
-
-        {/* Drifting tracer particles — atmosphere */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[15, 32, 48, 64, 78, 88].map((x, i) => (
-            <span
-              key={i}
-              className="absolute bottom-0 h-1 w-1 rounded-full bg-lime-400/35 blur-[1px] animate-ember"
-              style={{
-                left: `${x}%`,
-                animationDelay: `${i * 1.7}s`,
-                animationDuration: `${10 + i}s`,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Faint film grain via box-shadow stipple — using a layered radial */}
-        <div
-          className="absolute inset-0 opacity-[0.06] mix-blend-overlay pointer-events-none"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)",
-            backgroundSize: "3px 3px, 7px 7px",
-            backgroundPosition: "0 0, 1px 2px",
-          }}
-        />
+      <section className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]"
+        style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 55%, #060a04 100%)" }}
+      >
+        {/* Glow orbs */}
+        <div className="absolute -right-32 -bottom-40 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(107,140,58,0.12),transparent_65%)] pointer-events-none" />
+        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(217,119,6,0.06),transparent_65%)] pointer-events-none" />
 
         <div className="relative z-10 px-5 py-9 sm:px-10 sm:py-14 lg:px-14">
           {/* Tagline */}
           <div className="flex items-center gap-3 mb-7">
-            <div className="h-px w-8 bg-gradient-to-r from-transparent to-lime-500/50" />
-            <span className="text-[10px] font-semibold tracking-[0.32em] uppercase text-lime-300/70">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/40" />
+            <span className="font-mono text-[10px] tracking-[0.28em] uppercase text-primary/60">
               Battlefield 1942 · Online Now
             </span>
-            <div className="h-px flex-1 bg-gradient-to-r from-lime-500/30 to-transparent" />
+            <div className="h-px flex-1 bg-gradient-to-r from-primary/25 to-transparent" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 lg:gap-14 items-end">
             {/* Left — count + headline */}
             <div className="min-w-0">
-              <div className="text-[5.5rem] sm:text-[7rem] lg:text-[9.5rem] font-black leading-[0.82] tracking-tight tabular-nums text-stone-100 [text-shadow:0_2px_24px_rgba(0,0,0,0.4)]">
+              <div className="text-[5.5rem] sm:text-[7rem] lg:text-[9.5rem] font-black leading-[0.82] tracking-tight tabular-nums text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.4)]">
                 <AnimatedCounter value={data.current_active_players} duration={1500} />
               </div>
-              <h1 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-stone-200">
-                Players in combat <span className="text-lime-300/90">right now</span>
+              <h1 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-slate-300">
+                Players in combat <span className="text-primary">right now</span>
               </h1>
-              {/* Compact server status pills — replaces the wordy "Live telemetry from..." */}
               <div className="mt-5 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-1.5">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                   </span>
-                  <span className="text-xs font-medium text-emerald-200/90 tabular-nums">
+                  <span className="font-mono text-xs text-emerald-300/80 tabular-nums">
                     {activeServerCount} active
                   </span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-700/50 bg-stone-800/30 px-3 py-1.5">
-                  <ServerIcon className="h-3 w-3 text-stone-400" />
-                  <span className="text-xs font-medium text-stone-300 tabular-nums">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1e2a14] bg-[#0a0f06]/60 px-3 py-1.5">
+                  <ServerIcon className="h-3 w-3 text-slate-500" />
+                  <span className="font-mono text-xs text-slate-400 tabular-nums">
                     {totalServerCount} tracked
                   </span>
                 </span>
@@ -395,12 +320,12 @@ export default function HomeClient() {
         <Card className="lg:col-span-2 border-border/60 overflow-hidden relative">
           {/* Subtle ambient backdrop */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(101,163,13,0.07),transparent_60%)] pointer-events-none" />
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-lime-500/25 to-transparent pointer-events-none" />
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent pointer-events-none" />
 
           <CardHeader className="pb-3 border-b border-border/40 relative">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-md bg-lime-500/10 p-1.5 text-lime-400 ring-1 ring-lime-500/20">
+                <div className="rounded-md bg-primary/10 p-1.5 text-primary ring-1 ring-primary/20">
                   <Activity className="h-4 w-4" />
                 </div>
                 <div>
@@ -435,7 +360,7 @@ export default function HomeClient() {
         <Card className="border-border/60 overflow-hidden">
           <CardHeader className="pb-2 border-b border-border/40">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="rounded-md bg-lime-500/10 p-1.5 text-lime-500 ring-1 ring-lime-500/20">
+              <div className="rounded-md bg-primary/10 p-1.5 text-primary ring-1 ring-primary/20">
                 <Clock className="h-4 w-4" />
               </div>
               <div>
@@ -484,16 +409,15 @@ function DogTag({
 }) {
   const positive = (changePct ?? 0) >= 0;
   return (
-    <div className="relative rounded-lg border border-stone-700/40 bg-gradient-to-br from-stone-900/80 to-stone-950/60 backdrop-blur-sm p-4 overflow-hidden">
-      {/* Edge accent */}
-      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r bg-gradient-to-b from-yellow-400/80 via-yellow-600/30 to-transparent" />
+    <div className="relative rounded-lg border border-[#1e2a14] bg-[#070b05] p-4 overflow-hidden">
+      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r bg-gradient-to-b from-amber-400/70 via-amber-600/20 to-transparent" />
       <div className="pl-2">
-        <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-stone-400">{label}</p>
+        <p className="font-mono text-[10px] tracking-[0.22em] uppercase text-muted-foreground/50">{label}</p>
         <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
-          <span className="text-3xl sm:text-4xl font-bold tabular-nums text-stone-100 leading-none">
+          <span className="text-3xl sm:text-4xl font-bold tabular-nums text-white leading-none">
             {value}
           </span>
-          {sub && <span className="text-xs text-stone-500">{sub}</span>}
+          {sub && <span className="text-xs text-muted-foreground/50">{sub}</span>}
         </div>
         {typeof changePct === "number" && (
           <p className={cn(
@@ -502,7 +426,7 @@ function DogTag({
           )}>
             {positive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
             <span className="tabular-nums">{positive ? "+" : ""}{changePct.toFixed(0)}%</span>
-            {changeLabel && <span className="text-stone-500 font-normal">{changeLabel}</span>}
+            {changeLabel && <span className="text-muted-foreground/40 font-normal">{changeLabel}</span>}
           </p>
         )}
       </div>
@@ -513,8 +437,8 @@ function DogTag({
 const accentMap = {
   emerald: { text: "text-emerald-400", border: "border-emerald-500/20" },
   blue:    { text: "text-blue-400",    border: "border-blue-500/20" },
-  olive:   { text: "text-yellow-400",  border: "border-yellow-500/25" },
-  stone:   { text: "text-stone-200",   border: "border-stone-600/30" },
+  olive:   { text: "text-amber-400",   border: "border-amber-500/20" },
+  stone:   { text: "text-slate-300",   border: "border-[#1e2a14]" },
 } as const;
 
 function ChartStatBadge({ label, value, accent }: { label: string; value: string; accent: keyof typeof accentMap }) {
@@ -551,11 +475,11 @@ function PeakHours({ data }: { data: HourlyData }) {
   // Color-encode bars by intensity: stone → olive → lime → gold at peak
   const getBarColor = (v: number) => {
     const t = max > 0 ? v / max : 0;
-    if (t >= 0.85) return "from-yellow-500 to-amber-300";
-    if (t >= 0.65) return "from-lime-400 to-yellow-400";
-    if (t >= 0.45) return "from-lime-600 to-lime-400";
-    if (t >= 0.25) return "from-stone-600 to-lime-800";
-    return "from-stone-700 to-stone-600";
+    if (t >= 0.85) return "from-amber-400 to-amber-300";
+    if (t >= 0.65) return "from-primary to-amber-400";
+    if (t >= 0.45) return "from-primary/80 to-primary";
+    if (t >= 0.25) return "from-[#1e2a14] to-primary/60";
+    return "from-[#1e2a14] to-[#2a3a1a]";
   };
 
   // Build smooth area path overlay (sparkline-style)
@@ -597,10 +521,10 @@ function PeakHours({ data }: { data: HourlyData }) {
       <div className="relative">
         {/* Average reference line */}
         <div
-          className="absolute inset-x-0 border-t border-dashed border-stone-600/40 z-10 pointer-events-none"
+          className="absolute inset-x-0 border-t border-dashed border-[#1e2a14] z-10 pointer-events-none"
           style={{ top: `${100 - (avg / max) * 95}%` }}
         >
-          <span className="absolute -top-3 right-0 text-[9px] font-medium text-stone-500 tabular-nums bg-card/80 px-1 rounded">
+          <span className="absolute -top-3 right-0 font-mono text-[9px] text-muted-foreground/40 tabular-nums bg-card/80 px-1 rounded">
             avg {avg}
           </span>
         </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { AlertTriangle, Loader2, Clock, Map, Users, Server, Globe, MessageCircle, Lock, Unlock, Timer, Tag, Check, Trophy, MapPin } from "lucide-react";
@@ -386,10 +386,6 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
         className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
         style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 60%, #060a04 100%)" }}
       >
-        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
-          backgroundImage: "linear-gradient(#6b8c3a 1px, transparent 1px), linear-gradient(90deg, #6b8c3a 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }} />
         <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-primary/6 blur-[80px] pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 h-44 w-44 rounded-full bg-amber-500/6 blur-[60px] pointer-events-none" />
 

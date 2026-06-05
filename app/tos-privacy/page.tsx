@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -76,10 +76,6 @@ export default function TosPrivacyPage() {
                 style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)" }}
             >
                 {/* Grid overlay */}
-                <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
-                    backgroundImage: "linear-gradient(#6b8c3a 1px, transparent 1px), linear-gradient(90deg, #6b8c3a 1px, transparent 1px)",
-                    backgroundSize: "32px 32px",
-                }} />
                 <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/6 blur-[90px] pointer-events-none" />
                 <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-blue-500/6 blur-[70px] pointer-events-none" />
 

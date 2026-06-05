@@ -12,7 +12,7 @@ const config = {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Inter',
+  				'var(--font-sans)',
                     ...fontFamily.sans
                 ]
   		},

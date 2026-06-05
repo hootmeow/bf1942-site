@@ -134,14 +134,6 @@ export default function LinuxServerPage() {
         }}
       >
         {/* Grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#6b8c3a 1px, transparent 1px), linear-gradient(90deg, #6b8c3a 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
         {/* Glow blobs */}
         <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-amber-500/5 blur-[100px] pointer-events-none" />
         <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/8 blur-[80px] pointer-events-none" />

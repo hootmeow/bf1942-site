@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Barlow } from "next/font/google";
 
 import "./globals.css";
 
@@ -7,7 +7,11 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AppShell } from "@/components/app-shell";
 import Script from "next/script";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const barlow = Barlow({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-sans",
+});
 
 // --- VIEWPORT CONFIGURATION ---
 export const viewport = {
@@ -76,7 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans`}>
+      <body className={`${barlow.variable} font-sans`}>
         {/* --- Umami Analytics --- */}
         <Script
           src="https://analytics.bf1942.online/script.js"

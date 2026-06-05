@@ -260,14 +260,6 @@ export default function CommunityPage() {
         className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
         style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)" }}
       >
-        {/* Tactical grid overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.05] pointer-events-none"
-          style={{
-            backgroundImage: "linear-gradient(#6b8c3a 1px, transparent 1px), linear-gradient(90deg, #6b8c3a 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
         {/* Amber glow */}
         <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-amber-500/6 blur-[90px] pointer-events-none" />
         {/* Green glow */}
