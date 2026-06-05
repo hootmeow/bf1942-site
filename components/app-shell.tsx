@@ -149,7 +149,7 @@ export function AppShell({ children, user }: AppShellProps) {
           <main className="flex-1 bg-background px-3 pb-8 pt-4 sm:px-4 sm:pb-10 sm:pt-6 lg:px-8">
             <div className="mx-auto max-w-7xl">{children}</div>
           </main>
-          <footer className="border-t border-border/60 bg-background/90 px-3 py-3 sm:px-4 sm:py-4 lg:px-8">
+          <footer className="border-t border-[#1e2a14] bg-[#060a04]/95 px-3 py-3 sm:px-4 sm:py-4 lg:px-8">
             <div className="mx-auto max-w-7xl text-center text-[10px] sm:text-xs text-muted-foreground">
               <Link href="/about" className="px-2 hover:underline">
                 About
@@ -174,7 +174,7 @@ interface AppHeaderProps {
 
 function AppHeader({ onToggleSidebar, user }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/60 bg-background/90 backdrop-blur">
+    <header className="sticky top-0 z-30 w-full border-b border-[#1e2a14] bg-[#060a04]/95 backdrop-blur">
       <div className="flex items-center gap-2 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-8">
         <Button
           variant="ghost"
@@ -222,20 +222,19 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
   const sidebarContent = (
     <div
       className={cn(
-        "flex h-full flex-col border-r border-border/60 bg-background/95 backdrop-blur transition-all duration-200",
+        "flex h-full flex-col border-r border-[#1e2a14] bg-[#060a04]/98 backdrop-blur transition-all duration-200",
         collapsed ? "w-16 sm:w-20" : "w-64"
       )}
     >
       <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-4 sm:py-6">
         {/* --- REVERTED to Avatar and ADDED animate-pulse-glow --- */}
-        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border border-primary/50 animate-pulse-glow">
-          <AvatarFallback className="bg-primary/20 text-primary text-xs sm:text-sm">BF</AvatarFallback>
-        </Avatar>
-        {/* --- END MODIFIED SECTION --- */}
+        <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg border border-primary/40 bg-primary/15">
+          <span className="font-mono text-[10px] sm:text-xs font-black text-primary tracking-tight">BF</span>
+        </div>
         {!collapsed && (
           <div>
-            <p className="text-sm sm:text-lg font-bold text-foreground leading-tight">BF1942.online</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground/60 leading-tight">Live Stats &amp; Community</p>
+            <p className="text-sm sm:text-base font-black text-foreground leading-tight tracking-tight">BF1942.online</p>
+            <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground/40 leading-tight">Live Stats &amp; Community</p>
           </div>
         )}
       </div>
@@ -326,7 +325,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
                               >
                                 {child.label}
                               </Link>
-                              <div className="pl-3 border-l-2 border-border/40 ml-3 space-y-1">
+                              <div className="pl-3 border-l-2 border-[#1e2a14]/50 ml-3 space-y-1">
                                 {/* @ts-ignore - Dynamic children property */}
                                 {child.children.map((subChild) => (
                                   <Link
@@ -387,7 +386,7 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
       </nav>
       {/* --- END NAVIGATION --- */}
 
-      <div className="px-3 pb-6 mt-1 pt-3 border-t border-border/40">
+      <div className="px-3 pb-6 mt-1 pt-3 border-t border-[#1e2a14]/50">
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
