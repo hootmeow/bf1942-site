@@ -381,14 +381,26 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight text-foreground flex flex-wrap items-center gap-2">
-          <ServerFlag ip={server_info.ip} className="h-5 w-auto shadow-md shrink-0" />
-          <span>{server_info.current_server_name || "Server Details"}</span>
-        </h1>
+      {/* ── Hero ──────────────────────────────────────────────────── */}
+      <div
+        className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
+        style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 60%, #060a04 100%)" }}
+      >
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
+          backgroundImage: "linear-gradient(#6b8c3a 1px, transparent 1px), linear-gradient(90deg, #6b8c3a 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }} />
+        <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-primary/6 blur-[80px] pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 h-44 w-44 rounded-full bg-amber-500/6 blur-[60px] pointer-events-none" />
 
-        {/* Status band */}
-        <div className="mt-3 rounded-lg border border-border/50 bg-gradient-to-r from-card/40 via-card/20 to-card/40 px-4 py-2.5">
+        <div className="relative z-10 px-6 py-8 sm:px-8 sm:py-10">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex flex-wrap items-center gap-3 mb-4">
+            <ServerFlag ip={server_info.ip} className="h-6 w-auto shadow-md shrink-0" />
+            <span>{server_info.current_server_name || "Server Details"}</span>
+          </h1>
+
+          {/* Status band */}
+          <div className="rounded-lg border border-[#1e2a14] bg-[#0a0f06]/60 px-4 py-2.5">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
 
             {/* LIVE pulse */}
@@ -407,7 +419,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
               </span>
             </div>
 
-            <div className="hidden sm:block h-4 w-px bg-border/60 shrink-0" />
+            <div className="hidden sm:block h-4 w-px bg-[#1e2a14] shrink-0" />
 
             {/* Location — flag + city inline */}
             {geo ? (
@@ -438,7 +450,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
             {/* Community links */}
             {communityLinks && (
               <>
-                <div className="hidden sm:block h-4 w-px bg-border/60 shrink-0" />
+                <div className="hidden sm:block h-4 w-px bg-[#1e2a14] shrink-0" />
                 <div className="flex items-center gap-0.5 shrink-0">
                   {communityLinks.website && (
                     <a href={communityLinks.website} target="_blank" rel="noopener noreferrer"
@@ -491,10 +503,10 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
 
           </div>
         </div>
+      </div>
 
-        {/* Server Owner - New Line */}
-        {/* Owner band — same visual style as status band */}
-        <div className="mt-2 rounded-lg border border-border/50 bg-gradient-to-r from-card/40 via-card/20 to-card/40 px-4 py-2.5">
+        {/* Server Owner */}
+        <div className="border-t border-[#1e2a14] bg-[#0a0f06]/60 px-6 py-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <ServerOwnerDisplay
             serverId={server_info.server_id}
@@ -504,7 +516,7 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
           />
           {server_info.server_id && (
             <>
-              <div className="h-4 w-px bg-border/60 shrink-0" />
+              <div className="h-4 w-px bg-[#1e2a14] shrink-0" />
               <Dialog>
                 <DialogTrigger asChild>
                   <button className="flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-foreground transition-colors">

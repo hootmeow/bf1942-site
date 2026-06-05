@@ -465,10 +465,10 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
           </AlertDescription>
         </Alert>
       )}
-      <div className="rounded-xl border border-border/50 bg-gradient-to-br from-card/80 via-card/60 to-card/40 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden">
+      <div className="rounded-xl border border-[#1e2a14] bg-[#070b05] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0d1208 0%, #070b05 60%, #060a04 100%)" }}>
         <div className="flex items-start gap-4">
           <div className="relative shrink-0">
-            <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-card overflow-hidden border border-border/60 shadow-lg">
+            <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-[#0a0f06] overflow-hidden border border-[#1e2a14] shadow-lg">
               {player_info.iso_country_code ? (
                 <PlayerFlag isoCode={player_info.iso_country_code} className="h-full w-full object-cover" />
               ) : (
@@ -480,13 +480,13 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             {online_status?.is_online && (
               <span className="absolute bottom-0.5 right-0.5 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-card"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-[#070b05]"></span>
               </span>
             )}
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              <h1 className="text-3xl font-bold tracking-tight text-white">
                 {player_info.last_known_name}
               </h1>
 
@@ -512,15 +512,15 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
               {/* Custom Title Badge */}
               {player_info.custom_title && (
-                <span className="inline-flex items-center rounded-md bg-yellow-500/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-500/20">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.15em] border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded">
                   {player_info.custom_title}
                 </span>
               )}
 
               {/* GLOBAL RANK BADGE */}
               {(advancedProfile?.skill_rating?.global_rank || player_info.is_flagged) && (
-                <div className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold ${player_info.is_flagged ? "border-border/50 bg-muted/50 text-muted-foreground" : "border-primary/30 bg-primary/10 text-primary"}`}>
-                  <Trophy className="h-3 w-3" />
+                <div className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.15em] ${player_info.is_flagged ? "border-[#1e2a14] bg-[#0a0f06] text-muted-foreground" : "border-primary/30 bg-primary/10 text-primary"}`}>
+                  <Trophy className="h-2.5 w-2.5" />
                   Global #{player_info.is_flagged ? "N/A" : advancedProfile?.skill_rating?.global_rank}
                 </div>
               )}

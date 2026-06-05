@@ -76,6 +76,7 @@ const navItems: NavItem[] = [
     overviewLabel: null,
     children: [
       { label: "Leaderboards", href: "/rank-info" },
+      { label: "Map Statistics", href: "/stats/maps" },
       { label: "Global Challenges", href: "/challenges" },
       { label: "Search & Browse", href: "/search" },
       { label: "Stats FAQ", href: "/rank-system" },
