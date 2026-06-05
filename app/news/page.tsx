@@ -94,7 +94,7 @@ export default async function NewsPage() {
         <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-amber-500/6 blur-[90px] pointer-events-none" />
         <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-primary/6 blur-[70px] pointer-events-none" />
 
-        <div className="relative z-10 px-8 py-12 sm:px-12 sm:py-16">
+        <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400 mb-4">

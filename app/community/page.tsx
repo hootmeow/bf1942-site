@@ -265,11 +265,11 @@ export default function CommunityPage() {
         {/* Green glow */}
         <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/5 blur-[70px] pointer-events-none" />
 
-        <div className="relative z-10 px-8 py-12 sm:px-12 sm:py-20">
+        <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8">
             <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400 mb-5">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40 mb-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
                 Allied Networks
               </span>
               <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl leading-tight">

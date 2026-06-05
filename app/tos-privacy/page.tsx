@@ -80,7 +80,7 @@ export default function TosPrivacyPage() {
                 <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-blue-500/6 blur-[70px] pointer-events-none" />
 
                 <div className="relative z-10 text-center">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400 mb-5">
+                    <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40 mb-3">
                         <ShieldCheck className="h-2.5 w-2.5" />
                         Legal &amp; Privacy
                     </span>

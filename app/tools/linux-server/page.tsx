@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Github, AlertTriangle, ShieldCheck, Server, Settings, Monitor,
@@ -138,13 +137,10 @@ export default function LinuxServerPage() {
         <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-amber-500/5 blur-[100px] pointer-events-none" />
         <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/8 blur-[80px] pointer-events-none" />
 
-        <div className="relative z-10 px-8 py-14 sm:px-14 sm:py-20">
-          <Badge
-            variant="outline"
-            className="mb-5 border-amber-500/30 bg-amber-500/10 text-amber-400 uppercase tracking-[0.2em] text-[10px] font-bold"
-          >
+        <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-12">
+          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40 mb-3">
             Deployment Tool
-          </Badge>
+          </span>
 
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl leading-tight">
             BF1942 Linux<br />

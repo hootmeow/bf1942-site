@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Activity, AlertTriangle, ArrowRight, Server as ServerIcon, TrendingUp, TrendingDown, Clock } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -290,7 +289,7 @@ export default function HomeClient() {
           </Button>
         </div>
 
-        <LiveTicker className="rounded-lg border border-border/60 bg-card/50" />
+        <LiveTicker className="rounded-lg border border-[#1e2a14] bg-[#070b05]" />
 
         {topServers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -299,7 +298,7 @@ export default function HomeClient() {
             ))}
           </div>
         ) : (
-          <div className="py-12 text-center text-muted-foreground border border-dashed border-border/60 rounded-xl bg-card/30">
+          <div className="py-12 text-center text-muted-foreground border border-dashed border-[#1e2a14] rounded-xl bg-[#060a04]">
             <ServerIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
             <p className="font-medium">No active fronts detected</p>
             <p className="text-sm mt-1">Check back soon for live battlefield intel.</p>
@@ -317,20 +316,20 @@ export default function HomeClient() {
            Player Activity  +  Peak Hours
          ============================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <Card className="lg:col-span-2 border-border/60 overflow-hidden relative">
+        <div className="lg:col-span-2 rounded-xl border border-[#1e2a14] bg-[#070b05] overflow-hidden relative">
           {/* Subtle ambient backdrop */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(101,163,13,0.07),transparent_60%)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(107,140,58,0.07),transparent_60%)] pointer-events-none" />
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent pointer-events-none" />
 
-          <CardHeader className="pb-3 border-b border-border/40 relative">
+          <div className="pb-3 border-b border-[#1e2a14] relative px-4 pt-4 sm:px-6 sm:pt-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="rounded-md bg-primary/10 p-1.5 text-primary ring-1 ring-primary/20">
                   <Activity className="h-4 w-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-base sm:text-lg">Player Activity</CardTitle>
-                  <CardDescription className="text-xs">Global concurrency over time</CardDescription>
+                  <p className="text-base sm:text-lg font-semibold text-foreground">Player Activity</p>
+                  <p className="text-xs text-muted-foreground">Global concurrency over time</p>
                 </div>
               </div>
               <Button asChild variant="ghost" size="sm" className="hidden sm:flex text-xs text-muted-foreground">
@@ -347,29 +346,29 @@ export default function HomeClient() {
                 <ChartStatBadge label="24h Peak" value={chartStats.peak.toLocaleString()} accent="olive" />
               </div>
             )}
-          </CardHeader>
-          <CardContent className="p-3 sm:p-5 relative">
+          </div>
+          <div className="p-3 sm:p-5 relative">
             <PlayerActivityChart
               data24h={data.global_concurrency_timeline_24h || data.global_concurrency_heatmap_24h}
               data7d={data.global_concurrency_timeline_7d || data.global_concurrency_heatmap_7d}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Peak Hours — distinct from the timeline chart, no overlap with active-server cards */}
-        <Card className="border-border/60 overflow-hidden">
-          <CardHeader className="pb-2 border-b border-border/40">
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05] overflow-hidden">
+          <div className="pb-2 border-b border-[#1e2a14] px-4 pt-4 sm:px-5 sm:pt-5">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="rounded-md bg-primary/10 p-1.5 text-primary ring-1 ring-primary/20">
                 <Clock className="h-4 w-4" />
               </div>
               <div>
-                <CardTitle className="text-base sm:text-lg">Peak Hours</CardTitle>
-                <CardDescription className="text-xs">When the servers fill up · your local time</CardDescription>
+                <p className="text-base sm:text-lg font-semibold text-foreground">Peak Hours</p>
+                <p className="text-xs text-muted-foreground">When the servers fill up · your local time</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-4">
+          </div>
+          <div className="p-4">
             {hourlyActivity ? (
               <PeakHours data={hourlyActivity} />
             ) : (
@@ -378,8 +377,8 @@ export default function HomeClient() {
                 Hourly data unavailable.
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         <div className="flex lg:hidden">
           <Button asChild variant="outline" size="sm" className="w-full">
@@ -444,7 +443,7 @@ const accentMap = {
 function ChartStatBadge({ label, value, accent }: { label: string; value: string; accent: keyof typeof accentMap }) {
   const c = accentMap[accent];
   return (
-    <div className={cn("rounded-lg border bg-card/40 px-3 py-2", c.border)}>
+    <div className={cn("rounded-lg border bg-[#070b05] px-3 py-2", c.border)}>
       <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">{label}</p>
       <p className={cn("text-lg sm:text-xl font-bold tabular-nums leading-tight", c.text)}>{value}</p>
     </div>
@@ -588,7 +587,7 @@ function PeakHours({ data }: { data: HourlyData }) {
       </div>
 
       {/* Best window — additional data point */}
-      <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+      <div className="rounded-lg border border-[#1e2a14] bg-[#070b05] p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground">Best 3-hour Window</p>

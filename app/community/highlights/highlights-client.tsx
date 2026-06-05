@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -559,7 +559,7 @@ export default function HighlightsPage() {
         <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-red-500/5 blur-[80px] pointer-events-none" />
         <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-primary/5 blur-[60px] pointer-events-none" />
 
-        <div className="relative z-10 px-8 py-12 sm:px-12 sm:py-16">
+        <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-12">
           <span className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-red-400 mb-4">
             <Youtube className="h-3 w-3" />
             Community Intel

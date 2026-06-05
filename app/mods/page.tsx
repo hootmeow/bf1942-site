@@ -77,38 +77,21 @@ export default function ModsPage() {
     return (
         <div className="space-y-12 pb-12">
             {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] px-6 py-16 shadow-2xl sm:px-12 md:py-24">
-                {/* Amber rim light */}
-                <div className="absolute -right-20 -top-20 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.13),transparent_65%)] pointer-events-none" />
-                {/* Soft white glow */}
-                <div className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.03),transparent_65%)] pointer-events-none" />
-                {/* Topographic contour lines */}
-                <svg aria-hidden className="absolute inset-0 h-full w-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 1200 400">
-                  <defs>
-                    <linearGradient id="topoMods" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0" stopColor="rgba(255,255,255,0.0)" />
-                      <stop offset="0.4" stopColor="rgba(255,255,255,0.08)" />
-                      <stop offset="1" stopColor="rgba(255,255,255,0.0)" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,70 L150,63 L300,78 L450,60 L600,74 L750,57 L900,71 L1050,61 L1200,70" fill="none" stroke="url(#topoMods)" strokeWidth="1.2" opacity="0.5" />
-                  <path d="M0,130 L150,123 L300,138 L450,120 L600,134 L750,117 L900,131 L1050,121 L1200,130" fill="none" stroke="url(#topoMods)" strokeWidth="0.6" opacity="0.5" />
-                  <path d="M0,190 L150,183 L300,198 L450,180 L600,194 L750,177 L900,191 L1050,181 L1200,190" fill="none" stroke="url(#topoMods)" strokeWidth="1.2" opacity="0.5" />
-                  <path d="M0,250 L150,243 L300,258 L450,240 L600,254 L750,237 L900,251 L1050,241 L1200,250" fill="none" stroke="url(#topoMods)" strokeWidth="0.6" opacity="0.5" />
-                  <path d="M0,320 L150,313 L300,328 L450,310 L600,324 L750,307 L900,321 L1050,311 L1200,320" fill="none" stroke="url(#topoMods)" strokeWidth="1.2" opacity="0.5" />
-                </svg>
-                {/* Film grain */}
-                <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)", backgroundSize: "3px 3px, 7px 7px", backgroundPosition: "0 0, 1px 2px" }} />
-
-                <div className="relative z-10 max-w-3xl">
-                    <Badge variant="outline" className="mb-4 border-amber-500/30 bg-amber-500/10 text-amber-400">
-                        <Cog className="h-3 w-3 mr-1" />
+            <div
+                className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
+                style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)" }}
+            >
+                <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-amber-500/6 blur-[90px] pointer-events-none" />
+                <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-primary/6 blur-[70px] pointer-events-none" />
+                <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-12 max-w-3xl">
+                    <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40 mb-3">
+                        <Cog className="h-2.5 w-2.5" />
                         Community Content
-                    </Badge>
+                    </span>
                     <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl">
                         Mods & Expansions
                     </h1>
-                    <p className="mt-6 text-lg text-zinc-400 max-w-2xl leading-relaxed">
+                    <p className="mt-6 text-lg text-slate-400 max-w-2xl leading-relaxed">
                         Curated Battlefield 1942 modifications vetted for stability, authenticity, and active communities.
                         From modern warfare to the Vietnam jungle, these mods transform the classic experience.
                     </p>
