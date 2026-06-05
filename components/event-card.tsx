@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import { useState } from "react"
 import { Users, Hash, Repeat } from "lucide-react"
 import Link from "next/link"
 import { getNextOccurrence } from "@/lib/event-utils"
@@ -59,13 +59,14 @@ export interface EventSummary {
 // ── EventCard ──────────────────────────────────────────────────────────────────
 
 export function EventCard({ event }: { event: EventSummary }) {
-  const typeInfo  = getEventTypeInfo(event.event_type)
-  const nextDate  = getNextOccurrence(event)
-  const isPast    = nextDate < new Date()
-  const msUntil   = nextDate.getTime() - Date.now()
-  const daysUntil = Math.ceil(msUntil / 86_400_000)
-  const isToday   = !isPast && daysUntil <= 0
-  const isUrgent  = !isPast && daysUntil <= 3 && !isToday
+  const typeInfo    = getEventTypeInfo(event.event_type)
+  const nextDate    = getNextOccurrence(event)
+  const isPast      = nextDate < new Date()
+  const msUntil     = nextDate.getTime() - Date.now()
+  const daysUntil   = Math.ceil(msUntil / 86_400_000)
+  const isToday     = !isPast && daysUntil <= 0
+  const isUrgent    = !isPast && daysUntil <= 3 && !isToday
+  const [bannerErr, setBannerErr] = useState(false)
 
   const dayNum  = nextDate.toLocaleDateString("en-GB", { day: "2-digit" })
   const monthYr = nextDate.toLocaleDateString("en-GB", { month: "short", year: "numeric" }).toUpperCase()
@@ -86,14 +87,14 @@ export function EventCard({ event }: { event: EventSummary }) {
         <div className={cn("h-[3px] w-full shrink-0", typeInfo.bar)} />
 
         {/* Banner / header area */}
-        {event.banner_url ? (
+        {event.banner_url && !bannerErr ? (
           <div className="relative h-40 shrink-0 overflow-hidden">
-            <Image
+            <img
               src={event.banner_url}
               alt={event.title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              loading="lazy"
+              onError={() => setBannerErr(true)}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#070b05] via-[#070b05]/50 to-transparent" />
             {/* Type badge on image */}
