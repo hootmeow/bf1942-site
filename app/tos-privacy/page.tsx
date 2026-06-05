@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
     FileText,
     ShieldCheck,
@@ -60,9 +59,9 @@ function TocItem({ href, children }: { href: string; children: React.ReactNode }
     return (
         <a
             href={href}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors py-1"
+            className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-colors py-1"
         >
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight className="h-2.5 w-2.5 shrink-0" />
             {children}
         </a>
     );
@@ -72,26 +71,34 @@ export default function TosPrivacyPage() {
     return (
         <div className="max-w-5xl mx-auto">
             {/* Hero Header */}
-            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] px-8 py-12 mb-10">
-                <div className="absolute -right-20 -top-20 h-[300px] w-[300px] rounded-full bg-primary/10 blur-[100px]" />
-                <div className="absolute -bottom-10 -left-10 h-[200px] w-[200px] rounded-full bg-blue-500/10 blur-[80px]" />
+            <div
+                className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl px-8 py-14 mb-10"
+                style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)" }}
+            >
+                {/* Grid overlay */}
+                <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{
+                    backgroundImage: "linear-gradient(#6b8c3a 1px, transparent 1px), linear-gradient(90deg, #6b8c3a 1px, transparent 1px)",
+                    backgroundSize: "32px 32px",
+                }} />
+                <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/6 blur-[90px] pointer-events-none" />
+                <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-blue-500/6 blur-[70px] pointer-events-none" />
 
                 <div className="relative z-10 text-center">
-                    <div className="inline-flex items-center gap-2 mb-4">
-                        <ShieldCheck className="h-8 w-8 text-primary" />
-                        <FileText className="h-8 w-8 text-primary" />
-                    </div>
-                    <h1 className="text-4xl font-bold tracking-tight text-white mb-3">
-                        Terms of Service & Privacy Policy
+                    <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400 mb-5">
+                        <ShieldCheck className="h-2.5 w-2.5" />
+                        Legal &amp; Privacy
+                    </span>
+                    <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-3">
+                        Terms of Service<br />&amp; <span className="text-primary">Privacy Policy</span>
                     </h1>
-                    <p className="text-slate-400 max-w-2xl mx-auto">
+                    <p className="text-slate-400 max-w-2xl mx-auto text-sm leading-relaxed">
                         Your privacy matters to us. This document explains how we collect, use, and protect your information.
                     </p>
-                    <div className="mt-4 flex items-center justify-center gap-3">
-                        <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-slate-300">
-                            <Clock className="h-3 w-3 mr-1" />
+                    <div className="mt-5 flex items-center justify-center gap-3">
+                        <span className="inline-flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 border border-[#1e2a14] bg-[#0a0f06] px-3 py-1.5 rounded">
+                            <Clock className="h-2.5 w-2.5" />
                             Last Updated: February 6, 2026
-                        </Badge>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -100,10 +107,10 @@ export default function TosPrivacyPage() {
                 {/* Sticky Table of Contents - Desktop */}
                 <aside className="hidden lg:block">
                     <div className="sticky top-24 space-y-6">
-                        <Card className="border-border/60 bg-card/40">
+                        <Card className="border-[#1e2a14] bg-[#070b05]">
                             <CardContent className="p-4">
-                                <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-primary" />
+                                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/70 mb-3 flex items-center gap-2">
+                                    <FileText className="h-3 w-3 text-primary" />
                                     Terms of Service
                                 </h4>
                                 <nav className="space-y-0.5">
@@ -117,10 +124,10 @@ export default function TosPrivacyPage() {
                             </CardContent>
                         </Card>
 
-                        <Card className="border-border/60 bg-card/40">
+                        <Card className="border-[#1e2a14] bg-[#070b05]">
                             <CardContent className="p-4">
-                                <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                                    <ShieldCheck className="h-4 w-4 text-primary" />
+                                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/70 mb-3 flex items-center gap-2">
+                                    <ShieldCheck className="h-3 w-3 text-primary" />
                                     Privacy Policy
                                 </h4>
                                 <nav className="space-y-0.5">
@@ -143,8 +150,8 @@ export default function TosPrivacyPage() {
                 {/* Main Content */}
                 <div className="lg:col-span-3 space-y-12">
                     {/* Terms of Service */}
-                    <Card className="border-border/60 bg-card/40 overflow-hidden">
-                        <div className="bg-gradient-to-r from-primary/10 via-transparent to-transparent border-b border-border/40 px-6 py-4">
+                    <Card className="border-[#1e2a14] bg-[#070b05] overflow-hidden">
+                        <div className="bg-gradient-to-r from-primary/10 via-transparent to-transparent border-b border-[#1e2a14] px-6 py-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-lg bg-primary/20">
                                     <FileText className="h-6 w-6 text-primary" />
@@ -248,8 +255,8 @@ export default function TosPrivacyPage() {
                     </Card>
 
                     {/* Privacy Policy */}
-                    <Card className="border-border/60 bg-card/40 overflow-hidden">
-                        <div className="bg-gradient-to-r from-green-500/10 via-transparent to-transparent border-b border-border/40 px-6 py-4">
+                    <Card className="border-[#1e2a14] bg-[#070b05] overflow-hidden">
+                        <div className="bg-gradient-to-r from-green-500/10 via-transparent to-transparent border-b border-[#1e2a14] px-6 py-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-lg bg-green-500/20">
                                     <ShieldCheck className="h-6 w-6 text-green-500" />
@@ -267,7 +274,7 @@ export default function TosPrivacyPage() {
                                 </p>
 
                                 <div className="space-y-4">
-                                    <div className="p-4 rounded-lg border border-border/60 bg-card/60">
+                                    <div className="p-4 rounded-lg border border-[#1e2a14] bg-[#0a0f06]">
                                         <h4 className="font-semibold text-foreground mb-2">Public Game Data</h4>
                                         <p className="text-sm">
                                             Player in-game names (aliases), keyhashes, IP addresses of game
@@ -279,7 +286,7 @@ export default function TosPrivacyPage() {
                                         </p>
                                     </div>
 
-                                    <div className="p-4 rounded-lg border border-border/60 bg-card/60">
+                                    <div className="p-4 rounded-lg border border-[#1e2a14] bg-[#0a0f06]">
                                         <h4 className="font-semibold text-foreground mb-2">Account Information (Optional)</h4>
                                         <p className="text-sm">
                                             If you choose to log in via Discord to claim a profile, we collect:
@@ -294,7 +301,7 @@ export default function TosPrivacyPage() {
                                         </p>
                                     </div>
 
-                                    <div className="p-4 rounded-lg border border-border/60 bg-card/60">
+                                    <div className="p-4 rounded-lg border border-[#1e2a14] bg-[#0a0f06]">
                                         <h4 className="font-semibold text-foreground mb-2">Technical Data</h4>
                                         <p className="text-sm">
                                             Our servers automatically collect standard technical data including IP addresses,
@@ -376,7 +383,7 @@ export default function TosPrivacyPage() {
                                         { title: "Withdraw Consent", desc: "Withdraw previously given consent at any time without affecting past processing" },
                                         { title: "Lodge a Complaint", desc: "File a complaint with your national data protection authority (supervisory authority)" },
                                     ].map((right) => (
-                                        <div key={right.title} className="p-3 rounded-lg border border-border/60 bg-card/60">
+                                        <div key={right.title} className="p-3 rounded-lg border border-[#1e2a14] bg-[#0a0f06]">
                                             <p className="font-semibold text-foreground text-sm">{right.title}</p>
                                             <p className="text-xs text-muted-foreground">{right.desc}</p>
                                         </div>
@@ -451,7 +458,7 @@ export default function TosPrivacyPage() {
                                     If you have any questions about these Terms or Privacy Policy, or wish to exercise your
                                     data rights, please contact us:
                                 </p>
-                                <div className="p-4 rounded-lg border border-border/60 bg-card/60 mt-4">
+                                <div className="p-4 rounded-lg border border-[#1e2a14] bg-[#0a0f06] mt-4">
                                     <p className="font-semibold text-foreground mb-2">Discord Server</p>
                                     <Link
                                         href="https://discord.gg/n2FXvJU4zJ"
