@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { Loader2, Upload, Eye, Pencil } from "lucide-react"
+import { MarkdownRenderer } from "@/components/markdown-renderer"
 
 interface EventEditorProps {
   initialTitle?: string
@@ -70,6 +71,9 @@ export function EventEditor({
     !COMMON_EVENT_TYPES.find(t => t.value === initialEventType) && initialEventType !== ""
   )
   const [eventTypeValue, setEventTypeValue] = useState(initialEventType)
+  const [descValue, setDescValue] = useState(initialDescription)
+  const [descTab, setDescTab] = useState<"write" | "preview">("write")
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function fetchServers() {
@@ -203,8 +207,82 @@ export function EventEditor({
         <p className="text-[0.8rem] text-muted-foreground">Tag a tracked server or enter a server name manually.</p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="ev-desc">Description</Label>
-        <Textarea id="ev-desc" name="description" defaultValue={initialDescription} placeholder="What's this event about?" className="resize-none h-24" />
+        <div className="flex items-center justify-between">
+          <Label htmlFor="ev-desc">Description</Label>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setDescTab("write")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border transition-colors ${descTab === "write" ? "bg-primary text-primary-foreground border-primary" : "border-input bg-background hover:bg-muted"}`}
+            >
+              <Pencil className="h-3 w-3" />
+              Write
+            </button>
+            <button
+              type="button"
+              onClick={() => setDescTab("preview")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border transition-colors ${descTab === "preview" ? "bg-primary text-primary-foreground border-primary" : "border-input bg-background hover:bg-muted"}`}
+            >
+              <Eye className="h-3 w-3" />
+              Preview
+            </button>
+            <button
+              type="button"
+              title="Import .md file"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-input bg-background hover:bg-muted transition-colors"
+            >
+              <Upload className="h-3 w-3" />
+              Import .md
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".md,.txt"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const reader = new FileReader()
+                reader.onload = (ev) => {
+                  const text = ev.target?.result
+                  if (typeof text === "string") {
+                    setDescValue(text.slice(0, 10000))
+                    setDescTab("write")
+                  }
+                }
+                reader.readAsText(file)
+                e.target.value = ""
+              }}
+            />
+          </div>
+        </div>
+        {descTab === "write" ? (
+          <Textarea
+            id="ev-desc"
+            name="description"
+            value={descValue}
+            onChange={(e) => setDescValue(e.target.value)}
+            placeholder={"What's this event about?\n\nSupports **bold**, *italic*, `code`, lists, headings, and links."}
+            className="resize-y min-h-[120px] font-mono text-sm"
+            maxLength={10000}
+          />
+        ) : (
+          <>
+            {/* Hidden input so form still submits the value when in preview mode */}
+            <input type="hidden" name="description" value={descValue} />
+            <div className="min-h-[120px] rounded-md border border-input bg-muted/30 p-3">
+              {descValue.trim() ? (
+                <MarkdownRenderer content={descValue} />
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Nothing to preview yet.</p>
+              )}
+            </div>
+          </>
+        )}
+        <p className="text-[0.8rem] text-muted-foreground">
+          Markdown supported: **bold**, *italic*, `code`, # Headings, - lists, [links](url). Max 10,000 characters.
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="ev-tags">Tags (optional)</Label>

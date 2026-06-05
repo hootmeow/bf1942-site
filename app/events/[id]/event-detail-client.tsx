@@ -18,6 +18,7 @@ import { getIsAdmin } from "@/app/actions/admin-actions"
 import { useToast } from "@/components/ui/toast-simple"
 import { trackEvent } from "@/lib/analytics"
 import { utcToLocalDatetime, formatLocalDate, formatLocalTime, formatUTCTime, localDatetimeToUTC } from "@/lib/datetime-utils"
+import { MarkdownRenderer } from "@/components/markdown-renderer"
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   tournament: { label: "Tournament", color: "bg-red-500/10 text-red-500 border-red-500/20" },
@@ -87,6 +88,7 @@ export default function EventDetailPage() {
   const [editing, setEditing] = useState(false)
   const [editLoading, setEditLoading] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [bannerError, setBannerError] = useState(false)
 
   const currentUserId = session?.user?.id
 
@@ -99,6 +101,7 @@ export default function EventDetailPage() {
           if (data.ok) {
             setEvent(data.event)
             setRsvps(data.rsvps)
+            setBannerError(false)
             trackEvent("event_view", { event_id: String(eventId) })
           } else {
             setError("Event not found")
@@ -162,6 +165,7 @@ export default function EventDetailPage() {
     if (res.ok) {
       toast({ title: "Event Updated", variant: "success" })
       setEditing(false)
+      setBannerError(false)
       const tagsStr = (formData.get("tags") as string)?.trim()
       const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()).filter(Boolean) : null
 
@@ -219,9 +223,15 @@ export default function EventDetailPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Banner */}
-      {event.banner_url && !editing && (
+      {event.banner_url && !editing && !bannerError && (
         <div className="rounded-xl overflow-hidden border border-border/60 bg-muted/30">
-          <img src={event.banner_url} alt="" className="w-full max-h-80 object-contain" />
+          <img
+            src={event.banner_url}
+            alt=""
+            className="w-full max-h-80 object-contain"
+            loading="lazy"
+            onError={() => setBannerError(true)}
+          />
         </div>
       )}
 
@@ -288,9 +298,9 @@ export default function EventDetailPage() {
                 </div>
               )}
               {event.description && (
-                <blockquote className="border-l-2 border-primary/30 pl-4 text-sm text-muted-foreground whitespace-pre-wrap">
-                  {event.description}
-                </blockquote>
+                <div className="border-l-2 border-primary/30 pl-4 text-muted-foreground">
+                  <MarkdownRenderer content={event.description} />
+                </div>
               )}
               {event.discord_link && (
                 <a
