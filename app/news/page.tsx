@@ -16,7 +16,7 @@ const CATEGORY_STYLES: Record<string, {
   Update:          { text: "text-blue-400",   border: "border-blue-500/30",   bg: "bg-blue-500/10",   bar: "bg-blue-500",   activeBorder: "hover:border-blue-500/40" },
   News:            { text: "text-green-400",  border: "border-green-500/30",  bg: "bg-green-500/10",  bar: "bg-green-500",  activeBorder: "hover:border-green-500/40" },
   Announcement:    { text: "text-amber-400",  border: "border-amber-500/30",  bg: "bg-amber-500/10",  bar: "bg-amber-500",  activeBorder: "hover:border-amber-500/40" },
-  "Weekly Sitrep": { text: "text-purple-400", border: "border-purple-500/30", bg: "bg-purple-500/10", bar: "bg-purple-500", activeBorder: "hover:border-purple-500/40" },
+  "Weekly Sitrep": { text: "text-teal-400", border: "border-teal-500/30", bg: "bg-teal-500/10", bar: "bg-teal-500", activeBorder: "hover:border-teal-500/40" },
   default:         { text: "text-primary",    border: "border-primary/30",    bg: "bg-primary/10",    bar: "bg-primary",    activeBorder: "hover:border-primary/40" },
 };
 
