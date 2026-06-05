@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 const CATEGORY_STYLES: Record<string, {
   text: string; border: string; bg: string; bar: string; activeBorder: string;
 }> = {
-  Update:          { text: "text-blue-400",   border: "border-blue-500/30",   bg: "bg-blue-500/10",   bar: "bg-blue-500",   activeBorder: "hover:border-blue-500/40" },
-  News:            { text: "text-green-400",  border: "border-green-500/30",  bg: "bg-green-500/10",  bar: "bg-green-500",  activeBorder: "hover:border-green-500/40" },
+  Update:          { text: "text-sky-400",     border: "border-sky-500/30",    bg: "bg-sky-500/10",    bar: "bg-sky-500",    activeBorder: "hover:border-sky-500/40"   },
+  News:            { text: "text-emerald-400",border: "border-emerald-500/30",bg: "bg-emerald-500/10",bar: "bg-emerald-500",activeBorder: "hover:border-emerald-500/40"},
   Announcement:    { text: "text-amber-400",  border: "border-amber-500/30",  bg: "bg-amber-500/10",  bar: "bg-amber-500",  activeBorder: "hover:border-amber-500/40" },
   "Weekly Sitrep": { text: "text-teal-400", border: "border-teal-500/30", bg: "bg-teal-500/10", bar: "bg-teal-500", activeBorder: "hover:border-teal-500/40" },
   default:         { text: "text-primary",    border: "border-primary/30",    bg: "bg-primary/10",    bar: "bg-primary",    activeBorder: "hover:border-primary/40" },

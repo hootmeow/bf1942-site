@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
     Map,
     Crosshair,
@@ -45,43 +44,42 @@ function WikiCategoryCard({
     available = true,
 }: WikiCategoryCardProps) {
     const content = (
-        <Card className={`group relative overflow-hidden border-border/60 bg-card/40 transition-all duration-300 ${available ? 'hover:border-border hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'opacity-60'}`}>
-            <CardContent className="p-6">
+        <div className={`group relative overflow-hidden rounded-xl border border-[#1e2a14] bg-[#070b05] transition-all duration-300 ${available ? "hover:border-[#2a3a1a] hover:shadow-lg hover:-translate-y-0.5 cursor-pointer" : "opacity-60"}`}>
+            <div className="p-5">
                 <div className="flex items-start gap-4">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${bgColor} ${color}`}>
-                        <Icon className="h-6 w-6" />
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${bgColor} ${color}`}>
+                        <Icon className="h-5 w-5" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-bold text-foreground">{title}</h3>
+                            <h3 className="text-base font-bold text-foreground">{title}</h3>
                             {count !== undefined && (
-                                <Badge variant="secondary" className="text-xs">
-                                    {count} entries
-                                </Badge>
+                                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/50 border border-[#1e2a14] bg-[#0a0f06] px-1.5 py-0.5 rounded">
+                                    {count}
+                                </span>
                             )}
                             {!available && (
-                                <Badge variant="outline" className="text-xs text-muted-foreground">
-                                    Coming Soon
-                                </Badge>
+                                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/40 border border-[#1e2a14] px-1.5 py-0.5 rounded">
+                                    Soon
+                                </span>
                             )}
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-muted-foreground/70 leading-relaxed">
                             {description}
                         </p>
                     </div>
                     {available && (
-                        <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
                     )}
                 </div>
-            </CardContent>
+            </div>
             {available && (
                 <div className={`absolute inset-0 ${bgColor} opacity-0 transition-opacity duration-500 group-hover:opacity-10 pointer-events-none`} />
             )}
-        </Card>
+        </div>
     );
 
     if (!available) return content;
-
     return <Link href={href}>{content}</Link>;
 }
 
@@ -90,7 +88,7 @@ export default function WikiPage() {
     const theaterCount = Object.keys(mapsByTheater).length;
 
     return (
-        <div className="space-y-12 pb-12">
+        <div className="space-y-10 pb-12">
             {/* Hero Section */}
             <div
                 className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
@@ -114,74 +112,60 @@ export default function WikiPage() {
             </div>
 
             {/* Vanilla Game Notice */}
-            <Card className="border-amber-500/20 bg-amber-500/5">
-                <CardContent className="p-4 flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
-                        <Info className="h-4 w-4" />
-                    </div>
-                    <div className="text-sm">
-                        <p className="text-foreground font-medium mb-1">Vanilla Battlefield 1942</p>
-                        <p className="text-muted-foreground">
-                            This wiki covers the original, unmodified version of Battlefield 1942. Weapons, maps, vehicles, and gameplay mechanics
-                            may differ when playing online with server-side modifications. For information on specific mods or expansion packs,
-                            please visit the <Link href="/mods" className="text-primary hover:underline">Mods & Expansions</Link> section.
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
+                    <Info className="h-4 w-4" />
+                </div>
+                <div className="text-sm">
+                    <p className="text-foreground font-medium mb-1">Vanilla Battlefield 1942</p>
+                    <p className="text-muted-foreground/80">
+                        This wiki covers the original, unmodified version of Battlefield 1942. Weapons, maps, vehicles, and gameplay mechanics
+                        may differ when playing online with server-side modifications. For information on specific mods or expansion packs,
+                        please visit the <Link href="/mods" className="text-primary hover:underline">Mods & Expansions</Link> section.
+                    </p>
+                </div>
+            </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="border-border/60 bg-card/40">
-                    <CardContent className="p-4 text-center">
-                        <Map className="h-6 w-6 mx-auto mb-2 text-blue-500" />
-                        <p className="text-2xl font-bold text-foreground">{wikiMaps.length}</p>
-                        <p className="text-xs text-muted-foreground">Maps</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/40">
-                    <CardContent className="p-4 text-center">
-                        <Compass className="h-6 w-6 mx-auto mb-2 text-amber-500" />
-                        <p className="text-2xl font-bold text-foreground">{theaterCount}</p>
-                        <p className="text-xs text-muted-foreground">Theaters</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/40">
-                    <CardContent className="p-4 text-center">
-                        <Crosshair className="h-6 w-6 mx-auto mb-2 text-red-500" />
-                        <p className="text-2xl font-bold text-foreground">5</p>
-                        <p className="text-xs text-muted-foreground">Kits</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/40">
-                    <CardContent className="p-4 text-center">
-                        <Truck className="h-6 w-6 mx-auto mb-2 text-green-500" />
-                        <p className="text-2xl font-bold text-foreground">35+</p>
-                        <p className="text-xs text-muted-foreground">Vehicles</p>
-                    </CardContent>
-                </Card>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="rounded-xl border border-[#1e2a14] bg-[#070b05] p-4 text-center">
+                    <Map className="h-6 w-6 mx-auto mb-2 text-blue-400" />
+                    <p className="text-2xl font-bold text-foreground">{wikiMaps.length}</p>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/50 mt-0.5">Maps</p>
+                </div>
+                <div className="rounded-xl border border-[#1e2a14] bg-[#070b05] p-4 text-center">
+                    <Compass className="h-6 w-6 mx-auto mb-2 text-amber-400" />
+                    <p className="text-2xl font-bold text-foreground">{theaterCount}</p>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/50 mt-0.5">Theaters</p>
+                </div>
+                <div className="rounded-xl border border-[#1e2a14] bg-[#070b05] p-4 text-center">
+                    <Crosshair className="h-6 w-6 mx-auto mb-2 text-red-400" />
+                    <p className="text-2xl font-bold text-foreground">5</p>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/50 mt-0.5">Kits</p>
+                </div>
+                <div className="rounded-xl border border-[#1e2a14] bg-[#070b05] p-4 text-center">
+                    <Truck className="h-6 w-6 mx-auto mb-2 text-emerald-400" />
+                    <p className="text-2xl font-bold text-foreground">35+</p>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground/50 mt-0.5">Vehicles</p>
+                </div>
             </div>
 
             {/* Categories Grid */}
-            <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                        <Swords className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-foreground">Browse the Wiki</h2>
-                        <p className="text-sm text-muted-foreground">Choose a category to explore</p>
-                    </div>
+            <div className="space-y-5">
+                <div className="flex items-center gap-2 mb-2">
+                    <Swords className="h-4 w-4 text-primary" />
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Browse the Wiki</span>
+                    <div className="flex-1 h-px bg-gradient-to-r from-[#1e2a14] to-transparent" />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                     <WikiCategoryCard
                         href="/wiki/maps"
                         icon={Map}
                         title="Maps"
                         description="Detailed breakdowns of all 16 maps including control points, vehicle spawns, and strategic analysis."
                         count={wikiMaps.length}
-                        color="text-blue-500"
+                        color="text-blue-400"
                         bgColor="bg-blue-500/10"
                     />
                     <WikiCategoryCard
@@ -189,8 +173,8 @@ export default function WikiPage() {
                         icon={GraduationCap}
                         title="Basic Training"
                         description="Essential game mechanics, controls, and tips for new players to get started."
-                        color="text-green-500"
-                        bgColor="bg-green-500/10"
+                        color="text-emerald-400"
+                        bgColor="bg-emerald-500/10"
                     />
                     <WikiCategoryCard
                         href="/wiki/kits"
@@ -198,7 +182,7 @@ export default function WikiPage() {
                         title="Soldier Kits"
                         description="Learn about the 5 soldier classes: Scout, Assault, Anti-Tank, Medic, and Engineer."
                         count={5}
-                        color="text-orange-500"
+                        color="text-orange-400"
                         bgColor="bg-orange-500/10"
                     />
                     <WikiCategoryCard
@@ -206,7 +190,7 @@ export default function WikiPage() {
                         icon={Crosshair}
                         title="Weapons & Emplacements"
                         description="Infantry firearms and static gun positions - stats, tactics, and effective usage."
-                        color="text-red-500"
+                        color="text-red-400"
                         bgColor="bg-red-500/10"
                     />
                     <WikiCategoryCard
@@ -214,7 +198,7 @@ export default function WikiPage() {
                         icon={Truck}
                         title="Land Vehicles"
                         description="Tanks, APCs, jeeps, and artillery - learn to dominate on the ground."
-                        color="text-amber-500"
+                        color="text-amber-400"
                         bgColor="bg-amber-500/10"
                     />
                     <WikiCategoryCard
@@ -222,7 +206,7 @@ export default function WikiPage() {
                         icon={Plane}
                         title="Aircraft"
                         description="Fighters, bombers, and dive bombers - master the skies."
-                        color="text-cyan-500"
+                        color="text-cyan-400"
                         bgColor="bg-cyan-500/10"
                     />
                     <WikiCategoryCard
@@ -230,7 +214,7 @@ export default function WikiPage() {
                         icon={Anchor}
                         title="Naval Vessels"
                         description="Battleships, carriers, destroyers, and landing craft."
-                        color="text-indigo-500"
+                        color="text-indigo-400"
                         bgColor="bg-indigo-500/10"
                     />
                     <WikiCategoryCard
@@ -238,51 +222,45 @@ export default function WikiPage() {
                         icon={Target}
                         title="Tactics & Strategy"
                         description="Veteran tactics for coordinated team play and map control."
-                        color="text-purple-500"
-                        bgColor="bg-purple-500/10"
+                        color="text-slate-400"
+                        bgColor="bg-slate-500/10"
                     />
                 </div>
             </div>
 
             {/* Featured Maps by Theater */}
-            <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                        <Map className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-foreground">Maps by Theater</h2>
-                        <p className="text-sm text-muted-foreground">Quick access to maps organized by war theater</p>
-                    </div>
+            <div className="space-y-5">
+                <div className="flex items-center gap-2 mb-2">
+                    <Map className="h-4 w-4 text-primary" />
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Maps by Theater</span>
+                    <div className="flex-1 h-px bg-gradient-to-r from-[#1e2a14] to-transparent" />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                     {Object.entries(mapsByTheater).map(([theater, maps]) => {
                         const colors = theaterColors[theater];
                         return (
                             <Link href={`/wiki/maps?theater=${encodeURIComponent(theater)}`} key={theater}>
-                                <Card className={`group border-border/60 bg-card/40 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${colors.border} border`}>
-                                    <CardContent className="p-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <Badge className={`${colors.bg} ${colors.text} border-0`}>
-                                                {theater}
-                                            </Badge>
-                                            <span className="text-xs text-muted-foreground">{maps.length} maps</span>
-                                        </div>
-                                        <div className="space-y-1">
-                                            {maps.slice(0, 3).map(map => (
-                                                <p key={map.slug} className="text-sm text-muted-foreground truncate">
-                                                    {map.name}
-                                                </p>
-                                            ))}
-                                            {maps.length > 3 && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    +{maps.length - 3} more
-                                                </p>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                <div className="group rounded-xl border border-[#1e2a14] bg-[#070b05] hover:border-[#2a3a1a] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 p-4 h-full">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <Badge className={`${colors.bg} ${colors.text} border-0 font-mono text-[9px] uppercase tracking-[0.12em]`}>
+                                            {theater}
+                                        </Badge>
+                                        <span className="font-mono text-[9px] text-muted-foreground/40">{maps.length} maps</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                        {maps.slice(0, 3).map(map => (
+                                            <p key={map.slug} className="text-sm text-muted-foreground/60 truncate group-hover:text-muted-foreground/80 transition-colors">
+                                                {map.name}
+                                            </p>
+                                        ))}
+                                        {maps.length > 3 && (
+                                            <p className="font-mono text-[9px] text-muted-foreground/30">
+                                                +{maps.length - 3} more
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
                             </Link>
                         );
                     })}
