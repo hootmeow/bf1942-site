@@ -35,6 +35,21 @@ const RECURRENCE_SHORT: Record<string, string> = {
   weekly: "WEEKLY", biweekly: "BIWEEKLY", monthly: "MONTHLY",
 }
 
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/^#{1,3}\s+/gm, "")        // headings
+    .replace(/\*\*(.+?)\*\*/g, "$1")    // bold
+    .replace(/\*(.+?)\*/g, "$1")        // italic
+    .replace(/`(.+?)`/g, "$1")          // inline code
+    .replace(/\[(.+?)\]\(.+?\)/g, "$1") // links
+    .replace(/^[-*]\s+/gm, "")          // unordered list markers
+    .replace(/^\d+\.\s+/gm, "")         // ordered list markers
+    .replace(/^>\s*/gm, "")             // blockquotes
+    .replace(/```[\s\S]*?```/g, "")     // fenced code blocks
+    .replace(/\n+/g, " ")               // collapse newlines
+    .trim()
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface EventSummary {
@@ -153,7 +168,7 @@ export function EventCard({ event }: { event: EventSummary }) {
           {/* Description */}
           {event.description && (
             <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed border-l border-[#2a3a1a] pl-2.5">
-              {event.description}
+              {stripMarkdown(event.description)}
             </p>
           )}
 

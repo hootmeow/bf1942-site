@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, Loader2, User, Search, ChevronLeft, ChevronRight, Clock, Map, Users, Server, Filter, Calendar, Swords, X, ArrowRightLeft, XCircle, Scale } from "lucide-react";
+import { AlertTriangle, Loader2, User, Search, ChevronLeft, ChevronRight, Clock, Map, Users, Server, Filter, Calendar, Swords, X, ArrowRightLeft, XCircle, Scale, ChevronDown, ChevronUp, Shield, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
@@ -244,6 +244,29 @@ function RoundCard({ round }: { round: Round }) {
     );
 }
 
+const SELECT_CLS = "h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
+
+const KNOWN_MAPS = [
+    "Wake Island", "Guadalcanal", "Iwo Jima", "Coral Sea",
+    "Stalingrad", "Kursk", "Kharkov", "Berlin",
+    "El Alamein", "Gazala", "Tobruk", "Operation Battleaxe",
+    "Omaha Beach", "Battle of the Bulge", "Market Garden",
+    "Bocage", "Caen", "Invasion of the Philippines",
+    "Battle of Midway", "Siege of Tobruk",
+    "Liberation of Caen", "Fall of Tobruk",
+];
+
+const DURATION_OPTIONS = [
+    { value: "", label: "Any" },
+    { value: "5", label: "5 min" },
+    { value: "10", label: "10 min" },
+    { value: "15", label: "15 min" },
+    { value: "20", label: "20 min" },
+    { value: "30", label: "30 min" },
+    { value: "45", label: "45 min" },
+    { value: "60", label: "1 hour" },
+];
+
 function RoundsTab() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -252,32 +275,41 @@ function RoundsTab() {
     const [loading, setLoading] = useState(true);
     const [totalRounds, setTotalRounds] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
-    const page = parseInt(searchParams.get("page") || "1");
-    const serverQuery = searchParams.get("server") || "";
-    const mapFilter = searchParams.get("map") || "";
-    const daysFilter = searchParams.get("days") || "7";
-    const minPlayersFilter = searchParams.get("min_players") || "";
+    // Read all filters from URL
+    const page           = parseInt(searchParams.get("page") || "1");
+    const serverQuery    = searchParams.get("server") || "";
+    const mapFilter      = searchParams.get("map") || "";
+    const daysFilter     = searchParams.get("days") || "7";
+    const minPlayers     = searchParams.get("min_players") || "";
+    const maxPlayers     = searchParams.get("max_players") || "";
+    const dateFrom       = searchParams.get("date_from") || "";
+    const dateTo         = searchParams.get("date_to") || "";
+    const minDuration    = searchParams.get("min_duration") || "";
+    const maxDuration    = searchParams.get("max_duration") || "";
+    const winnerTeam     = searchParams.get("winner_team") || "";
+    const gamemodeFilter = searchParams.get("gamemode") || "";
 
+    // Local form state (committed to URL on Search)
     const [serverInput, setServerInput] = useState(serverQuery);
-    const [mapInput, setMapInput] = useState(mapFilter);
+    const [mapInput, setMapInput]       = useState(mapFilter);
+
+    // Show advanced panel if any advanced filter is active
+    useEffect(() => {
+        if (dateFrom || dateTo || minDuration || maxDuration || maxPlayers || winnerTeam || gamemodeFilter) {
+            setShowAdvanced(true);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const updateFilters = useCallback((newParams: Record<string, string>) => {
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", "rounds");
-
         Object.entries(newParams).forEach(([key, value]) => {
-            if (value) {
-                params.set(key, value);
-            } else {
-                params.delete(key);
-            }
+            if (value) params.set(key, value);
+            else params.delete(key);
         });
-
-        if (!('page' in newParams)) {
-            params.set("page", "1");
-        }
-
+        if (!("page" in newParams)) params.set("page", "1");
         router.push(`/search?${params.toString()}`);
     }, [searchParams, router]);
 
@@ -285,16 +317,29 @@ function RoundsTab() {
         async function fetchRounds() {
             setLoading(true);
             try {
-                const queryParams = new URLSearchParams();
-                queryParams.set("page", page.toString());
-                queryParams.set("page_size", "12");
-                queryParams.set("days", daysFilter);
+                const q = new URLSearchParams();
+                q.set("page", page.toString());
+                q.set("page_size", "12");
 
-                if (serverQuery) queryParams.set("server_name", serverQuery);
-                if (mapFilter) queryParams.set("map_name", mapFilter);
-                if (minPlayersFilter) queryParams.set("min_players", minPlayersFilter);
+                // Date range takes precedence over days shortcut
+                if (dateFrom || dateTo) {
+                    if (dateFrom) q.set("date_from", dateFrom);
+                    if (dateTo)   q.set("date_to",   dateTo);
+                } else {
+                    q.set("days", daysFilter);
+                }
 
-                const res = await fetch(`/api/v1/rounds/browse?${queryParams.toString()}`);
+                if (serverQuery)    q.set("server_name",   serverQuery);
+                if (mapFilter)      q.set("map_name",      mapFilter);
+                if (minPlayers)     q.set("min_players",   minPlayers);
+                if (maxPlayers)     q.set("max_players",   maxPlayers);
+                if (winnerTeam)     q.set("winner_team",   winnerTeam);
+                if (gamemodeFilter) q.set("gamemode",      gamemodeFilter);
+                // Duration is in minutes in UI; API expects seconds
+                if (minDuration)    q.set("min_duration",  String(parseInt(minDuration) * 60));
+                if (maxDuration)    q.set("max_duration",  String(parseInt(maxDuration) * 60));
+
+                const res = await fetch(`/api/v1/rounds/browse?${q.toString()}`);
                 if (res.ok) {
                     const data: RoundsResponse = await res.json();
                     if (data.ok) {
@@ -309,9 +354,8 @@ function RoundsTab() {
                 setLoading(false);
             }
         }
-
         fetchRounds();
-    }, [page, serverQuery, mapFilter, daysFilter, minPlayersFilter]);
+    }, [page, serverQuery, mapFilter, daysFilter, minPlayers, maxPlayers, dateFrom, dateTo, minDuration, maxDuration, winnerTeam, gamemodeFilter]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -324,46 +368,68 @@ function RoundsTab() {
         router.push("/search?tab=rounds");
     };
 
-    const hasActiveFilters = serverQuery || mapFilter || minPlayersFilter || daysFilter !== "7";
+    const hasAdvancedFilters = dateFrom || dateTo || minDuration || maxDuration || maxPlayers || winnerTeam || gamemodeFilter;
+    const hasActiveFilters   = serverQuery || mapFilter || minPlayers || daysFilter !== "7" || hasAdvancedFilters;
+
+    // Active filter pills for quick visual summary
+    const filterPills: { label: string; key: string }[] = [
+        ...(serverQuery    ? [{ label: `Server: ${serverQuery}`,    key: "server"      }] : []),
+        ...(mapFilter      ? [{ label: `Map: ${mapFilter}`,         key: "map"         }] : []),
+        ...(winnerTeam     ? [{ label: winnerTeam === "1" ? "Winner: Axis" : winnerTeam === "2" ? "Winner: Allies" : "Winner: Draw", key: "winner_team" }] : []),
+        ...(gamemodeFilter ? [{ label: `Mode: ${gamemodeFilter}`,   key: "gamemode"    }] : []),
+        ...(minPlayers     ? [{ label: `${minPlayers}+ players`,    key: "min_players" }] : []),
+        ...(maxPlayers     ? [{ label: `≤${maxPlayers} players`,    key: "max_players" }] : []),
+        ...(minDuration    ? [{ label: `≥${minDuration}m duration`, key: "min_duration"}] : []),
+        ...(maxDuration    ? [{ label: `≤${maxDuration}m duration`, key: "max_duration"}] : []),
+        ...(dateFrom       ? [{ label: `From: ${dateFrom}`,         key: "date_from"   }] : []),
+        ...(dateTo         ? [{ label: `To: ${dateTo}`,             key: "date_to"     }] : []),
+    ];
 
     return (
         <div className="space-y-6">
             <Card className="border-border/60">
-                <CardContent className="p-4">
-                    <form onSubmit={handleSearch} className="space-y-4">
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <div className="relative flex-1">
-                                <Server className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    placeholder="Search by server name..."
-                                    className="pl-9"
-                                    value={serverInput}
-                                    onChange={(e) => setServerInput(e.target.value)}
-                                />
-                            </div>
-                            <div className="relative flex-1 sm:max-w-[200px]">
-                                <Map className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    placeholder="Filter by map..."
-                                    className="pl-9"
-                                    value={mapInput}
-                                    onChange={(e) => setMapInput(e.target.value)}
-                                />
-                            </div>
-                            <Button type="submit">
-                                <Search className="h-4 w-4 mr-2" />
-                                Search
-                            </Button>
+                <CardContent className="p-4 space-y-4">
+                    {/* Primary search row */}
+                    <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <Server className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search by server name..."
+                                className="pl-9"
+                                value={serverInput}
+                                onChange={(e) => setServerInput(e.target.value)}
+                            />
+                        </div>
+                        <div className="relative flex-1 sm:max-w-[220px]">
+                            <Map className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Filter by map..."
+                                className="pl-9"
+                                value={mapInput}
+                                onChange={(e) => setMapInput(e.target.value)}
+                                list="map-suggestions"
+                            />
+                            <datalist id="map-suggestions">
+                                {KNOWN_MAPS.map(m => <option key={m} value={m} />)}
+                            </datalist>
+                        </div>
+                        <Button type="submit" className="shrink-0">
+                            <Search className="h-4 w-4 mr-2" />
+                            Search
+                        </Button>
+                    </form>
+
+                    {/* Quick filters row */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground shrink-0">
+                            <Filter className="h-3.5 w-3.5" />
+                            <span>Quick:</span>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-3">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Filter className="h-4 w-4" />
-                                <span>Filters:</span>
-                            </div>
-
+                        {/* Days shortcut — hidden when date range is active */}
+                        {!dateFrom && !dateTo && (
                             <select
                                 value={daysFilter}
                                 onChange={(e) => updateFilters({ days: e.target.value })}
@@ -373,38 +439,231 @@ function RoundsTab() {
                                 <option value="7">Last 7 days</option>
                                 <option value="30">Last 30 days</option>
                                 <option value="90">Last 90 days</option>
+                                <option value="365">Last year</option>
+                                <option value="9999">All time</option>
                             </select>
+                        )}
+                        {(dateFrom || dateTo) && (
+                            <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary border border-primary/20 rounded-md px-2.5 h-9">
+                                <Calendar className="h-3 w-3" />
+                                Custom date range
+                                <button type="button" onClick={() => updateFilters({ date_from: "", date_to: "", days: "7" })} className="ml-1 hover:text-destructive">
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </span>
+                        )}
 
-                            <select
-                                value={minPlayersFilter}
-                                onChange={(e) => updateFilters({ min_players: e.target.value })}
-                                className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                            >
-                                <option value="">Any players</option>
-                                <option value="5">5+ players</option>
-                                <option value="10">10+ players</option>
-                                <option value="20">20+ players</option>
-                                <option value="32">32+ players</option>
-                            </select>
+                        <select
+                            value={minPlayers}
+                            onChange={(e) => updateFilters({ min_players: e.target.value })}
+                            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            <option value="">Any players</option>
+                            <option value="5">5+ players</option>
+                            <option value="10">10+ players</option>
+                            <option value="20">20+ players</option>
+                            <option value="32">32+ players</option>
+                            <option value="48">48+ players</option>
+                        </select>
 
-                            {hasActiveFilters && (
-                                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-                                    <X className="h-4 w-4 mr-1" />
-                                    Clear
-                                </Button>
-                            )}
+                        <button
+                            type="button"
+                            onClick={() => setShowAdvanced(v => !v)}
+                            className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-md border text-sm transition-colors ${showAdvanced || hasAdvancedFilters ? "border-primary/40 bg-primary/10 text-primary" : "border-input bg-background text-muted-foreground hover:text-foreground"}`}
+                        >
+                            <Filter className="h-3.5 w-3.5" />
+                            Advanced
+                            {hasAdvancedFilters && <span className="bg-primary text-primary-foreground rounded-full h-4 w-4 text-[10px] flex items-center justify-center font-bold">{filterPills.filter(p => ["winner_team","gamemode","max_players","min_duration","max_duration","date_from","date_to"].includes(p.key)).length}</span>}
+                            {showAdvanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+
+                        {hasActiveFilters && (
+                            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground h-9">
+                                <X className="h-4 w-4 mr-1" />
+                                Clear all
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Advanced filters panel */}
+                    {showAdvanced && (
+                        <div className="border-t border-border/60 pt-4 space-y-4">
+                            {/* Date range */}
+                            <div className="space-y-1.5">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    Date Range
+                                </p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">From</label>
+                                        <Input
+                                            type="date"
+                                            value={dateFrom}
+                                            max={dateTo || undefined}
+                                            onChange={(e) => updateFilters({ date_from: e.target.value, days: "" })}
+                                            className="h-9 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground">To</label>
+                                        <Input
+                                            type="date"
+                                            value={dateTo}
+                                            min={dateFrom || undefined}
+                                            onChange={(e) => updateFilters({ date_to: e.target.value, days: "" })}
+                                            className="h-9 text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                {/* Quick date shortcuts */}
+                                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                    {[
+                                        { label: "Today", from: new Date().toISOString().slice(0,10), to: new Date().toISOString().slice(0,10) },
+                                        { label: "This week", from: new Date(Date.now()-6*86400000).toISOString().slice(0,10), to: new Date().toISOString().slice(0,10) },
+                                        { label: "This month", from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0,10), to: new Date().toISOString().slice(0,10) },
+                                        { label: "Last month", from: new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString().slice(0,10), to: new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString().slice(0,10) },
+                                    ].map(preset => (
+                                        <button
+                                            key={preset.label}
+                                            type="button"
+                                            onClick={() => updateFilters({ date_from: preset.from, date_to: preset.to, days: "" })}
+                                            className="text-xs px-2 py-1 rounded border border-border/60 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Duration + Players */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Clock className="h-3 w-3" /> Min duration
+                                    </label>
+                                    <select
+                                        value={minDuration}
+                                        onChange={(e) => updateFilters({ min_duration: e.target.value })}
+                                        className={SELECT_CLS}
+                                    >
+                                        {DURATION_OPTIONS.map(o => (
+                                            <option key={o.value} value={o.value} disabled={maxDuration ? parseInt(o.value || "0") >= parseInt(maxDuration) : false}>
+                                                {o.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Clock className="h-3 w-3" /> Max duration
+                                    </label>
+                                    <select
+                                        value={maxDuration}
+                                        onChange={(e) => updateFilters({ max_duration: e.target.value })}
+                                        className={SELECT_CLS}
+                                    >
+                                        {DURATION_OPTIONS.map(o => (
+                                            <option key={o.value} value={o.value} disabled={minDuration ? parseInt(o.value || "999") <= parseInt(minDuration) : false}>
+                                                {o.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Users className="h-3 w-3" /> Max players
+                                    </label>
+                                    <select
+                                        value={maxPlayers}
+                                        onChange={(e) => updateFilters({ max_players: e.target.value })}
+                                        className={SELECT_CLS}
+                                    >
+                                        <option value="">Any</option>
+                                        <option value="10">≤ 10</option>
+                                        <option value="20">≤ 20</option>
+                                        <option value="32">≤ 32</option>
+                                        <option value="48">≤ 48</option>
+                                        <option value="64">≤ 64</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Users className="h-3 w-3" /> Min players
+                                    </label>
+                                    <select
+                                        value={minPlayers}
+                                        onChange={(e) => updateFilters({ min_players: e.target.value })}
+                                        className={SELECT_CLS}
+                                    >
+                                        <option value="">Any</option>
+                                        <option value="5">5+</option>
+                                        <option value="10">10+</option>
+                                        <option value="20">20+</option>
+                                        <option value="32">32+</option>
+                                        <option value="48">48+</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Winner + Gamemode */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Trophy className="h-3 w-3" /> Winner
+                                    </label>
+                                    <select
+                                        value={winnerTeam}
+                                        onChange={(e) => updateFilters({ winner_team: e.target.value })}
+                                        className={SELECT_CLS}
+                                    >
+                                        <option value="">Any outcome</option>
+                                        <option value="1">Axis win</option>
+                                        <option value="2">Allies win</option>
+                                        <option value="0">Draw</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Shield className="h-3 w-3" /> Game mode
+                                    </label>
+                                    <select
+                                        value={gamemodeFilter}
+                                        onChange={(e) => updateFilters({ gamemode: e.target.value })}
+                                        className={SELECT_CLS}
+                                    >
+                                        <option value="">Any mode</option>
+                                        <option value="conquest">Conquest</option>
+                                        <option value="ctf">Capture the Flag</option>
+                                        <option value="tdm">Team Deathmatch</option>
+                                        <option value="coop">Co-op</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    )}
                 </CardContent>
             </Card>
 
+            {/* Active filter pills */}
+            {filterPills.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                    {filterPills.map(pill => (
+                        <span key={pill.key} className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-1">
+                            {pill.label}
+                            <button type="button" onClick={() => updateFilters({ [pill.key]: "" })} className="hover:text-destructive">
+                                <X className="h-3 w-3" />
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            )}
+
             {!loading && (
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>
-                        {totalRounds.toLocaleString()} rounds found
-                        {serverQuery && <span className="ml-1">for "{serverQuery}"</span>}
-                        {mapFilter && <span className="ml-1">on "{mapFilter}"</span>}
-                    </span>
+                <div className="text-sm text-muted-foreground">
+                    {totalRounds.toLocaleString()} round{totalRounds !== 1 ? "s" : ""} found
+                    {serverQuery && <span className="ml-1">on "{serverQuery}"</span>}
+                    {mapFilter && <span className="ml-1">· map "{mapFilter}"</span>}
                 </div>
             )}
 
@@ -423,24 +682,14 @@ function RoundsTab() {
 
                     {totalPages > 1 && (
                         <div className="flex items-center justify-center gap-4 py-4">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => updateFilters({ page: String(page - 1) })}
-                                disabled={page <= 1}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => updateFilters({ page: String(page - 1) })} disabled={page <= 1}>
                                 <ChevronLeft className="h-4 w-4 mr-1" />
                                 Previous
                             </Button>
                             <span className="text-sm text-muted-foreground">
                                 Page {page} of {totalPages}
                             </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => updateFilters({ page: String(page + 1) })}
-                                disabled={page >= totalPages}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => updateFilters({ page: String(page + 1) })} disabled={page >= totalPages}>
                                 Next
                                 <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
@@ -451,7 +700,7 @@ function RoundsTab() {
                 <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                     <Swords className="h-16 w-16 mb-4 opacity-30" />
                     <p className="font-medium text-lg">No rounds found</p>
-                    <p className="text-sm mt-1">Try adjusting your search or filters.</p>
+                    <p className="text-sm mt-1">Try adjusting your filters.</p>
                     {hasActiveFilters && (
                         <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
                             Clear all filters
