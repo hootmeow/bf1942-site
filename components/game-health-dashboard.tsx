@@ -2,13 +2,6 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
   Users,
   Server,
   Swords,
@@ -528,7 +521,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
   return (
     <div className="space-y-6">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] px-6 py-10 shadow-2xl sm:px-12 sm:py-14">
+      <div className="relative overflow-hidden rounded-3xl border border-[#1e2a14] bg-gradient-to-br from-[#0d1208] via-[#0a0f06] to-[#060a04] px-6 py-10 shadow-2xl sm:px-12 sm:py-14">
         <div className="absolute -right-20 -top-20 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.16),transparent_65%)]" />
         <div className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(101,163,13,0.08),transparent_65%)]" />
 
@@ -538,18 +531,15 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
             </span>
-            <Badge
-              variant="outline"
-              className="border-green-500/30 bg-green-500/10 text-green-400 font-mono"
-            >
+            <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-green-400 border border-green-500/30 bg-green-500/10 px-2.5 py-1 rounded">
               LIVE METRICS
-            </Badge>
+            </span>
           </div>
 
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             Game Health
           </h1>
-          <p className="mt-2 max-w-[500px] text-lg text-stone-400">
+          <p className="mt-2 max-w-[500px] text-lg text-slate-400">
             Population trends, server activity, and game mode analytics.
           </p>
 
@@ -563,8 +553,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 className={[
                   "px-4 py-1.5 rounded-full text-sm font-semibold border transition-all",
                   period === days
-                    ? "bg-lime-500/20 border-lime-500/50 text-lime-400"
-                    : "bg-white/5 border-white/10 text-stone-400 hover:border-white/20 hover:text-white",
+                    ? "bg-primary/20 border-primary/50 text-primary"
+                    : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20 hover:text-white",
                   loading ? "opacity-50 cursor-not-allowed" : "",
                 ].join(" ")}
               >
@@ -584,8 +574,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           title="Players Online Now"
           value={globalMetrics?.current_active_players ?? 0}
           icon={Users}
-          iconColor="text-lime-400"
-          iconBg="bg-lime-500/20"
+          iconColor="text-primary"
+          iconBg="bg-primary/20"
         />
         <MetricCard
           title="Unique Players (7d)"
@@ -599,37 +589,37 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
           title="Active Servers Today"
           value={stats.serversToday}
           icon={Server}
-          iconColor="text-lime-400"
-          iconBg="bg-lime-500/20"
+          iconColor="text-amber-400"
+          iconBg="bg-amber-500/20"
           changePct={stats.serversPct}
         />
         <MetricCard
           title="Rounds Today"
           value={stats.roundsToday}
           icon={Swords}
-          iconColor="text-purple-400"
-          iconBg="bg-purple-500/20"
+          iconColor="text-sky-400"
+          iconBg="bg-sky-500/20"
           changePct={stats.roundsPct}
         />
       </div>
 
       {/* Population Trend Chart */}
-      <Card className="border-border/60 bg-card/40">
-        <CardHeader>
+      <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+        <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <CardTitle as="h2" className="flex items-center gap-2">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Activity className="h-5 w-5 text-primary" />
               Population Trend ({period} Days)
-            </CardTitle>
+            </p>
             <div className="flex flex-wrap gap-3 text-sm">
-              <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+              <div className="flex items-center gap-1.5 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-1.5">
                 <span className="text-muted-foreground">30d Avg:</span>
                 <span className="font-bold tabular-nums">
                   {stats.avg30d.toLocaleString()}
                 </span>
               </div>
               {stats.peakDay && (
-                <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                <div className="flex items-center gap-1.5 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-1.5">
                   <span className="text-muted-foreground">Peak:</span>
                   <span className="font-bold tabular-nums">
                     {stats.peakDay.unique_players.toLocaleString()}
@@ -639,7 +629,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </span>
                 </div>
               )}
-              <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+              <div className="flex items-center gap-1.5 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-1.5">
                 <span className="text-muted-foreground">Trend:</span>
                 {stats.trendPct >= 0 ? (
                   <span className="font-bold text-green-500 tabular-nums flex items-center gap-0.5">
@@ -654,8 +644,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="p-5">
           <div className="h-[300px] sm:h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={population_trend}>
@@ -732,27 +722,27 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               Peak Concurrent
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* NEW: New vs Returning Players */}
       {player_retention.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <CardTitle as="h2" className="flex items-center gap-2">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <UserPlus className="h-5 w-5 text-green-400" />
                 New vs Returning Players ({period} Days)
-              </CardTitle>
+              </p>
               {retentionStats && (
                 <div className="flex flex-wrap gap-3 text-sm">
-                  <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-1.5">
                     <span className="text-muted-foreground">30d New Players:</span>
                     <span className="font-bold tabular-nums text-green-400">
                       {retentionStats.totalNew.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-1.5">
                     <span className="text-muted-foreground">Avg Return Rate:</span>
                     <span className="font-bold tabular-nums text-blue-400">
                       {retentionStats.avgReturnRate}%
@@ -761,8 +751,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 </div>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="p-5">
             <div className="h-[300px] sm:h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={player_retention}>
@@ -831,21 +821,21 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 New Players
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Server & Rounds Trend — 2-column grid */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Active Servers */}
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <Server className="h-5 w-5 text-lime-400" />
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Server className="h-5 w-5 text-amber-400" />
               Active Servers ({period} Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-5">
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={server_trend}>
@@ -910,18 +900,18 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Rounds Played */}
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
-            <CardTitle as="h2" className="flex items-center gap-2">
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Swords className="h-5 w-5 text-blue-400" />
               Rounds Played ({period} Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-5">
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={rounds_trend}>
@@ -986,19 +976,19 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Round Quality */}
       {round_quality_trend.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <CardTitle as="h2" className="flex items-center gap-2">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Shield className="h-5 w-5 text-emerald-400" />
                 Round Quality ({period} Days)
-              </CardTitle>
+              </p>
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block h-3 w-3 rounded-sm bg-emerald-500/80" />
@@ -1008,16 +998,13 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   <span className="inline-block h-3 w-3 rounded-sm bg-muted-foreground/30" />
                   <span className="text-muted-foreground">Unranked</span>
                 </span>
-                <Badge
-                  variant="outline"
-                  className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-mono text-xs"
-                >
+                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 rounded">
                   {avgRankedPct}% avg ranked
-                </Badge>
+                </span>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="p-5">
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={round_quality_trend} barSize={10}>
@@ -1073,20 +1060,20 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* NEW: Map Popularity Trends */}
       {map_trends.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <CardTitle as="h2" className="flex items-center gap-2">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Map className="h-5 w-5 text-cyan-400" />
                 Map Popularity ({period} Days)
-              </CardTitle>
-              <div className="flex items-center gap-1 rounded-lg border border-border/40 bg-muted/30 p-0.5">
+              </p>
+              <div className="flex items-center gap-1 rounded-lg border border-[#1e2a14] bg-[#0a0f06] p-0.5">
                 <button
                   onClick={() => setActiveRoundsOnly(true)}
                   className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
@@ -1109,8 +1096,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 </button>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="p-5">
             <div className="space-y-2.5">
               {map_trends.map((item, index) => {
                 const percent = (item.total_rounds / mapTrendsMax) * 100;
@@ -1132,17 +1119,17 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                         )}
                       </span>
                       {item.trend_pct > 5 ? (
-                        <Badge variant="outline" className="border-green-500/30 bg-green-500/10 text-green-400 text-xs px-1.5 py-0">
+                        <span className="inline-flex items-center font-mono text-[9px] border border-green-500/30 bg-green-500/10 text-green-400 px-1.5 py-0 rounded">
                           <TrendingUp className="h-3 w-3 mr-0.5" />+{item.trend_pct}%
-                        </Badge>
+                        </span>
                       ) : item.trend_pct < -5 ? (
-                        <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-400 text-xs px-1.5 py-0">
+                        <span className="inline-flex items-center font-mono text-[9px] border border-red-500/30 bg-red-500/10 text-red-400 px-1.5 py-0 rounded">
                           <TrendingDown className="h-3 w-3 mr-0.5" />{item.trend_pct}%
-                        </Badge>
+                        </span>
                       ) : (
-                        <Badge variant="outline" className="border-border/40 bg-muted/30 text-muted-foreground text-xs px-1.5 py-0">
+                        <span className="inline-flex items-center font-mono text-[9px] border border-[#1e2a14] bg-[#0a0f06] text-muted-foreground px-1.5 py-0 rounded">
                           {item.trend_pct > 0 ? "+" : ""}{item.trend_pct}%
-                        </Badge>
+                        </span>
                       )}
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden ml-5">
@@ -1158,8 +1145,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Player Churn & Experience — 2-column grid */}
@@ -1167,28 +1154,28 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
         <div className="grid gap-4 lg:grid-cols-2">
           {/* Player Churn */}
           {player_churn && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <UserMinus className="h-5 w-5 text-red-400" />
                   Player Retention (7-Day)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-border/40 bg-muted/30 p-3 text-center">
+                  <div className="rounded-lg border border-[#1e2a14] bg-[#0a0f06] p-3 text-center">
                     <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Active</p>
                     <p className="font-mono text-xl font-bold text-green-400 tabular-nums">
                       {player_churn.active_7d.toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-border/40 bg-muted/30 p-3 text-center">
+                  <div className="rounded-lg border border-[#1e2a14] bg-[#0a0f06] p-3 text-center">
                     <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Churned</p>
                     <p className="font-mono text-xl font-bold text-red-400 tabular-nums">
                       {player_churn.churned_7d.toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-border/40 bg-muted/30 p-3 text-center">
+                  <div className="rounded-lg border border-[#1e2a14] bg-[#0a0f06] p-3 text-center">
                     <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Retention</p>
                     <p className="font-mono text-xl font-bold text-blue-400 tabular-nums">
                       {player_churn.retention_rate}%
@@ -1198,20 +1185,20 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 <p className="text-xs text-muted-foreground mt-3">
                   Churned = active 8-14 days ago but not seen in the last 7 days
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Player Experience Breakdown */}
           {player_experience && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <BarChart3 className="h-5 w-5 text-purple-400" />
                   Player Experience Mix (7-Day Active)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 {(() => {
                   const total = player_experience.newcomers + player_experience.regulars + player_experience.veterans;
                   if (total === 0) return <p className="text-sm text-muted-foreground">No data available</p>;
@@ -1253,21 +1240,21 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </>
                   );
                 })()}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
 
       {/* Game Mode Breakdown */}
-      <Card className="border-border/60 bg-card/40">
-        <CardHeader>
-          <CardTitle as="h2" className="flex items-center gap-2">
+      <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+        <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+          <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Gamepad2 className="h-5 w-5 text-pink-400" />
             Game Mode Breakdown (Last {period} Days)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="p-5">
           <div className="space-y-2.5">
             {gamemode_breakdown.map((item, index) => {
               const percent = (item.rounds_played / gamemodeMax) * 100;
@@ -1319,31 +1306,31 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               </p>
             )}
           </div>
-          <div className="flex items-start gap-2 mt-4 rounded-lg border border-border/40 bg-muted/20 px-3 py-2.5 text-xs text-muted-foreground">
+          <div className="flex items-start gap-2 mt-4 rounded-lg border border-[#1e2a14] bg-[#0a0f06]/60 px-3 py-2.5 text-xs text-muted-foreground">
             <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
             <span>Co-op rounds are not currently tracked by our site.</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Network Quality / Ping Trends */}
       {ping_trends.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <CardTitle as="h2" className="flex items-center gap-2">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Wifi className="h-5 w-5 text-sky-400" />
                 Network Quality ({period} Days)
-              </CardTitle>
+              </p>
               {pingStats && (
                 <div className="flex flex-wrap gap-3 text-sm">
-                  <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-1.5">
                     <span className="text-muted-foreground">Current Avg:</span>
                     <span className="font-bold tabular-nums text-amber-400">
                       {pingStats.currentAvg.toFixed(0)}ms
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-1.5">
                     <span className="text-muted-foreground">30d Median:</span>
                     <span className="font-bold tabular-nums text-blue-400">
                       {pingStats.median30d}ms
@@ -1352,8 +1339,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 </div>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="p-5">
             <div className="h-[300px] sm:h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={ping_trends}>
@@ -1425,22 +1412,22 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                 P95 Ping
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Round Duration + Avg Players per Round */}
       {(round_duration_trend.length > 0 || avg_players_per_round_trend.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {round_duration_trend.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Clock className="h-5 w-5 text-sky-400" />
                   Avg Round Duration ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={round_duration_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -1462,19 +1449,19 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {avg_players_per_round_trend.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Users className="h-5 w-5 text-emerald-400" />
                   Avg Players per Round ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={avg_players_per_round_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -1496,25 +1483,25 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
 
       {/* Team Win Balance */}
       {team_balance_trend.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <CardTitle as="h2" className="flex items-center gap-2">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Swords className="h-5 w-5 text-red-400" />
                 Team Win Balance ({period} Days)
-              </CardTitle>
+              </p>
               <p className="text-xs text-muted-foreground">Percentage of decisive rounds won by each faction</p>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="p-5">
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={team_balance_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -1537,20 +1524,20 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-red-500" />Axis</div>
               <div className="flex items-center gap-1.5"><div className="h-0.5 w-4 border-t-2 border-dashed border-muted-foreground/50" />50% Balance</div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Daily Combat Stats (Kills + Deaths + K/D) */}
       {daily_kills_trend.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
-            <CardTitle as="h2" className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-lime-400" />
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Zap className="h-5 w-5 text-primary" />
               Daily Combat Activity ({period} Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-5">
             <div className="h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={daily_kills_trend} margin={{ top: 5, right: 48, left: 0, bottom: 0 }}>
@@ -1573,26 +1560,26 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               </ResponsiveContainer>
             </div>
             <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-lime-500" />Kills</div>
+              <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-primary" />Kills</div>
               <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-red-500" />Deaths</div>
               <div className="flex items-center gap-1.5"><div className="h-0.5 w-4 bg-emerald-400" />K/D Ratio (right axis)</div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Avg Score + Server Fill Rate */}
       {(avg_score_trend.length > 0 || fill_rate_trend.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {avg_score_trend.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Target className="h-5 w-5 text-cyan-400" />
                   Avg Player Score per Round ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={avg_score_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -1615,19 +1602,19 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">Average final score per player per round across all non-blacklisted servers</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {fill_rate_trend.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <BarChart3 className="h-5 w-5 text-violet-400" />
                   Server Fill Rate ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={fill_rate_trend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -1650,8 +1637,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">Avg % of server slots occupied when servers had at least 1 player</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -1660,14 +1647,14 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
       {(session_distribution.length > 0 || top_servers.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {session_distribution.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Timer className="h-5 w-5 text-orange-400" />
                   Session Length Distribution ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={session_distribution} layout="vertical" margin={{ top: 5, right: 48, left: 4, bottom: 0 }}>
@@ -1691,23 +1678,23 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">Total playtime per player across all rounds in the period — shows casual drop-ins vs committed players</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {top_servers.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Trophy className="h-5 w-5 text-yellow-400" />
                   Most Active Servers ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+                </p>
+              </div>
+              <div>
                 <div className="overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-border/40 text-xs text-muted-foreground uppercase">
+                      <tr className="border-b border-[#1e2a14] text-xs text-muted-foreground uppercase">
                         <th className="px-4 py-2.5 text-left font-medium">#</th>
                         <th className="px-4 py-2.5 text-left font-medium">Server</th>
                         <th className="px-4 py-2.5 text-right font-medium">Rounds</th>
@@ -1716,7 +1703,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </thead>
                     <tbody>
                       {top_servers.map((server, i) => (
-                        <tr key={i} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                        <tr key={i} className="border-b border-[#1e2a14]/40 hover:bg-[#0a0f06] transition-colors">
                           <td className="px-4 py-2 text-muted-foreground font-mono text-xs">{i + 1}</td>
                           <td className="px-4 py-2 max-w-[160px]">
                             <span className="font-medium truncate block text-xs leading-tight" title={server.server_name}>
@@ -1730,22 +1717,22 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </tbody>
                   </table>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
 
       {/* Map Win Rate by Team */}
       {map_win_rates.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
-            <CardTitle as="h2" className="flex items-center gap-2">
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Crosshair className="h-5 w-5 text-red-400" />
               Map Win Rate by Team ({period} Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-5">
             <div className="h-[340px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -1770,22 +1757,22 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               </ResponsiveContainer>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Stacked win % per map — balanced maps sit near the 50% line. Only maps with ≥5 decisive rounds shown.</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Round Size Distribution + Player Engagement Depth */}
       {(round_size_distribution.length > 0 || player_engagement_distribution.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {round_size_distribution.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Layers className="h-5 w-5 text-cyan-400" />
                   Round Size Distribution ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={round_size_distribution} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
@@ -1809,19 +1796,19 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">Distribution of rounds by player count — shows whether servers are running full or mostly empty</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {player_engagement_distribution.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <UserCheck className="h-5 w-5 text-emerald-400" />
                   Player Engagement Depth ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={player_engagement_distribution} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
@@ -1845,8 +1832,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">How many rounds each unique player played — shows casual vs dedicated player split</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -1855,14 +1842,14 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
       {(gametype_kill_stats.length > 0 || server_consistency.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {gametype_kill_stats.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Crosshair className="h-5 w-5 text-orange-400" />
                   Combat Intensity by Game Mode ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[240px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={gametype_kill_stats} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
@@ -1879,23 +1866,23 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">Average kills and deaths per player per round, grouped by game mode (modes with ≥5 rounds)</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {server_consistency.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <CalendarCheck className="h-5 w-5 text-violet-400" />
                   Server Consistency ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+                </p>
+              </div>
+              <div>
                 <div className="overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-border/40 text-xs text-muted-foreground uppercase">
+                      <tr className="border-b border-[#1e2a14] text-xs text-muted-foreground uppercase">
                         <th className="px-4 py-2.5 text-left font-medium">Server</th>
                         <th className="px-4 py-2.5 text-center font-medium">Active Days</th>
                         <th className="px-4 py-2.5 text-right font-medium">Rounds</th>
@@ -1909,7 +1896,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                         const dotColor = pct >= 0.8 ? "bg-emerald-500" : pct >= 0.5 ? "bg-blue-500" : pct >= 0.25 ? "bg-amber-500" : "bg-red-500";
                         const textColor = pct >= 0.8 ? "text-emerald-400" : pct >= 0.5 ? "text-blue-400" : pct >= 0.25 ? "text-amber-400" : "text-red-400";
                         return (
-                          <tr key={i} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                          <tr key={i} className="border-b border-[#1e2a14]/40 hover:bg-[#0a0f06] transition-colors">
                             <td className="px-4 py-2 max-w-[160px]">
                               <span className="font-medium truncate block text-xs leading-tight" title={s.server_name}>
                                 {s.server_name}
@@ -1929,25 +1916,25 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </tbody>
                   </table>
                 </div>
-                <p className="px-4 py-2.5 text-xs text-muted-foreground border-t border-border/20">
+                <p className="px-4 py-2.5 text-xs text-muted-foreground border-t border-[#1e2a14]/40">
                   Active days = days with ≥1 round. Rnd/Day = rounds ÷ active days. Color: green ≥80%, blue ≥50%, amber ≥25%, red &lt;25%.
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
 
       {/* Gametype Popularity Trend */}
       {gametype_trend.length > 0 && allGamemodes.length > 0 && (
-        <Card className="border-border/60 bg-card/40">
-          <CardHeader>
-            <CardTitle as="h2" className="flex items-center gap-2">
+        <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+          <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Gamepad2 className="h-5 w-5 text-blue-400" />
               Game Mode Trend ({period} Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-5">
             <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={gametype_trend} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -1990,22 +1977,22 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
               </ResponsiveContainer>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Daily rounds per game mode — shows how each mode&apos;s popularity shifts over time</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Map Average Duration + Score Distribution */}
       {(map_avg_duration.length > 0 || score_distribution.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {map_avg_duration.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Clock className="h-5 w-5 text-teal-400" />
                   Map Average Duration ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[340px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={map_avg_duration} layout="vertical" margin={{ top: 4, right: 56, left: 8, bottom: 0 }}>
@@ -2028,19 +2015,19 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">Average round length per map — longer rounds may indicate more intense fights or larger servers</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {score_distribution.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Zap className="h-5 w-5 text-yellow-400" />
                   Score Distribution ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={score_distribution} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
@@ -2064,8 +2051,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">Distribution of final scores per player per round — skewed right = most players scoring low</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -2074,14 +2061,14 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
       {(kd_distribution.length > 0 || top_active_players.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {kd_distribution.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Target className="h-5 w-5 text-red-400" />
                   K/D Ratio Distribution ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </p>
+              </div>
+              <div className="p-5">
                 <div className="h-[240px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={kd_distribution} layout="vertical" margin={{ top: 4, right: 48, left: 4, bottom: 0 }}>
@@ -2105,23 +2092,23 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">K/D ratio per player aggregated across the period (min 10 combined kills+deaths). Peak at 1.0–1.5 is expected.</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {top_active_players.length > 0 && (
-            <Card className="border-border/60 bg-card/40">
-              <CardHeader>
-                <CardTitle as="h2" className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+              <div className="px-5 pt-5 pb-4 border-b border-[#1e2a14]">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Activity className="h-5 w-5 text-green-400" />
                   Most Active Players ({period} Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+                </p>
+              </div>
+              <div>
                 <div className="overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-border/40 text-xs text-muted-foreground uppercase">
+                      <tr className="border-b border-[#1e2a14] text-xs text-muted-foreground uppercase">
                         <th className="px-4 py-2.5 text-left font-medium">#</th>
                         <th className="px-4 py-2.5 text-left font-medium">Player</th>
                         <th className="px-4 py-2.5 text-right font-medium">Rounds</th>
@@ -2131,7 +2118,7 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </thead>
                     <tbody>
                       {top_active_players.map((p, i) => (
-                        <tr key={i} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                        <tr key={i} className="border-b border-[#1e2a14]/40 hover:bg-[#0a0f06] transition-colors">
                           <td className="px-4 py-2 text-muted-foreground font-mono text-xs">{i + 1}</td>
                           <td className="px-4 py-2 max-w-[140px]">
                             <span className="font-medium truncate block text-xs leading-tight" title={p.player_name}>
@@ -2146,8 +2133,8 @@ export const GameHealthDashboard = React.memo(function GameHealthDashboard({
                     </tbody>
                   </table>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -2180,8 +2167,8 @@ function MetricCard({
   changePct?: number;
 }) {
   return (
-    <Card className="border-border/60 bg-card/40">
-      <CardContent className="flex items-center gap-4 p-5">
+    <div className="rounded-xl border border-[#1e2a14] bg-[#070b05]">
+      <div className="flex items-center gap-4 p-5">
         <div className={`rounded-lg p-2.5 ${iconBg}`}>
           <Icon className={`h-5 w-5 ${iconColor}`} />
         </div>
@@ -2210,7 +2197,7 @@ function MetricCard({
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

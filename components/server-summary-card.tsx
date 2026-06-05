@@ -1,8 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ServerFlag } from "@/components/server-flag";
 import Link from "next/link";
 import { Map as MapIcon, Server } from "lucide-react";
@@ -41,18 +39,18 @@ function getPlayerTier(count: number, max: number) {
     };
     if (count >= 40) return {
         label: "packed",
-        barClass: "bg-gradient-to-r from-lime-500 via-yellow-400 to-amber-300",
+        barClass: "bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300",
         glowClass: "shadow-[0_0_12px_rgba(234,179,8,0.55)]",
-        countClass: "text-yellow-400 font-semibold",
-        borderClass: "border-l-yellow-400",
+        countClass: "text-amber-400 font-semibold",
+        borderClass: "border-l-amber-400",
         pulse: true,
     };
     if (count >= 20) return {
         label: "active",
-        barClass: "bg-gradient-to-r from-lime-700 to-lime-400",
-        glowClass: "shadow-[0_0_8px_rgba(101,163,13,0.45)]",
-        countClass: "text-lime-400 font-semibold",
-        borderClass: "border-l-lime-500",
+        barClass: "bg-gradient-to-r from-primary/60 to-primary",
+        glowClass: "shadow-[0_0_8px_rgba(107,140,58,0.45)]",
+        countClass: "text-primary font-semibold",
+        borderClass: "border-l-primary",
         pulse: true,
     };
     if (count >= 5) return {
@@ -78,11 +76,11 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
     const tier = getPlayerTier(server.current_player_count, server.current_max_players || 64);
 
     return (
-        <Card className={cn(
-            "group bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/60 transition-all duration-200 overflow-hidden hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 card-glow border-l-2",
+        <div className={cn(
+            "group rounded-xl bg-[#070b05] border border-[#1e2a14] hover:border-[#2a3a1a] hover:bg-[#0a0f06] transition-all duration-200 overflow-hidden hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/30 border-l-2",
             tier.borderClass
         )}>
-            <CardContent className="p-4">
+            <div className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="space-y-1.5 overflow-hidden flex-1 min-w-0">
                         <h3 className="font-bold flex items-center gap-2 text-base">
@@ -137,13 +135,13 @@ export function ServerSummaryCard({ server }: { server: LiveServer }) {
                         <div
                             className={cn(
                                 "absolute top-1/2 -translate-y-1/2 h-4 rounded-full blur-md animate-pulse",
-                                tier.label === "packed" ? "bg-yellow-400/35" : "bg-lime-500/30"
+                                tier.label === "packed" ? "bg-amber-400/35" : "bg-primary/30"
                             )}
                             style={{ width: `${fillPercent}%` }}
                         />
                     )}
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
