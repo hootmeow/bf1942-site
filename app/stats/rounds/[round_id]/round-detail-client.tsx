@@ -344,6 +344,27 @@ export default function RoundDetailClient() {
                             </div>
                         </div>
 
+                        {/* Dominance Score Meter */}
+                        {round.tickets1 != null && round.tickets2 != null && (round.tickets1 + round.tickets2) > 0 && (() => {
+                            const winT = Math.max(round.tickets1, round.tickets2);
+                            const loseT = Math.min(round.tickets1, round.tickets2);
+                            const total = winT + loseT;
+                            const score = Math.round((winT / total) * 100);
+                            const label = score >= 98 ? "Shutout" : score >= 90 ? "Dominant" : score >= 75 ? "Decisive" : score >= 60 ? "Close" : "Razor-Thin";
+                            const color = score >= 90 ? "bg-red-500" : score >= 75 ? "bg-amber-500" : score >= 60 ? "bg-yellow-500" : "bg-green-500";
+                            return (
+                                <div className="max-w-xs mx-auto space-y-1 pt-2">
+                                    <div className="flex justify-between text-[10px] text-muted-foreground uppercase tracking-wider">
+                                        <span>Dominance</span>
+                                        <span className="font-semibold text-foreground">{label} ({score}%)</span>
+                                    </div>
+                                    <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                                        <div className={`h-full rounded-full transition-all duration-700 ${color}`} style={{ width: `${score}%` }} />
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                         {/* Narrative */}
                         {narrative && (
                             <p className="text-sm italic text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto pt-2">
@@ -404,6 +425,9 @@ export default function RoundDetailClient() {
                 </div>
             </div>
 
+            {/* Ticket Decay Rate Analysis */}
+            <TicketDecayAnalysis timeline={timeline} round={round} />
+
             {/* Ticket Bleed Momentum */}
             <RoundMomentum roundId={roundId} />
 
@@ -450,6 +474,80 @@ export default function RoundDetailClient() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+function TicketDecayAnalysis({ timeline, round }: {
+    timeline: TimelineResponse | null;
+    round: RoundData;
+}) {
+    const points = timeline?.ticket_timeline;
+    if (!points || points.length < 4) return null;
+
+    // Sample every Nth point to get ~10 windows for decay rate calc
+    const step = Math.max(1, Math.floor(points.length / 10));
+    const sampled = points.filter((_, i) => i % step === 0);
+
+    // Compute tickets-per-minute decay rate for each team across windows
+    const windows: { label: string; t1Rate: number; t2Rate: number }[] = [];
+    for (let i = 1; i < sampled.length; i++) {
+        const prev = sampled[i - 1];
+        const curr = sampled[i];
+        const dtMs = new Date(curr.timestamp).getTime() - new Date(prev.timestamp).getTime();
+        if (dtMs <= 0) continue;
+        const dtMin = dtMs / 60000;
+        const t1Rate = prev.tickets1 != null && curr.tickets1 != null ? (prev.tickets1 - curr.tickets1) / dtMin : 0;
+        const t2Rate = prev.tickets2 != null && curr.tickets2 != null ? (prev.tickets2 - curr.tickets2) / dtMin : 0;
+        const pct = Math.round((i / sampled.length) * 100);
+        windows.push({ label: `${pct}%`, t1Rate: Math.max(0, t1Rate), t2Rate: Math.max(0, t2Rate) });
+    }
+
+    if (windows.length === 0) return null;
+
+    const avgT1 = windows.reduce((s, w) => s + w.t1Rate, 0) / windows.length;
+    const avgT2 = windows.reduce((s, w) => s + w.t2Rate, 0) / windows.length;
+    const maxRate = Math.max(...windows.flatMap(w => [w.t1Rate, w.t2Rate]), 1);
+
+    const t1Label = "Axis";
+    const t2Label = "Allies";
+
+    return (
+        <Card className="border-border/60">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-primary" />
+                    Ticket Bleed Rate
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                <div className="flex gap-6 text-xs text-muted-foreground mb-1">
+                    <span><span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-1" />{t1Label} avg {avgT1.toFixed(1)} tix/min</span>
+                    <span><span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1" />{t2Label} avg {avgT2.toFixed(1)} tix/min</span>
+                </div>
+                <div className="space-y-1">
+                    {windows.map((w, i) => (
+                        <div key={i} className="grid grid-cols-[40px_1fr_1fr] gap-1 items-center text-[10px] text-muted-foreground">
+                            <span className="text-right pr-1">{w.label}</span>
+                            <div className="flex items-center gap-0.5">
+                                <div
+                                    className="h-2 rounded-sm bg-red-500/70 transition-all"
+                                    style={{ width: `${(w.t1Rate / maxRate) * 100}%`, minWidth: w.t1Rate > 0 ? "2px" : "0" }}
+                                />
+                                <span className="shrink-0">{w.t1Rate.toFixed(1)}</span>
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                                <div
+                                    className="h-2 rounded-sm bg-blue-500/70 transition-all"
+                                    style={{ width: `${(w.t2Rate / maxRate) * 100}%`, minWidth: w.t2Rate > 0 ? "2px" : "0" }}
+                                />
+                                <span className="shrink-0">{w.t2Rate.toFixed(1)}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground/60">Tickets lost per minute across equal time windows. Spikes indicate intense firefights or flag captures.</p>
+            </CardContent>
+        </Card>
     );
 }
 

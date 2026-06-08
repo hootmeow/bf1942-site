@@ -154,6 +154,51 @@ interface PlayerProfileApiResponse {
   war_stories?: WarStoryData[] | null;
 }
 
+// --- New Feature Interfaces ---
+interface SessionSummary {
+  total_sessions: number;
+  avg_session_seconds: number;
+  avg_rounds_per_session: number;
+  longest_session_seconds: number;
+  longest_session_rounds: number;
+  longest_session_date: string;
+}
+interface CompletionRateData {
+  total_rounds_with_data: number;
+  avg_completion_pct: number;
+  full_rounds: number;
+  early_exits: number;
+  label: string;
+}
+interface ScoreDeathData {
+  lifetime_score_per_death: number;
+  avg_score_per_death_per_round: number;
+  best_single_round_spd: number;
+  rounds_played: number;
+}
+interface ServerLoyaltyData {
+  total_rounds: number;
+  distinct_servers: number;
+  loyalty_pct: number;
+  nomad_score: number;
+  loyalty_label: string;
+  home_server: { server_id: number; server_name: string; rounds: number };
+  servers: { server_id: number; server_name: string; rounds: number; share_pct: number }[];
+}
+interface ComebackData {
+  total_absences: number;
+  is_returning: boolean;
+  absences: {
+    gap_start: string;
+    gap_end: string;
+    gap_days: number;
+    kdr_before: number | null;
+    rounds_before: number;
+    kdr_after: number | null;
+    rounds_after: number;
+  }[];
+}
+
 // --- New Advanced Stats Components ---
 import { SkillRatingCard, SkillRating } from "@/components/skill-rating-card";
 import { BattleBuddiesList, RelatedPlayer } from "@/components/battle-buddies-list";
@@ -288,6 +333,13 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
     kdr_streak: { current: number; best: number; best_ended: string | null };
   } | null>(null);
 
+  // New features 4-8
+  const [sessions, setSessions] = useState<SessionSummary | null>(null);
+  const [completionRate, setCompletionRate] = useState<CompletionRateData | null>(null);
+  const [scoreDeath, setScoreDeath] = useState<ScoreDeathData | null>(null);
+  const [serverLoyalty, setServerLoyalty] = useState<ServerLoyaltyData | null>(null);
+  const [comeback, setComeback] = useState<ComebackData | null>(null);
+
   // Single effect: fetch all player data in parallel
   useEffect(() => {
     if (!playerName) {
@@ -298,13 +350,19 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
     async function fetchAll() {
       const encodedName = encodeURIComponent(playerName!);
-      const [profileRes, advancedRes, rankRes, mapRes, tsRes, streaksRes] = await Promise.allSettled([
+      const [profileRes, advancedRes, rankRes, mapRes, tsRes, streaksRes,
+             sessionsRes, completionRes, spdRes, loyaltyRes, comebackRes] = await Promise.allSettled([
         fetch(`/api/v1/players/search/profile?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/profile_advanced?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/history_rank?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/map_performance?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/timeseries?name=${encodedName}&timespan=week`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/streaks?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/sessions?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/completion-rate?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/score-per-death?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/server-loyalty?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/comeback?name=${encodedName}`).then(r => r.ok ? r.json() : null),
       ]);
 
       // Profile (required)
@@ -341,6 +399,26 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
       // Streaks (optional)
       const streaksData = streaksRes.status === 'fulfilled' ? streaksRes.value : null;
       if (streaksData?.ok) setStreaks(streaksData);
+
+      // Sessions (feature 4)
+      const sessData = sessionsRes.status === 'fulfilled' ? sessionsRes.value : null;
+      if (sessData?.ok && sessData.summary) setSessions(sessData.summary);
+
+      // Completion rate (feature 5)
+      const compData = completionRes.status === 'fulfilled' ? completionRes.value : null;
+      if (compData?.ok) setCompletionRate(compData);
+
+      // Score per death (feature 6)
+      const spdData = spdRes.status === 'fulfilled' ? spdRes.value : null;
+      if (spdData?.ok) setScoreDeath(spdData);
+
+      // Server loyalty (feature 7)
+      const loyaltyData = loyaltyRes.status === 'fulfilled' ? loyaltyRes.value : null;
+      if (loyaltyData?.ok && loyaltyData.loyalty_label) setServerLoyalty(loyaltyData);
+
+      // Comeback (feature 8)
+      const comebackData = comebackRes.status === 'fulfilled' ? comebackRes.value : null;
+      if (comebackData?.ok) setComeback(comebackData);
 
       setLoading(false);
     }
@@ -1185,6 +1263,191 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
             </CardContent>
           </Card>
         </TooltipProvider>
+      )}
+
+      {/* ── Features 4-8: New Stat Sections ── */}
+      {(sessions || completionRate || scoreDeath || serverLoyalty || (comeback && comeback.total_absences > 0)) && (
+        <>
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-10 rounded-full bg-gradient-to-b from-cyan-500 to-cyan-500/20 flex-shrink-0" />
+            <div className="p-2 rounded-lg bg-cyan-500/10 ring-1 ring-cyan-500/20">
+              <BarChart className="h-5 w-5 text-cyan-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">Behaviour & Efficiency</h2>
+              <p className="text-sm text-muted-foreground">Session patterns, survival habits, and server loyalty</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Feature 4: Sessions */}
+            {sessions && (
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-cyan-400" />
+                    Play Sessions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div>
+                      <p className="text-2xl font-bold">{sessions.total_sessions.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Total Sessions</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{sessions.avg_rounds_per_session.toFixed(1)}</p>
+                      <p className="text-xs text-muted-foreground">Avg Rounds / Session</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Avg session</span>
+                      <span className="font-medium">{Math.floor(sessions.avg_session_seconds / 60)}m</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Longest session</span>
+                      <span className="font-medium text-amber-400">{Math.floor(sessions.longest_session_seconds / 3600)}h {Math.floor((sessions.longest_session_seconds % 3600) / 60)}m ({sessions.longest_session_rounds} rounds)</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Feature 5: Completion Rate + Feature 6: Score per Death */}
+            {(completionRate || scoreDeath) && (
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-yellow-400" />
+                    Efficiency Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {completionRate && (
+                    <div>
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>Round Completion</span>
+                        <span className="font-semibold text-foreground">{completionRate.avg_completion_pct}% — {completionRate.label}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+                          style={{ width: `${completionRate.avg_completion_pct}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
+                        <span>{completionRate.full_rounds} full rounds</span>
+                        <span>{completionRate.early_exits} early exits</span>
+                      </div>
+                    </div>
+                  )}
+                  {scoreDeath && (
+                    <div className="pt-1 space-y-1">
+                      <p className="text-xs text-muted-foreground">Score / Death (Survival Efficiency)</p>
+                      <div className="grid grid-cols-3 gap-1 text-center">
+                        <div>
+                          <p className="text-lg font-bold text-emerald-400">{scoreDeath.lifetime_score_per_death.toFixed(1)}</p>
+                          <p className="text-[10px] text-muted-foreground">Lifetime</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold">{scoreDeath.avg_score_per_death_per_round.toFixed(1)}</p>
+                          <p className="text-[10px] text-muted-foreground">Avg/Round</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-amber-400">{scoreDeath.best_single_round_spd.toFixed(1)}</p>
+                          <p className="text-[10px] text-muted-foreground">Best Round</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Feature 7: Server Loyalty */}
+            {serverLoyalty && (
+              <Card className="border-border/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Server className="h-4 w-4 text-violet-400" />
+                    Server Loyalty
+                    <span className="ml-auto text-xs font-medium text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full">{serverLoyalty.loyalty_label}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground truncate pr-2">Home server</span>
+                      <span className="font-medium truncate text-right">{serverLoyalty.home_server.server_name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Loyalty</span>
+                      <span className="font-medium">{serverLoyalty.loyalty_pct}% of rounds</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Distinct servers</span>
+                      <span className="font-medium">{serverLoyalty.distinct_servers}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1 pt-1">
+                    {serverLoyalty.servers.slice(0, 4).map((s) => (
+                      <div key={s.server_id} className="flex items-center gap-2">
+                        <div className="h-1.5 rounded-full bg-violet-500/70 shrink-0" style={{ width: `${s.share_pct}%`, maxWidth: "60%" }} />
+                        <span className="text-[10px] text-muted-foreground truncate">{s.server_name}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{s.share_pct}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Feature 8: Comeback / Absence tracking */}
+          {comeback && comeback.total_absences > 0 && (
+            <Card className="border-border/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-amber-400" />
+                  Return from Absence
+                  {comeback.is_returning && (
+                    <span className="ml-auto text-xs font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full animate-pulse">
+                      Currently Returning
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {comeback.absences.slice(-3).reverse().map((ab, i) => {
+                    const kdrChange = ab.kdr_before != null && ab.kdr_after != null ? ab.kdr_after - ab.kdr_before : null;
+                    return (
+                      <div key={i} className="flex items-start gap-4 text-sm border-b border-border/40 last:border-0 pb-3 last:pb-0">
+                        <div className="text-center shrink-0 w-14">
+                          <p className="text-lg font-bold text-amber-400">{ab.gap_days}d</p>
+                          <p className="text-[10px] text-muted-foreground">away</p>
+                        </div>
+                        <div className="flex-1 space-y-0.5">
+                          <p className="text-xs text-muted-foreground">{new Date(ab.gap_start).toLocaleDateString()} → {new Date(ab.gap_end).toLocaleDateString()}</p>
+                          <div className="flex gap-4 text-xs">
+                            <span>Before: <span className="font-medium">{ab.kdr_before?.toFixed(2) ?? "—"} KDR</span> <span className="text-muted-foreground">({ab.rounds_before}r)</span></span>
+                            <span>After: <span className="font-medium">{ab.kdr_after?.toFixed(2) ?? "—"} KDR</span> <span className="text-muted-foreground">({ab.rounds_after}r)</span></span>
+                            {kdrChange != null && (
+                              <span className={kdrChange >= 0 ? "text-emerald-400" : "text-red-400"}>
+                                {kdrChange >= 0 ? "+" : ""}{kdrChange.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Full Match History */}
