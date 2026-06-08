@@ -1,4 +1,10 @@
+import type { Metadata } from "next"
 import { auth } from "@/lib/auth"
+
+export const metadata: Metadata = {
+    title: "Admin Panel",
+    robots: { index: false, follow: false },
+}
 import { isUserAdmin, isUserViewer } from "@/lib/admin-auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"

@@ -141,7 +141,7 @@ interface WarStoryData {
   round_date?: string | null;
 }
 
-interface PlayerProfileApiResponse {
+export interface PlayerProfileApiResponse {
   ok: boolean;
   player_info: PlayerInfo;
   linked_aliases?: LinkedAlias[];
@@ -314,14 +314,20 @@ function ClaimProfileDialog({ playerId, playerName, isVerified, isLoggedIn }: { 
 }
 
 // --- Main Page Component ---
-export default function PlayerPageClient({ currentUser }: { currentUser?: any }) {
+export default function PlayerPageClient({
+  currentUser,
+  initialProfile,
+}: {
+  currentUser?: any;
+  initialProfile?: PlayerProfileApiResponse | null;
+}) {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug;
   const playerName = slug ? decodeURIComponent(slug) : undefined;
   const { toast } = useToast();
 
-  const [profile, setProfile] = useState<PlayerProfileApiResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<PlayerProfileApiResponse | null>(initialProfile ?? null);
+  const [loading, setLoading] = useState(!initialProfile);
   const [error, setError] = useState<string | null>(null);
 
   const [advancedProfile, setAdvancedProfile] = useState<AdvancedProfileResponse | null>(null);
@@ -350,9 +356,14 @@ export default function PlayerPageClient({ currentUser }: { currentUser?: any })
 
     async function fetchAll() {
       const encodedName = encodeURIComponent(playerName!);
+      // Skip profile fetch when server already provided it as initialProfile
+      const profilePromise = initialProfile
+        ? Promise.resolve(initialProfile)
+        : fetch(`/api/v1/players/search/profile?name=${encodedName}`).then(r => r.ok ? r.json() : null);
+
       const [profileRes, advancedRes, rankRes, mapRes, tsRes, streaksRes,
              sessionsRes, completionRes, spdRes, loyaltyRes, comebackRes] = await Promise.allSettled([
-        fetch(`/api/v1/players/search/profile?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        profilePromise,
         fetch(`/api/v1/players/search/profile_advanced?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/history_rank?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/map_performance?name=${encodedName}`).then(r => r.ok ? r.json() : null),

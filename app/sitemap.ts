@@ -27,6 +27,7 @@ interface ServerResponse {
 interface PlayerResponse {
   player_id: number;
   name: string;
+  last_active?: string;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -302,24 +303,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Failed to fetch servers for sitemap:", e);
   }
 
-  // Dynamic: Top players from leaderboard
+  // Dynamic: ALL players (not just leaderboard top-N) via dedicated sitemap endpoint.
+  // /api/v1/players/sitemap bypasses the leaderboard_cache filters (>=3 rounds, active
+  // within 60 days) so every player with at least 1 round gets a URL in the sitemap.
   let playerPages: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/leaderboard?limit=500`, {
-      next: { revalidate: 3600 },
-    });
-    if (res.ok) {
+    const PAGE_SIZE = 1000;
+    const MAX_PLAYERS = 100000;
+    let offset = 0;
+    let hasMore = true;
+    const seen = new Set<string>();
+
+    while (hasMore && offset < MAX_PLAYERS) {
+      const res = await fetch(
+        `${BASE_URL}/api/v1/players/sitemap?limit=${PAGE_SIZE}&offset=${offset}`,
+        { next: { revalidate: 3600 } }
+      );
+      if (!res.ok) break;
       const data = await res.json();
-      if (data.ok && Array.isArray(data.leaderboard)) {
-        playerPages = data.leaderboard
-          .filter((player: PlayerResponse) => player.name)
-          .map((player: PlayerResponse) => ({
+      const page: PlayerResponse[] = data.ok && Array.isArray(data.players)
+        ? data.players
+        : [];
+
+      for (const player of page) {
+        if (player.name && !seen.has(player.name)) {
+          seen.add(player.name);
+          playerPages.push({
             url: `${BASE_URL}/player/${encodeURIComponent(player.name)}`,
-            lastModified: now,
-            changeFrequency: "daily" as ChangeFrequency,
-            priority: 0.6,
-          }));
+            lastModified: player.last_active ? new Date(player.last_active) : now,
+            changeFrequency: "weekly" as ChangeFrequency,
+            priority: 0.5,
+          });
+        }
       }
+
+      hasMore = page.length === PAGE_SIZE;
+      offset += PAGE_SIZE;
     }
   } catch (e) {
     console.error("Failed to fetch players for sitemap:", e);

@@ -63,7 +63,9 @@ export const metadata: Metadata = {
 
   icons: {
     icon: "/favicon.ico",
+    apple: "/icons/icon-192.png",
   },
+  manifest: "/manifest.webmanifest",
 
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,

@@ -331,10 +331,10 @@ export default function RoundDetailClient() {
                         {/* Axis */}
                         <div className={cn(
                             "flex-1 flex flex-col items-center justify-center py-4 px-6 border-t border-b border-l",
-                            winner === 1 ? "border-red-600/60 bg-red-950/40" : "border-border/30 bg-zinc-900/40"
+                            winner === 1 ? "border-red-600/60 bg-red-950/40" : "border-red-900/20 bg-red-950/10"
                         )}>
                             <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-red-400/70 mb-1">Axis</p>
-                            <p className={cn("text-5xl font-black font-mono tabular-nums leading-none", winner === 1 ? "text-red-400" : "text-zinc-400")}>
+                            <p className={cn("text-5xl font-black font-mono tabular-nums leading-none", winner === 1 ? "text-red-400" : "text-red-700/60")}>
                                 {round.tickets1 ?? "—"}
                             </p>
                             {winner === 1 && <p className="text-[8px] font-mono text-red-500/70 uppercase tracking-widest mt-1.5 flex items-center gap-0.5"><Trophy className="h-2 w-2" /> VICTOR</p>}
@@ -348,10 +348,10 @@ export default function RoundDetailClient() {
                         {/* Allies */}
                         <div className={cn(
                             "flex-1 flex flex-col items-center justify-center py-4 px-6 border-t border-b border-r",
-                            winner === 2 ? "border-blue-600/60 bg-blue-950/40" : "border-border/30 bg-zinc-900/40"
+                            winner === 2 ? "border-blue-600/60 bg-blue-950/40" : "border-blue-900/20 bg-blue-950/10"
                         )}>
                             <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-blue-400/70 mb-1">Allies</p>
-                            <p className={cn("text-5xl font-black font-mono tabular-nums leading-none", winner === 2 ? "text-blue-400" : "text-zinc-400")}>
+                            <p className={cn("text-5xl font-black font-mono tabular-nums leading-none", winner === 2 ? "text-blue-400" : "text-blue-700/60")}>
                                 {round.tickets2 ?? "—"}
                             </p>
                             {winner === 2 && <p className="text-[8px] font-mono text-blue-500/70 uppercase tracking-widest mt-1.5 flex items-center gap-0.5"><Trophy className="h-2 w-2" /> VICTOR</p>}
