@@ -219,6 +219,32 @@ export default function RoundDetailClient() {
         return `The ${winnerName} secured a ${intensity} on ${round.map_name}, defeating the ${loserName} by ${ticketDiff} tickets. The battle lasted for ${Math.floor(round.duration_seconds / 60)} minutes.${extra}`;
     }, [data, timeline]);
 
+    // Bleed rate computed from timeline — must be before any early return (Rules of Hooks)
+    const bleedRates = useMemo(() => {
+        const pts = timeline?.ticket_timeline;
+        if (!pts || pts.length < 4) return null;
+        const first = pts[0], last = pts[pts.length - 1];
+        const dtMin = (new Date(last.timestamp).getTime() - new Date(first.timestamp).getTime()) / 60000;
+        if (dtMin <= 0) return null;
+        const t1 = first.tickets1 != null && last.tickets1 != null ? ((first.tickets1 - last.tickets1) / dtMin).toFixed(1) : null;
+        const t2 = first.tickets2 != null && last.tickets2 != null ? ((first.tickets2 - last.tickets2) / dtMin).toFixed(1) : null;
+        return t1 && t2 ? { t1, t2 } : null;
+    }, [timeline]);
+
+    // Dominance score — uses data?.round to handle pre-load null safely
+    const dominance = useMemo(() => {
+        const t1 = data?.round.tickets1;
+        const t2 = data?.round.tickets2;
+        if (t1 == null || t2 == null) return null;
+        const total = t1 + t2;
+        if (total === 0) return null;
+        const winT = Math.max(t1, t2);
+        const score = Math.round((winT / total) * 100);
+        const label = score >= 98 ? "Shutout" : score >= 90 ? "Dominant" : score >= 75 ? "Decisive" : score >= 60 ? "Close" : "Razor-Thin";
+        const barColor = score >= 90 ? "bg-red-500" : score >= 75 ? "bg-amber-500" : score >= 60 ? "bg-yellow-400" : "bg-emerald-500";
+        return { score, label, barColor };
+    }, [data]);
+
     if (loading) {
         return (
             <div className="flex min-h-[200px] items-center justify-center gap-2 text-muted-foreground">
@@ -245,30 +271,6 @@ export default function RoundDetailClient() {
     const closenessBadge = ticketDiff < 20 ? "NAIL-BITER" : ticketDiff < 50 ? "HARD-FOUGHT" : null;
 
     const playerHighlights = timeline?.player_highlights;
-
-    // Bleed rate computed from timeline
-    const bleedRates = useMemo(() => {
-        const pts = timeline?.ticket_timeline;
-        if (!pts || pts.length < 4) return null;
-        const first = pts[0], last = pts[pts.length - 1];
-        const dtMin = (new Date(last.timestamp).getTime() - new Date(first.timestamp).getTime()) / 60000;
-        if (dtMin <= 0) return null;
-        const t1 = first.tickets1 != null && last.tickets1 != null ? ((first.tickets1 - last.tickets1) / dtMin).toFixed(1) : null;
-        const t2 = first.tickets2 != null && last.tickets2 != null ? ((first.tickets2 - last.tickets2) / dtMin).toFixed(1) : null;
-        return t1 && t2 ? { t1, t2 } : null;
-    }, [timeline]);
-
-    // Dominance score
-    const dominance = useMemo(() => {
-        if (round.tickets1 == null || round.tickets2 == null) return null;
-        const total = round.tickets1 + round.tickets2;
-        if (total === 0) return null;
-        const winT = Math.max(round.tickets1, round.tickets2);
-        const score = Math.round((winT / total) * 100);
-        const label = score >= 98 ? "Shutout" : score >= 90 ? "Dominant" : score >= 75 ? "Decisive" : score >= 60 ? "Close" : "Razor-Thin";
-        const barColor = score >= 90 ? "bg-red-500" : score >= 75 ? "bg-amber-500" : score >= 60 ? "bg-yellow-400" : "bg-emerald-500";
-        return { score, label, barColor };
-    }, [round]);
 
     const winnerAccent = winner === 1 ? "border-red-700/50" : winner === 2 ? "border-blue-700/50" : "border-border/40";
     const winnerGlow   = winner === 1 ? "from-red-950/70 via-zinc-950 to-zinc-950" : winner === 2 ? "from-blue-950/70 via-zinc-950 to-zinc-950" : "from-zinc-900 to-zinc-950";
