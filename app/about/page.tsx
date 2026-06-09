@@ -16,7 +16,7 @@ const organizationJsonLd = {
   "@type": "Organization",
   "name": "BF1942 Online - bf1942.online",
   "url": "https://www.bf1942.online",
-  "logo": "https://www.bf1942.online/images/og-image.png",
+  "logo": "https://www.bf1942.online/icon",
   "sameAs": ["https://discord.gg/XWkkZnqJnm"],
 };
 

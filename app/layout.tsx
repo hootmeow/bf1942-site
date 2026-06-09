@@ -20,8 +20,8 @@ export const viewport = {
   maximumScale: 5,
   userScalable: true,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' }
+    { media: '(prefers-color-scheme: light)', color: '#f7f8f4' },
+    { media: '(prefers-color-scheme: dark)', color: '#060a04' }
   ],
 };
 
@@ -42,14 +42,8 @@ export const metadata: Metadata = {
     description: "The Battlefield 1942 community hub — live server browser, player stats, leaderboards, game wiki, mods, and guides.",
     url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online",
     siteName: "BF1942 Online",
-    images: [
-      {
-        url: "/images/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "BF1942 Online — Battlefield 1942 Stats & Community Hub",
-      },
-    ],
+    // OG/Twitter images are generated on-brand by app/opengraph-image.tsx
+    // (the Next.js file-based metadata convention) — no static file needed.
     locale: "en_US",
     type: "website",
   },
@@ -58,12 +52,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BF1942 Online | Battlefield 1942 Stats & Servers",
     description: "The Battlefield 1942 community hub — live servers, player stats, leaderboards, wiki, and mods.",
-    images: ["/images/og-image.png"],
-  },
-
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/icons/icon-192.png",
   },
   manifest: "/manifest.webmanifest",
 

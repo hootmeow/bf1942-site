@@ -265,12 +265,12 @@ function SiteSidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SiteSidebarPr
     >
       <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-4 sm:py-6">
         {/* --- REVERTED to Avatar and ADDED animate-pulse-glow --- */}
-        <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg border border-primary/40 bg-primary/15">
+        <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg border border-primary/40 bg-gradient-to-br from-primary/25 to-primary/10 shadow-[inset_0_1px_0_hsl(var(--primary)/0.25)]">
           <span className="font-mono text-[10px] sm:text-xs font-black text-primary tracking-tight">BF</span>
         </div>
         {!collapsed && (
           <div>
-            <p className="text-sm sm:text-base font-black text-foreground leading-tight tracking-tight">BF1942.online</p>
+            <p className="text-sm sm:text-base font-black text-gradient-primary leading-tight tracking-tight">BF1942.online</p>
             <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground/40 leading-tight">Live Stats &amp; Community</p>
           </div>
         )}

@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export const alt = 'BF1942 Command Center';
+export const alt = 'BF1942 Online — Battlefield 1942 Stats, Servers & Community';
 export const size = {
     width: 1200,
     height: 630,
@@ -15,62 +15,89 @@ export default async function Image() {
         (
             <div
                 style={{
-                    background: 'linear-gradient(to bottom right, #0F172A, #1E293B)',
                     width: '100%',
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    padding: '72px 80px',
+                    background:
+                        'linear-gradient(135deg, #0d1208 0%, #0a0f06 55%, #060a04 100%)',
+                    color: '#f5f7f0',
+                    fontFamily: 'sans-serif',
                 }}
             >
+                {/* Olive glow accent */}
                 <div
                     style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: '20px'
+                        position: 'absolute',
+                        right: '-180px',
+                        bottom: '-220px',
+                        width: '620px',
+                        height: '620px',
+                        borderRadius: '9999px',
+                        background:
+                            'radial-gradient(circle, rgba(122,158,66,0.22), transparent 65%)',
                     }}
-                >
-                    {/* Simple SVG Logo Placeholder */}
-                    <svg
-                        width="80"
-                        height="80"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ color: '#F97316' }} // Orange-500
+                />
+
+                {/* Brand row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '72px',
+                            height: '72px',
+                            borderRadius: '16px',
+                            border: '2px solid rgba(140,180,80,0.45)',
+                            background: 'rgba(122,158,66,0.16)',
+                            color: '#a3c34d',
+                            fontSize: '30px',
+                            fontWeight: 800,
+                            letterSpacing: '-1px',
+                        }}
                     >
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="22" y1="12" x2="18" y2="12" />
-                        <line x1="6" y1="12" x2="2" y2="12" />
-                        <line x1="12" y1="6" x2="12" y2="2" />
-                        <line x1="12" y1="22" x2="12" y2="18" />
-                    </svg>
+                        BF
+                    </div>
+                    <span
+                        style={{
+                            fontSize: '26px',
+                            letterSpacing: '6px',
+                            textTransform: 'uppercase',
+                            color: 'rgba(163,195,77,0.85)',
+                        }}
+                    >
+                        Battlefield 1942 · Online
+                    </span>
                 </div>
-                <h1
-                    style={{
-                        fontSize: '64px',
-                        fontWeight: 'bold',
-                        margin: '0',
-                        letterSpacing: '-2px'
-                    }}
-                >
-                    BF1942 COMMAND CENTER
-                </h1>
-                <p
-                    style={{
-                        fontSize: '32px',
-                        color: '#94A3B8', // Slate-400
-                        marginTop: '10px'
-                    }}
-                >
-                    Live Stats • Server Browser • Community
-                </p>
+
+                {/* Headline */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h1
+                        style={{
+                            fontSize: '88px',
+                            fontWeight: 800,
+                            margin: 0,
+                            lineHeight: 1.02,
+                            letterSpacing: '-3px',
+                        }}
+                    >
+                        Live Stats, Servers
+                        <br />& Community
+                    </h1>
+                    <p
+                        style={{
+                            fontSize: '30px',
+                            color: '#9fb08f',
+                            marginTop: '24px',
+                        }}
+                    >
+                        Server browser · Leaderboards · Wiki · Mods · bf1942.online
+                    </p>
+                </div>
             </div>
         ),
         {

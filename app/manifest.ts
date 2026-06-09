@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Battlefield 1942 community hub — live servers, player stats, leaderboards, wiki, and mods.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0f172a",
-    theme_color: "#0f172a",
+    background_color: "#060a04",
+    theme_color: "#060a04",
     orientation: "portrait-primary",
     categories: ["games", "sports"],
     icons: [
@@ -18,13 +18,14 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/x-icon",
       },
       {
-        src: "/icons/icon-192.png",
-        sizes: "192x192",
+        // Generated on-brand by app/apple-icon.tsx
+        src: "/apple-icon",
+        sizes: "180x180",
         type: "image/png",
-        purpose: "maskable",
       },
       {
-        src: "/icons/icon-512.png",
+        // Generated on-brand by app/icon.tsx
+        src: "/icon",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
