@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database, Ban, Eye } from "lucide-react"
+import { Loader2, Trash2, ShieldCheck, ShieldAlert, RotateCcw, AlertCircle, FileText, Save, Circle, Users, Map as MapIcon, Clock, Database, Ban, Eye, Gamepad2, CalendarPlus } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Textarea } from "@/components/ui/textarea"
@@ -44,7 +44,7 @@ function resolveDisplayName(server: WhitelistedServer): string {
         ? server.live_server_name!
         : labelIsReal
             ? server.server_name!
-            : "Unknown Server"
+            : server.port ? `${server.ip}:${server.port}` : server.ip
 }
 
 function StateBadge({ state }: { state: string | null }) {
@@ -131,12 +131,30 @@ function DetailsDialog({ server }: { server: WhitelistedServer }) {
 }
 
 function ServerNameCell({ server }: { server: WhitelistedServer }) {
-    const displayName = resolveDisplayName(server)
+    const liveIsReal = server.live_server_name && server.live_server_name.trim().length > 0
+    const labelIsReal = server.server_name
+        && server.server_name.trim().length > 0
+        && server.server_name !== "New Discovery"
     const ipPort = server.port ? `${server.ip}:${server.port}` : server.ip
+
     return (
         <div className="min-w-0">
-            <div className="font-medium text-sm truncate max-w-[220px]" title={displayName}>{displayName}</div>
-            <div className="text-xs text-muted-foreground font-mono">{ipPort}</div>
+            {liveIsReal ? (
+                <>
+                    <div className="font-medium text-sm truncate max-w-[220px]" title={server.live_server_name!}>{server.live_server_name}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{ipPort}</div>
+                </>
+            ) : labelIsReal ? (
+                <>
+                    <div className="font-medium text-sm truncate max-w-[220px]" title={server.server_name!}>{server.server_name}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{ipPort}</div>
+                </>
+            ) : (
+                <>
+                    <div className="font-medium text-sm font-mono" title={ipPort}>{ipPort}</div>
+                    <div className="text-[10px] text-muted-foreground/60 italic">name not yet polled</div>
+                </>
+            )}
             {server.admin_notes && (
                 <div className="text-[10px] text-muted-foreground italic truncate max-w-[220px] mt-0.5" title={server.admin_notes}>
                     {server.admin_notes}
@@ -230,10 +248,16 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                         <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Server</th>
                                         <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">State</th>
                                         <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><Gamepad2 className="h-3 w-3" />Gametype</span>
+                                        </th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
                                             <span className="flex items-center gap-1"><Users className="h-3 w-3" />Players</span>
                                         </th>
                                         <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
                                             <span className="flex items-center gap-1"><MapIcon className="h-3 w-3" />Map</span>
+                                        </th>
+                                        <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
+                                            <span className="flex items-center gap-1"><CalendarPlus className="h-3 w-3" />Discovered</span>
                                         </th>
                                         <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
                                             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Last Seen</span>
@@ -247,6 +271,11 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                             <td className="px-4 py-2.5"><ServerNameCell server={server} /></td>
                                             <td className="px-3 py-2.5"><StateBadge state={server.current_state} /></td>
                                             <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                {server.current_gametype
+                                                    ? server.current_gametype
+                                                    : <span className="text-muted-foreground/50">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
                                                 {server.current_player_count !== null && server.current_state !== 'OFFLINE'
                                                     ? `${server.current_player_count}/${server.current_max_players}`
                                                     : <span className="text-muted-foreground/50">—</span>}
@@ -255,6 +284,9 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                 {server.current_map && server.current_state !== 'OFFLINE'
                                                     ? <span className="truncate block" title={server.current_map}>{server.current_map}</span>
                                                     : <span className="text-muted-foreground/50">—</span>}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                                <span title={new Date(server.added_at).toLocaleString()}>{formatTimeAgo(new Date(server.added_at))}</span>
                                             </td>
                                             <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
                                                 {server.last_seen
