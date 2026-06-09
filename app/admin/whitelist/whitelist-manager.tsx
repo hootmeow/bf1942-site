@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { addWhitelistedServer, removeWhitelistedServer, toggleServerStatus, unignoreServer, updateServerDetails, blockServer, unblockServer } from "@/app/actions/whitelist"
 import type { WhitelistedServer } from "@/app/actions/whitelist"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,12 @@ import { Label } from "@/components/ui/label"
 interface WhitelistManagerProps {
     initialServers: WhitelistedServer[]
     isReadOnly?: boolean
+}
+
+interface GeoInfo {
+    country_code: string
+    city: string
+    country: string
 }
 
 function formatTimeAgo(date: Date): string {
@@ -130,7 +136,7 @@ function DetailsDialog({ server }: { server: WhitelistedServer }) {
     )
 }
 
-function ServerNameCell({ server }: { server: WhitelistedServer }) {
+function ServerNameCell({ server, geo }: { server: WhitelistedServer; geo?: GeoInfo | null }) {
     const liveIsReal = server.live_server_name && server.live_server_name.trim().length > 0
     const labelIsReal = server.server_name
         && server.server_name.trim().length > 0
@@ -155,6 +161,17 @@ function ServerNameCell({ server }: { server: WhitelistedServer }) {
                     <div className="text-[10px] text-muted-foreground/60 italic">name not yet polled</div>
                 </>
             )}
+            {geo && (
+                <div className="flex items-center gap-1 mt-0.5">
+                    <img
+                        src={`https://flagcdn.com/w20/${geo.country_code.toLowerCase()}.png`}
+                        srcSet={`https://flagcdn.com/w40/${geo.country_code.toLowerCase()}.png 2x`}
+                        alt={geo.country_code}
+                        className="h-3 w-auto rounded-[1px] object-contain"
+                    />
+                    <span className="text-[10px] text-muted-foreground">{geo.city}, {geo.country}</span>
+                </div>
+            )}
             {server.admin_notes && (
                 <div className="text-[10px] text-muted-foreground italic truncate max-w-[220px] mt-0.5" title={server.admin_notes}>
                     {server.admin_notes}
@@ -167,11 +184,34 @@ function ServerNameCell({ server }: { server: WhitelistedServer }) {
 export function WhitelistManager({ initialServers, isReadOnly = false }: WhitelistManagerProps) {
     const [isPending, startTransition] = useTransition()
     const [error, setError] = useState<string | null>(null)
+    const [geoCache, setGeoCache] = useState<Record<string, GeoInfo | null>>({})
 
     const activeServers = initialServers.filter(s => s.is_active && !s.is_ignored && !s.is_blocked)
     const inactiveServers = initialServers.filter(s => !s.is_active && !s.is_ignored && !s.is_blocked)
     const ignoredServers = initialServers.filter(s => s.is_ignored && !s.is_blocked)
     const blockedServers = initialServers.filter(s => s.is_blocked)
+
+    // Fetch geo for pending servers client-side so we can show country + city
+    useEffect(() => {
+        const missing = inactiveServers.map(s => s.ip).filter(ip => !(ip in geoCache))
+        if (missing.length === 0) return
+
+        Promise.allSettled(
+            missing.map(ip =>
+                fetch(`/api/geo?ip=${encodeURIComponent(ip)}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then((data): { ip: string; data: GeoInfo | null } => ({ ip, data }))
+                    .catch((): { ip: string; data: null } => ({ ip, data: null }))
+            )
+        ).then(results => {
+            const updates: Record<string, GeoInfo | null> = {}
+            results.forEach(r => {
+                if (r.status === "fulfilled") updates[r.value.ip] = r.value.data
+            })
+            setGeoCache(prev => ({ ...prev, ...updates }))
+        })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [inactiveServers.map(s => s.ip).join(",")])
 
     async function handleAddServer(formData: FormData) {
         setError(null)
@@ -268,7 +308,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                 <tbody className="divide-y divide-yellow-500/10">
                                     {inactiveServers.map((server) => (
                                         <tr key={server.ip} className="hover:bg-yellow-500/10 transition-colors">
-                                            <td className="px-4 py-2.5"><ServerNameCell server={server} /></td>
+                                            <td className="px-4 py-2.5"><ServerNameCell server={server} geo={geoCache[server.ip]} /></td>
                                             <td className="px-3 py-2.5"><StateBadge state={server.current_state} /></td>
                                             <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
                                                 {server.current_gametype

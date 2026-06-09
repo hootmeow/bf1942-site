@@ -5,6 +5,7 @@ import { isUserAdmin } from "@/lib/admin-auth"
 import { pool } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { notifyNewPendingServer } from "@/lib/discord"
 
 // Zod schema for input validation
 const AddServerSchema = z.object({
@@ -117,14 +118,23 @@ export async function addWhitelistedServer(formData: FormData) {
     const client = await pool.connect()
     try {
         await client.query(
-            `INSERT INTO whitelisted_servers (ip, server_name, added_by) 
+            `INSERT INTO whitelisted_servers (ip, server_name, added_by)
              VALUES ($1, $2, $3)
-             ON CONFLICT (ip) DO UPDATE SET 
+             ON CONFLICT (ip) DO UPDATE SET
                 server_name = EXCLUDED.server_name,
                 is_active = TRUE,
                 is_ignored = FALSE`,
             [ip, name, user.name || "Admin"]
         )
+
+        // Fire Discord notification (non-blocking, failure is tolerated)
+        notifyNewPendingServer({
+            ip,
+            serverName: name || null,
+            addedBy: user.name || "Admin",
+            isAutoDiscovered: false,
+        }).catch(() => {})
+
         revalidatePath("/admin/whitelist")
         return { success: true }
     } catch (e: any) {
