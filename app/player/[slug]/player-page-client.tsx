@@ -42,8 +42,30 @@ import { getThemeClasses } from "@/components/theme-picker";
 import { trackEvent } from "@/lib/analytics";
 import { WarStoryCard } from "@/components/war-story-card";
 import { PlayerMatchHistory } from "@/components/player-match-history";
+import { SectionHeader } from "@/components/section-header";
 import { BookOpen, Flame } from "lucide-react";
 import { ImageIcon as GalleryIcon, MapPin } from "lucide-react";
+
+// Sticky in-page navigation for the (very long) profile. Anchors smooth-scroll
+// to each section; the row scrolls horizontally on small screens.
+function ProfileSectionNav({ sections }: { sections: { id: string; label: string }[] }) {
+  if (sections.length === 0) return null;
+  return (
+    <nav className="sticky top-14 sm:top-16 z-20 rounded-xl border border-[#1e2a14] bg-[#060a04]/90 px-2 py-1.5 backdrop-blur">
+      <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {sections.map((s) => (
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            className="whitespace-nowrap rounded-full border border-[#1e2a14] bg-[#0a0f06] px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            {s.label}
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+}
 
 // --- Interfaces ---
 interface PlayerInfo {
@@ -519,6 +541,19 @@ export default function PlayerPageClient({
 
   const themeClass = getThemeClasses(player_info.profile_theme || "default");
 
+  const hasBehaviour = !!(sessions || completionRate || scoreDeath || serverLoyalty || (comeback && comeback.total_absences > 0));
+  const hasProfileContent = !!(profile.war_stories?.length || player_info.gallery_urls?.length || player_info.favorite_maps?.length);
+  const navSections = [
+    { id: "overview", label: "Overview" },
+    { id: "activity", label: "Activity" },
+    { id: "playstyle", label: "Playstyle" },
+    ...(mapPerformance && mapPerformance.length > 0 ? [{ id: "maps", label: "Maps" }] : []),
+    { id: "rankings", label: "Rankings" },
+    { id: "social", label: "Social" },
+    ...(hasBehaviour ? [{ id: "behaviour", label: "Behaviour" }] : []),
+    ...(hasProfileContent ? [{ id: "profile-content", label: "Profile" }] : []),
+  ];
+
   return (
     <div className={`space-y-6 ${themeClass}`}>
       {/* JSON-LD Structured Data */}
@@ -673,7 +708,7 @@ export default function PlayerPageClient({
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:justify-end">
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
@@ -796,13 +831,16 @@ export default function PlayerPageClient({
         </div>
       </div>
 
+      {/* Sticky in-page navigation */}
+      <ProfileSectionNav sections={navSections} />
+
       {/* Advanced Stats: Skill Rating */}
       {advancedProfile?.skill_rating && (
         <SkillRatingCard rating={advancedProfile.skill_rating} />
       )}
 
       {/* Stats Side-by-Side Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div id="overview" className="grid grid-cols-1 lg:grid-cols-3 gap-6 scroll-mt-32">
       {/* Lifetime Stats */}
       <Card className="lg:col-span-2 border-border/60 overflow-hidden">
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 via-transparent to-transparent">
@@ -951,16 +989,13 @@ export default function PlayerPageClient({
       )}
 
       {/* Activity Section Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-10 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-500/20 flex-shrink-0" />
-        <div className="p-2 rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/20">
-          <TrendingUp className="h-5 w-5 text-emerald-500" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Activity Patterns</h2>
-          <p className="text-sm text-muted-foreground">When and how often you play</p>
-        </div>
-      </div>
+      <SectionHeader
+        id="activity"
+        accent="emerald"
+        icon={TrendingUp}
+        title="Activity Patterns"
+        subtitle="When and how often you play"
+      />
 
       {/* Activity Charts Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -1021,22 +1056,25 @@ export default function PlayerPageClient({
             </CardContent>
           </Card>
         ) : (
-          <div className="lg:col-span-2" />
+          <Card className="lg:col-span-2 border-border/60 flex items-center justify-center p-8 bg-muted/10">
+            <div className="text-center text-muted-foreground">
+              <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm font-medium">Not enough history yet</p>
+              <p className="text-xs mt-1">Performance trends appear after a few more rounds.</p>
+            </div>
+          </Card>
         )}
         <PlayerRivals playerId={player_info.player_id} />
       </div>
 
       {/* Playstyle Section Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-10 rounded-full bg-gradient-to-b from-purple-500 to-purple-500/20 flex-shrink-0" />
-        <div className="p-2 rounded-lg bg-purple-500/10 ring-1 ring-purple-500/20">
-          <Map className="h-5 w-5 text-purple-500" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Playstyle</h2>
-          <p className="text-sm text-muted-foreground">Your preferred maps, servers, and teams</p>
-        </div>
-      </div>
+      <SectionHeader
+        id="playstyle"
+        accent="purple"
+        icon={Map}
+        title="Playstyle"
+        subtitle="Your preferred maps, servers, and teams"
+      />
 
       {/* Team Preference, Gamemode, Maps, Servers Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
@@ -1133,46 +1171,37 @@ export default function PlayerPageClient({
       {/* Map Performance Section */}
       {mapPerformance && mapPerformance.length > 0 && (
         <>
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-10 rounded-full bg-gradient-to-b from-primary to-primary/20 flex-shrink-0" />
-            <div className="p-2 rounded-lg bg-primary/10 ring-1 ring-primary/20">
-              <Map className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">Map Performance</h2>
-              <p className="text-sm text-muted-foreground">Your stats breakdown across every map</p>
-            </div>
-          </div>
+          <SectionHeader
+            id="maps"
+            accent="primary"
+            icon={Map}
+            title="Map Performance"
+            subtitle="Your stats breakdown across every map"
+          />
 
           <PlayerMapPerformance stats={mapPerformance} />
         </>
       )}
 
       {/* Server Rankings Section */}
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-10 rounded-full bg-gradient-to-b from-amber-500 to-amber-500/20 flex-shrink-0" />
-        <div className="p-2 rounded-lg bg-amber-500/10 ring-1 ring-amber-500/20">
-          <Trophy className="h-5 w-5 text-amber-500" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Server Rankings</h2>
-          <p className="text-sm text-muted-foreground">Your rank on each server you&apos;ve played</p>
-        </div>
-      </div>
+      <SectionHeader
+        id="rankings"
+        accent="amber"
+        icon={Trophy}
+        title="Server Rankings"
+        subtitle="Your rank on each server you've played"
+      />
 
       <PlayerServerRanks playerName={player_info.last_known_name} />
 
       {/* Social & History Section Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-10 rounded-full bg-gradient-to-b from-blue-500 to-blue-500/20 flex-shrink-0" />
-        <div className="p-2 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/20">
-          <Users className="h-5 w-5 text-blue-500" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Social & History</h2>
-          <p className="text-sm text-muted-foreground">Sessions, teammates, and recent matches</p>
-        </div>
-      </div>
+      <SectionHeader
+        id="social"
+        accent="blue"
+        icon={Users}
+        title="Social & History"
+        subtitle="Sessions, teammates, and recent matches"
+      />
 
       {/* Social: Battle Buddies, Recent Rounds, Rank History */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -1279,16 +1308,13 @@ export default function PlayerPageClient({
       {/* ── Features 4-8: New Stat Sections ── */}
       {(sessions || completionRate || scoreDeath || serverLoyalty || (comeback && comeback.total_absences > 0)) && (
         <>
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-10 rounded-full bg-gradient-to-b from-cyan-500 to-cyan-500/20 flex-shrink-0" />
-            <div className="p-2 rounded-lg bg-cyan-500/10 ring-1 ring-cyan-500/20">
-              <BarChart className="h-5 w-5 text-cyan-500" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">Behaviour & Efficiency</h2>
-              <p className="text-sm text-muted-foreground">Session patterns, survival habits, and server loyalty</p>
-            </div>
-          </div>
+          <SectionHeader
+            id="behaviour"
+            accent="cyan"
+            icon={BarChart}
+            title="Behaviour & Efficiency"
+            subtitle="Session patterns, survival habits, and server loyalty"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Feature 4: Sessions */}
@@ -1467,16 +1493,13 @@ export default function PlayerPageClient({
       {/* Profile Content */}
       {(profile.war_stories?.length || player_info.gallery_urls?.length || player_info.favorite_maps?.length) ? (
         <>
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-10 rounded-full bg-gradient-to-b from-pink-500 to-pink-500/20 flex-shrink-0" />
-            <div className="p-2 rounded-lg bg-pink-500/10 ring-1 ring-pink-500/20">
-              <BookOpen className="h-5 w-5 text-pink-500" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">Player Profile</h2>
-              <p className="text-sm text-muted-foreground">Stories, screenshots, and personal touches</p>
-            </div>
-          </div>
+          <SectionHeader
+            id="profile-content"
+            accent="pink"
+            icon={BookOpen}
+            title="Player Profile"
+            subtitle="Stories, screenshots, and personal touches"
+          />
 
           {profile.war_stories && profile.war_stories.length > 0 && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
