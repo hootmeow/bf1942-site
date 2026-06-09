@@ -76,7 +76,7 @@ export default async function PlayerPage(props: { params: Promise<{ slug: string
       "name": playerName,
       "identifier": String(pi?.player_id ?? ""),
       "description": ls
-        ? `BF1942 player with ${ls.total_rounds_played} rounds, ${ls.total_kills} kills, and a ${ls.overall_kdr.toFixed(2)} K/D ratio.`
+        ? `BF1942 player with ${ls.total_rounds_played} rounds, ${ls.total_kills} kills, and a ${ls.overall_kdr?.toFixed(2) ?? '0.00'} K/D ratio.`
         : `Battlefield 1942 player profile for ${playerName}.`,
       ...(pi?.iso_country_code ? { "nationality": pi.iso_country_code } : {}),
     },

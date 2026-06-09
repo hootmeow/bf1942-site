@@ -41,7 +41,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         if (res.ok) {
             const data = await res.json();
             if (data.ok && data.lifetime_stats) {
-                kd = data.lifetime_stats.overall_kdr.toFixed(2);
+                kd = data.lifetime_stats.overall_kdr != null ? data.lifetime_stats.overall_kdr.toFixed(2) : '--';
                 score = data.lifetime_stats.total_score.toLocaleString();
                 // Try to guess rank from score? Or just show "Veteran"
                 if (data.lifetime_stats.total_score > 100000) rank = "General";
