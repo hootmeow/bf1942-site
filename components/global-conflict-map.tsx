@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { GeoData } from "@/hooks/use-server-geo";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Map as MapIcon, RefreshCw, Server, Map as MapLucide, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Map as MapLucide, ZoomIn, ZoomOut, Maximize2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LiveServer {
@@ -143,6 +143,7 @@ interface Cluster {
     y: number;
     servers: LiveServer[];
     geo: GeoData;
+    players: number;
 }
 
 // Helper to validate coordinates are valid and meaningful
@@ -180,16 +181,28 @@ function guessGeoFromName(name: string): GeoData | null {
 const MAP_OFFSET_X = 0; // Adjust if markers are horizontally offset
 const MAP_OFFSET_Y = 0; // Adjust if markers are vertically offset
 
-// Continent colors for server markers
-const CONTINENT_COLORS: Record<string, { bg: string; border: string; shadow: string; text: string }> = {
-    'North America': { bg: 'bg-blue-500', border: 'border-blue-300', shadow: 'shadow-[0_0_15px_rgba(59,130,246,1)]', text: 'text-blue-400' },
-    'South America': { bg: 'bg-green-500', border: 'border-green-300', shadow: 'shadow-[0_0_15px_rgba(34,197,94,1)]', text: 'text-green-400' },
-    'Europe': { bg: 'bg-purple-500', border: 'border-purple-300', shadow: 'shadow-[0_0_15px_rgba(168,85,247,1)]', text: 'text-purple-400' },
-    'Asia': { bg: 'bg-red-500', border: 'border-red-300', shadow: 'shadow-[0_0_15px_rgba(239,68,68,1)]', text: 'text-red-400' },
-    'Africa': { bg: 'bg-yellow-500', border: 'border-yellow-300', shadow: 'shadow-[0_0_15px_rgba(234,179,8,1)]', text: 'text-yellow-400' },
-    'Oceania': { bg: 'bg-cyan-500', border: 'border-cyan-300', shadow: 'shadow-[0_0_15px_rgba(6,182,212,1)]', text: 'text-cyan-400' },
-    'Unknown': { bg: 'bg-gray-500', border: 'border-gray-300', shadow: 'shadow-[0_0_15px_rgba(107,114,128,1)]', text: 'text-gray-400' },
+// Continent marker styles. NOTE: every Tailwind class is a complete literal
+// string so the JIT compiler picks them up (interpolated classes like
+// `${x}/10` are NOT generated and silently break — that was the old bug).
+interface ContinentStyle {
+    dot: string;
+    glow: string;
+    ring: string;
+    text: string;
+    chip: string;
+    legend: string;
+}
+const CONTINENT_STYLE: Record<string, ContinentStyle> = {
+    'North America': { dot: 'bg-sky-400', glow: 'shadow-[0_0_10px_rgba(56,189,248,0.6)]', ring: 'ring-sky-300/50', text: 'text-sky-300', chip: 'bg-sky-500/10 border-sky-500/30', legend: 'bg-sky-400' },
+    'South America': { dot: 'bg-emerald-400', glow: 'shadow-[0_0_10px_rgba(52,211,153,0.6)]', ring: 'ring-emerald-300/50', text: 'text-emerald-300', chip: 'bg-emerald-500/10 border-emerald-500/30', legend: 'bg-emerald-400' },
+    'Europe': { dot: 'bg-violet-400', glow: 'shadow-[0_0_10px_rgba(167,139,250,0.6)]', ring: 'ring-violet-300/50', text: 'text-violet-300', chip: 'bg-violet-500/10 border-violet-500/30', legend: 'bg-violet-400' },
+    'Asia': { dot: 'bg-rose-400', glow: 'shadow-[0_0_10px_rgba(251,113,133,0.6)]', ring: 'ring-rose-300/50', text: 'text-rose-300', chip: 'bg-rose-500/10 border-rose-500/30', legend: 'bg-rose-400' },
+    'Africa': { dot: 'bg-amber-400', glow: 'shadow-[0_0_10px_rgba(251,191,36,0.6)]', ring: 'ring-amber-300/50', text: 'text-amber-300', chip: 'bg-amber-500/10 border-amber-500/30', legend: 'bg-amber-400' },
+    'Oceania': { dot: 'bg-cyan-400', glow: 'shadow-[0_0_10px_rgba(34,211,238,0.6)]', ring: 'ring-cyan-300/50', text: 'text-cyan-300', chip: 'bg-cyan-500/10 border-cyan-500/30', legend: 'bg-cyan-400' },
+    'Unknown': { dot: 'bg-slate-400', glow: 'shadow-[0_0_10px_rgba(148,163,184,0.55)]', ring: 'ring-slate-300/50', text: 'text-slate-300', chip: 'bg-slate-500/10 border-slate-500/30', legend: 'bg-slate-400' },
 };
+
+const CONTINENT_ORDER = ['North America', 'South America', 'Europe', 'Africa', 'Asia', 'Oceania', 'Unknown'];
 
 // Helper to determine continent from country code
 function getContinentFromCountryCode(countryCode: string): string {
@@ -211,72 +224,67 @@ function getContinentFromCountryCode(countryCode: string): string {
 
 export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
     const [geoMap, setGeoMap] = useState<Record<string, GeoData>>({});
-    const [loading, setLoading] = useState(true);
-    const [cacheCleared, setCacheCleared] = useState(false);
+    const [locating, setLocating] = useState(true);
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [activeId, setActiveId] = useState<string | null>(null);
 
-    // Mouse drag handlers for panning
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if (zoom > 1) {
-            setIsDragging(true);
-            setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-        }
+    const mapRef = useRef<HTMLDivElement>(null);
+    const dragStart = useRef({ x: 0, y: 0 });
+    const movedRef = useRef(false);
+    const fetchedRef = useRef<Set<string>>(new Set(Object.keys(STATIC_GEO_CACHE)));
+
+    // Pointer-based pan (works for both mouse and touch)
+    const handlePointerDown = (e: React.PointerEvent) => {
+        // Reset on every press so a previous drag can't suppress a later tap.
+        movedRef.current = false;
+        if (zoom <= 1) return;
+        setIsDragging(true);
+        dragStart.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
     };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (isDragging && zoom > 1) {
-            setPan({
-                x: e.clientX - dragStart.x,
-                y: e.clientY - dragStart.y
-            });
-        }
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!isDragging || zoom <= 1) return;
+        const nx = e.clientX - dragStart.current.x;
+        const ny = e.clientY - dragStart.current.y;
+        if (Math.abs(nx - pan.x) > 2 || Math.abs(ny - pan.y) > 2) movedRef.current = true;
+        setPan({ x: nx, y: ny });
     };
+    const handlePointerUp = () => setIsDragging(false);
 
-    const handleMouseUp = () => {
-        setIsDragging(false);
-    };
+    // Scroll-wheel zoom (non-passive listener so we can preventDefault page scroll)
+    useEffect(() => {
+        const el = mapRef.current;
+        if (!el) return;
+        const onWheel = (e: WheelEvent) => {
+            e.preventDefault();
+            setZoom(z => Math.min(4, Math.max(0.5, +(z + (e.deltaY < 0 ? 0.3 : -0.3)).toFixed(2))));
+        };
+        el.addEventListener("wheel", onWheel, { passive: false });
+        return () => el.removeEventListener("wheel", onWheel);
+    }, []);
 
-    const handleMouseLeave = () => {
-        setIsDragging(false);
-    };
+    // Reset pan whenever we return to (or below) 1x so the map can't get stuck off-screen
+    useEffect(() => {
+        if (zoom <= 1) setPan({ x: 0, y: 0 });
+    }, [zoom]);
 
-    // Clear cache function
-    const clearGeoCache = () => {
-        try {
-            localStorage.removeItem("server_geo_full_cache");
-            // Clear memory cache except static entries
-            Object.keys(GEO_CACHE).forEach(key => {
-                if (!STATIC_GEO_CACHE[key]) {
-                    delete GEO_CACHE[key];
-                }
-            });
-            setGeoMap({});
-            setCacheCleared(true);
-            setTimeout(() => setCacheCleared(false), 3000);
-            console.log("[Map] Cache cleared, will refetch all coordinates");
-        } catch (e) {
-            console.error("Failed to clear cache", e);
-        }
-    };
-
-    // 1. Bulk Fetch Geo Data (uses backend caching)
+    // Bulk-fetch geo data. Depends only on `servers`; a ref tracks which IPs we've
+    // already requested so we never loop or refetch (the old effect depended on
+    // geoMap and re-ran on every update).
     useEffect(() => {
         let mounted = true;
 
         async function loadAll() {
-            setLoading(true);
+            setLocating(true);
             const uniqueIPs = Array.from(new Set(servers.map(s => s.ip)));
-
-            // Filter out already-cached IPs
-            const uncachedIPs = uniqueIPs.filter(ip => !geoMap[ip]);
+            const uncachedIPs = uniqueIPs.filter(ip => !fetchedRef.current.has(ip));
 
             if (uncachedIPs.length > 0) {
+                uncachedIPs.forEach(ip => fetchedRef.current.add(ip));
                 const results = await fetchGeoForIPs(uncachedIPs);
 
-                // FALLBACK: Guess from server name for any that still failed
+                // FALLBACK: guess from server name for any that still failed
                 for (const ip of uncachedIPs) {
                     if (!results[ip]) {
                         const server = servers.find(s => s.ip === ip);
@@ -294,91 +302,77 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                 }
             }
 
-            if (mounted) setLoading(false);
+            if (mounted) setLocating(false);
         }
 
         if (servers.length > 0) {
             loadAll();
         } else {
-            setLoading(false);
+            setLocating(false);
         }
 
         return () => { mounted = false; };
-    }, [servers, geoMap]); // depend on servers and geoMap
+    }, [servers]);
 
-    // 2. Group into Clusters
+    // Group servers into geographic clusters
     const clusters = useMemo(() => {
         const groups: Record<string, Cluster> = {};
 
         servers.forEach(server => {
             const geo = geoMap[server.ip];
             if (!geo || geo.latitude == null || geo.longitude == null) return;
+            if (!isValidCoordinates(geo.latitude, geo.longitude)) return;
 
-            // Validate coordinates before clustering
-            if (!isValidCoordinates(geo.latitude, geo.longitude)) {
-                console.warn(`[Map] Skipping server ${server.current_server_name} (${server.ip}) - invalid coords: ${geo.latitude}, ${geo.longitude}`);
-                return;
-            }
-
-            // Use more precise coordinates for clustering - only group if at exact same location
-            // 0.01 degree is roughly 1km - close enough to be "same location"
-            const latKey = geo.latitude.toFixed(2);
-            const lonKey = geo.longitude.toFixed(2);
-            const key = `${latKey},${lonKey}`;
+            // 0.01 degree ≈ 1km — close enough to be the "same location"
+            const key = `${geo.latitude.toFixed(2)},${geo.longitude.toFixed(2)}`;
 
             if (!groups[key]) {
-                // Equirectangular Projection with offset adjustments
+                // Equirectangular projection
                 const x = ((geo.longitude + 180) / 360) * 100 + MAP_OFFSET_X;
                 const y = ((90 - geo.latitude) / 180) * 100 + MAP_OFFSET_Y;
-
-                console.log(`[Map] Plotting ${server.current_server_name}: ${geo.city}, ${geo.country} (lat:${geo.latitude.toFixed(2)}, lng:${geo.longitude.toFixed(2)}) -> x:${x.toFixed(1)}%, y:${y.toFixed(1)}%`);
-
-                groups[key] = {
-                    id: key,
-                    x: x,
-                    y: y,
-                    servers: [],
-                    geo: geo
-                };
+                groups[key] = { id: key, x, y, servers: [], geo, players: 0 };
             }
             groups[key].servers.push(server);
+            groups[key].players += server.current_player_count;
         });
 
-        return Object.values(groups);
+        // Larger clusters render last so they sit on top
+        return Object.values(groups).sort((a, b) => a.servers.length - b.servers.length);
     }, [servers, geoMap]);
 
+    const totalPlayers = useMemo(
+        () => clusters.reduce((sum, c) => sum + c.players, 0),
+        [clusters]
+    );
+
+    // Only show continents that are actually present, in a stable order
+    const presentContinents = useMemo(() => {
+        const set = new Set<string>();
+        clusters.forEach(c => set.add(getContinentFromCountryCode(c.geo.country_code)));
+        return CONTINENT_ORDER.filter(c => set.has(c));
+    }, [clusters]);
 
     return (
-        <div className="relative rounded-xl border border-blue-500/30 bg-[#0a0f1c] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden">
-            {/* Header Overlay */}
-            <div className="absolute top-0 left-0 p-4 z-10 pointer-events-none">
-                <div>
-                    <h2 className="text-xl font-bold tracking-widest text-blue-400 uppercase drop-shadow-[0_0_5px_rgba(59,130,246,0.5)] flex items-center gap-2">
-                        <MapLucide className="h-5 w-5" />
-                        Global Conflict Map
-                    </h2>
-                    <p className="text-[10px] text-blue-500/60 font-mono mt-1">
-                        LIVE GEOLOCATION FEED v2.0
-                    </p>
-                    <Button
-                        onClick={clearGeoCache}
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2 text-[10px] h-6 px-2 pointer-events-auto text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                    >
-                        <RefreshCw className={cn("h-3 w-3 mr-1", cacheCleared && "animate-spin")} />
-                        Clear Cache
-                    </Button>
-                </div>
+        <div className="relative overflow-hidden rounded-2xl border border-[#1e2a14] bg-[#070b05] shadow-[0_24px_60px_-24px_rgba(0,0,0,0.6)]">
+            {/* Header */}
+            <div className="pointer-events-none absolute left-0 top-0 z-10 p-4">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-primary">
+                    <MapLucide className="h-4 w-4" />
+                    Global Conflict Map
+                </h2>
+                <p className="mt-1 font-mono text-[10px] text-muted-foreground/50">
+                    {clusters.length} location{clusters.length !== 1 ? "s" : ""} · {totalPlayers} player{totalPlayers !== 1 ? "s" : ""} live
+                </p>
             </div>
 
-            {/* Zoom Controls */}
-            <div className="absolute top-20 left-4 z-20 flex flex-col gap-2 pointer-events-auto">
+            {/* Zoom controls */}
+            <div className="absolute right-4 top-4 z-20 flex flex-col gap-2">
                 <Button
                     onClick={() => setZoom(z => Math.min(z + 0.5, 4))}
                     variant="outline"
                     size="icon"
-                    className="bg-black/40 backdrop-blur border-blue-500/20 text-blue-400 hover:bg-blue-500/20"
+                    aria-label="Zoom in"
+                    className="h-9 w-9 border-primary/20 bg-black/40 text-primary/80 backdrop-blur hover:bg-primary/15 hover:text-primary"
                     disabled={zoom >= 4}
                 >
                     <ZoomIn className="h-4 w-4" />
@@ -387,7 +381,8 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                     onClick={() => setZoom(z => Math.max(z - 0.5, 0.5))}
                     variant="outline"
                     size="icon"
-                    className="bg-black/40 backdrop-blur border-blue-500/20 text-blue-400 hover:bg-blue-500/20"
+                    aria-label="Zoom out"
+                    className="h-9 w-9 border-primary/20 bg-black/40 text-primary/80 backdrop-blur hover:bg-primary/15 hover:text-primary"
                     disabled={zoom <= 0.5}
                 >
                     <ZoomOut className="h-4 w-4" />
@@ -396,139 +391,167 @@ export function GlobalConflictMap({ servers }: { servers: LiveServer[] }) {
                     onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
                     variant="outline"
                     size="icon"
-                    className="bg-black/40 backdrop-blur border-blue-500/20 text-blue-400 hover:bg-blue-500/20"
+                    aria-label="Reset view"
+                    className="h-9 w-9 border-primary/20 bg-black/40 text-primary/80 backdrop-blur hover:bg-primary/15 hover:text-primary"
                 >
                     <Maximize2 className="h-4 w-4" />
                 </Button>
-                <div className="text-[10px] text-center text-blue-400 font-mono bg-black/40 px-2 py-1 rounded">
+                <div className="rounded bg-black/40 px-2 py-1 text-center font-mono text-[10px] text-primary/80 backdrop-blur">
                     {(zoom * 100).toFixed(0)}%
                 </div>
             </div>
 
-            {/* Map Container - SVG Based for perfect alignment */}
+            {/* Map viewport */}
             <div
-                className={cn("relative w-full aspect-[2/1] bg-[#0f172a] rounded-lg overflow-hidden border border-slate-800",
+                ref={mapRef}
+                className={cn(
+                    "relative aspect-[2/1] w-full overflow-hidden bg-[#0a0f06]",
                     zoom > 1 ? (isDragging ? "cursor-grabbing" : "cursor-grab") : "cursor-default"
                 )}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseLeave}
+                style={{ touchAction: zoom > 1 ? "none" : "auto" }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                onClick={() => { if (!movedRef.current) setActiveId(null); }}
             >
-
-                {/* Zoomable/Pannable Inner Container */}
+                {/* Zoomable / pannable inner layer */}
                 <div
                     className="absolute inset-0 origin-center transition-transform duration-200"
-                    style={{
-                        transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`
-                    }}
+                    style={{ transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)` }}
                 >
-                    {/* 1. Tactical Grid Background */}
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(30,41,59,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(30,41,59,0.3)_1px,transparent_1px)] bg-[size:4%_8%] pointer-events-none"></div>
+                    {/* Tactical grid */}
+                    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(122,158,66,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(122,158,66,0.08)_1px,transparent_1px)] bg-[size:4%_8%]" />
 
-                {/* 2. Equirectangular Map Image (Strict 2:1 Ratio to match projection)
-                    Using reliable Wikimedia Commons equirectangular projection
-                */}
-                <div
-                    className="absolute inset-0 pointer-events-none transition-opacity duration-1000"
-                    style={{
-                        backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg')`,
-                        backgroundSize: '100% 100%',
-                        backgroundPosition: '0 0',
-                        backgroundRepeat: 'no-repeat',
-                        // Brighter styling for better visibility
-                        filter: 'grayscale(100%) brightness(0.7) sepia(1) hue-rotate(180deg) saturate(1.5) contrast(1.2)',
-                        opacity: 0.85
-                    }}
-                ></div>
+                    {/* Equirectangular world map (strict 2:1 to match projection) */}
+                    <div
+                        className="pointer-events-none absolute inset-0"
+                        style={{
+                            backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg')`,
+                            backgroundSize: "100% 100%",
+                            backgroundRepeat: "no-repeat",
+                            // Neutral-dark landmass with a faint olive cast to sit under olive chrome
+                            filter: "grayscale(100%) brightness(0.5) sepia(0.35) hue-rotate(35deg) saturate(0.7) contrast(1.05)",
+                            opacity: 0.7,
+                        }}
+                    />
+                    {/* Subtle vignette for depth */}
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.45))]" />
 
-                {/* 3. Coastline Glow (Optional, via Drop Shadow on image container if we had transparency, 
-                    but simpler to just style the image itself) */}
+                    {/* Clusters */}
+                    {clusters.map(cluster => {
+                        const count = cluster.servers.length;
+                        const sizePx = count === 1 ? 12 : 12 + (Math.min(count, 5) * 4) + (Math.max(0, count - 5) * 2);
+                        const isSingle = count === 1;
+                        const continent = getContinentFromCountryCode(cluster.geo.country_code);
+                        const style = CONTINENT_STYLE[continent];
+                        const open = activeId === cluster.id;
 
-                {/* 3. Plot Clusters */}
-                {clusters.map(cluster => {
-                    const count = cluster.servers.length;
-                    // Base size 12px, add 4px per server up to 5 servers, then slower scaling
-                    const sizePx = count === 1 ? 12 : 12 + (Math.min(count, 5) * 4) + (Math.max(0, count - 5) * 2);
-                    const isSingleServer = count === 1;
+                        const dot = (
+                            <>
+                                {/* Ping pulse */}
+                                <span
+                                    className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-60", style.dot)}
+                                    style={{ animationDuration: "1.8s" }}
+                                />
+                                {/* Core */}
+                                <span
+                                    className={cn(
+                                        "relative inline-flex items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 z-30",
+                                        style.dot, style.glow, style.ring
+                                    )}
+                                    style={{ width: `${sizePx}px`, height: `${sizePx}px` }}
+                                >
+                                    {count > 1 && count}
+                                </span>
+                            </>
+                        );
 
-                    // Determine continent color
-                    const continent = getContinentFromCountryCode(cluster.geo.country_code);
-                    const colors = CONTINENT_COLORS[continent];
-
-                    const clusterDot = (
-                        <>
-                            {/* Radar Scan Effect */}
-                            <div className={`absolute -inset-2 rounded-full border ${colors.border}/30 animate-[spin_3s_linear_infinite] opacity-0 group-hover:opacity-100`}></div>
-
-                            {/* Pulse - Continent Color */}
-                            <span
-                                className={`absolute inline-flex h-full w-full animate-ping rounded-full ${colors.bg} opacity-75`}
-                                style={{ animationDuration: '1.5s' }}
-                            ></span>
-
-                            {/* Core Dot */}
-                            <span
-                                className={`relative inline-flex items-center justify-center rounded-full ${colors.bg} ${colors.shadow} border-2 ${colors.border} text-[10px] font-bold text-white z-30`}
-                                style={{ width: `${sizePx}px`, height: `${sizePx}px` }}
+                        return (
+                            <div
+                                key={cluster.id}
+                                className="group absolute z-20 cursor-pointer"
+                                style={{
+                                    left: `${cluster.x}%`,
+                                    top: `${cluster.y}%`,
+                                    transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (movedRef.current) return;
+                                    if (!isSingle) setActiveId(prev => (prev === cluster.id ? null : cluster.id));
+                                }}
                             >
-                                {count > 1 && count}
-                            </span>
-                        </>
-                    );
+                                {isSingle ? (
+                                    <Link
+                                        href={`/servers/${cluster.servers[0].server_id}`}
+                                        className="block"
+                                        onClick={(e) => { if (movedRef.current) e.preventDefault(); }}
+                                    >
+                                        {dot}
+                                    </Link>
+                                ) : (
+                                    dot
+                                )}
 
-                    return (
-                        <div
-                            key={cluster.id}
-                            className="absolute group z-20 cursor-pointer"
-                            style={{
-                                left: `${cluster.x}%`,
-                                top: `${cluster.y}%`,
-                                transform: `translate(-50%, -50%) scale(${1 / zoom})`
-                            }}
-                        >
-                            {isSingleServer ? (
-                                <Link href={`/servers/${cluster.servers[0].server_id}`} className="block">
-                                    {clusterDot}
-                                </Link>
-                            ) : (
-                                clusterDot
-                            )}
-
-                            {/* Location Label (Always visible for large clusters?) No, keeps clutter down. tooltip only. */}
-
-                            {/* Tooltip */}
-                            <div className="absolute left-1/2 bottom-[140%] mb-2 -translate-x-1/2 hidden group-hover:block z-50 min-w-[220px]">
-                                <div className={`bg-slate-900/95 backdrop-blur text-white text-xs rounded border ${colors.border}/30 shadow-2xl overflow-hidden`}>
-                                    <div className={`px-3 py-2 ${colors.bg}/10 border-b ${colors.border}/20 font-bold flex justify-between items-center ${colors.text} uppercase tracking-wider`}>
-                                        <span className="flex items-center gap-2"><MapLucide className="h-3 w-3" /> {cluster.geo.city || "Unknown Grid"}</span>
-                                        <span className="text-xs">{count} Server{count !== 1 ? 's' : ''}</span>
+                                {/* Tooltip / details — hover on desktop, tap-toggle on touch */}
+                                <div
+                                    className={cn(
+                                        "absolute bottom-[140%] left-1/2 z-50 mb-2 min-w-[220px] -translate-x-1/2",
+                                        open ? "block" : "hidden group-hover:block"
+                                    )}
+                                >
+                                    <div className="overflow-hidden rounded-lg border border-[#1e2a14] bg-[#070b05]/95 text-xs text-white shadow-2xl backdrop-blur">
+                                        <div className={cn("flex items-center justify-between border-b px-3 py-2 font-bold uppercase tracking-wider", style.chip, style.text)}>
+                                            <span className="flex items-center gap-2"><MapLucide className="h-3 w-3" /> {cluster.geo.city || "Unknown Grid"}</span>
+                                            <span className="text-[11px]">{count} server{count !== 1 ? "s" : ""}</span>
+                                        </div>
+                                        <div className="max-h-[200px] overflow-y-auto p-1">
+                                            {cluster.servers.map(s => (
+                                                <Link href={`/servers/${s.server_id}`} key={s.server_id} className="block">
+                                                    <div className="flex items-center justify-between rounded border-b border-dashed border-white/10 p-2 transition-colors last:border-0 hover:bg-primary/15">
+                                                        <span className="max-w-[130px] truncate font-medium text-slate-200">{s.current_server_name}</span>
+                                                        <Badge variant="outline" className="h-4 border-primary/30 bg-primary/10 font-mono text-[9px] text-primary">
+                                                            {s.current_player_count}/{s.current_max_players}
+                                                        </Badge>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div className="p-1 max-h-[200px] overflow-y-auto custom-scrollbar">
-                                        {cluster.servers.map(s => (
-                                            <Link href={`/servers/${s.server_id}`} key={s.server_id} className="block">
-                                                <div className="flex justify-between items-center p-2 hover:bg-green-500/20 rounded transition-colors border-b border-dashed border-white/10 last:border-0 cursor-pointer">
-                                                    <span className="truncate max-w-[130px] font-medium text-slate-200 hover:text-green-300">{s.current_server_name}</span>
-                                                    <Badge variant="outline" className="text-[9px] h-4 border-slate-600 font-mono text-green-400 bg-green-950/30">
-                                                        {s.current_player_count}/{s.current_max_players}
-                                                    </Badge>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
+                                    <div className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-[#070b05]/95" />
                                 </div>
-                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-slate-900/90 absolute left-1/2 -translate-x-1/2 top-full shadow-sm"></div>
                             </div>
+                        );
+                    })}
+                </div>
+
+                {/* Empty / locating state */}
+                {clusters.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="rounded-lg border border-[#1e2a14] bg-black/40 px-4 py-3 text-center backdrop-blur">
+                            <p className="text-sm font-medium text-muted-foreground">
+                                {locating ? "Locating active servers…" : "No servers to plot right now"}
+                            </p>
                         </div>
-                    );
-                })}
-                </div> {/* End Zoomable Container */}
+                    </div>
+                )}
             </div>
 
-
-            {/* Cyberpunk details */}
-            <div className="absolute bottom-2 left-4 text-[9px] font-mono text-blue-500/30">
-                CLUSTERS: {clusters.length} // TARGETS: {servers.length}
+            {/* Legend + hint footer */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#1e2a14] px-4 py-2.5">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    {presentContinents.map(continent => (
+                        <span key={continent} className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                            <span className={cn("h-2 w-2 rounded-full", CONTINENT_STYLE[continent].legend)} />
+                            {continent}
+                        </span>
+                    ))}
+                </div>
+                <span className="hidden items-center gap-1.5 font-mono text-[10px] text-muted-foreground/50 sm:flex">
+                    <Users className="h-3 w-3" />
+                    Scroll or pinch to zoom · drag to pan · tap a marker for details
+                </span>
             </div>
         </div>
     );

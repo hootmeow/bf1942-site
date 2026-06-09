@@ -74,13 +74,13 @@ export default function MapClient() {
         className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
         style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)" }}
       >
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-sky-500/6 blur-[90px] pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-primary/6 blur-[70px] pointer-events-none" />
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-500/[0.07] blur-[90px] pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-primary/[0.07] blur-[70px] pointer-events-none" />
 
         <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-sky-400 mb-4">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400 mb-4">
                 <Radio className="h-2.5 w-2.5 animate-pulse" />
                 Live Intelligence
               </span>
@@ -89,16 +89,16 @@ export default function MapClient() {
                 <span className="text-primary">Map</span>
               </h1>
               <p className="mt-3 text-slate-400 max-w-md text-sm leading-relaxed">
-                Live view of all active Battlefield 1942 servers worldwide. Click a location to see server details.
+                Live view of every Battlefield 1942 server worldwide. Tap a location to see who&apos;s online.
               </p>
             </div>
             <div className="flex items-center gap-6 font-mono">
               <div className="text-center">
                 <p className="text-2xl font-black text-primary tabular-nums">{servers.length}</p>
-                <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">Active Servers</p>
+                <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">Servers Tracked</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-black text-sky-400 tabular-nums">
+                <p className="text-2xl font-black text-emerald-400 tabular-nums">
                   {servers.reduce((sum, s) => sum + s.current_player_count, 0)}
                 </p>
                 <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">Players Online</p>
