@@ -5,6 +5,7 @@ import { isUserAdmin } from "@/lib/admin-auth"
 import { pool } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { logAdminAction } from "@/app/actions/audit-log-actions"
 
 async function ensureAdmin() {
     const session = await auth()
@@ -12,6 +13,7 @@ async function ensureAdmin() {
 
     const isAdmin = await isUserAdmin(session.user.email)
     if (!isAdmin) redirect("/")
+    return session.user
 }
 
 export async function getReviewQueue(status: string = 'pending', limit: number = 50) {
@@ -83,7 +85,7 @@ export async function reviewQueueItem(
     action: 'approve' | 'unrank' | 'flag_player' | 'blacklist_server' | 'dismiss',
     notes?: string
 ) {
-    await ensureAdmin()
+    const adminUser = await ensureAdmin()
     const client = await pool.connect()
     try {
         await client.query('BEGIN')
@@ -147,6 +149,14 @@ export async function reviewQueueItem(
         `, [newStatus, actionTaken, notes, queueId])
 
         await client.query('COMMIT')
+
+        logAdminAction(
+            adminUser?.id ?? "",
+            `integrity_${actionTaken}`,
+            item_type,
+            String(item_id),
+            { queue_id: queueId, notes: notes || undefined }
+        ).catch(() => {})
 
         revalidatePath('/admin/integrity')
         revalidatePath('/admin/review-queue')

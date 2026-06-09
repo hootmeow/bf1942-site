@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useTransition, useEffect } from "react"
-import { addWhitelistedServer, removeWhitelistedServer, toggleServerStatus, unignoreServer, updateServerDetails, blockServer, unblockServer } from "@/app/actions/whitelist"
+import { addWhitelistedServer, removeWhitelistedServer, toggleServerStatus, unignoreServer, updateServerDetails, blockServer, unblockServer, bulkWhitelistAction } from "@/app/actions/whitelist"
 import type { WhitelistedServer } from "@/app/actions/whitelist"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -185,6 +186,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
     const [isPending, startTransition] = useTransition()
     const [error, setError] = useState<string | null>(null)
     const [geoCache, setGeoCache] = useState<Record<string, GeoInfo | null>>({})
+    const [selectedIPs, setSelectedIPs] = useState<Set<string>>(new Set())
 
     const activeServers = initialServers.filter(s => s.is_active && !s.is_ignored && !s.is_blocked)
     const inactiveServers = initialServers.filter(s => !s.is_active && !s.is_ignored && !s.is_blocked)
@@ -212,6 +214,38 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
         })
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [inactiveServers.map(s => s.ip).join(",")])
+
+    const allPendingSelected = inactiveServers.length > 0 && inactiveServers.every(s => selectedIPs.has(s.ip))
+
+    function toggleSelect(ip: string) {
+        setSelectedIPs(prev => {
+            const next = new Set(prev)
+            next.has(ip) ? next.delete(ip) : next.add(ip)
+            return next
+        })
+    }
+
+    function toggleSelectAll() {
+        if (allPendingSelected) {
+            setSelectedIPs(prev => {
+                const next = new Set(prev)
+                inactiveServers.forEach(s => next.delete(s.ip))
+                return next
+            })
+        } else {
+            setSelectedIPs(prev => new Set([...prev, ...inactiveServers.map(s => s.ip)]))
+        }
+    }
+
+    async function handleBulkAction(action: 'approve' | 'ignore' | 'block') {
+        if (selectedIPs.size === 0) return
+        const label = action === 'approve' ? 'approve' : action === 'ignore' ? 'ignore' : 'block'
+        if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} ${selectedIPs.size} server(s)?`)) return
+        startTransition(async () => {
+            await bulkWhitelistAction(Array.from(selectedIPs), action)
+            setSelectedIPs(new Set())
+        })
+    }
 
     async function handleAddServer(formData: FormData) {
         setError(null)
@@ -279,12 +313,38 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                             <Badge className="bg-yellow-500 text-white">{inactiveServers.length}</Badge>
                         </CardTitle>
                         <CardDescription>Servers seen by the ingest engine but not yet approved. Review and approve, ignore, or block each one.</CardDescription>
+                        {!isReadOnly && selectedIPs.size > 0 && (
+                            <div className="flex items-center gap-2 pt-2 flex-wrap">
+                                <span className="text-xs text-muted-foreground">{selectedIPs.size} selected</span>
+                                <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white px-2.5" onClick={() => handleBulkAction('approve')} disabled={isPending}>
+                                    <ShieldCheck className="w-3 h-3 mr-1" /> Approve
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/10" onClick={() => handleBulkAction('ignore')} disabled={isPending}>
+                                    <ShieldAlert className="w-3 h-3 mr-1" /> Ignore
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleBulkAction('block')} disabled={isPending}>
+                                    <Ban className="w-3 h-3 mr-1" /> Block
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 text-xs px-2 text-muted-foreground" onClick={() => setSelectedIPs(new Set())} disabled={isPending}>
+                                    Clear
+                                </Button>
+                            </div>
+                        )}
                     </CardHeader>
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-y border-yellow-500/20 bg-yellow-500/10">
+                                        {!isReadOnly && (
+                                            <th className="px-3 py-2 w-8">
+                                                <Checkbox
+                                                    checked={allPendingSelected}
+                                                    onCheckedChange={toggleSelectAll}
+                                                    aria-label="Select all"
+                                                />
+                                            </th>
+                                        )}
                                         <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Server</th>
                                         <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">State</th>
                                         <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2 whitespace-nowrap">
@@ -308,6 +368,15 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                 <tbody className="divide-y divide-yellow-500/10">
                                     {inactiveServers.map((server) => (
                                         <tr key={server.ip} className="hover:bg-yellow-500/10 transition-colors">
+                                            {!isReadOnly && (
+                                                <td className="px-3 py-2.5">
+                                                    <Checkbox
+                                                        checked={selectedIPs.has(server.ip)}
+                                                        onCheckedChange={() => toggleSelect(server.ip)}
+                                                        aria-label={`Select ${server.ip}`}
+                                                    />
+                                                </td>
+                                            )}
                                             <td className="px-4 py-2.5"><ServerNameCell server={server} geo={geoCache[server.ip]} /></td>
                                             <td className="px-3 py-2.5"><StateBadge state={server.current_state} /></td>
                                             <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">

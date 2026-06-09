@@ -5,6 +5,7 @@ import { isUserAdmin } from "@/lib/admin-auth"
 import { pool } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { logAdminAction } from "@/app/actions/audit-log-actions"
 
 export async function ensureAdmin() {
     const session = await auth()
@@ -113,6 +114,8 @@ export async function deleteRound(roundId: string) {
         }
 
         await client.query('COMMIT')
+        const user = await ensureAdmin()
+        logAdminAction(user.id ?? "", "delete_round", "round", roundId).catch(() => {})
         revalidatePath('/admin/rounds')
         return { success: true, deletedCallback: true }
     } catch (e) {
@@ -222,15 +225,16 @@ export async function searchPlayers(query: string) {
 }
 
 export async function toggleVerification(playerId: string, isVerified: boolean) {
-    await ensureAdmin()
+    const user = await ensureAdmin()
     const client = await pool.connect()
     try {
         await client.query(`
-            UPDATE players 
-            SET is_verified = $1 
+            UPDATE players
+            SET is_verified = $1
             WHERE player_id = $2
         `, [isVerified, playerId])
 
+        logAdminAction(user.id ?? "", isVerified ? "verify_player" : "unverify_player", "player", playerId).catch(() => {})
         revalidatePath('/admin/players/verified')
         return { success: true }
     } catch (e) {
@@ -261,7 +265,7 @@ export async function deleteDigest(weekNumber: number) {
 }
 
 export async function toggleRoundRanked(roundId: string, isRanked: boolean) {
-    await ensureAdmin()
+    const user = await ensureAdmin()
     const client = await pool.connect()
     try {
         await client.query(`
@@ -270,6 +274,7 @@ export async function toggleRoundRanked(roundId: string, isRanked: boolean) {
             WHERE round_id = $2
         `, [isRanked, roundId])
 
+        logAdminAction(user.id ?? "", isRanked ? "rank_round" : "unrank_round", "round", roundId).catch(() => {})
         revalidatePath('/admin/rounds')
         revalidatePath(`/admin/rounds/${roundId}`)
         return { success: true }

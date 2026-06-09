@@ -11,11 +11,66 @@ import { getAuditLog } from "@/app/actions/audit-log-actions"
 interface LogEntry {
     log_id: number
     admin_user_id: string
+    admin_display_name: string
     action_type: string
     target_type: string | null
     target_id: string | null
     details: Record<string, unknown> | null
     created_at: string
+}
+
+function renderDetails(actionType: string, details: Record<string, unknown> | null): string {
+    if (!details) return "—"
+    const d = details
+    switch (actionType) {
+        case "approve_claim":
+        case "deny_claim":
+            return String(d.player_name || d.target_name || d.claim_id || "—")
+        case "whitelist_approve":
+        case "whitelist_ignore":
+        case "whitelist_block":
+        case "whitelist_unblock":
+        case "whitelist_restore":
+        case "whitelist_deactivate":
+            return String(d.server_name ? `${d.server_name} (${d.ip})` : d.ip || "—")
+        case "whitelist_bulk_approve":
+        case "whitelist_bulk_ignore":
+        case "whitelist_bulk_block":
+            return `${d.count} servers`
+        case "integrity_approve":
+        case "integrity_dismissed":
+            return `${d.queue_id ? `Queue #${d.queue_id}` : "—"}`
+        case "integrity_unranked":
+            return `Round #${d.item_id || "—"}`
+        case "integrity_player_flagged":
+            return `Player #${d.item_id || "—"}`
+        case "integrity_server_blacklisted":
+            return `Server #${d.item_id || "—"}`
+        case "delete_round":
+        case "rank_round":
+        case "unrank_round":
+            return `Round #${d.round_id || "—"}`
+        case "verify_player":
+        case "unverify_player":
+            return `Player #${d.player_id || "—"}`
+        case "create_article":
+        case "update_article":
+        case "delete_article":
+            return String(d.title || d.slug || "—")
+        case "create_challenge":
+        case "update_challenge":
+        case "delete_challenge":
+            return String(d.title || d.challenge_id || "—")
+        case "hide_event":
+        case "unhide_event":
+        case "hide_org":
+        case "unhide_org":
+            return String(d.name || d.event_id || d.org_id || "—")
+        default: {
+            const str = JSON.stringify(details)
+            return str.length > 80 ? str.slice(0, 80) + "…" : str
+        }
+    }
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -120,11 +175,11 @@ export default function AuditLogPage() {
                                                 </span>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-                                            {entry.details ? JSON.stringify(entry.details) : "—"}
+                                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={entry.details ? JSON.stringify(entry.details) : undefined}>
+                                            {renderDetails(entry.action_type, entry.details)}
                                         </TableCell>
-                                        <TableCell className="font-mono text-xs text-muted-foreground max-w-[120px] truncate">
-                                            {entry.admin_user_id}
+                                        <TableCell className="text-xs text-muted-foreground max-w-[140px] truncate" title={entry.admin_user_id}>
+                                            {entry.admin_display_name}
                                         </TableCell>
                                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                                             {new Date(entry.created_at).toLocaleString()}

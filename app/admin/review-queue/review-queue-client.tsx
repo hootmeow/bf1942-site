@@ -244,12 +244,25 @@ export default function ReviewQueueClient({
                                             )}
                                             {item.item_type === 'player' && (
                                                 <>
-                                                    Player: {itemDetails.canonical_name || itemDetails.last_known_name}
+                                                    Player:{' '}
+                                                    <Link
+                                                        href={`/player/${encodeURIComponent(itemDetails.canonical_name || itemDetails.last_known_name)}`}
+                                                        className="text-primary hover:underline"
+                                                    >
+                                                        {itemDetails.canonical_name || itemDetails.last_known_name}
+                                                    </Link>
                                                 </>
                                             )}
                                             {item.item_type === 'server' && (
                                                 <>
-                                                    Server: {itemDetails.server_name} ({itemDetails.ip})
+                                                    Server:{' '}
+                                                    <Link
+                                                        href="/admin/whitelist"
+                                                        className="text-primary hover:underline"
+                                                    >
+                                                        {itemDetails.server_name || itemDetails.ip}
+                                                    </Link>
+                                                    {itemDetails.server_name && ` (${itemDetails.ip})`}
                                                 </>
                                             )}
                                         </CardDescription>

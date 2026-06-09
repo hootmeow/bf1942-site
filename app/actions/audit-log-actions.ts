@@ -54,9 +54,18 @@ export async function getAuditLog(limit = 100, offset = 0) {
         await ensureTable()
         const [rows, countRes] = await Promise.all([
             pool.query(`
-                SELECT log_id, admin_user_id, action_type, target_type, target_id, details, created_at
-                FROM admin_audit_log
-                ORDER BY created_at DESC
+                SELECT
+                    aal.log_id,
+                    aal.admin_user_id,
+                    COALESCE(u.name, u.email, aal.admin_user_id) AS admin_display_name,
+                    aal.action_type,
+                    aal.target_type,
+                    aal.target_id,
+                    aal.details,
+                    aal.created_at
+                FROM admin_audit_log aal
+                LEFT JOIN users u ON u.id::text = aal.admin_user_id
+                ORDER BY aal.created_at DESC
                 LIMIT $1 OFFSET $2
             `, [limit, offset]),
             pool.query(`SELECT COUNT(*) FROM admin_audit_log`),

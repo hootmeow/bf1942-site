@@ -6,6 +6,7 @@ import { pool } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { notifyNewPendingServer } from "@/lib/discord"
+import { logAdminAction } from "@/app/actions/audit-log-actions"
 
 // Zod schema for input validation
 const AddServerSchema = z.object({
@@ -164,12 +165,11 @@ export async function updateServerDetails(ip: string, serverName: string, notes:
 }
 
 export async function removeWhitelistedServer(ip: string) {
-    await verifyAdmin()
-
+    const user = await verifyAdmin()
     const client = await pool.connect()
     try {
-        // Soft delete by setting is_ignored = TRUE
         await client.query("UPDATE whitelisted_servers SET is_ignored = TRUE, is_active = FALSE WHERE ip = $1", [ip])
+        logAdminAction(user.id ?? "", "whitelist_ignore", "server", ip, { ip }).catch(() => {})
         revalidatePath("/admin/whitelist")
         return { success: true }
     } catch (e: any) {
@@ -180,11 +180,11 @@ export async function removeWhitelistedServer(ip: string) {
 }
 
 export async function unignoreServer(ip: string) {
-    await verifyAdmin()
-
+    const user = await verifyAdmin()
     const client = await pool.connect()
     try {
         await client.query("UPDATE whitelisted_servers SET is_ignored = FALSE WHERE ip = $1", [ip])
+        logAdminAction(user.id ?? "", "whitelist_restore", "server", ip, { ip }).catch(() => {})
         revalidatePath("/admin/whitelist")
         return { success: true }
     } catch (e: any) {
@@ -195,14 +195,11 @@ export async function unignoreServer(ip: string) {
 }
 
 export async function toggleServerStatus(ip: string, isActive: boolean) {
-    await verifyAdmin()
-
+    const user = await verifyAdmin()
     const client = await pool.connect()
     try {
-        await client.query(
-            "UPDATE whitelisted_servers SET is_active = $2 WHERE ip = $1",
-            [ip, isActive]
-        )
+        await client.query("UPDATE whitelisted_servers SET is_active = $2 WHERE ip = $1", [ip, isActive])
+        logAdminAction(user.id ?? "", isActive ? "whitelist_approve" : "whitelist_deactivate", "server", ip, { ip }).catch(() => {})
         revalidatePath("/admin/whitelist")
         return { success: true }
     } catch (e: any) {
@@ -213,20 +210,15 @@ export async function toggleServerStatus(ip: string, isActive: boolean) {
 }
 
 export async function blockServer(ip: string) {
-    await verifyAdmin()
-
+    const user = await verifyAdmin()
     const client = await pool.connect()
     try {
-        // Mark as blocked in the whitelist
         await client.query(
             "UPDATE whitelisted_servers SET is_ignored = TRUE, is_blocked = TRUE, is_active = FALSE WHERE ip::text = $1::text",
             [ip]
         )
-        // Also set is_blacklisted on any matching server records so the ingest engine skips it
-        await client.query(
-            "UPDATE servers SET is_blacklisted = TRUE WHERE ip::text = $1::text",
-            [ip]
-        )
+        await client.query("UPDATE servers SET is_blacklisted = TRUE WHERE ip::text = $1::text", [ip])
+        logAdminAction(user.id ?? "", "whitelist_block", "server", ip, { ip }).catch(() => {})
         revalidatePath("/admin/whitelist")
         return { success: true }
     } catch (e: any) {
@@ -237,22 +229,56 @@ export async function blockServer(ip: string) {
 }
 
 export async function unblockServer(ip: string) {
-    await verifyAdmin()
-
+    const user = await verifyAdmin()
     const client = await pool.connect()
     try {
         await client.query(
             "UPDATE whitelisted_servers SET is_blocked = FALSE, is_ignored = FALSE WHERE ip::text = $1::text",
             [ip]
         )
-        await client.query(
-            "UPDATE servers SET is_blacklisted = FALSE WHERE ip::text = $1::text",
-            [ip]
-        )
+        await client.query("UPDATE servers SET is_blacklisted = FALSE WHERE ip::text = $1::text", [ip])
+        logAdminAction(user.id ?? "", "whitelist_unblock", "server", ip, { ip }).catch(() => {})
         revalidatePath("/admin/whitelist")
         return { success: true }
     } catch (e: any) {
         return { error: "Failed to unblock server" }
+    } finally {
+        client.release()
+    }
+}
+
+export async function bulkWhitelistAction(ips: string[], action: 'approve' | 'ignore' | 'block') {
+    const user = await verifyAdmin()
+    if (!ips.length) return { success: false, error: "No servers selected" }
+
+    const client = await pool.connect()
+    try {
+        if (action === 'approve') {
+            await client.query(
+                "UPDATE whitelisted_servers SET is_active = TRUE, is_ignored = FALSE WHERE ip = ANY($1::text[])",
+                [ips]
+            )
+        } else if (action === 'ignore') {
+            await client.query(
+                "UPDATE whitelisted_servers SET is_ignored = TRUE, is_active = FALSE WHERE ip = ANY($1::text[])",
+                [ips]
+            )
+        } else if (action === 'block') {
+            await client.query(
+                "UPDATE whitelisted_servers SET is_ignored = TRUE, is_blocked = TRUE, is_active = FALSE WHERE ip = ANY($1::text[])",
+                [ips]
+            )
+            await client.query(
+                "UPDATE servers SET is_blacklisted = TRUE WHERE ip::text = ANY($1::text[])",
+                [ips]
+            )
+        }
+
+        logAdminAction(user.id ?? "", `whitelist_bulk_${action}`, "server", null, { ips, count: ips.length }).catch(() => {})
+        revalidatePath("/admin/whitelist")
+        return { success: true, count: ips.length }
+    } catch (e: any) {
+        return { error: "Bulk action failed: " + e.message }
     } finally {
         client.release()
     }
