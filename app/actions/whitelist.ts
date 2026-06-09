@@ -274,7 +274,7 @@ export async function bulkWhitelistAction(ips: string[], action: 'approve' | 'ig
             )
         }
 
-        logAdminAction(user.id ?? "", `whitelist_bulk_${action}`, "server", null, { ips, count: ips.length }).catch(() => {})
+        logAdminAction(user.id ?? "", `whitelist_bulk_${action}`, "server", undefined, { ips, count: ips.length }).catch(() => {})
         revalidatePath("/admin/whitelist")
         return { success: true, count: ips.length }
     } catch (e: any) {
