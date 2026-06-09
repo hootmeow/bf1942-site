@@ -201,6 +201,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as ChangeFrequency,
       priority: 0.6,
     },
+    // Stats sub-pages
+    {
+      url: `${BASE_URL}/stats/maps`,
+      lastModified: now,
+      changeFrequency: "daily" as ChangeFrequency,
+      priority: 0.6,
+    },
     // Tools
     {
       url: `${BASE_URL}/tools`,

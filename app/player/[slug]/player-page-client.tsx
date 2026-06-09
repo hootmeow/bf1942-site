@@ -699,7 +699,7 @@ export default function PlayerPageClient({
                 <div className="space-y-2">
                   <Label>Direct Link</Label>
                   <div className="flex gap-2">
-                    <Input readOnly value={`${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}.png`} />
+                    <Input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/sig/${encodeURIComponent(player_info.last_known_name)}.png`} />
                     <Button size="icon" variant="outline" onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}.png`);
                       toast({ title: "Copied!", variant: "success" });
@@ -711,7 +711,7 @@ export default function PlayerPageClient({
                 <div className="space-y-2">
                   <Label>BBCode (Forums)</Label>
                   <div className="flex gap-2">
-                    <Input readOnly value={`[img]${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}.png[/img]`} />
+                    <Input readOnly value={`[img]${typeof window !== 'undefined' ? window.location.origin : ''}/sig/${encodeURIComponent(player_info.last_known_name)}.png[/img]`} />
                     <Button size="icon" variant="outline" onClick={() => {
                       navigator.clipboard.writeText(`[img]${window.location.origin}/sig/${encodeURIComponent(player_info.last_known_name)}.png[/img]`);
                       toast({ title: "Copied!", variant: "success" });
@@ -749,7 +749,7 @@ export default function PlayerPageClient({
                 <div className="space-y-2">
                   <Label>Direct Link</Label>
                   <div className="flex gap-2">
-                    <Input readOnly value={`${window.location.origin}/dogtag/${encodeURIComponent(player_info.last_known_name)}.png`} />
+                    <Input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/dogtag/${encodeURIComponent(player_info.last_known_name)}.png`} />
                     <Button size="icon" variant="outline" onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/dogtag/${encodeURIComponent(player_info.last_known_name)}.png`);
                       toast({ title: "Copied!", variant: "success" });

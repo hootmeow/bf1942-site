@@ -124,6 +124,42 @@ interface AppShellProps {
 
 import { ToastProvider } from "@/components/ui/toast-simple";
 
+const BOTTOM_NAV_TABS = [
+  { label: "Home",    href: "/",        icon: Home,      exact: true  },
+  { label: "Servers", href: "/servers", icon: Server,    exact: false },
+  { label: "Stats",   href: "/stats",   icon: BarChart,  exact: false },
+  { label: "Search",  href: "/search",  icon: Search,    exact: false },
+  { label: "News",    href: "/news",    icon: Newspaper, exact: false },
+];
+
+function MobileBottomNav() {
+  const pathname = usePathname();
+
+  return (
+    <nav
+      className="fixed bottom-0 inset-x-0 z-40 flex md:hidden border-t border-[#1e2a14] bg-[#060a04]/95 backdrop-blur-md"
+      aria-label="Mobile navigation"
+    >
+      {BOTTOM_NAV_TABS.map(({ label, href, icon: Icon, exact }) => {
+        const isActive = exact ? pathname === href : pathname.startsWith(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "flex flex-1 flex-col items-center justify-center gap-1 py-3 transition-colors",
+              isActive ? "text-primary" : "text-muted-foreground/40 hover:text-muted-foreground"
+            )}
+          >
+            <Icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)]")} />
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em]">{label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function AppShell({ children, user }: AppShellProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
@@ -146,10 +182,10 @@ export function AppShell({ children, user }: AppShellProps) {
         <SiteSidebar isCollapsed={isCollapsed} isMobileOpen={isMobileOpen} onCloseMobile={closeMobile} />
         <div className="flex min-h-screen flex-1 flex-col">
           <AppHeader onToggleSidebar={toggleSidebar} user={user} />
-          <main className="flex-1 bg-background px-3 pb-8 pt-4 sm:px-4 sm:pb-10 sm:pt-6 lg:px-8">
+          <main className="flex-1 bg-background px-3 pb-20 pt-4 sm:px-4 sm:pt-6 sm:pb-10 lg:px-8 md:pb-8">
             <div className="mx-auto max-w-7xl">{children}</div>
           </main>
-          <footer className="border-t border-[#1e2a14] bg-[#060a04]/95 px-3 py-3 sm:px-4 sm:py-4 lg:px-8">
+          <footer className="border-t border-[#1e2a14] bg-[#060a04]/95 px-3 py-3 sm:px-4 sm:py-4 lg:px-8 mb-16 md:mb-0">
             <div className="mx-auto max-w-7xl text-center text-[10px] sm:text-xs text-muted-foreground">
               <Link href="/about" className="px-2 hover:underline">
                 About
@@ -163,6 +199,7 @@ export function AppShell({ children, user }: AppShellProps) {
           </footer>
         </div>
       </div>
+      <MobileBottomNav />
     </ToastProvider>
   );
 }
