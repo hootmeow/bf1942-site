@@ -6,12 +6,10 @@ import Link from "next/link";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -24,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
   Loader2,
-  Swords,
   Users,
   Map,
   TrendingUp,
@@ -35,6 +32,8 @@ import {
   Clock,
   Zap,
   Star,
+  ArrowLeft,
+  Radio,
 } from "lucide-react";
 
 interface DigestData {
@@ -200,76 +199,62 @@ export default function DigestClient() {
     .slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <Button asChild variant="outline">
-        <Link href="/news">&larr; Back to all news</Link>
-      </Button>
+    <div className="mx-auto max-w-4xl space-y-6 pb-8">
+      {/* Back nav */}
+      <Link
+        href="/news"
+        className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-3 w-3" />
+        All Dispatches
+      </Link>
 
-      {/* Header */}
-      <Card className="border-border/60 overflow-hidden">
-        <CardHeader className="bg-gradient-to-br from-purple-500/10 via-transparent to-transparent">
-          <div className="flex items-center gap-3 mb-3">
-            <Badge
-              variant="outline"
-              className="bg-purple-500/10 text-purple-400 border-purple-500/30"
-            >
-              Weekly Sitrep
-            </Badge>
-          </div>
-          <CardTitle className="text-3xl font-bold text-foreground">
-            {formatDateRange(digest.period_start, digest.period_end)}
-          </CardTitle>
-          <CardDescription className="text-base mt-2 leading-relaxed">
-            {d.summary.unique_players} soldiers clashed across {d.summary.total_rounds} rounds this week,
-            tallying {d.summary.total_kills.toLocaleString()} confirmed kills.
-            {d.summary.players_change !== null && d.summary.players_change > 0
-              ? ` Player activity is up ${d.summary.players_change}% from last week.`
-              : d.summary.players_change !== null && d.summary.players_change < 0
-              ? ` Player activity dipped ${Math.abs(d.summary.players_change)}% from last week.`
-              : ""}
-            {" "}Here&apos;s the full debrief.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      {/* Hero */}
+      <div
+        className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
+        style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)" }}
+      >
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-teal-500" />
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-teal-500/6 blur-[90px] pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-primary/6 blur-[70px] pointer-events-none" />
 
-      {/* Battlefield Summary */}
-      <Card className="border-border/60 overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-purple-500/10 via-transparent to-transparent border-b border-border/40 py-3">
-          <CardTitle as="h2" className="flex items-center gap-2 text-base">
-            <Swords className="h-4 w-4 text-purple-500" />
-            Battlefield Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-3 gap-4 p-4">
-          <div className="text-center p-4 rounded-lg border bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20">
-            <div className="text-3xl font-bold tabular-nums text-blue-400">
-              {d.summary.total_rounds}
+        <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-teal-400 mb-4">
+                <Radio className="h-2.5 w-2.5 animate-pulse" />
+                Weekly Sitrep · Week {digest.week_number}
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-snug">
+                {formatDateRange(digest.period_start, digest.period_end)}
+              </h1>
+              <p className="mt-3 text-slate-400 text-sm leading-relaxed max-w-2xl">
+                {d.summary.unique_players} soldiers clashed across {d.summary.total_rounds} rounds,
+                tallying {d.summary.total_kills.toLocaleString()} confirmed kills.
+                {d.summary.players_change !== null && d.summary.players_change > 0
+                  ? ` Activity up ${d.summary.players_change}% from last week.`
+                  : d.summary.players_change !== null && d.summary.players_change < 0
+                  ? ` Activity dipped ${Math.abs(d.summary.players_change)}% from last week.`
+                  : ""}
+              </p>
             </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-              Rounds
+            <div className="flex items-center gap-6 font-mono shrink-0">
+              <div className="text-center">
+                <p className="text-2xl font-black text-teal-400 tabular-nums">{d.summary.total_rounds}</p>
+                <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">Rounds</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-black text-red-400 tabular-nums">{d.summary.total_kills.toLocaleString()}</p>
+                <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">Kills</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-black text-primary tabular-nums">{d.summary.unique_players}</p>
+                <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">Soldiers</p>
+              </div>
             </div>
-            <ChangeBadge value={d.summary.rounds_change} />
           </div>
-          <div className="text-center p-4 rounded-lg border bg-gradient-to-br from-red-500/10 to-transparent border-red-500/20">
-            <div className="text-3xl font-bold tabular-nums text-red-400">
-              {d.summary.total_kills.toLocaleString()}
-            </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-              Kills
-            </div>
-            <ChangeBadge value={d.summary.kills_change} />
-          </div>
-          <div className="text-center p-4 rounded-lg border bg-gradient-to-br from-green-500/10 to-transparent border-green-500/20">
-            <div className="text-3xl font-bold tabular-nums text-green-400">
-              {d.summary.unique_players}
-            </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-              Soldiers
-            </div>
-            <ChangeBadge value={d.summary.players_change} />
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Notable Records */}
       {Object.keys(notables).length > 0 && (
@@ -539,6 +524,15 @@ export default function DigestClient() {
           </CardContent>
         </Card>
       )}
+
+      {/* Footer nav */}
+      <Link
+        href="/news"
+        className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-3 w-3" />
+        Back to News
+      </Link>
     </div>
   );
 }
