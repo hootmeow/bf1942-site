@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 import { redirect } from "next/navigation";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield } from "lucide-react";
 
 // --- FIX: Add 'async' to the function ---
 export default async function ProfilePage() {
@@ -28,27 +28,32 @@ export default async function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Profile</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage your Battlefield identity, communication preferences, and operational alerts.
-        </p>
-      </div>
-      <Card className="max-w-xl border-border/60">
-        <CardHeader>
-          <CardTitle>{user.displayName}</CardTitle>
-          <CardDescription>Authenticated Command Center operator</CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border border-primary/50">
-            <AvatarFallback className="text-lg font-semibold text-primary">JD</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="text-sm text-muted-foreground">Email</p>
-            <p className="text-lg font-medium text-foreground">{user.email}</p>
+      {/* Hero */}
+      <div
+        className="relative overflow-hidden rounded-2xl border border-[#1e2a14] shadow-2xl"
+        style={{ background: "linear-gradient(135deg, #0d1208 0%, #0a0f06 50%, #060a04 100%)" }}
+      >
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/6 blur-[90px] pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-amber-500/6 blur-[70px] pointer-events-none" />
+
+        <div className="relative z-10 px-6 py-8 sm:px-10 sm:py-10">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+            <Avatar className="h-20 w-20 border-2 border-primary/40 ring-2 ring-primary/10 flex-shrink-0">
+              <AvatarFallback className="text-2xl font-black text-primary bg-primary/10">JD</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-3">
+                <Shield className="h-2.5 w-2.5" />
+                Command Center Operator
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                {user.displayName}
+              </h1>
+              <p className="mt-1 font-mono text-xs text-muted-foreground/60">{user.email}</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
