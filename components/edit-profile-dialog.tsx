@@ -106,9 +106,8 @@ export function EditProfileDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="icon" title="Edit profile" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     <Pencil className="h-4 w-4" />
-                    Edit Profile
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">

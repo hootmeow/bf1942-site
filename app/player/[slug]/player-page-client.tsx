@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, CalendarDays, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck } from "lucide-react";
+import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, CalendarDays, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck, UserPlus } from "lucide-react";
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart, PlayerTimeseriesChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
 import { Button } from "@/components/ui/button";
@@ -355,9 +355,8 @@ function ClaimProfileDialog({ playerId, playerName, isVerified, isLoggedIn }: { 
 
   if (isVerified) {
     return (
-      <Button variant="ghost" size="sm" className="gap-2 text-green-500 hover:text-green-600 hover:bg-green-500/10 cursor-default">
+      <Button variant="ghost" size="icon" title="Verified profile" className="h-8 w-8 cursor-default text-green-500 hover:bg-green-500/10 hover:text-green-600">
         <ShieldCheck className="h-4 w-4" />
-        Verified
       </Button>
     )
   }
@@ -365,9 +364,8 @@ function ClaimProfileDialog({ playerId, playerName, isVerified, isLoggedIn }: { 
   if (!isLoggedIn) {
     return (
       <form action={loginAction}>
-        <Button variant="secondary" size="sm" className="gap-2">
-          <Shield className="h-4 w-4" />
-          Claim Profile
+        <Button variant="ghost" size="icon" title="Claim this profile" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+          <UserPlus className="h-4 w-4" />
         </Button>
       </form>
     )
@@ -376,9 +374,8 @@ function ClaimProfileDialog({ playerId, playerName, isVerified, isLoggedIn }: { 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm" className="gap-2">
-          <Shield className="h-4 w-4" />
-          Claim Profile
+        <Button variant="ghost" size="icon" title="Claim this profile" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+          <UserPlus className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -812,12 +809,14 @@ export default function PlayerPageClient({
           </div>
         </div>
 
-          <div className="flex flex-col gap-1.5 sm:w-44 sm:shrink-0 [&_button]:w-full [&_button]:justify-start">
+          {/* Compact action toolbar — small icon buttons in one row so it never
+              stretches the header. Labels surface on hover (title); a divider
+              separates export utilities from account actions. */}
+          <div className="inline-flex items-center gap-0.5 self-start rounded-lg border border-[#1e2a14] bg-[#0a0f06]/50 p-1 sm:shrink-0">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="default" size="sm" className="gap-2">
+              <Button variant="ghost" size="icon" title="Forum signature" className="h-8 w-8 text-primary hover:bg-primary/10 hover:text-primary">
                 <ImageIcon className="h-4 w-4" />
-                Get Signature
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -865,9 +864,8 @@ export default function PlayerPageClient({
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button variant="ghost" size="icon" title="Dog tag" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                 <Shield className="h-4 w-4" />
-                Dog Tag
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -907,10 +905,11 @@ export default function PlayerPageClient({
             </DialogContent>
           </Dialog>
 
-          <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
+          <Button variant="ghost" size="icon" title="Share profile" onClick={handleShare} className="h-8 w-8 text-muted-foreground hover:text-foreground">
             <Share2 className="h-4 w-4" />
-            Share Profile
           </Button>
+
+          <div className="mx-0.5 h-5 w-px bg-[#1e2a14]" />
 
           <ClaimProfileDialog
             playerId={player_info.player_id}
@@ -1422,7 +1421,10 @@ export default function PlayerPageClient({
             subtitle="Session patterns, survival habits, and server loyalty"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* auto-fit so the cards always stretch to fill the row — 1 card spans
+              full width, 2 split in half, 3 split in thirds — instead of leaving
+              an empty cell (the "missing tile" look) when a player lacks one. */}
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))]">
             {/* Feature 4: Sessions */}
             {sessions && (
               <Card className="border-border/60">
