@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck } from "lucide-react";
+import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, CalendarDays, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck } from "lucide-react";
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart, PlayerTimeseriesChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
 import { Button } from "@/components/ui/button";
@@ -249,6 +249,89 @@ function formatPlaytime(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   return `${hours}h ${minutes}m`;
+}
+
+// Prominent global-rank insignia shown beside the player's name in the header.
+// Ranked players get a tiered accent (gold for the very top of the board, olive
+// otherwise). Players without a global rank get an explicit "Unranked" state
+// (with a tooltip explaining how to earn one) instead of a hidden badge, and
+// flagged accounts read "Not Ranked" since their stats are excluded.
+function PlayerRankBadge({
+  globalRank,
+  rankLabel,
+  score,
+  isFlagged,
+}: {
+  globalRank?: number | null;
+  rankLabel?: string;
+  score?: number;
+  isFlagged?: boolean;
+}) {
+  if (isFlagged) {
+    return (
+      <div className="inline-flex items-center gap-2 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-2">
+        <Shield className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="flex flex-col leading-none">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Global Rank</span>
+          <span className="mt-1 text-sm font-bold text-muted-foreground">Not Ranked</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!globalRank) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-flex cursor-help items-center gap-2 rounded-lg border border-dashed border-[#2a3a1a] bg-[#0a0f06] px-3 py-2 transition-colors hover:border-primary/40">
+              <Trophy className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+              <div className="flex flex-col leading-none">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Global Rank</span>
+                <span className="mt-1 text-sm font-bold text-muted-foreground">Unranked</span>
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-[240px]">
+            <p className="text-xs">Play <b>3 or more ranked rounds</b> and stay active within the last 60 days to earn a global rank.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  const tier =
+    globalRank <= 3 ? "gold" :
+    globalRank <= 25 ? "elite" :
+    globalRank <= 100 ? "high" : "ranked";
+
+  // Full literal class strings only — Tailwind's JIT never sees interpolated names.
+  const ACCENT: Record<string, { wrap: string; chip: string; icon: string; num: string }> = {
+    gold:   { wrap: "border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-amber-500/5",  chip: "border-amber-500/30 bg-amber-500/15", icon: "text-amber-300",    num: "text-amber-200" },
+    elite:  { wrap: "border-amber-500/25 bg-gradient-to-r from-amber-500/10 to-transparent",  chip: "border-amber-500/25 bg-amber-500/10", icon: "text-amber-300/90", num: "text-amber-100" },
+    high:   { wrap: "border-primary/40 bg-gradient-to-r from-primary/15 to-primary/5",        chip: "border-primary/30 bg-primary/15",     icon: "text-primary",      num: "text-primary" },
+    ranked: { wrap: "border-primary/25 bg-gradient-to-r from-primary/10 to-transparent",      chip: "border-primary/20 bg-primary/10",     icon: "text-primary/90",   num: "text-primary" },
+  };
+  const a = ACCENT[tier];
+
+  return (
+    <div className={`inline-flex items-stretch overflow-hidden rounded-lg border shadow-sm ${a.wrap}`}>
+      <div className={`flex items-center border-r px-2.5 ${a.chip}`}>
+        <Trophy className={`h-4 w-4 ${a.icon}`} />
+      </div>
+      <div className="flex items-center gap-2.5 py-1.5 pl-3 pr-3.5">
+        <span className={`text-2xl font-extrabold leading-none tracking-tight tabular-nums ${a.num}`}>
+          #{globalRank.toLocaleString()}
+        </span>
+        <div className="flex flex-col gap-0.5 border-l border-white/10 pl-2.5 leading-none">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Global Rank</span>
+          <span className="text-xs font-semibold text-foreground/90">
+            {rankLabel || "Ranked"}{typeof score === "number" && score > 0 ? ` · ${score.toLocaleString()} RP` : ""}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // function getFlagEmoji... removed
@@ -614,6 +697,16 @@ export default function PlayerPageClient({
                 {player_info.last_known_name}
               </h1>
 
+              {/* PROMINENT GLOBAL RANK — explicit Unranked / flagged states */}
+              {(advancedProfile?.skill_rating || player_info.is_flagged) && (
+                <PlayerRankBadge
+                  globalRank={advancedProfile?.skill_rating?.global_rank}
+                  rankLabel={advancedProfile?.skill_rating?.label}
+                  score={advancedProfile?.skill_rating?.score}
+                  isFlagged={player_info.is_flagged}
+                />
+              )}
+
               {/* Online Badge */}
               {online_status?.is_online && (
                 <TooltipProvider>
@@ -641,13 +734,6 @@ export default function PlayerPageClient({
                 </span>
               )}
 
-              {/* GLOBAL RANK BADGE */}
-              {(advancedProfile?.skill_rating?.global_rank || player_info.is_flagged) && (
-                <div className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.15em] ${player_info.is_flagged ? "border-[#1e2a14] bg-[#0a0f06] text-muted-foreground" : "border-primary/30 bg-primary/10 text-primary"}`}>
-                  <Trophy className="h-2.5 w-2.5" />
-                  Global #{player_info.is_flagged ? "N/A" : advancedProfile?.skill_rating?.global_rank}
-                </div>
-              )}
             </div>
 
             {/* Bio / Status */}
@@ -659,20 +745,30 @@ export default function PlayerPageClient({
 
             {/* Metadata Row */}
             <div className="mt-2 flex flex-col gap-1">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
                 {player_info.first_seen && (
                   <>
                     <span className="flex items-center gap-1.5">
-                      <Clock className="h-3 w-3 shrink-0" />
+                      <CalendarDays className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                       Since {new Date(player_info.first_seen).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}
                     </span>
                     <div className="h-3 w-px bg-border/60 shrink-0" />
                   </>
                 )}
-                <span className="flex items-center gap-1.5">
-                  <Clock className="h-3 w-3 shrink-0" />
-                  Last seen {new Date(player_info.last_seen).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                </span>
+                {online_status?.is_online ? (
+                  <span className="flex items-center gap-1.5 font-semibold text-green-500">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                    </span>
+                    Online now
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    Last seen {new Date(player_info.last_seen).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </span>
+                )}
 
                 {/* Discord Display */}
                 {player_info.display_discord_id && player_info.discord_name && (
