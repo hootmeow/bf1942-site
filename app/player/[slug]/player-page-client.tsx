@@ -812,7 +812,7 @@ export default function PlayerPageClient({
           </div>
         </div>
 
-          <div className="flex flex-wrap gap-2 sm:max-w-[14rem] sm:shrink-0 sm:justify-end">
+          <div className="flex flex-col gap-1.5 sm:w-44 sm:shrink-0 [&_button]:w-full [&_button]:justify-start">
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="default" size="sm" className="gap-2">
