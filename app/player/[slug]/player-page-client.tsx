@@ -674,9 +674,18 @@ export default function PlayerPageClient({
         {/* tier accent stripe down the left edge */}
         <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary/50 via-primary/15 to-transparent" />
         <div className="p-5 sm:p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
           <div className="relative shrink-0">
-            <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-[#0a0f06] overflow-hidden border border-[#1e2a14] shadow-lg">
+            <div className={`flex h-20 w-20 items-center justify-center rounded-lg bg-[#0a0f06] overflow-hidden border shadow-lg ${
+              player_info.is_flagged
+                ? "border-[#1e2a14]"
+                : (advancedProfile?.skill_rating?.global_rank ?? Number.MAX_SAFE_INTEGER) <= 3
+                  ? "border-amber-500/50 ring-1 ring-amber-500/30"
+                  : (advancedProfile?.skill_rating?.global_rank ?? Number.MAX_SAFE_INTEGER) <= 100
+                    ? "border-primary/40 ring-1 ring-primary/25"
+                    : "border-[#1e2a14]"
+            }`}>
               {player_info.iso_country_code ? (
                 <PlayerFlag isoCode={player_info.iso_country_code} className="h-full w-full object-cover" />
               ) : (
@@ -803,11 +812,10 @@ export default function PlayerPageClient({
           </div>
         </div>
 
-        <div className="mt-5 border-t border-[#1e2a14]" />
-        <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 sm:max-w-[14rem] sm:shrink-0 sm:justify-end">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="default" size="sm" className="gap-2">
                 <ImageIcon className="h-4 w-4" />
                 Get Signature
               </Button>
@@ -857,7 +865,7 @@ export default function PlayerPageClient({
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="ghost" size="sm" className="gap-2">
                 <Shield className="h-4 w-4" />
                 Dog Tag
               </Button>
@@ -924,7 +932,8 @@ export default function PlayerPageClient({
               initialGalleryUrls={player_info.gallery_urls}
             />
           )}
-        </div>
+          </div>
+          </div>
         </div>
       </div>
 
