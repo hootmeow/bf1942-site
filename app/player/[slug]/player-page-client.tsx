@@ -251,30 +251,27 @@ function formatPlaytime(totalSeconds: number): string {
   return `${hours}h ${minutes}m`;
 }
 
-// Prominent global-rank insignia shown beside the player's name in the header.
-// Ranked players get a tiered accent (gold for the very top of the board, olive
-// otherwise). Players without a global rank get an explicit "Unranked" state
-// (with a tooltip explaining how to earn one) instead of a hidden badge, and
-// flagged accounts read "Not Ranked" since their stats are excluded.
-function PlayerRankBadge({
+// Global standing presented as an integrated "service ribbon" directly beneath
+// the player's name (tier-coloured accent bar + large rank number) rather than a
+// floating box, so it flows as a subtitle. It intentionally shows ONLY the global
+// leaderboard position — the military rank label + RP live in the dedicated
+// "Player Rank" card below, so repeating them here would be redundant. Players
+// without a global rank get an explicit "Unranked" state (with a tooltip on how
+// to qualify); flagged accounts read "Not Ranked" since their stats are excluded.
+function RankRibbon({
   globalRank,
-  rankLabel,
-  score,
   isFlagged,
 }: {
   globalRank?: number | null;
-  rankLabel?: string;
-  score?: number;
   isFlagged?: boolean;
 }) {
   if (isFlagged) {
     return (
-      <div className="inline-flex items-center gap-2 rounded-lg border border-[#1e2a14] bg-[#0a0f06] px-3 py-2">
-        <Shield className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <div className="flex flex-col leading-none">
-          <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Global Rank</span>
-          <span className="mt-1 text-sm font-bold text-muted-foreground">Not Ranked</span>
-        </div>
+      <div className="mt-2 flex items-center gap-2.5">
+        <span className="h-6 w-1 shrink-0 rounded-full bg-muted-foreground/25" />
+        <Shield className="h-4 w-4 shrink-0 text-muted-foreground/70" />
+        <span className="text-sm font-semibold text-muted-foreground">Not Ranked</span>
+        <span className="hidden text-xs text-muted-foreground/70 sm:inline">· stats excluded from leaderboard</span>
       </div>
     );
   }
@@ -284,12 +281,11 @@ function PlayerRankBadge({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="inline-flex cursor-help items-center gap-2 rounded-lg border border-dashed border-[#2a3a1a] bg-[#0a0f06] px-3 py-2 transition-colors hover:border-primary/40">
-              <Trophy className="h-4 w-4 shrink-0 text-muted-foreground/50" />
-              <div className="flex flex-col leading-none">
-                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Global Rank</span>
-                <span className="mt-1 text-sm font-bold text-muted-foreground">Unranked</span>
-              </div>
+            <div className="mt-2 flex w-fit cursor-help items-center gap-2.5">
+              <span className="h-6 w-1 shrink-0 rounded-full bg-muted-foreground/20" />
+              <Trophy className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+              <span className="text-sm font-bold text-muted-foreground">Unranked</span>
+              <span className="hidden text-xs text-muted-foreground/70 sm:inline">· play 3+ ranked rounds to qualify</span>
             </div>
           </TooltipTrigger>
           <TooltipContent className="max-w-[240px]">
@@ -304,32 +300,34 @@ function PlayerRankBadge({
     globalRank <= 3 ? "gold" :
     globalRank <= 25 ? "elite" :
     globalRank <= 100 ? "high" : "ranked";
+  const descriptor =
+    globalRank <= 3 ? "Top 3" :
+    globalRank <= 10 ? "Top 10" :
+    globalRank <= 25 ? "Top 25" :
+    globalRank <= 100 ? "Top 100" : null;
 
   // Full literal class strings only — Tailwind's JIT never sees interpolated names.
-  const ACCENT: Record<string, { wrap: string; chip: string; icon: string; num: string }> = {
-    gold:   { wrap: "border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-amber-500/5",  chip: "border-amber-500/30 bg-amber-500/15", icon: "text-amber-300",    num: "text-amber-200" },
-    elite:  { wrap: "border-amber-500/25 bg-gradient-to-r from-amber-500/10 to-transparent",  chip: "border-amber-500/25 bg-amber-500/10", icon: "text-amber-300/90", num: "text-amber-100" },
-    high:   { wrap: "border-primary/40 bg-gradient-to-r from-primary/15 to-primary/5",        chip: "border-primary/30 bg-primary/15",     icon: "text-primary",      num: "text-primary" },
-    ranked: { wrap: "border-primary/25 bg-gradient-to-r from-primary/10 to-transparent",      chip: "border-primary/20 bg-primary/10",     icon: "text-primary/90",   num: "text-primary" },
+  const ACCENT: Record<string, { bar: string; icon: string; num: string; tag: string; tagBg: string }> = {
+    gold:   { bar: "bg-amber-400",    icon: "text-amber-300",    num: "text-amber-200",  tag: "text-amber-300",    tagBg: "bg-amber-500/15" },
+    elite:  { bar: "bg-amber-500/70", icon: "text-amber-300/90", num: "text-amber-100",  tag: "text-amber-300/90", tagBg: "bg-amber-500/10" },
+    high:   { bar: "bg-primary",      icon: "text-primary",      num: "text-primary",    tag: "text-primary",      tagBg: "bg-primary/15" },
+    ranked: { bar: "bg-primary/60",   icon: "text-primary/90",   num: "text-primary",    tag: "text-primary/90",   tagBg: "bg-primary/10" },
   };
   const a = ACCENT[tier];
 
   return (
-    <div className={`inline-flex items-stretch overflow-hidden rounded-lg border shadow-sm ${a.wrap}`}>
-      <div className={`flex items-center border-r px-2.5 ${a.chip}`}>
-        <Trophy className={`h-4 w-4 ${a.icon}`} />
-      </div>
-      <div className="flex items-center gap-2.5 py-1.5 pl-3 pr-3.5">
-        <span className={`text-2xl font-extrabold leading-none tracking-tight tabular-nums ${a.num}`}>
-          #{globalRank.toLocaleString()}
+    <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+      <span className={`h-6 w-1 shrink-0 rounded-full ${a.bar}`} />
+      <Trophy className={`h-4 w-4 shrink-0 ${a.icon}`} />
+      <span className={`text-xl font-extrabold leading-none tabular-nums ${a.num}`}>
+        #{globalRank.toLocaleString()}
+      </span>
+      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/70">Global Rank</span>
+      {descriptor && (
+        <span className={`rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] ${a.tag} ${a.tagBg}`}>
+          {descriptor}
         </span>
-        <div className="flex flex-col gap-0.5 border-l border-white/10 pl-2.5 leading-none">
-          <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Global Rank</span>
-          <span className="text-xs font-semibold text-foreground/90">
-            {rankLabel || "Ranked"}{typeof score === "number" && score > 0 ? ` · ${score.toLocaleString()} RP` : ""}
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -672,8 +670,11 @@ export default function PlayerPageClient({
           </AlertDescription>
         </Alert>
       )}
-      <div className="rounded-xl border border-[#1e2a14] bg-[#070b05] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0d1208 0%, #070b05 60%, #060a04 100%)" }}>
-        <div className="flex items-start gap-4">
+      <div className="relative overflow-hidden rounded-xl border border-[#1e2a14]" style={{ background: "linear-gradient(135deg, #0d1208 0%, #070b05 60%, #060a04 100%)" }}>
+        {/* tier accent stripe down the left edge */}
+        <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary/50 via-primary/15 to-transparent" />
+        <div className="p-5 sm:p-6">
+          <div className="flex items-start gap-4">
           <div className="relative shrink-0">
             <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-[#0a0f06] overflow-hidden border border-[#1e2a14] shadow-lg">
               {player_info.iso_country_code ? (
@@ -696,16 +697,6 @@ export default function PlayerPageClient({
               <h1 className="text-3xl font-bold tracking-tight text-white">
                 {player_info.last_known_name}
               </h1>
-
-              {/* PROMINENT GLOBAL RANK — explicit Unranked / flagged states */}
-              {(advancedProfile?.skill_rating || player_info.is_flagged) && (
-                <PlayerRankBadge
-                  globalRank={advancedProfile?.skill_rating?.global_rank}
-                  rankLabel={advancedProfile?.skill_rating?.label}
-                  score={advancedProfile?.skill_rating?.score}
-                  isFlagged={player_info.is_flagged}
-                />
-              )}
 
               {/* Online Badge */}
               {online_status?.is_online && (
@@ -735,6 +726,14 @@ export default function PlayerPageClient({
               )}
 
             </div>
+
+            {/* RANK RIBBON — global standing as an integrated subtitle (military rank + RP live in the Player Rank card below) */}
+            {(advancedProfile?.skill_rating || player_info.is_flagged) && (
+              <RankRibbon
+                globalRank={advancedProfile?.skill_rating?.global_rank}
+                isFlagged={player_info.is_flagged}
+              />
+            )}
 
             {/* Bio / Status */}
             {player_info.bio && (
@@ -804,7 +803,8 @@ export default function PlayerPageClient({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 sm:justify-end">
+        <div className="mt-5 border-t border-[#1e2a14]" />
+        <div className="mt-4 flex flex-wrap gap-2">
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
@@ -924,6 +924,7 @@ export default function PlayerPageClient({
               initialGalleryUrls={player_info.gallery_urls}
             />
           )}
+        </div>
         </div>
       </div>
 
