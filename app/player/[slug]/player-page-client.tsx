@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useState, type ComponentProps } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -251,6 +251,14 @@ function formatPlaytime(totalSeconds: number): string {
   return `${hours}h ${minutes}m`;
 }
 
+// Per-metric colours for the Personal Bests tiles. Full literal class strings
+// only — Tailwind's JIT never sees interpolated names.
+const PB_COLORS = {
+  amber:  { wrap: "border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-transparent",   iconBg: "bg-amber-500/15",  icon: "text-amber-400",  value: "text-amber-400",  round: "text-amber-500/70" },
+  red:    { wrap: "border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent",        iconBg: "bg-red-500/15",    icon: "text-red-400",    value: "text-red-400",    round: "text-red-500/70" },
+  purple: { wrap: "border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-transparent",  iconBg: "bg-purple-500/15", icon: "text-purple-400", value: "text-purple-400", round: "text-purple-500/70" },
+};
+
 // Global standing presented as an integrated "service ribbon" directly beneath
 // the player's name (tier-coloured accent bar + large rank number) rather than a
 // floating box, so it flows as a subtitle. It intentionally shows ONLY the global
@@ -329,6 +337,20 @@ function RankRibbon({
         </span>
       )}
     </div>
+  );
+}
+
+// Card with the subtle left gradient accent stripe used on the profile header,
+// applied to content panels for a consistent visual language. Tunable in one place.
+function AccentCard({ className, children, ...props }: ComponentProps<typeof Card>) {
+  return (
+    <Card className={`relative overflow-hidden ${className ?? ""}`} {...props}>
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary/40 via-primary/10 to-transparent"
+      />
+      {children}
+    </Card>
   );
 }
 
@@ -947,7 +969,7 @@ export default function PlayerPageClient({
       {/* Stats Side-by-Side Grid */}
       <div id="overview" className="grid grid-cols-1 lg:grid-cols-3 gap-6 scroll-mt-32">
       {/* Lifetime Stats */}
-      <Card className="lg:col-span-2 border-border/60 overflow-hidden">
+      <AccentCard className="lg:col-span-2 border-border/60 overflow-hidden">
         <CardHeader className="border-b border-border/40 bg-gradient-to-r from-primary/5 via-transparent to-transparent">
           <CardTitle as="h2" className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-primary/20">
@@ -1032,10 +1054,10 @@ export default function PlayerPageClient({
             </div>
           </div>
         </CardContent>
-      </Card>
+      </AccentCard>
 
       {/* Personal Bests */}
-      <Card className="border-border/60 overflow-hidden">
+      <AccentCard className="flex flex-col border-border/60 overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-b border-border/40">
           <CardTitle as="h2" className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-amber-500/20">
@@ -1044,32 +1066,32 @@ export default function PlayerPageClient({
             Personal Bests
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-3 p-4">
+        {/* flex-1 tiles stretch to fill the column so it stays level with the
+            taller Lifetime Stats card instead of leaving a gap below. */}
+        <CardContent className="flex flex-1 flex-col gap-3 p-4">
           {[
-            { value: personal_bests?.best_round_score ?? 0, label: "Best Score", roundId: personal_bests?.best_score_round_id, color: "amber" },
-            { value: personal_bests?.best_round_kills ?? 0, label: "Best Kills", roundId: personal_bests?.best_kill_round_id, color: "red" },
-            { value: personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00', label: "Best KPM", roundId: personal_bests?.best_kpm_round_id, color: "purple" },
+            { value: (personal_bests?.best_round_score ?? 0).toLocaleString(), label: "Best Score", roundId: personal_bests?.best_score_round_id, color: "amber" as const, Icon: Trophy },
+            { value: (personal_bests?.best_round_kills ?? 0).toLocaleString(), label: "Best Kills", roundId: personal_bests?.best_kill_round_id, color: "red" as const, Icon: Target },
+            { value: personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00', label: "Best KPM", roundId: personal_bests?.best_kpm_round_id, color: "purple" as const, Icon: Zap },
           ].map((stat) => {
+            const c = PB_COLORS[stat.color];
             const inner = (
               <>
-                <div className={`text-3xl font-bold tabular-nums ${stat.color === 'amber' ? 'text-amber-500' : stat.color === 'red' ? 'text-red-500' : 'text-purple-500'}`}>
-                  {stat.value}
+                <div className={`shrink-0 rounded-lg p-2.5 ${c.iconBg}`}>
+                  <stat.Icon className={`h-5 w-5 ${c.icon}`} />
                 </div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</div>
+                <div className="min-w-0">
+                  <div className={`text-2xl font-bold leading-none tabular-nums ${c.value}`}>{stat.value}</div>
+                  <div className="mt-1.5 text-xs uppercase tracking-wider text-muted-foreground">{stat.label}</div>
+                </div>
                 {stat.roundId && (
-                  <div className={`text-[10px] mt-1.5 ${stat.color === 'amber' ? 'text-amber-500/60' : stat.color === 'red' ? 'text-red-500/60' : 'text-purple-500/60'}`}>
-                    Round #{stat.roundId}
-                  </div>
+                  <span className={`ml-auto shrink-0 self-start font-mono text-[10px] ${c.round}`}>#{stat.roundId} →</span>
                 )}
               </>
             );
-            const cls = `text-center p-4 rounded-lg border ${
-              stat.color === 'amber' ? 'bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20' :
-              stat.color === 'red' ? 'bg-gradient-to-br from-red-500/10 to-transparent border-red-500/20' :
-              'bg-gradient-to-br from-purple-500/10 to-transparent border-purple-500/20'
-            }`;
+            const cls = `flex flex-1 items-center gap-4 rounded-lg border p-4 ${c.wrap}`;
             return stat.roundId ? (
-              <Link key={stat.label} href={`/stats/rounds/${stat.roundId}`} className={`${cls} hover:brightness-125 transition-all`}>
+              <Link key={stat.label} href={`/stats/rounds/${stat.roundId}`} className={`${cls} transition-all hover:brightness-125`}>
                 {inner}
               </Link>
             ) : (
@@ -1077,7 +1099,7 @@ export default function PlayerPageClient({
             );
           })}
         </CardContent>
-      </Card>
+      </AccentCard>
       </div>
 
       {/* Achievements */}
@@ -1105,7 +1127,7 @@ export default function PlayerPageClient({
       {/* Activity Charts Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 24h Activity Chart */}
-        <Card className="border-border/60">
+        <AccentCard className="border-border/60">
           <CardHeader className="pb-2">
             <CardTitle as="h3" className="text-base flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
@@ -1120,10 +1142,10 @@ export default function PlayerPageClient({
               <p className="text-sm text-muted-foreground">No activity data available.</p>
             )}
           </CardContent>
-        </Card>
+        </AccentCard>
 
         {/* Activity Last 7 Days */}
-        <Card className="border-border/60">
+        <AccentCard className="border-border/60">
           <CardHeader className="pb-2">
             <CardTitle as="h3" className="text-base flex items-center gap-2">
               <BarChart className="h-4 w-4 text-emerald-500" />
@@ -1138,13 +1160,13 @@ export default function PlayerPageClient({
               <p className="text-sm text-muted-foreground">No activity data available.</p>
             )}
           </CardContent>
-        </Card>
+        </AccentCard>
       </div>
 
       {/* Performance Over Time + Rivals & Allies */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {timeseriesData.length > 0 ? (
-          <Card className="lg:col-span-2 border-border/60">
+          <AccentCard className="lg:col-span-2 border-border/60">
             <CardHeader className="pb-2 border-b border-border/40 bg-gradient-to-r from-purple-500/5 via-transparent to-transparent">
               <CardTitle as="h2" className="text-base flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-purple-500" />
@@ -1159,15 +1181,15 @@ export default function PlayerPageClient({
                 compact
               />
             </CardContent>
-          </Card>
+          </AccentCard>
         ) : (
-          <Card className="lg:col-span-2 border-border/60 flex items-center justify-center p-8 bg-muted/10">
+          <AccentCard className="lg:col-span-2 border-border/60 flex items-center justify-center p-8 bg-muted/10">
             <div className="text-center text-muted-foreground">
               <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-40" />
               <p className="text-sm font-medium">Not enough history yet</p>
               <p className="text-xs mt-1">Performance trends appear after a few more rounds.</p>
             </div>
-          </Card>
+          </AccentCard>
         )}
         <PlayerRivals playerId={player_info.player_id} />
       </div>
@@ -1184,7 +1206,7 @@ export default function PlayerPageClient({
       {/* Team Preference, Gamemode, Maps, Servers Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* Team Preference */}
-        <Card className="border-border/60">
+        <AccentCard className="border-border/60">
           <CardHeader className="pb-2">
             <CardTitle as="h3" className="text-base flex items-center gap-2">
               <Users className="h-4 w-4 text-purple-500" />
@@ -1203,10 +1225,10 @@ export default function PlayerPageClient({
               <p className="text-sm text-muted-foreground">No team preference data available.</p>
             )}
           </CardContent>
-        </Card>
+        </AccentCard>
 
         {/* Gamemode Breakdown */}
-        <Card className="border-border/60">
+        <AccentCard className="border-border/60">
           <CardHeader className="pb-2">
             <CardTitle as="h3" className="text-base flex items-center gap-2">
               <Server className="h-4 w-4 text-cyan-500" />
@@ -1236,10 +1258,10 @@ export default function PlayerPageClient({
               <p className="text-sm text-muted-foreground">No gamemode data available.</p>
             )}
           </CardContent>
-        </Card>
+        </AccentCard>
 
         {/* Top Maps */}
-        <Card className="border-border/60">
+        <AccentCard className="border-border/60">
           <CardHeader className="pb-2">
             <CardTitle as="h3" className="text-base flex items-center gap-2">
               <Map className="h-4 w-4 text-amber-500" />
@@ -1253,10 +1275,10 @@ export default function PlayerPageClient({
               <p className="text-sm text-muted-foreground">No map data available.</p>
             )}
           </CardContent>
-        </Card>
+        </AccentCard>
 
         {/* Top Servers */}
-        <Card className="border-border/60">
+        <AccentCard className="border-border/60">
           <CardHeader className="pb-2">
             <CardTitle as="h3" className="text-base flex items-center gap-2">
               <Server className="h-4 w-4 text-cyan-500" />
@@ -1270,7 +1292,7 @@ export default function PlayerPageClient({
               <p className="text-sm text-muted-foreground">No server data available.</p>
             )}
           </CardContent>
-        </Card>
+        </AccentCard>
       </div>
 
       {/* Map Performance Section */}
@@ -1314,27 +1336,27 @@ export default function PlayerPageClient({
           {advancedProfile?.related_players ? (
             <BattleBuddiesList players={advancedProfile.related_players} />
           ) : (
-            <Card className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
+            <AccentCard className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
               <p className="text-muted-foreground text-sm">No battle buddies found.</p>
-            </Card>
+            </AccentCard>
           )}
         </div>
         <div className="h-full">
           {recent_rounds && recent_rounds.length > 0 ? (
             <RecentRoundsList rounds={recent_rounds} playerName={player_info.last_known_name} />
           ) : (
-            <Card className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
+            <AccentCard className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
               <p className="text-muted-foreground text-sm">No recent rounds.</p>
-            </Card>
+            </AccentCard>
           )}
         </div>
         <div className="h-full">
           {rankHistory ? (
             <RankHistoryList history={rankHistory} playerName={player_info.last_known_name} />
           ) : (
-            <Card className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
+            <AccentCard className="border-border/60 h-full flex items-center justify-center p-6 bg-muted/20">
               <p className="text-muted-foreground text-sm">No rank history.</p>
-            </Card>
+            </AccentCard>
           )}
         </div>
       </div>
@@ -1364,7 +1386,7 @@ export default function PlayerPageClient({
       {/* Streaks */}
       {streaks && (streaks.win_streak.best > 0 || streaks.kdr_streak.best > 0) && (
         <TooltipProvider>
-          <Card className="border-border/60">
+          <AccentCard className="border-border/60">
             <CardContent className="flex items-center gap-6 px-5 py-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Flame className="h-4 w-4 text-orange-500" />
@@ -1406,7 +1428,7 @@ export default function PlayerPageClient({
                 </Tooltip>
               </div>
             </CardContent>
-          </Card>
+          </AccentCard>
         </TooltipProvider>
       )}
 
@@ -1427,7 +1449,7 @@ export default function PlayerPageClient({
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))]">
             {/* Feature 4: Sessions */}
             {sessions && (
-              <Card className="border-border/60">
+              <AccentCard className="border-border/60">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Clock className="h-4 w-4 text-cyan-400" />
@@ -1456,12 +1478,12 @@ export default function PlayerPageClient({
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </AccentCard>
             )}
 
             {/* Feature 5: Completion Rate + Feature 6: Score per Death */}
             {(completionRate || scoreDeath) && (
-              <Card className="border-border/60">
+              <AccentCard className="border-border/60">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Zap className="h-4 w-4 text-yellow-400" />
@@ -1507,12 +1529,12 @@ export default function PlayerPageClient({
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </AccentCard>
             )}
 
             {/* Feature 7: Server Loyalty */}
             {serverLoyalty && (
-              <Card className="border-border/60">
+              <AccentCard className="border-border/60">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Server className="h-4 w-4 text-violet-400" />
@@ -1545,13 +1567,13 @@ export default function PlayerPageClient({
                     ))}
                   </div>
                 </CardContent>
-              </Card>
+              </AccentCard>
             )}
           </div>
 
           {/* Feature 8: Comeback / Absence tracking */}
           {comeback && comeback.total_absences > 0 && (
-            <Card className="border-border/60">
+            <AccentCard className="border-border/60">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-amber-400" />
@@ -1590,7 +1612,7 @@ export default function PlayerPageClient({
                   })}
                 </div>
               </CardContent>
-            </Card>
+            </AccentCard>
           )}
         </>
       )}
@@ -1622,7 +1644,7 @@ export default function PlayerPageClient({
           )}
 
           {player_info.favorite_maps && player_info.favorite_maps.length > 0 && (
-            <Card className="border-border/60">
+            <AccentCard className="border-border/60">
               <CardHeader className="pb-2">
                 <CardTitle as="h2" className="text-base flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-amber-500" />
@@ -1638,7 +1660,7 @@ export default function PlayerPageClient({
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </AccentCard>
           )}
         </>
       ) : null}

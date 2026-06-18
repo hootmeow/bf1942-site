@@ -126,6 +126,8 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
 
     return (
         <Card className="border-border/60 relative overflow-hidden">
+            {/* Left accent stripe — matches the profile header and content panels */}
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary/40 via-primary/10 to-transparent" />
             {/* Decorative gradient background */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
             <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
@@ -214,8 +216,8 @@ export function SkillRatingCard({ rating }: { rating: SkillRating | null }) {
                     </div>
                 </div>
 
-                {/* Score breakdown — 3x2 grid */}
-                <div className="grid grid-cols-3 gap-3">
+                {/* Score breakdown — single row on desktop, wraps on smaller screens */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                     {components.map((comp) => (
                         <RPBreakdownCard
                             key={comp.label}
