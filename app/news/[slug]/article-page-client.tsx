@@ -7,6 +7,7 @@ import { AlertTriangle, ArrowLeft, Calendar, Tag } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { safeJsonLd } from "@/lib/utils";
 
 const CATEGORY_STYLES: Record<string, { text: string; border: string; bg: string; bar: string }> = {
   Update:          { text: "text-sky-400",      border: "border-sky-500/30",     bg: "bg-sky-500/10",     bar: "bg-sky-500"     },
@@ -59,7 +60,7 @@ export default function ArticlePageClient() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
 
       {/* Back nav */}
       <Link

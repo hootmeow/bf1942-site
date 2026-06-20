@@ -4,6 +4,7 @@ import type { PlayerProfileApiResponse } from "./player-page-client";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { auth } from "@/lib/auth";
+import { safeJsonLd } from "@/lib/utils";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.bf1942.online";
 // Hit the upstream API directly from the server (avoids looping through Next.js proxy)
@@ -91,7 +92,7 @@ export default async function PlayerPage(props: { params: Promise<{ slug: string
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <Suspense fallback={
         <div className="flex min-h-[400px] items-center justify-center gap-2 text-muted-foreground">

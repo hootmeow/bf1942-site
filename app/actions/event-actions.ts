@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { isUserAdmin } from "@/lib/admin-auth"
+import { isHttpUrl } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
 
 export async function createEvent(formData: FormData) {
@@ -29,6 +30,8 @@ export async function createEvent(formData: FormData) {
     if (recurrenceFrequency && !["weekly", "biweekly", "monthly"].includes(recurrenceFrequency)) {
         return { error: "Invalid recurrence frequency" }
     }
+    if (bannerUrl && !isHttpUrl(bannerUrl)) return { error: "Banner URL must be a valid http(s) URL" }
+    if (discordLink && !isHttpUrl(discordLink)) return { error: "Discord link must be a valid http(s) URL" }
 
     const client = await pool.connect()
     try {
@@ -79,6 +82,8 @@ export async function updateEvent(eventId: number, formData: FormData) {
         if (recurrenceFrequency && !["weekly", "biweekly", "monthly"].includes(recurrenceFrequency)) {
             return { error: "Invalid recurrence frequency" }
         }
+        if (bannerUrl && !isHttpUrl(bannerUrl)) return { error: "Banner URL must be a valid http(s) URL" }
+        if (discordLink && !isHttpUrl(discordLink)) return { error: "Discord link must be a valid http(s) URL" }
 
         await client.query(
             `UPDATE events SET title = $1, description = $2, event_type = $3, event_date = $4,

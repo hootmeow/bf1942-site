@@ -14,7 +14,11 @@ const ProfileUpdateSchema = z.object({
     displayDiscordId: z.boolean().default(false),
     profileTheme: z.enum(["default", "axis", "allied", "desert", "pacific", "arctic"]).default("default"),
     favoriteMaps: z.array(z.string().max(100)).max(10).default([]),
-    galleryUrls: z.array(z.string().url().max(500)).max(6).default([]),
+    // .url() alone accepts javascript:/data: — require http(s) so gallery URLs
+    // can't become XSS-on-click or load non-image schemes.
+    galleryUrls: z.array(
+        z.string().max(500).url().refine((u) => /^https?:\/\//i.test(u), "URL must be http(s)")
+    ).max(6).default([]),
 })
 
 export type ProfileUpdateState = {

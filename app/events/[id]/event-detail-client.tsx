@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RsvpButton } from "@/components/rsvp-button"
 import { EventEditor } from "@/components/event-editor"
+import { safeHref } from "@/lib/utils"
 import { Loader2, AlertTriangle, Calendar, Clock, User, Users, Trash2, Pencil, X, Server, Globe, CalendarClock, Hash, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
@@ -302,9 +303,9 @@ export default function EventDetailPage() {
                   <MarkdownRenderer content={event.description} />
                 </div>
               )}
-              {event.discord_link && (
+              {safeHref(event.discord_link) && (
                 <a
-                  href={event.discord_link}
+                  href={safeHref(event.discord_link)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-primary hover:underline"

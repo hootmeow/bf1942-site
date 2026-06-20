@@ -5,15 +5,16 @@ const nextConfig = {
     optimizePackageImports: ['recharts', 'lucide-react'],
   },
   images: {
+    // Allowlist of hosts next/image may fetch server-side. Avoid the '**'
+    // wildcard: it lets the image optimizer fetch ANY URL (SSRF / open-proxy
+    // risk if a user-controlled image URL ever reaches next/image).
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: '**',
-      },
+      { protocol: 'https', hostname: 'cdn.discordapp.com' },
+      { protocol: 'https', hostname: 'media.discordapp.net' },
+      { protocol: 'https', hostname: 'i.ytimg.com' },
+      { protocol: 'https', hostname: 'yt3.ggpht.com' },
+      { protocol: 'https', hostname: 'i.imgur.com' },
+      { protocol: 'https', hostname: 'www.bf1942.online' },
     ],
   },
   async headers() {

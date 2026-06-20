@@ -3,7 +3,16 @@
 import { auth } from "@/lib/auth"
 import { pool } from "@/lib/db"
 import { isUserAdmin } from "@/lib/admin-auth"
+import { isHttpUrl } from "@/lib/utils"
 import { revalidatePath } from "next/cache"
+
+/** Reject any provided URL that isn't an absolute http(s) link (blocks javascript:/data:). */
+function badUrl(fields: Record<string, string | null | undefined>): string | null {
+    for (const [label, value] of Object.entries(fields)) {
+        if (value && !isHttpUrl(value)) return `${label} must be a valid http(s) URL`
+    }
+    return null
+}
 
 export async function createOrganization(formData: FormData) {
     const session = await auth()
@@ -18,6 +27,8 @@ export async function createOrganization(formData: FormData) {
 
     if (!name || name.length > 100) return { error: "Name required, max 100 chars" }
     if (tag && tag.length > 10) return { error: "Tag max 10 chars" }
+    const urlErr = badUrl({ "Banner URL": bannerUrl, "Discord URL": discordUrl, "Website URL": websiteUrl })
+    if (urlErr) return { error: urlErr }
 
     const client = await pool.connect()
     try {
@@ -70,6 +81,8 @@ export async function updateOrganization(orgId: number, formData: FormData) {
         const websiteUrl = (formData.get("websiteUrl") as string)?.trim()
 
         if (!name) return { error: "Name required" }
+        const urlErr = badUrl({ "Banner URL": bannerUrl, "Discord URL": discordUrl, "Website URL": websiteUrl })
+        if (urlErr) return { error: urlErr }
 
         await client.query(
             `UPDATE organizations SET name = $1, tag = $2, description = $3, banner_url = $4,

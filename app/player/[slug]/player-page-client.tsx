@@ -3,6 +3,7 @@
 import { startTransition, useEffect, useState, type ComponentProps } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { safeJsonLd } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -660,7 +661,7 @@ export default function PlayerPageClient({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: safeJsonLd({
             "@context": "https://schema.org",
             "@type": "ProfilePage",
             "mainEntity": {
