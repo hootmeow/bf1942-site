@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import { AlertTriangle, Loader2, Clock, Calendar, Users, Activity, Swords, Zap, ShieldOff, Search, Server, Globe, MapPin, Gamepad2, Shield } from "lucide-react";
+import { useParams } from "next/navigation";
+import { AlertTriangle, Loader2, Clock, Calendar, Users, Activity, Swords, Zap, ShieldOff, Server, Globe, MapPin, Gamepad2, Shield } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScoreboardPlayer } from "@/components/scoreboard-table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { ChevronLeft, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,7 +13,6 @@ import dynamic from "next/dynamic";
 import { RoundTimelineChart } from "@/components/charts";
 import { useBattleReplayState } from "@/components/battle-replay";
 import { RoundMomentum } from "@/components/round-momentum";
-import { RoundReportCard, type ReportCardData } from "@/components/round-report-card";
 
 const BattleReplayCard = dynamic(
   () => import("@/components/battle-replay").then(m => ({ default: m.BattleReplayCard })),
