@@ -91,4 +91,17 @@ export const toolsList: ToolInfo[] = [
     author: "Arkyliën",
     authorUrl: "https://github.com/Ahrkylien",
   },
+  {
+    slug: 'refractorforge',
+    title: "RefractorForge",
+    description: "A modern map editor designed to edit Battlefield 1942 and Battlefield Vietnam maps.",
+    icon: FileCode,
+    href: "https://github.com/luccawulf/RefractorForge",
+    category: "Map Editing",
+    color: "text-rose-500",
+    bgColor: "bg-rose-500/10",
+    external: true,
+    author: "luccawulf",
+    authorUrl: "https://github.com/luccawulf",
+  },
 ];

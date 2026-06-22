@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { AlertTriangle, Loader2, Clock, Calendar, Users, Activity, Swords, Zap, ShieldOff, Search } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, Calendar, Users, Activity, Swords, Zap, ShieldOff, Search, Server, Globe, MapPin, Gamepad2, Shield } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScoreboardPlayer } from "@/components/scoreboard-table";
 import { Button } from "@/components/ui/button";
@@ -78,51 +78,7 @@ interface TimelineResponse {
 
 export default function RoundDetailClient() {
     const params = useParams();
-    const searchParams = useSearchParams();
     const roundId = params.round_id as string;
-
-    // Report card state — fetch both player lookup + card data in one shot
-    const [cardPlayerName, setCardPlayerName] = useState(searchParams.get("player") ?? "");
-    const [cardData, setCardData] = useState<ReportCardData | null>(null);
-    const [cardLookupLoading, setCardLookupLoading] = useState(false);
-    const [cardLookupError, setCardLookupError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const urlPlayer = searchParams.get("player");
-        if (urlPlayer?.trim()) fetchReportCard(urlPlayer.trim());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    async function fetchReportCard(name: string) {
-        if (!name.trim()) return;
-        setCardLookupLoading(true);
-        setCardLookupError(null);
-        setCardData(null);
-        try {
-            // Step 1: resolve player_id
-            const profileRes = await fetch(`/api/v1/players/search/profile?name=${encodeURIComponent(name.trim())}`);
-            const profileData = await profileRes.json();
-            if (!profileData.ok || !profileData.player_info?.player_id) {
-                setCardLookupError("Player not found. Check your in-game name spelling.");
-                return;
-            }
-            const playerId = profileData.player_info.player_id;
-
-            // Step 2: fetch card for this player + round
-            const cardRes = await fetch(`/api/v1/players/${playerId}/rounds/${roundId}/card`);
-            const card = await cardRes.json();
-            if (!card.ok) {
-                setCardLookupError(`${name} wasn't found in this round's records.`);
-                return;
-            }
-            setCardData(card);
-            setCardPlayerName(name.trim());
-        } catch {
-            setCardLookupError("Something went wrong. Please try again.");
-        } finally {
-            setCardLookupLoading(false);
-        }
-    }
 
     const [data, setData] = useState<RoundDetailsResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -473,33 +429,6 @@ export default function RoundDetailClient() {
                 playerStats={data.player_stats}
                 round={round}
             />
-
-            {/* ── FIELD REPORT CARD ────────────────────────────────────── */}
-            <div className="border border-border/40 rounded-none sm:rounded-md bg-zinc-950/60 overflow-hidden">
-                <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-zinc-900/40">
-                    <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Field Report — Personal Record</span>
-                </div>
-                <div className="p-4">
-                    <p className="text-xs text-muted-foreground mb-3 font-mono">Enter your in-game name to retrieve your battle record and performance badges.</p>
-                    <form
-                        onSubmit={(e) => { e.preventDefault(); fetchReportCard(cardPlayerName); }}
-                        className="flex gap-2 mb-4"
-                    >
-                        <Input
-                            value={cardPlayerName}
-                            onChange={(e) => setCardPlayerName(e.target.value)}
-                            placeholder="Callsign…"
-                            className="h-8 text-sm font-mono rounded-none border-border/40"
-                        />
-                        <Button type="submit" size="sm" disabled={cardLookupLoading || !cardPlayerName.trim()} className="rounded-none font-mono text-xs tracking-widest">
-                            {cardLookupLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "RETRIEVE"}
-                        </Button>
-                    </form>
-                    {cardLookupError && <p className="text-xs text-red-500 mb-3 font-mono">{cardLookupError}</p>}
-                    {cardData && <RoundReportCard data={cardData} roundId={roundId} />}
-                </div>
-            </div>
         </div>
     );
 }
@@ -578,9 +507,67 @@ function BattleSection({ roundId, timeline, timelineLoading, playerStats, round 
                 <RoundMomentum roundId={roundId} />
             </div>
 
-            {/* Replay scrubber + scoreboards */}
-            {hasReplayData && <BattleReplayCard state={replayState} />}
+            {/* Scoreboards — surfaced right under the charts */}
             {hasReplayData && <BattleReplayScoreboards state={replayState} />}
+
+            {/* Replay scrubber paired with a Server Intel panel so the chart
+                no longer spans the full width on its own. */}
+            {hasReplayData && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+                    <div className="lg:col-span-2 min-w-0">
+                        <BattleReplayCard state={replayState} />
+                    </div>
+                    <RoundInfoPanel round={round} combatants={playerStats.length} />
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Server / round metadata panel — fills the space beside the replay chart
+function RoundInfoPanel({ round, combatants }: { round: RoundData; combatants: number }) {
+    const fmtDateTime = (iso: string) => {
+        const d = new Date(iso);
+        return isNaN(d.getTime())
+            ? "—"
+            : d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    };
+    const fmtDuration = (s: number) => `${Math.floor(s / 60)}m ${s % 60}s`;
+    const ranked = round.is_ranked !== false;
+
+    const rows: { icon: ReactNode; label: string; value: ReactNode }[] = [
+        { icon: <Server className="h-3.5 w-3.5" />, label: "Server", value: round.current_server_name || "—" },
+        { icon: <Globe className="h-3.5 w-3.5" />, label: "Address", value: round.ip ? `${round.ip}:${round.port}` : "—" },
+        { icon: <Gamepad2 className="h-3.5 w-3.5" />, label: "Mode", value: round.gamemode || "—" },
+        { icon: <MapPin className="h-3.5 w-3.5" />, label: "Map", value: round.map_name || "—" },
+        {
+            icon: ranked ? <Shield className="h-3.5 w-3.5" /> : <ShieldOff className="h-3.5 w-3.5" />,
+            label: "Status",
+            value: <span className={ranked ? "text-emerald-400" : "text-orange-400"}>{ranked ? "Ranked" : "Unranked"}</span>,
+        },
+        { icon: <Calendar className="h-3.5 w-3.5" />, label: "Started", value: fmtDateTime(round.start_time) },
+        { icon: <Calendar className="h-3.5 w-3.5" />, label: "Ended", value: fmtDateTime(round.end_time) },
+        { icon: <Clock className="h-3.5 w-3.5" />, label: "Duration", value: fmtDuration(round.duration_seconds) },
+        { icon: <Users className="h-3.5 w-3.5" />, label: "Combatants", value: combatants },
+    ];
+
+    return (
+        <div className="flex flex-col border border-border/40 rounded-none sm:rounded-md bg-zinc-950/60 overflow-hidden">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-zinc-900/40">
+                <Server className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Server Intel</span>
+            </div>
+            <div className="flex-1 divide-y divide-border/20">
+                {rows.map((r) => (
+                    <div key={r.label} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                        <span className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-muted-foreground/70">
+                            {r.icon}
+                            {r.label}
+                        </span>
+                        <span className="text-xs font-mono text-foreground/90 text-right truncate max-w-[55%]">{r.value}</span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
