@@ -297,10 +297,10 @@ export default function RoundDetailClient() {
                 <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
                      style={{ backgroundImage: "repeating-linear-gradient(0deg,#fff 0,#fff 1px,transparent 1px,transparent 32px),repeating-linear-gradient(90deg,#fff 0,#fff 1px,transparent 1px,transparent 32px)" }} />
 
-                <div className={cn("relative bg-gradient-to-b p-5 md:p-8", winnerGlow)}>
+                <div className={cn("relative bg-gradient-to-b p-4 md:p-6", winnerGlow)}>
 
                     {/* Top bar: back + round id + ranked badge */}
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-4">
                         <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground hover:text-foreground h-7 px-2">
                             <Link href="/stats/rounds">
                                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -328,44 +328,58 @@ export default function RoundDetailClient() {
                     </div>
 
                     {/* Map name + server */}
-                    <div className="text-center mb-6">
+                    <div className="text-center mb-4">
                         <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground mb-1">
                             {round.current_server_name}{round.gamemode ? ` · ${round.gamemode}` : ""}
                         </p>
-                        <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-foreground leading-none">
+                        <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground leading-none">
                             {round.map_name}
                         </h1>
                     </div>
 
-                    {/* Ticket scoreboard — the centrepiece */}
-                    <div className="flex items-stretch justify-center gap-0 mb-5 max-w-sm mx-auto">
+                    {/* Ticket scoreboard — the centrepiece. Two self-contained
+                        boxes with a real gap; a floating VS chip bridges them so
+                        each winner frame stays a complete, unbroken border. */}
+                    <div className="relative flex items-stretch justify-center gap-3 mb-4 max-w-sm mx-auto">
                         {/* Axis */}
                         <div className={cn(
-                            "flex-1 flex flex-col items-center justify-center py-4 px-6 border-t border-b border-l",
-                            winner === 1 ? "border-red-600/60 bg-red-950/40" : "border-border/40 bg-zinc-900/40"
+                            "relative flex-1 flex flex-col items-center justify-center py-3.5 px-6 border overflow-hidden transition-colors",
+                            winner === 1
+                                ? "border-red-500/70 bg-red-950/30 shadow-[0_0_24px_-6px_rgba(239,68,68,0.55)]"
+                                : "border-border/40 bg-zinc-900/30"
                         )}>
+                            {winner === 1 && <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent" />}
                             <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-red-400/70 mb-1">Axis</p>
-                            <p className={cn("text-5xl font-black font-mono tabular-nums leading-none", winner === 1 ? "text-red-400" : "text-red-700/60")}>
+                            <p className={cn("text-4xl font-black font-mono tabular-nums leading-none", winner === 1 ? "text-red-400" : "text-red-300/35")}>
                                 {round.tickets1 ?? "—"}
                             </p>
-                            {winner === 1 && <p className="text-[8px] font-mono text-red-500/70 uppercase tracking-widest mt-1.5 flex items-center gap-0.5"><Trophy className="h-2 w-2" /> VICTOR</p>}
-                        </div>
-
-                        {/* Separator */}
-                        <div className="flex items-center justify-center w-10 bg-zinc-900/60 border-t border-b border-border/20">
-                            <span className="text-[10px] font-mono text-muted-foreground/50 tracking-widest rotate-0">VS</span>
+                            <p className={cn(
+                                "text-[8px] font-mono uppercase tracking-widest mt-1.5 flex items-center gap-0.5 transition-opacity",
+                                winner === 1 ? "text-red-500/80 opacity-100" : "opacity-0"
+                            )}><Trophy className="h-2 w-2" /> VICTOR</p>
                         </div>
 
                         {/* Allies */}
                         <div className={cn(
-                            "flex-1 flex flex-col items-center justify-center py-4 px-6 border-t border-b border-r",
-                            winner === 2 ? "border-blue-600/60 bg-blue-950/40" : "border-border/40 bg-zinc-900/40"
+                            "relative flex-1 flex flex-col items-center justify-center py-3.5 px-6 border overflow-hidden transition-colors",
+                            winner === 2
+                                ? "border-blue-500/70 bg-blue-950/30 shadow-[0_0_24px_-6px_rgba(59,130,246,0.55)]"
+                                : "border-border/40 bg-zinc-900/30"
                         )}>
+                            {winner === 2 && <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />}
                             <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-blue-400/70 mb-1">Allies</p>
-                            <p className={cn("text-5xl font-black font-mono tabular-nums leading-none", winner === 2 ? "text-blue-400" : "text-blue-700/60")}>
+                            <p className={cn("text-4xl font-black font-mono tabular-nums leading-none", winner === 2 ? "text-blue-400" : "text-blue-300/35")}>
                                 {round.tickets2 ?? "—"}
                             </p>
-                            {winner === 2 && <p className="text-[8px] font-mono text-blue-500/70 uppercase tracking-widest mt-1.5 flex items-center gap-0.5"><Trophy className="h-2 w-2" /> VICTOR</p>}
+                            <p className={cn(
+                                "text-[8px] font-mono uppercase tracking-widest mt-1.5 flex items-center gap-0.5 transition-opacity",
+                                winner === 2 ? "text-blue-500/80 opacity-100" : "opacity-0"
+                            )}><Trophy className="h-2 w-2" /> VICTOR</p>
+                        </div>
+
+                        {/* Floating VS chip */}
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-zinc-950 shadow-[0_0_0_4px_rgba(9,9,11,1)]">
+                            <span className="text-[9px] font-mono font-bold tracking-wider text-muted-foreground/70">VS</span>
                         </div>
                     </div>
 
