@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Trash2, Newspaper } from "lucide-react"
 import { deleteDigest } from "@/app/admin/actions"
 import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "../components/confirm-provider"
 import Link from "next/link"
 
 interface DigestRow {
@@ -24,6 +25,7 @@ export default function AdminDigestsPage() {
   const [digests, setDigests] = useState<DigestRow[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+  const confirm = useConfirm()
 
   async function fetchDigests() {
     try {
@@ -42,7 +44,7 @@ export default function AdminDigestsPage() {
   useEffect(() => { fetchDigests() }, [])
 
   async function handleDelete(weekNumber: number) {
-    if (!confirm(`Delete Weekly Sitrep #${weekNumber}? This cannot be undone.`)) return
+    if (!await confirm({ title: `Delete Weekly Sitrep #${weekNumber}?`, description: "This cannot be undone.", confirmText: "Delete", variant: "destructive" })) return
     const res = await deleteDigest(weekNumber)
     if (res.ok) {
       setDigests(digests.filter(d => d.week_number !== weekNumber))

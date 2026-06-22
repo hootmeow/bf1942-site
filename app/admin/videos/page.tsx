@@ -15,6 +15,7 @@ import {
   blockChannel, unblockChannel
 } from "@/app/actions/video-actions"
 import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "../components/confirm-provider"
 
 interface VideoRow {
   video_id: string
@@ -62,6 +63,7 @@ export default function AdminVideosPage() {
   const [showHidden, setShowHidden] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
   const { toast } = useToast()
+  const confirm = useConfirm()
 
   async function fetchData() {
     setLoading(true)
@@ -112,7 +114,7 @@ export default function AdminVideosPage() {
   }
 
   async function handleBlock(videoId: string) {
-    if (!confirm("Block this video permanently? It won't come back on re-sync.")) return
+    if (!await confirm({ title: "Block this video permanently?", description: "It won't come back on re-sync.", confirmText: "Block", variant: "destructive" })) return
     setActing(videoId)
     try {
       await blockVideo(videoId)
@@ -139,7 +141,7 @@ export default function AdminVideosPage() {
   }
 
   async function handleBlockChannel(channelId: string, channelName: string) {
-    if (!confirm(`Block all videos from "${channelName}"? This hides all their content and prevents re-sync.`)) return
+    if (!await confirm({ title: `Block all videos from "${channelName}"?`, description: "This hides all their content and prevents re-sync.", confirmText: "Block channel", variant: "destructive" })) return
     setActing(channelId)
     try {
       await blockChannel(channelId, channelName)

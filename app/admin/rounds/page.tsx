@@ -1,4 +1,4 @@
-import { getAdminRounds } from "@/app/admin/actions"
+import { getAdminRounds, type AdminRound } from "@/app/admin/actions"
 import Link from "next/link"
 import {
     Table,
@@ -9,10 +9,18 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ChevronLeft, ChevronRight, Eye, Search } from "lucide-react"
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react"
 import DeleteRoundButton from "../components/delete-button"
-import { redirect } from "next/navigation"
+import { AdminPageHeader } from "../components/admin-page-header"
+import { RoundsSearch } from "./rounds-search"
+
+function pageHref(page: number, search: string) {
+    const params = new URLSearchParams()
+    if (page > 1) params.set("page", String(page))
+    if (search) params.set("search", search)
+    const qs = params.toString()
+    return `/admin/rounds${qs ? `?${qs}` : ""}`
+}
 
 export default async function AdminRoundsPage({
     searchParams,
@@ -24,28 +32,13 @@ export default async function AdminRoundsPage({
     const searchQuery = searchParam || ""
     const { rounds, totalPages, page } = await getAdminRounds(currentPage, 50, searchQuery)
 
-    async function searchAction(formData: FormData) {
-        "use server"
-        const query = formData.get("query")?.toString() || ""
-        redirect(`/admin/rounds?search=${encodeURIComponent(query)}`)
-    }
-
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="text-3xl font-bold tracking-tight">Rounds Management</h1>
-                <form action={searchAction} className="flex w-full sm:w-auto items-center gap-2">
-                    <Input
-                        name="query"
-                        placeholder="Search map, ID, server, or player..."
-                        defaultValue={searchQuery}
-                        className="w-full sm:w-[300px]"
-                    />
-                    <Button type="submit" size="icon">
-                        <Search className="h-4 w-4" />
-                    </Button>
-                </form>
-            </div>
+            <AdminPageHeader
+                title="Rounds Management"
+                subtitle="Browse, inspect, and moderate recorded rounds."
+                action={<RoundsSearch initialQuery={searchQuery} />}
+            />
 
             <div className="rounded-md border border-border/60 overflow-hidden">
                 <Table>
@@ -61,7 +54,13 @@ export default async function AdminRoundsPage({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {rounds.map((round: any) => (
+                        {rounds.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                                    No rounds found{searchQuery ? ` for “${searchQuery}”` : ""}.
+                                </TableCell>
+                            </TableRow>
+                        ) : rounds.map((round: AdminRound) => (
                             <TableRow key={round.round_id}>
                                 <TableCell className="font-mono text-xs text-muted-foreground">{round.round_id}</TableCell>
                                 <TableCell>
@@ -84,7 +83,7 @@ export default async function AdminRoundsPage({
                                 </TableCell>
                                 <TableCell className="text-right flex justify-end gap-2">
                                     <Button variant="outline" size="sm" asChild>
-                                        <Link href={`/admin/rounds/${round.round_id}`}>
+                                        <Link href={`/admin/rounds/${round.round_id}`} aria-label={`View round ${round.round_id}`}>
                                             <Eye className="h-4 w-4" />
                                         </Link>
                                     </Button>
@@ -96,17 +95,17 @@ export default async function AdminRoundsPage({
                 </Table>
             </div>
 
-            <div className="flex justify-center gap-2 mt-4">
+            <div className="flex justify-center items-center gap-2 mt-4">
                 <Button variant="outline" size="sm" disabled={page <= 1} asChild>
-                    <Link href={`/admin/rounds?page=${page - 1}&search=${searchQuery}`}>
+                    <Link href={pageHref(page - 1, searchQuery)} aria-label="Previous page">
                         <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                     </Link>
                 </Button>
-                <div className="flex items-center text-sm text-muted-foreground">
-                    Page {page} of {totalPages}
+                <div className="flex items-center text-sm text-muted-foreground px-2">
+                    Page {page} of {Math.max(totalPages, 1)}
                 </div>
                 <Button variant="outline" size="sm" disabled={page >= totalPages} asChild>
-                    <Link href={`/admin/rounds?page=${page + 1}&search=${searchQuery}`}>
+                    <Link href={pageHref(page + 1, searchQuery)} aria-label="Next page">
                         Next <ChevronRight className="h-4 w-4 ml-1" />
                     </Link>
                 </Button>

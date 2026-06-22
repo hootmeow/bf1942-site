@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { toggleRoundRanked } from "../actions"
-import { Shield, ShieldOff } from "lucide-react"
+import { Loader2, Shield, ShieldOff } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/toast-simple"
 
 export default function ToggleRankedButton({
     roundId,
@@ -13,24 +14,25 @@ export default function ToggleRankedButton({
     roundId: string
     isRanked: boolean
 }) {
-    const [loading, setLoading] = useState(false)
+    const [loading, startTransition] = useTransition()
     const router = useRouter()
+    const { toast } = useToast()
 
-    const handleToggle = async () => {
-        setLoading(true)
-        try {
-            const result = await toggleRoundRanked(roundId, !isRanked)
-            if (result.success) {
-                router.refresh()
-            } else {
-                alert(result.error || "Failed to update round")
+    const handleToggle = () => {
+        startTransition(async () => {
+            try {
+                const result = await toggleRoundRanked(roundId, !isRanked)
+                if (result.success) {
+                    toast({ title: isRanked ? "Round marked unranked" : "Round marked ranked", variant: "success" })
+                    router.refresh()
+                } else {
+                    toast({ title: "Failed to update round", description: result.error, variant: "destructive" })
+                }
+            } catch (e) {
+                console.error(e)
+                toast({ title: "Failed to update round", variant: "destructive" })
             }
-        } catch (e) {
-            console.error(e)
-            alert("Failed to update round")
-        } finally {
-            setLoading(false)
-        }
+        })
     }
 
     return (
@@ -40,17 +42,14 @@ export default function ToggleRankedButton({
             variant={isRanked ? "outline" : "default"}
             className="w-full"
         >
-            {isRanked ? (
-                <>
-                    <ShieldOff className="h-4 w-4 mr-2" />
-                    Mark as Unranked
-                </>
+            {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : isRanked ? (
+                <ShieldOff className="h-4 w-4 mr-2" />
             ) : (
-                <>
-                    <Shield className="h-4 w-4 mr-2" />
-                    Mark as Ranked
-                </>
+                <Shield className="h-4 w-4 mr-2" />
             )}
+            {isRanked ? "Mark as Unranked" : "Mark as Ranked"}
         </Button>
     )
 }

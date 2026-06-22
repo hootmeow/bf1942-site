@@ -1,8 +1,9 @@
 import { pool } from "@/lib/db"
 import { getIntegrityStats } from "./actions/integrity-actions"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AdminPageHeader } from "./components/admin-page-header"
 import Link from "next/link"
 import {
     UserCheck, Server, Bot, AlertTriangle, Shield, Target,
@@ -25,7 +26,8 @@ async function getDashboardCounts() {
                    AND COALESCE(is_blocked, FALSE) = FALSE)                                          AS pending_whitelist
         `)
         return res.rows[0]
-    } catch {
+    } catch (e) {
+        console.error("[Admin] Failed to load dashboard counts", e)
         return null
     }
 }
@@ -42,7 +44,8 @@ async function getServerHealth() {
             WHERE last_successful_poll > NOW() - INTERVAL '15 minutes'
         `)
         return res.rows[0]
-    } catch {
+    } catch (e) {
+        console.error("[Admin] Failed to load server health", e)
         return null
     }
 }
@@ -92,12 +95,17 @@ export default async function AdminDashboardPage() {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                    Platform overview and pending actions
-                </p>
-            </div>
+            <AdminPageHeader title="Admin Dashboard" subtitle="Platform overview and pending actions" />
+
+            {!counts && (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Couldn&apos;t load dashboard metrics</AlertTitle>
+                    <AlertDescription>
+                        The database query failed — counts below may be incomplete. Check server logs.
+                    </AlertDescription>
+                </Alert>
+            )}
 
             {/* Action Required */}
             <div>

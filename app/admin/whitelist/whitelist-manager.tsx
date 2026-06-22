@@ -15,6 +15,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "../components/confirm-provider"
 
 interface WhitelistManagerProps {
     initialServers: WhitelistedServer[]
@@ -76,12 +78,20 @@ function DetailsDialog({ server }: { server: WhitelistedServer }) {
     const [contact, setContact] = useState(server.owner_contact || "")
     const [open, setOpen] = useState(false)
     const [saving, setSaving] = useState(false)
+    const { toast } = useToast()
 
     const handleSave = async () => {
         setSaving(true)
-        await updateServerDetails(server.ip, serverName, notes, contact)
-        setSaving(false)
-        setOpen(false)
+        try {
+            await updateServerDetails(server.ip, serverName, notes, contact)
+            toast({ title: "Server details saved", variant: "success" })
+            setOpen(false)
+        } catch (e) {
+            console.error(e)
+            toast({ title: "Failed to save details", variant: "destructive" })
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
@@ -187,6 +197,8 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
     const [error, setError] = useState<string | null>(null)
     const [geoCache, setGeoCache] = useState<Record<string, GeoInfo | null>>({})
     const [selectedIPs, setSelectedIPs] = useState<Set<string>>(new Set())
+    const { toast } = useToast()
+    const confirm = useConfirm()
 
     const activeServers = initialServers.filter(s => s.is_active && !s.is_ignored && !s.is_blocked)
     const inactiveServers = initialServers.filter(s => !s.is_active && !s.is_ignored && !s.is_blocked)
@@ -239,11 +251,22 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
 
     async function handleBulkAction(action: 'approve' | 'ignore' | 'block') {
         if (selectedIPs.size === 0) return
-        const label = action === 'approve' ? 'approve' : action === 'ignore' ? 'ignore' : 'block'
-        if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} ${selectedIPs.size} server(s)?`)) return
+        const label = action.charAt(0).toUpperCase() + action.slice(1)
+        const ok = await confirm({
+            title: `${label} ${selectedIPs.size} server${selectedIPs.size !== 1 ? "s" : ""}?`,
+            confirmText: label,
+            variant: action === "block" ? "destructive" : "default",
+        })
+        if (!ok) return
         startTransition(async () => {
-            await bulkWhitelistAction(Array.from(selectedIPs), action)
-            setSelectedIPs(new Set())
+            try {
+                await bulkWhitelistAction(Array.from(selectedIPs), action)
+                setSelectedIPs(new Set())
+                toast({ title: `${selectedIPs.size} server${selectedIPs.size !== 1 ? "s" : ""} ${action}d`, variant: "success" })
+            } catch (e) {
+                console.error(e)
+                toast({ title: "Bulk action failed", variant: "destructive" })
+            }
         })
     }
 
@@ -256,8 +279,37 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
             } else {
                 const form = document.getElementById("add-server-form") as HTMLFormElement
                 form.reset()
+                toast({ title: "Server added", variant: "success" })
             }
         })
+    }
+
+    async function requestIgnore(server: WhitelistedServer) {
+        const ok = await confirm({
+            title: "Ignore this server?",
+            description: "It will be hidden from the active list but can be restored later.",
+            confirmText: "Ignore",
+        })
+        if (ok) startTransition(async () => { await removeWhitelistedServer(server.ip) })
+    }
+
+    async function requestBlock(server: WhitelistedServer) {
+        const ok = await confirm({
+            title: `Block ${resolveDisplayName(server)}?`,
+            description: "This permanently blacklists the IP. You can unblock it later.",
+            confirmText: "Block",
+            variant: "destructive",
+        })
+        if (ok) startTransition(async () => { await blockServer(server.ip) })
+    }
+
+    async function requestUnblock(server: WhitelistedServer) {
+        const ok = await confirm({
+            title: `Unblock ${resolveDisplayName(server)}?`,
+            description: "This removes the blacklist flag and moves the server to the Ignored list.",
+            confirmText: "Unblock",
+        })
+        if (ok) startTransition(async () => { await unblockServer(server.ip) })
     }
 
     return (
@@ -419,11 +471,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                             size="sm"
                                                             variant="outline"
                                                             className="h-7 text-xs px-2.5 text-yellow-600 hover:bg-yellow-500/10 border-yellow-500/30"
-                                                            onClick={() => {
-                                                                if (confirm("Ignore this server? It will be hidden but can be restored later.")) {
-                                                                    startTransition(async () => { await removeWhitelistedServer(server.ip) })
-                                                                }
-                                                            }}
+                                                            onClick={() => requestIgnore(server)}
                                                             disabled={isPending}
                                                         >
                                                             <ShieldAlert className="w-3 h-3 mr-1" />
@@ -433,11 +481,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                             size="sm"
                                                             variant="outline"
                                                             className="h-7 text-xs px-2.5 text-destructive hover:bg-destructive/10 border-destructive/20"
-                                                            onClick={() => {
-                                                                if (confirm(`Block ${resolveDisplayName(server)}? This permanently blacklists the IP. You can unblock it later.`)) {
-                                                                    startTransition(async () => { await blockServer(server.ip) })
-                                                                }
-                                                            }}
+                                                            onClick={() => requestBlock(server)}
                                                             disabled={isPending}
                                                         >
                                                             <Ban className="w-3 h-3 mr-1" />
@@ -529,11 +573,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                             size="icon"
                                                             variant="ghost"
                                                             className="h-8 w-8 text-muted-foreground hover:text-yellow-500"
-                                                            onClick={() => {
-                                                                if (confirm("Ignore this server? It will be hidden but can be restored later.")) {
-                                                                    startTransition(async () => { await removeWhitelistedServer(server.ip) })
-                                                                }
-                                                            }}
+                                                            onClick={() => requestIgnore(server)}
                                                             disabled={isPending}
                                                             title="Ignore Server"
                                                         >
@@ -543,11 +583,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                             size="icon"
                                                             variant="ghost"
                                                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                            onClick={() => {
-                                                                if (confirm(`Block ${resolveDisplayName(server)}? This will permanently blacklist the IP. You can unblock it later.`)) {
-                                                                    startTransition(async () => { await blockServer(server.ip) })
-                                                                }
-                                                            }}
+                                                            onClick={() => requestBlock(server)}
                                                             disabled={isPending}
                                                             title="Block Server"
                                                         >
@@ -615,11 +651,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="h-7 text-xs px-2.5 text-destructive hover:bg-destructive/10 border-destructive/20"
-                                                                onClick={() => {
-                                                                    if (confirm(`Block ${resolveDisplayName(server)}? This permanently blacklists the IP.`)) {
-                                                                        startTransition(async () => { await blockServer(server.ip) })
-                                                                    }
-                                                                }}
+                                                                onClick={() => requestBlock(server)}
                                                                 disabled={isPending}
                                                             >
                                                                 <Ban className="w-3 h-3 mr-1" />
@@ -686,11 +718,7 @@ export function WhitelistManager({ initialServers, isReadOnly = false }: Whiteli
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="h-7 text-xs px-2.5"
-                                                                onClick={() => {
-                                                                    if (confirm(`Unblock ${resolveDisplayName(server)}? This will remove the blacklist flag and move it to the Ignored list.`)) {
-                                                                        startTransition(async () => { await unblockServer(server.ip) })
-                                                                    }
-                                                                }}
+                                                                onClick={() => requestUnblock(server)}
                                                                 disabled={isPending}
                                                             >
                                                                 <RotateCcw className="w-3 h-3 mr-1" />

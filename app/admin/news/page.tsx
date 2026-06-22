@@ -16,6 +16,7 @@ import {
     deleteDbArticle,
 } from "@/app/actions/news-article-actions"
 import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "../components/confirm-provider"
 
 interface ArticleRow {
     article_id: number
@@ -60,6 +61,7 @@ export default function AdminNewsPage() {
     const [form, setForm]         = useState<EditState | null>(null)
     const [saving, setSaving]     = useState(false)
     const { toast } = useToast()
+    const confirm = useConfirm()
 
     async function fetchArticles() {
         const res = await getDbArticles(true)
@@ -129,7 +131,7 @@ export default function AdminNewsPage() {
     }
 
     async function handleDelete(articleId: number, title: string) {
-        if (!confirm(`Delete "${title}"?`)) return
+        if (!await confirm({ title: `Delete "${title}"?`, confirmText: "Delete", variant: "destructive" })) return
         try {
             const res = await deleteDbArticle(articleId)
             if (res.ok) {

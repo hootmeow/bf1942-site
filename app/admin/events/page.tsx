@@ -9,6 +9,7 @@ import { Loader2, Trash2, Calendar, Eye, EyeOff } from "lucide-react"
 import { deleteEvent } from "@/app/actions/event-actions"
 import { getAdminEvents, setEventVisibility } from "@/app/actions/content-mod-actions"
 import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "../components/confirm-provider"
 import Link from "next/link"
 
 interface EventRow {
@@ -27,6 +28,7 @@ export default function AdminEventsPage() {
     const [loading, setLoading] = useState(true)
     const [acting, setActing]   = useState<number | null>(null)
     const { toast } = useToast()
+    const confirm = useConfirm()
 
     async function fetchEvents() {
         try {
@@ -51,7 +53,7 @@ export default function AdminEventsPage() {
     useEffect(() => { fetchEvents() }, [])
 
     async function handleDelete(eventId: number) {
-        if (!confirm("Delete this event?")) return
+        if (!await confirm({ title: "Delete this event?", confirmText: "Delete", variant: "destructive" })) return
         setActing(eventId)
         try {
             const res = await deleteEvent(eventId)

@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useTransition } from "react"
 import { deleteRound } from "@/app/admin/actions"
 import { Button } from "@/components/ui/button"
 import { Loader2, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "./confirm-provider"
 
 export default function DeleteRoundButton({
     roundId,
@@ -15,34 +17,38 @@ export default function DeleteRoundButton({
     className?: string,
     redirectUrl?: string
 }) {
-    const [isDeleting, setIsDeleting] = useState(false)
+    const [isDeleting, startTransition] = useTransition()
     const router = useRouter()
+    const { toast } = useToast()
+    const confirm = useConfirm()
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this round? This action cannot be undone.")) {
-            return
-        }
+        const ok = await confirm({
+            title: "Delete this round?",
+            description: "This permanently removes the round and all its player stats. This action cannot be undone.",
+            confirmText: "Delete",
+            variant: "destructive",
+        })
+        if (!ok) return
 
-        setIsDeleting(true)
-        try {
-            const res = await deleteRound(roundId)
-            if (res.success) {
-                // Determine if we are on the details page or list page
-                if (redirectUrl) {
-                    router.push(redirectUrl)
+        startTransition(async () => {
+            try {
+                const res = await deleteRound(roundId)
+                if (res.success) {
+                    toast({ title: "Round deleted", variant: "success" })
+                    if (redirectUrl) {
+                        router.push(redirectUrl)
+                    } else {
+                        router.refresh()
+                    }
                 } else {
-                    // Just refresh if on list page
-                    router.refresh()
+                    toast({ title: "Failed to delete round", description: res.error, variant: "destructive" })
                 }
-            } else {
-                alert(`Failed to delete round: ${res.error}`)
+            } catch (e) {
+                console.error(e)
+                toast({ title: "Error deleting round", variant: "destructive" })
             }
-        } catch (e) {
-            console.error(e)
-            alert("Error deleting round")
-        } finally {
-            setIsDeleting(false)
-        }
+        })
     }
 
     return (
@@ -52,6 +58,7 @@ export default function DeleteRoundButton({
             onClick={handleDelete}
             disabled={isDeleting}
             className={className}
+            aria-label="Delete round"
         >
             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             <span className="sr-only">Delete</span>

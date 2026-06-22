@@ -10,34 +10,45 @@ import { reviewQueueItem, bulkReviewAction } from "../actions/integrity-actions"
 import { useRouter } from "next/navigation"
 import { AlertTriangle, CheckCircle, XCircle, Flag, Ban, Eye, Trash2 } from "lucide-react"
 import Link from "next/link"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "../components/confirm-provider"
+import { AdminPageHeader } from "../components/admin-page-header"
+
+interface ReviewQueueItem {
+    queue_id: string
+    item_type: string
+    risk_score: number
+    created_at: string
+    flag_reason: string
+    // Dynamic JSONB detail blobs from the integrity engine.
+    item_details?: Record<string, any>
+    flag_details?: Record<string, any>
+}
+
+type ReviewAction = "approve" | "unrank" | "flag_player" | "blacklist_server" | "dismiss"
+type BulkAction = "approve" | "unrank" | "dismiss"
 
 export default function ReviewQueueClient({
     initialItems,
     initialStatus,
 }: {
-    initialItems: any[]
+    initialItems: ReviewQueueItem[]
     initialStatus: string
 }) {
     const router = useRouter()
+    const { toast } = useToast()
+    const confirm = useConfirm()
     const [items, setItems] = useState(initialItems)
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
     const [expandedItem, setExpandedItem] = useState<string | null>(null)
     const [notes, setNotes] = useState<Record<string, string>>({})
     const [processing, setProcessing] = useState(false)
 
-    const handleAction = async (queueId: string, action: string, itemNotes?: string) => {
+    const handleAction = async (queueId: string, action: ReviewAction, itemNotes?: string) => {
         setProcessing(true)
         try {
-            const result = await reviewQueueItem(queueId, action as any, itemNotes)
+            const result = await reviewQueueItem(queueId, action, itemNotes)
             if (result.ok) {
                 // Remove from list
                 setItems(items.filter(item => item.queue_id !== queueId))
@@ -46,36 +57,44 @@ export default function ReviewQueueClient({
                     next.delete(queueId)
                     return next
                 })
+                toast({ title: "Item processed", variant: "success" })
             } else {
-                alert(result.error)
+                toast({ title: "Action failed", description: result.error, variant: "destructive" })
             }
         } catch (e) {
             console.error(e)
-            alert("Failed to process action")
+            toast({ title: "Failed to process action", variant: "destructive" })
         } finally {
             setProcessing(false)
         }
     }
 
-    const handleBulkAction = async (action: string) => {
+    const handleBulkAction = async (action: BulkAction) => {
         if (selectedItems.size === 0) {
-            alert("No items selected")
+            toast({ title: "No items selected", variant: "destructive" })
             return
         }
 
-        if (!confirm(`Are you sure you want to ${action} ${selectedItems.size} items?`)) {
-            return
-        }
+        const ok = await confirm({
+            title: `${action.charAt(0).toUpperCase() + action.slice(1)} ${selectedItems.size} item${selectedItems.size !== 1 ? "s" : ""}?`,
+            description: "This applies the selected action to every checked item.",
+            confirmText: "Apply",
+            variant: action === "dismiss" ? "destructive" : "default",
+        })
+        if (!ok) return
 
         setProcessing(true)
         try {
-            const result = await bulkReviewAction(Array.from(selectedItems), action as any)
+            const result = await bulkReviewAction(Array.from(selectedItems), action)
             if (result.ok) {
+                toast({ title: "Bulk action applied", variant: "success" })
                 router.refresh()
+            } else {
+                toast({ title: "Bulk action failed", variant: "destructive" })
             }
         } catch (e) {
             console.error(e)
-            alert("Failed to process bulk action")
+            toast({ title: "Failed to process bulk action", variant: "destructive" })
         } finally {
             setProcessing(false)
         }
@@ -107,24 +126,16 @@ export default function ReviewQueueClient({
 
     return (
         <div className="space-y-6 p-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">Review Queue</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Review flagged items for integrity issues
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push('/admin/integrity')}
-                    >
+            <AdminPageHeader
+                title="Review Queue"
+                subtitle="Review flagged items for integrity issues"
+                action={
+                    <Button variant="outline" size="sm" onClick={() => router.push('/admin/integrity')}>
                         <Eye className="h-4 w-4 mr-2" />
                         Dashboard
                     </Button>
-                </div>
-            </div>
+                }
+            />
 
             {/* Status Tabs */}
             <Tabs
@@ -270,7 +281,7 @@ export default function ReviewQueueClient({
                                         {/* Details */}
                                         {item.flag_details && (
                                             <div className="mt-3 text-sm space-y-1">
-                                                {Object.entries(item.flag_details).map(([key, value]: [string, any]) => (
+                                                {Object.entries(item.flag_details).map(([key, value]) => (
                                                     <div key={key} className="flex gap-2">
                                                         <span className="text-muted-foreground capitalize">
                                                             {key.replace(/_/g, ' ')}:

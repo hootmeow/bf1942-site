@@ -19,6 +19,19 @@ export async function ensureAdmin() {
     return session.user
 }
 
+export interface AdminRound {
+    round_id: string
+    server_id: string
+    map_name: string
+    start_time: string
+    end_time: string
+    duration_seconds: number
+    winner_team: number | null
+    gamemode: string | null
+    is_ranked: boolean | null
+    server_name: string
+}
+
 export async function getAdminRounds(page: number = 1, pageSize: number = 50, search?: string) {
     await ensureAdmin()
 
@@ -79,7 +92,7 @@ export async function getAdminRounds(page: number = 1, pageSize: number = 50, se
         const totalCount = parseInt(countRes.rows[0].count, 10)
 
         return {
-            rounds: roundsRes.rows,
+            rounds: roundsRes.rows as AdminRound[],
             totalCount,
             page,
             pageSize,

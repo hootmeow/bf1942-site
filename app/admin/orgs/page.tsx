@@ -9,6 +9,7 @@ import { Loader2, Trash2, Users, Eye, EyeOff } from "lucide-react"
 import { deleteOrganization } from "@/app/actions/org-actions"
 import { getAdminOrgs, setOrgVisibility } from "@/app/actions/content-mod-actions"
 import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "../components/confirm-provider"
 import Link from "next/link"
 
 interface Org {
@@ -25,6 +26,7 @@ export default function AdminOrgsPage() {
     const [loading, setLoading] = useState(true)
     const [acting, setActing]   = useState<number | null>(null)
     const { toast } = useToast()
+    const confirm = useConfirm()
 
     async function fetchOrgs() {
         try {
@@ -51,7 +53,7 @@ export default function AdminOrgsPage() {
     useEffect(() => { fetchOrgs() }, [])
 
     async function handleDelete(orgId: number) {
-        if (!confirm("Delete this organization?")) return
+        if (!await confirm({ title: "Delete this organization?", confirmText: "Delete", variant: "destructive" })) return
         setActing(orgId)
         try {
             const res = await deleteOrganization(orgId)

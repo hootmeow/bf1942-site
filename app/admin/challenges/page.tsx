@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Loader2, Trash2, Target, Plus, History, Pencil, X, Check } from "lucide-react"
 import { createChallenge, deleteChallenge, updateChallenge } from "@/app/actions/admin-actions"
 import { useToast } from "@/components/ui/toast-simple"
+import { useConfirm } from "../components/confirm-provider"
 
 interface ChallengeRow {
   challenge_id: number
@@ -67,6 +68,7 @@ export default function AdminChallengesPage() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const { toast } = useToast()
+  const confirm = useConfirm()
 
   // Edit state
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -140,7 +142,7 @@ export default function AdminChallengesPage() {
   }
 
   async function handleDelete(challengeId: number) {
-    if (!confirm("Deactivate this challenge?")) return
+    if (!await confirm({ title: "Deactivate this challenge?", confirmText: "Deactivate", variant: "destructive" })) return
     try {
       const res = await deleteChallenge(challengeId)
       if (res.ok) {
