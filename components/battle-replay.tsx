@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ScoreboardPlayer } from "@/components/scoreboard-table";
 import {
   Table,
@@ -283,51 +282,49 @@ export function BattleReplayCard({ state }: { state: BattleReplayState }) {
   } = state;
 
   return (
-    <Card className="border-border/60">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-4">
-            <CardTitle as="h3" className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              Battle Replay
-            </CardTitle>
-            <div className="flex items-center rounded-lg border border-border/60 bg-muted/20 p-0.5">
-              <button
-                className={cn(
-                  "px-3 py-1 rounded-md text-xs font-medium transition-colors",
-                  activeTab === "chart"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => setActiveTab("chart")}
-              >
-                Score Chart
-              </button>
-              <button
-                className={cn(
-                  "px-3 py-1 rounded-md text-xs font-medium transition-colors",
-                  activeTab === "log"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => setActiveTab("log")}
-              >
-                Combat Log
-              </button>
-            </div>
+    <div className="border border-border/40 rounded-none sm:rounded-md bg-zinc-950/60 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 border-b border-border/30 bg-zinc-900/40">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+            <Trophy className="h-3.5 w-3.5 text-yellow-500" />
+            Battle Replay
+          </span>
+          <div className="flex items-center rounded-none border border-border/40 bg-zinc-900/60 p-0.5">
+            <button
+              className={cn(
+                "px-2.5 py-0.5 rounded-none text-[11px] font-mono uppercase tracking-wider transition-colors",
+                activeTab === "chart"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setActiveTab("chart")}
+            >
+              Chart
+            </button>
+            <button
+              className={cn(
+                "px-2.5 py-0.5 rounded-none text-[11px] font-mono uppercase tracking-wider transition-colors",
+                activeTab === "log"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setActiveTab("log")}
+            >
+              Log
+            </button>
           </div>
-          {activeTab === "chart" && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{selectedPlayers.size} player{selectedPlayers.size !== 1 ? "s" : ""} shown</span>
-              <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set(allPlayerNames.slice(0, 5)))}>Top 5</button>
-              <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set(allPlayerNames))}>All</button>
-              <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set())}>None</button>
-            </div>
-          )}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[400px]">
+        {activeTab === "chart" && (
+          <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
+            <span>{selectedPlayers.size} shown</span>
+            <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set(allPlayerNames.slice(0, 5)))}>Top 5</button>
+            <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set(allPlayerNames))}>All</button>
+            <button className="text-primary hover:underline" onClick={() => setSelectedPlayers(new Set())}>None</button>
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        <div className="h-[280px]">
           {activeTab === "chart" ? (
             <div className="flex flex-col h-full">
               <div className="flex-1 min-h-0">
@@ -472,8 +469,8 @@ export function BattleReplayCard({ state }: { state: BattleReplayState }) {
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -483,7 +480,7 @@ export function BattleReplayScoreboards({ state }: { state: BattleReplayState })
   const { teamPlayers, winner, selectedPlayers, togglePlayer, playerColorIndex, statsAtTime } = state;
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <TeamScoreboard
         title="Axis"
         team={1}
@@ -566,26 +563,24 @@ function TeamScoreboard({
   if (players.length === 0) return null;
 
   return (
-    <Card className={cn(
-      "border-border/60",
+    <div className={cn(
+      "border border-border/40 rounded-none sm:rounded-md bg-zinc-950/60 overflow-hidden",
       isWinner && (isAxis
         ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]"
         : "border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]")
     )}>
-      <CardHeader className={cn(
-        "border-b",
+      <div className={cn(
+        "flex items-center justify-between px-4 py-2.5 border-b",
         isAxis ? "bg-red-950/20 border-red-900/20" : "bg-blue-950/20 border-blue-900/20",
         isWinner && (isAxis ? "bg-red-900/30" : "bg-blue-900/30")
       )}>
-        <div className="flex items-center justify-between">
-          <CardTitle as="h2" className={cn("flex items-center gap-2", isAxis ? "text-red-500" : "text-blue-500")}>
-            {title}
-            {isWinner && <Trophy className="h-4 w-4" />}
-          </CardTitle>
-          {statsAtTime && <span className="text-xs text-muted-foreground font-mono">At scrubber time</span>}
-        </div>
-      </CardHeader>
-      <CardContent className="pt-4 px-0">
+        <span className={cn("flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest", isAxis ? "text-red-400" : "text-blue-400")}>
+          {title}
+          {isWinner && <Trophy className="h-3.5 w-3.5" />}
+        </span>
+        {statsAtTime && <span className="text-[10px] text-muted-foreground/70 font-mono uppercase tracking-wider">At scrubber time</span>}
+      </div>
+      <div className="pt-2">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -665,7 +660,7 @@ function TeamScoreboard({
             </TableRow>
           </TableFooter>
         </Table>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
