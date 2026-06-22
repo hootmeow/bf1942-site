@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, TrendingDown, ArrowLeftRight } from "lucide-react";
 import {
   AreaChart,
@@ -95,19 +94,17 @@ export function RoundMomentum({ roundId }: { roundId: string | number }) {
 
   if (loading) {
     return (
-      <Card className="border-border/60 bg-card/50">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
-            Ticket Bleed Momentum
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 flex items-center justify-center text-muted-foreground text-xs">
+      <div className="flex-1 min-w-0 h-full border border-border/40 rounded-none sm:rounded-md bg-zinc-950/60 overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-zinc-900/40">
+          <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Ticket Bleed Rate</span>
+        </div>
+        <div className="p-4">
+          <div className="h-52 flex items-center justify-center text-muted-foreground text-xs font-mono">
             Loading momentum data…
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -136,24 +133,22 @@ export function RoundMomentum({ roundId }: { roundId: string | number }) {
       : "Even match";
 
   return (
-    <Card className="border-border/60 bg-card/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
-            Ticket Bleed Rate
-          </CardTitle>
-          <span className="text-xs text-muted-foreground">{dominantLabel}</span>
+    <div className="flex-1 min-w-0 h-full flex flex-col border border-border/40 rounded-none sm:rounded-md bg-zinc-950/60 overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border/30 bg-zinc-900/40">
+        <div className="flex items-center gap-3">
+          <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Ticket Bleed Rate</span>
         </div>
-      </CardHeader>
-      <CardContent>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">{dominantLabel}</span>
+      </div>
+      <div className="p-4 flex flex-col flex-1">
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="axisGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="alliedGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -185,7 +180,7 @@ export function RoundMomentum({ roundId }: { roundId: string | number }) {
                 type="monotone"
                 dataKey="axis"
                 name="Axis bleed"
-                stroke="#f59e0b"
+                stroke="#ef4444"
                 strokeWidth={1.5}
                 fill="url(#axisGrad)"
                 dot={false}
@@ -206,24 +201,24 @@ export function RoundMomentum({ roundId }: { roundId: string | number }) {
         </div>
 
         {/* Summary pills */}
-        <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-auto pt-3 text-[11px] font-mono text-muted-foreground">
           <span className="flex items-center gap-1">
-            <TrendingDown className="h-3 w-3 text-amber-500" />
-            Axis avg <span className="font-semibold text-amber-500 ml-1">{summary.avg_bleed_rate_t1}/min</span>
+            <TrendingDown className="h-3 w-3 text-red-500" />
+            Axis avg <span className="font-semibold text-red-400 ml-1">{summary.avg_bleed_rate_t1}/min</span>
           </span>
           <span className="flex items-center gap-1">
             <TrendingDown className="h-3 w-3 text-blue-500" />
-            Allied avg <span className="font-semibold text-blue-500 ml-1">{summary.avg_bleed_rate_t2}/min</span>
+            Allied avg <span className="font-semibold text-blue-400 ml-1">{summary.avg_bleed_rate_t2}/min</span>
           </span>
           <span className="flex items-center gap-1">
             <ArrowLeftRight className="h-3 w-3" />
             {summary.lead_changes} lead change{summary.lead_changes !== 1 ? "s" : ""}
           </span>
           {summary.closest_margin !== null && (
-            <span>Closest margin: <span className="font-semibold text-foreground">{summary.closest_margin} tickets</span></span>
+            <span>Closest: <span className="font-semibold text-foreground">{summary.closest_margin} tkt</span></span>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

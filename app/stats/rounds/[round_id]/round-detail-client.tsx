@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { AlertTriangle, Loader2, Clock, Users, Activity, Swords, Zap, ShieldOff, Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, Loader2, Clock, Calendar, Users, Activity, Swords, Zap, ShieldOff, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScoreboardPlayer } from "@/components/scoreboard-table";
 import { Button } from "@/components/ui/button";
@@ -183,6 +182,18 @@ export default function RoundDetailClient() {
         return `${minutes}m ${remainingSeconds}s`;
     };
 
+    const formatDateTime = (iso: string) => {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return null;
+        return d.toLocaleString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+
     // --- Highlights Calculation ---
     const highlights = useMemo(() => {
         if (!data?.player_stats || data.player_stats.length === 0) return null;
@@ -331,7 +342,7 @@ export default function RoundDetailClient() {
                         {/* Axis */}
                         <div className={cn(
                             "flex-1 flex flex-col items-center justify-center py-4 px-6 border-t border-b border-l",
-                            winner === 1 ? "border-red-600/60 bg-red-950/40" : "border-red-900/20 bg-red-950/10"
+                            winner === 1 ? "border-red-600/60 bg-red-950/40" : "border-border/40 bg-zinc-900/40"
                         )}>
                             <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-red-400/70 mb-1">Axis</p>
                             <p className={cn("text-5xl font-black font-mono tabular-nums leading-none", winner === 1 ? "text-red-400" : "text-red-700/60")}>
@@ -348,7 +359,7 @@ export default function RoundDetailClient() {
                         {/* Allies */}
                         <div className={cn(
                             "flex-1 flex flex-col items-center justify-center py-4 px-6 border-t border-b border-r",
-                            winner === 2 ? "border-blue-600/60 bg-blue-950/40" : "border-blue-900/20 bg-blue-950/10"
+                            winner === 2 ? "border-blue-600/60 bg-blue-950/40" : "border-border/40 bg-zinc-900/40"
                         )}>
                             <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-blue-400/70 mb-1">Allies</p>
                             <p className={cn("text-5xl font-black font-mono tabular-nums leading-none", winner === 2 ? "text-blue-400" : "text-blue-700/60")}>
@@ -372,7 +383,13 @@ export default function RoundDetailClient() {
                     )}
 
                     {/* Quick meta row */}
-                    <div className="flex items-center justify-center gap-5 text-[11px] font-mono text-muted-foreground/60 mb-4">
+                    <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-[11px] font-mono text-muted-foreground/60 mb-4">
+                        {formatDateTime(round.start_time) && (
+                            <>
+                                <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDateTime(round.start_time)}</span>
+                                <span className="text-border/60">|</span>
+                            </>
+                        )}
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDuration(round.duration_seconds)}</span>
                         <span className="text-border/60">|</span>
                         <span className="flex items-center gap-1"><Users className="h-3 w-3" />{data.player_stats.length} combatants</span>
@@ -434,11 +451,9 @@ export default function RoundDetailClient() {
                 )}
             </div>
 
-            {/* ── MOMENTUM ─────────────────────────────────────────────── */}
-            <RoundMomentum roundId={roundId} />
-
             {/* ── BATTLE SECTION ───────────────────────────────────────── */}
             <BattleSection
+                roundId={roundId}
                 timeline={timeline}
                 timelineLoading={timelineLoading}
                 playerStats={data.player_stats}
@@ -491,13 +506,15 @@ function IntelCell({ label, sub, accent, children, last }: {
     );
 }
 
-function BattleSection({ timeline, timelineLoading, playerStats, round }: {
+function BattleSection({ roundId, timeline, timelineLoading, playerStats, round }: {
+    roundId: string;
     timeline: TimelineResponse | null;
     timelineLoading: boolean;
     playerStats: ScoreboardPlayer[];
     round: RoundData;
 }) {
     const hasReplayData = timeline?.player_scores && Object.keys(timeline.player_scores).length > 0;
+    const hasTimeline = !!(timeline && timeline.ticket_timeline && timeline.ticket_timeline.length > 0);
 
     const replayState = useBattleReplayState({
         playerScores: timeline?.player_scores || {},
@@ -508,39 +525,47 @@ function BattleSection({ timeline, timelineLoading, playerStats, round }: {
     });
 
     return (
-        <div className="space-y-6">
-            {/* Side-by-side: Timeline + Replay card */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="border-border/60">
-                    <CardHeader>
-                        <CardTitle as="h3" className="flex items-center gap-2">
-                            <Activity className="h-5 w-5 text-primary" />
-                            Battle Timeline
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+        <div className="space-y-4">
+            {/* Section heading */}
+            <div className="flex items-center gap-3 px-1">
+                <Activity className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground">Battle Analysis</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-border/50 to-transparent" />
+            </div>
+
+            {/* Two telemetry charts side by side — tactical panels.
+                RoundMomentum renders its own flex-1 panel (or null); if it's null
+                the timeline panel fills the row on its own. */}
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+                <div className="flex-1 min-w-0 flex flex-col border border-border/40 rounded-none sm:rounded-md bg-zinc-950/60 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-zinc-900/40">
+                        <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Battle Timeline</span>
+                    </div>
+                    <div className="p-4 flex-1">
                         {timelineLoading ? (
-                            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                            <div className="flex items-center justify-center h-[300px] text-muted-foreground text-xs font-mono">
                                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                                Loading timeline...
+                                Loading timeline…
                             </div>
-                        ) : timeline && timeline.ticket_timeline && timeline.ticket_timeline.length > 0 ? (
+                        ) : hasTimeline ? (
                             <RoundTimelineChart
-                                ticketTimeline={timeline.ticket_timeline}
-                                keyMoments={timeline.key_moments}
+                                ticketTimeline={timeline!.ticket_timeline}
+                                keyMoments={timeline!.key_moments}
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                            <div className="flex items-center justify-center h-[200px] text-muted-foreground text-xs font-mono">
                                 No timeline data available for this round.
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
-                {hasReplayData && <BattleReplayCard state={replayState} />}
+                <RoundMomentum roundId={roundId} />
             </div>
 
-            {/* Full-width scoreboards below */}
+            {/* Replay scrubber + scoreboards */}
+            {hasReplayData && <BattleReplayCard state={replayState} />}
             {hasReplayData && <BattleReplayScoreboards state={replayState} />}
         </div>
     );
