@@ -44,7 +44,7 @@ export async function submitClaimRequest(playerId: number, playerName: string) {
 
     } catch (e: any) {
         console.error("Claim Error:", e)
-        return { ok: false, error: "Database error: " + e.message }
+        return { ok: false, error: "An unexpected error occurred." }
     }
 }
 
@@ -88,6 +88,6 @@ export async function submitServerClaimRequest(serverId: number, serverName: str
 
     } catch (e: any) {
         console.error("Server Claim Error:", e)
-        return { ok: false, error: "Database error: " + e.message }
+        return { ok: false, error: "An unexpected error occurred." }
     }
 }

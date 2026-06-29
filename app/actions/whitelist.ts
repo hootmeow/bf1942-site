@@ -10,7 +10,10 @@ import { logAdminAction } from "@/app/actions/audit-log-actions"
 
 // Zod schema for input validation
 const AddServerSchema = z.object({
-    ip: z.string(), // We'll rely on basic string validation for now to avoid complexity
+    ip: z.string().regex(
+        /^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]{2,45}$/,
+        "Must be a valid IPv4 or IPv6 address"
+    ),
     name: z.string().min(1, "Server name is required").max(100),
 })
 
@@ -140,7 +143,7 @@ export async function addWhitelistedServer(formData: FormData) {
         return { success: true }
     } catch (e: any) {
         console.error("Failed to add server:", e)
-        return { error: "Database error: " + e.message }
+        return { error: "Failed to add server." }
     } finally {
         client.release()
     }
@@ -278,7 +281,8 @@ export async function bulkWhitelistAction(ips: string[], action: 'approve' | 'ig
         revalidatePath("/admin/whitelist")
         return { success: true, count: ips.length }
     } catch (e: any) {
-        return { error: "Bulk action failed: " + e.message }
+        console.error("Bulk whitelist action failed:", e)
+        return { error: "Bulk action failed." }
     } finally {
         client.release()
     }

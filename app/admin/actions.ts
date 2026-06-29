@@ -104,7 +104,7 @@ export async function getAdminRounds(page: number = 1, pageSize: number = 50, se
 }
 
 export async function deleteRound(roundId: string) {
-    await ensureAdmin()
+    const user = await ensureAdmin()
 
     if (!/^\d+$/.test(roundId)) {
         console.error(`[Admin] Invalid round ID for deletion: ${roundId}`)
@@ -127,7 +127,6 @@ export async function deleteRound(roundId: string) {
         }
 
         await client.query('COMMIT')
-        const user = await ensureAdmin()
         logAdminAction(user.id ?? "", "delete_round", "round", roundId).catch(() => {})
         revalidatePath('/admin/rounds')
         return { success: true, deletedCallback: true }

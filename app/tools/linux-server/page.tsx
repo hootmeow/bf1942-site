@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { safeJsonLd } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -123,7 +124,7 @@ function TroubleshootCard({ title, children }: { title: string; children: React.
 export default function LinuxServerPage() {
   return (
     <div className="space-y-12 pb-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(howToJsonLd) }} />
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <div

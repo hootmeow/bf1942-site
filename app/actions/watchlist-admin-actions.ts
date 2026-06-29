@@ -48,12 +48,16 @@ export async function addPlayerToWatchlist(data: {
 }) {
     const user = await checkAdmin()
 
+    if (!["critical", "high", "medium", "low"].includes(data.severity)) {
+        return { ok: false, error: "Invalid severity" }
+    }
+
     await pool.query(`
         INSERT INTO player_flags (player_id, flag_type, severity, details)
         VALUES ($1, 'watchlist', $2, $3)
     `, [
         data.player_id,
-        data.severity || "medium",
+        data.severity,
         JSON.stringify({ reason: data.reason, notes: data.notes || null, added_by: user.id }),
     ])
 

@@ -2,16 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+const IP_PATTERN = /^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]{2,45}$/
+
 export async function GET(request: NextRequest) {
     const ip = request.nextUrl.searchParams.get('ip');
     if (!ip) {
         return NextResponse.json({ error: 'Missing ip' }, { status: 400 });
     }
 
+    if (!IP_PATTERN.test(ip)) {
+        return NextResponse.json({ error: 'Invalid IP address' }, { status: 400 });
+    }
+
     try {
         // ip-api.com is much more reliable than ipwho.is; free tier, no key needed
         const res = await fetch(
-            `http://ip-api.com/json/${ip}?fields=status,country,countryCode,city,regionName,lat,lon,timezone`,
+            `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,city,regionName,lat,lon,timezone`,
             {
                 next: { revalidate: 86400 },
                 signal: AbortSignal.timeout(5000),

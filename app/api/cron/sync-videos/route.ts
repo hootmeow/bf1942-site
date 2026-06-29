@@ -26,7 +26,8 @@ export async function GET(request: Request) {
 
     // days=0 means fetch ALL (no date filter) — useful for initial seed
     // default 90 days for regular cron syncs
-    const days = parseInt(searchParams.get("days") || "90", 10)
+    const rawDays = parseInt(searchParams.get("days") || "90", 10)
+    const days = isNaN(rawDays) || rawDays < 0 ? 90 : Math.min(rawDays, 365)
 
     try {
         const videos = await fetchAllBF1942Videos(days)

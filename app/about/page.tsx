@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
+import { safeJsonLd } from "@/lib/utils";
 import {
   BarChart3, BookOpen, Download, Globe, Heart, History,
   MessageCircle, Monitor, Server, Shield,
@@ -55,7 +56,7 @@ export default function AboutPage() {
     <div className="mx-auto max-w-5xl space-y-8 pb-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(organizationJsonLd) }}
       />
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}

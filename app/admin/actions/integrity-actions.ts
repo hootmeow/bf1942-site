@@ -9,9 +9,9 @@ import { logAdminAction } from "@/app/actions/audit-log-actions"
 
 async function ensureAdmin() {
     const session = await auth()
-    if (!session?.user?.email) redirect("/login")
+    if (!session?.user?.id) redirect("/login")
 
-    const isAdmin = await isUserAdmin(session.user.email)
+    const isAdmin = await isUserAdmin(session.user.id)
     if (!isAdmin) redirect("/")
     return session.user
 }
@@ -165,7 +165,7 @@ export async function reviewQueueItem(
     } catch (e) {
         await client.query('ROLLBACK')
         console.error("Failed to review queue item", e)
-        return { ok: false, error: String(e) }
+        return { ok: false, error: "Failed to process queue item." }
     } finally {
         client.release()
     }

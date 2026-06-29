@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { safeJsonLd } from "@/lib/utils";
 import {
   Alert,
   AlertDescription,
@@ -164,7 +165,7 @@ export default function GuidePage() {
     <div className="space-y-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(howToJsonLd) }}
       />
 
       {/* Hero Header */}

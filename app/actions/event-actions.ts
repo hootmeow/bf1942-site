@@ -12,7 +12,7 @@ export async function createEvent(formData: FormData) {
 
     const title = (formData.get("title") as string)?.trim()
     const description = (formData.get("description") as string)?.trim()
-    const eventType = (formData.get("eventType") as string) || "other"
+    const rawEventType = (formData.get("eventType") as string)?.trim() || "other"
     const eventDate = formData.get("eventDate") as string // Already converted to UTC on client
     const endDate = (formData.get("endDate") as string) || null // Already converted to UTC on client
     const organizerOrgId = formData.get("organizerOrgId") ? Number(formData.get("organizerOrgId")) : null
@@ -26,6 +26,8 @@ export async function createEvent(formData: FormData) {
     const discordLink = (formData.get("discordLink") as string)?.trim() || null
 
     if (!title || title.length > 200) return { error: "Title required, max 200 chars" }
+    if (!/^[a-zA-Z0-9_\- ]{1,30}$/.test(rawEventType)) return { error: "Invalid event type." }
+    const eventType = rawEventType
     if (!eventDate) return { error: "Event date required" }
     if (recurrenceFrequency && !["weekly", "biweekly", "monthly"].includes(recurrenceFrequency)) {
         return { error: "Invalid recurrence frequency" }
@@ -66,7 +68,7 @@ export async function updateEvent(eventId: number, formData: FormData) {
 
         const title = (formData.get("title") as string)?.trim()
         const description = (formData.get("description") as string)?.trim()
-        const eventType = (formData.get("eventType") as string) || "other"
+        const rawEventType = (formData.get("eventType") as string)?.trim() || "other"
         const eventDate = formData.get("eventDate") as string // Already converted to UTC on client
         const endDate = (formData.get("endDate") as string) || null // Already converted to UTC on client
         const bannerUrl = (formData.get("bannerUrl") as string)?.trim()
@@ -79,6 +81,8 @@ export async function updateEvent(eventId: number, formData: FormData) {
         const discordLink = (formData.get("discordLink") as string)?.trim() || null
 
         if (!title) return { error: "Title required" }
+        if (!/^[a-zA-Z0-9_\- ]{1,30}$/.test(rawEventType)) return { error: "Invalid event type." }
+        const eventType = rawEventType
         if (recurrenceFrequency && !["weekly", "biweekly", "monthly"].includes(recurrenceFrequency)) {
             return { error: "Invalid recurrence frequency" }
         }
