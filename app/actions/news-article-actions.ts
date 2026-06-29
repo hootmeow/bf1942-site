@@ -38,6 +38,9 @@ async function checkAdmin() {
 }
 
 export async function getDbArticles(includeUnpublished = false) {
+    if (includeUnpublished) {
+        await checkAdmin()
+    }
     await ensureTable()
 
     const res = await pool.query(`

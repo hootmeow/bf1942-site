@@ -211,13 +211,13 @@ export function ComparisonView({ player1, player2 }: ComparisonViewProps) {
             <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-4 border rounded-lg bg-card/50 border-border/60">
                     <h2 className="text-2xl font-bold truncate">{data.p1.name}</h2>
-                    <Link href={`/player/${data.p1.name}`} passHref>
+                    <Link href={`/player/${encodeURIComponent(data.p1.name)}`} passHref>
                         <Button variant="link" size="sm">View Profile</Button>
                     </Link>
                 </div>
                 <div className="text-center p-4 border rounded-lg bg-card/50 border-border/60">
                     <h2 className="text-2xl font-bold truncate">{data.p2.name}</h2>
-                    <Link href={`/player/${data.p2.name}`} passHref>
+                    <Link href={`/player/${encodeURIComponent(data.p2.name)}`} passHref>
                         <Button variant="link" size="sm">View Profile</Button>
                     </Link>
                 </div>

@@ -49,7 +49,7 @@ export function LeaderboardTable({ players }: { players: LeaderboardItem[] }) {
                                 {player.rank > 3 && <span className="text-muted-foreground">#{player.rank}</span>}
                             </TableCell>
                             <TableCell>
-                                <Link href={`/player/${player.name}`} className="flex items-center gap-3 group">
+                                <Link href={`/player/${encodeURIComponent(player.name)}`} className="flex items-center gap-3 group">
                                     <Avatar className="h-8 w-8 border border-border/40">
                                         <AvatarFallback className="text-xs bg-secondary">
                                             {player.name.substring(0, 2).toUpperCase()}

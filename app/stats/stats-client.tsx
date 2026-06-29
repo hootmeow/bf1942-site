@@ -75,12 +75,14 @@ function RecordStatCard({
   variant?: "default" | "destructive";
 }) {
   const Icon = icon;
-  const colorClass = variant === "destructive" ? "destructive" : "primary";
+  const iconClasses = variant === "destructive"
+    ? "bg-destructive/10 text-destructive"
+    : "bg-primary/10 text-primary";
 
   return (
     <div className="rounded-lg border border-border/60 bg-card/40 p-4">
       <div className="flex items-center gap-3">
-        <div className={`rounded-full bg-${colorClass}/10 p-2 text-${colorClass}`}>
+        <div className={`rounded-full ${iconClasses} p-2`}>
           <Icon className="h-4 w-4" />
         </div>
         <div>

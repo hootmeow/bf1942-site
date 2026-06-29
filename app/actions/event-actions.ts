@@ -157,6 +157,7 @@ export async function deleteEvent(eventId: number) {
 
         await client.query("DELETE FROM events WHERE event_id = $1", [eventId])
         revalidatePath("/events")
+        revalidatePath(`/events/${eventId}`)
         return { ok: true }
     } catch (e) {
         console.error("Delete event error:", e)
