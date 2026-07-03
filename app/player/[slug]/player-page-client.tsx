@@ -3,7 +3,7 @@
 import { startTransition, useEffect, useState, type ComponentProps } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { safeJsonLd } from "@/lib/utils";
+import { cn, safeJsonLd } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -65,6 +65,77 @@ function ProfileSectionNav({ sections }: { sections: { id: string; label: string
         ))}
       </div>
     </nav>
+  );
+}
+
+// Day-of-week x hour presence heatmap (GitHub-contribution style).
+// dow follows ClickHouse toDayOfWeek: 1 = Monday .. 7 = Sunday.
+const HEATMAP_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function PlayerHoursHeatmap({
+  cells,
+  peak,
+}: {
+  cells: { dow: number; hour: number; minutes: number }[];
+  peak: { dow: number; hour: number; minutes: number } | null;
+}) {
+  const grid = new Map<string, number>();
+  let max = 0;
+  for (const c of cells) {
+    grid.set(`${c.dow}-${c.hour}`, c.minutes);
+    if (c.minutes > max) max = c.minutes;
+  }
+  if (max === 0) return <p className="text-sm text-muted-foreground">No presence data available.</p>;
+
+  return (
+    <div className="space-y-2">
+      <div className="overflow-x-auto">
+        <div className="min-w-[560px]">
+          {/* Hour labels */}
+          <div className="grid gap-[3px] mb-1" style={{ gridTemplateColumns: "36px repeat(24, 1fr)" }}>
+            <div />
+            {Array.from({ length: 24 }, (_, h) => (
+              <div key={h} className="text-center text-[9px] font-mono text-muted-foreground/60">
+                {h % 3 === 0 ? h : ""}
+              </div>
+            ))}
+          </div>
+          {HEATMAP_DAYS.map((day, i) => {
+            const dow = i + 1;
+            return (
+              <div key={day} className="grid gap-[3px] mb-[3px]" style={{ gridTemplateColumns: "36px repeat(24, 1fr)" }}>
+                <div className="text-[10px] font-mono text-muted-foreground/70 flex items-center">{day}</div>
+                {Array.from({ length: 24 }, (_, hour) => {
+                  const minutes = grid.get(`${dow}-${hour}`) ?? 0;
+                  const intensity = minutes / max;
+                  const isPeak = peak && peak.dow === dow && peak.hour === hour;
+                  return (
+                    <div
+                      key={hour}
+                      title={`${day} ${String(hour).padStart(2, "0")}:00 UTC — ${minutes} min`}
+                      className={cn(
+                        "aspect-square rounded-[2px] min-h-[10px]",
+                        isPeak && "ring-1 ring-amber-400"
+                      )}
+                      style={{
+                        backgroundColor: intensity > 0
+                          ? `rgba(16, 185, 129, ${0.15 + intensity * 0.85})`
+                          : "rgba(120, 120, 120, 0.08)",
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {peak && (
+        <p className="text-xs text-muted-foreground">
+          Peak playtime: <strong className="text-foreground">{HEATMAP_DAYS[peak.dow - 1]}s around {String(peak.hour).padStart(2, "0")}:00 UTC</strong> ({peak.minutes} min over 90 days)
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -258,6 +329,7 @@ const PB_COLORS = {
   amber:  { wrap: "border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-transparent",   iconBg: "bg-amber-500/15",  icon: "text-amber-400",  value: "text-amber-400",  round: "text-amber-500/70" },
   red:    { wrap: "border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent",        iconBg: "bg-red-500/15",    icon: "text-red-400",    value: "text-red-400",    round: "text-red-500/70" },
   purple: { wrap: "border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-transparent",  iconBg: "bg-purple-500/15", icon: "text-purple-400", value: "text-purple-400", round: "text-purple-500/70" },
+  orange: { wrap: "border-orange-500/20 bg-gradient-to-br from-orange-500/10 to-transparent",  iconBg: "bg-orange-500/15", icon: "text-orange-400", value: "text-orange-400", round: "text-orange-500/70" },
 };
 
 // Global standing presented as an integrated "service ribbon" directly beneath
@@ -469,6 +541,18 @@ export default function PlayerPageClient({
   const [serverLoyalty, setServerLoyalty] = useState<ServerLoyaltyData | null>(null);
   const [comeback, setComeback] = useState<ComebackData | null>(null);
 
+  // Snapshot-derived extras (kill streak, team switches) + hours heatmap
+  const [combatExtras, setCombatExtras] = useState<{
+    best_kill_streak: { streak: number; round_id: number; map_name: string; date: string } | null;
+    avg_best_streak: number;
+    team_switches: { total: number; rounds_with_switch: number; rounds: number };
+    score_per_minute: number;
+  } | null>(null);
+  const [hoursHeatmap, setHoursHeatmap] = useState<{
+    cells: { dow: number; hour: number; minutes: number }[];
+    peak: { dow: number; hour: number; minutes: number } | null;
+  } | null>(null);
+
   // Single effect: fetch all player data in parallel
   useEffect(() => {
     if (!playerName) {
@@ -485,7 +569,8 @@ export default function PlayerPageClient({
         : fetch(`/api/v1/players/search/profile?name=${encodedName}`).then(r => r.ok ? r.json() : null);
 
       const [profileRes, advancedRes, rankRes, mapRes, tsRes, streaksRes,
-             sessionsRes, completionRes, spdRes, loyaltyRes, comebackRes] = await Promise.allSettled([
+             sessionsRes, completionRes, spdRes, loyaltyRes, comebackRes,
+             extrasRes, heatmapRes] = await Promise.allSettled([
         profilePromise,
         fetch(`/api/v1/players/search/profile_advanced?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/history_rank?name=${encodedName}`).then(r => r.ok ? r.json() : null),
@@ -497,6 +582,8 @@ export default function PlayerPageClient({
         fetch(`/api/v1/players/search/score-per-death?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/server-loyalty?name=${encodedName}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/v1/players/search/comeback?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/combat_extras?name=${encodedName}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/v1/players/search/activity_heatmap?name=${encodedName}`).then(r => r.ok ? r.json() : null),
       ]);
 
       // Profile (required)
@@ -553,6 +640,16 @@ export default function PlayerPageClient({
       // Comeback (feature 8)
       const comebackData = comebackRes.status === 'fulfilled' ? comebackRes.value : null;
       if (comebackData?.ok) setComeback(comebackData);
+
+      // Combat extras (kill streak, team switches)
+      const extrasData = extrasRes.status === 'fulfilled' ? extrasRes.value : null;
+      if (extrasData?.ok) setCombatExtras(extrasData);
+
+      // Hours heatmap (day-of-week x hour presence)
+      const heatmapData = heatmapRes.status === 'fulfilled' ? heatmapRes.value : null;
+      if (heatmapData?.ok && heatmapData.cells?.length > 0) {
+        setHoursHeatmap({ cells: heatmapData.cells, peak: heatmapData.peak });
+      }
 
       setLoading(false);
     }
@@ -1044,7 +1141,10 @@ export default function PlayerPageClient({
           </div>
 
           {/* Discovery Stats */}
-          <div className="grid grid-cols-2 divide-x divide-border/30 border-t border-border/40">
+          <div className={cn(
+            "grid divide-x divide-border/30 border-t border-border/40",
+            combatExtras ? "grid-cols-3" : "grid-cols-2"
+          )}>
             <div className="px-4 py-3 flex items-center justify-center gap-3">
               <Server className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm"><strong className="tabular-nums">{lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0}</strong> <span className="text-muted-foreground">servers played</span></span>
@@ -1053,6 +1153,12 @@ export default function PlayerPageClient({
               <Map className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm"><strong className="tabular-nums">{lifetime_stats?.unique_maps ?? lifetime_stats?.unique_maps_played ?? 0}</strong> <span className="text-muted-foreground">maps played</span></span>
             </div>
+            {combatExtras && (
+              <div className="px-4 py-3 flex items-center justify-center gap-3" title={`Switched teams in ${combatExtras.team_switches.rounds_with_switch} of ${combatExtras.team_switches.rounds} rounds`}>
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm"><strong className="tabular-nums">{combatExtras.team_switches.total}</strong> <span className="text-muted-foreground">team switches</span></span>
+              </div>
+            )}
           </div>
         </CardContent>
       </AccentCard>
@@ -1074,6 +1180,13 @@ export default function PlayerPageClient({
             { value: (personal_bests?.best_round_score ?? 0).toLocaleString(), label: "Best Score", roundId: personal_bests?.best_score_round_id, color: "amber" as const, Icon: Trophy },
             { value: (personal_bests?.best_round_kills ?? 0).toLocaleString(), label: "Best Kills", roundId: personal_bests?.best_kill_round_id, color: "red" as const, Icon: Target },
             { value: personal_bests?.best_round_kpm?.toFixed(2) ?? '0.00', label: "Best KPM", roundId: personal_bests?.best_kpm_round_id, color: "purple" as const, Icon: Zap },
+            ...(combatExtras?.best_kill_streak ? [{
+              value: combatExtras.best_kill_streak.streak.toLocaleString(),
+              label: `Kill Streak · ${combatExtras.best_kill_streak.map_name}`,
+              roundId: combatExtras.best_kill_streak.round_id,
+              color: "orange" as const,
+              Icon: Flame,
+            }] : []),
           ].map((stat) => {
             const c = PB_COLORS[stat.color];
             const inner = (
@@ -1163,6 +1276,22 @@ export default function PlayerPageClient({
           </CardContent>
         </AccentCard>
       </div>
+
+      {/* Hours Heatmap — day-of-week x hour presence over the last 90 days */}
+      {hoursHeatmap && (
+        <AccentCard className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle as="h3" className="text-base flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-emerald-500" />
+              Play Schedule
+              <span className="text-xs font-normal text-muted-foreground">(Last 90 days, UTC)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PlayerHoursHeatmap cells={hoursHeatmap.cells} peak={hoursHeatmap.peak} />
+          </CardContent>
+        </AccentCard>
+      )}
 
       {/* Performance Over Time + Rivals & Allies */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

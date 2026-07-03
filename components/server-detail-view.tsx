@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { AlertTriangle, Loader2, Clock, Map, Users, Server, Globe, MessageCircle, Lock, Unlock, Timer, Tag, Check, Trophy, MapPin } from "lucide-react";
+import { Activity, AlertTriangle, Loader2, Clock, Map, Users, Server, Globe, MessageCircle, Lock, Unlock, Timer, Tag, Check, Trophy, MapPin } from "lucide-react";
 import { SERVER_LINKS } from "@/lib/server-links";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -251,15 +251,17 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
 
   const [rankData, setRankData] = useState<{ rank: number; activity_hours_7d: number } | null>(null);
   const [mapBalance, setMapBalance] = useState<MapBalanceStat[]>([]);
+  const [reliability, setReliability] = useState<{ uptime_pct: number; days: number } | null>(null);
 
-  // Fetch rank, rounds, and map balance in parallel
+  // Fetch rank, rounds, map balance, and reliability in parallel
   useEffect(() => {
     if (!server_info?.server_id) return;
     async function fetchServerData() {
-      const [rankRes, roundsRes, balanceRes] = await Promise.allSettled([
+      const [rankRes, roundsRes, balanceRes, reliabilityRes] = await Promise.allSettled([
         fetch("/api/v1/servers/rankings?limit=100"),
         fetch(`/api/v1/servers/search/rounds?search=${server_info.server_id}&page_size=8`),
         fetch(`/api/v1/servers/search/balance?search=${server_info.server_id}`),
+        fetch(`/api/v1/servers/${server_info.server_id}/reliability?days=30`),
       ]);
 
       // Process rank
@@ -295,6 +297,16 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
             setMapBalance(data.map_balance_stats);
           }
         } catch (e) { console.error("Failed to parse map balance", e); }
+      }
+
+      // Process reliability (30d uptime)
+      if (reliabilityRes.status === "fulfilled" && reliabilityRes.value.ok) {
+        try {
+          const data = await reliabilityRes.value.json();
+          if (data.ok && typeof data.uptime_pct === "number") {
+            setReliability({ uptime_pct: data.uptime_pct, days: data.days });
+          }
+        } catch (e) { console.error("Failed to parse reliability", e); }
       }
     }
     fetchServerData();
@@ -640,6 +652,22 @@ export function ServerDetailView({ initialData, slug, serverOwner }: { initialDa
           />
 
           <StatCard title="Version" value={server_info.version || "v1.61"} icon={Tag} />
+
+          {reliability && (
+            <StatCard
+              title={`Uptime (${reliability.days}d)`}
+              value={(
+                <span className={cn(
+                  reliability.uptime_pct >= 99 ? "text-emerald-500"
+                    : reliability.uptime_pct >= 95 ? "text-yellow-500"
+                    : "text-red-500"
+                )}>
+                  {reliability.uptime_pct}%
+                </span>
+              )}
+              icon={Activity}
+            />
+          )}
 
           <div className="rounded-lg border border-border/60 bg-gradient-to-br from-card/50 to-card/30 p-4 transition-all duration-300 hover:from-card/70 hover:to-card/50 hover:border-primary/30 hover:shadow-[0_8px_16px_rgba(0,0,0,0.12)] relative overflow-hidden group/stat">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-primary/[0.02] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-500" />
