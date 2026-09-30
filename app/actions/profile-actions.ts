@@ -34,10 +34,11 @@ export async function updateProfileSettings(prevState: ProfileUpdateState | null
     }
 
     // Parse Data
-    let favoriteMaps: unknown, galleryUrls: unknown
+    let parsedFavoriteMaps: unknown
+    let parsedGalleryUrls: unknown
     try {
-        favoriteMaps = JSON.parse((formData.get("favoriteMaps") as string) || "[]")
-        galleryUrls = JSON.parse((formData.get("galleryUrls") as string) || "[]")
+        parsedFavoriteMaps = JSON.parse((formData.get("favoriteMaps") as string) || "[]")
+        parsedGalleryUrls = JSON.parse((formData.get("galleryUrls") as string) || "[]")
     } catch {
         return { error: "Invalid data format." }
     }
@@ -49,8 +50,8 @@ export async function updateProfileSettings(prevState: ProfileUpdateState | null
         customTitle: formData.get("customTitle") as string,
         displayDiscordId: formData.get("displayDiscordId") === "on",
         profileTheme: (formData.get("profileTheme") as string) || "default",
-        favoriteMaps,
-        galleryUrls,
+        favoriteMaps: parsedFavoriteMaps,
+        galleryUrls: parsedGalleryUrls,
     }
 
     const validated = ProfileUpdateSchema.safeParse(rawData)
