@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, CalendarDays, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map, Ghost, Share2, Shield, ShieldCheck, UserPlus } from "lucide-react";
+import { Loader2, AlertTriangle, User, Users, Trophy, Target, Clock, CalendarDays, BarChart, Skull, Star, Hash, Zap, TrendingUp, Wifi, Server, Map as MapIcon, Ghost, Share2, Shield, ShieldCheck, UserPlus } from "lucide-react";
 import { PlayerPlaytimeChart, PlayerTopMapsChart, PlayerTopServersChart, PlayerTeamPreferenceChart, PlayerActivityLast7DaysChart, PlayerTimeseriesChart } from "@/components/charts";
 import { useToast } from "@/components/ui/toast-simple";
 import { Button } from "@/components/ui/button";
@@ -1150,7 +1150,7 @@ export default function PlayerPageClient({
               <span className="text-sm"><strong className="tabular-nums">{lifetime_stats?.unique_servers ?? lifetime_stats?.unique_servers_played ?? 0}</strong> <span className="text-muted-foreground">servers played</span></span>
             </div>
             <div className="px-4 py-3 flex items-center justify-center gap-3">
-              <Map className="h-4 w-4 text-muted-foreground" />
+              <MapIcon className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm"><strong className="tabular-nums">{lifetime_stats?.unique_maps ?? lifetime_stats?.unique_maps_played ?? 0}</strong> <span className="text-muted-foreground">maps played</span></span>
             </div>
             {combatExtras && (
@@ -1328,7 +1328,7 @@ export default function PlayerPageClient({
       <SectionHeader
         id="playstyle"
         accent="purple"
-        icon={Map}
+        icon={MapIcon}
         title="Playstyle"
         subtitle="Your preferred maps, servers, and teams"
       />
@@ -1394,7 +1394,7 @@ export default function PlayerPageClient({
         <AccentCard className="border-border/60">
           <CardHeader className="pb-2">
             <CardTitle as="h3" className="text-base flex items-center gap-2">
-              <Map className="h-4 w-4 text-amber-500" />
+              <MapIcon className="h-4 w-4 text-amber-500" />
               Favorite Maps
             </CardTitle>
           </CardHeader>
@@ -1431,7 +1431,7 @@ export default function PlayerPageClient({
           <SectionHeader
             id="maps"
             accent="primary"
-            icon={Map}
+            icon={MapIcon}
             title="Map Performance"
             subtitle="Your stats breakdown across every map"
           />
